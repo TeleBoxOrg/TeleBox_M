@@ -7,7 +7,9 @@ import {
 import path from "path";
 import fs from "fs";
 import axios from "axios";
-import { Api } from "teleproto";
+import { html } from "@mtcute/html-parser";
+import type { MessageContext } from "@mtcute/dispatcher";
+import { TelegramClient } from "@mtcute/node";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { JSONFilePreset } from "lowdb/node";
 import { getPrefixes } from "@utils/pluginManager";
@@ -76,35 +78,30 @@ function codeTag(value: string): string {
 }
 
 async function sendOrEditMessage(
-  msg: Api.Message, 
+  msg: MessageContext, 
   text: string, 
-  options?: { parseMode?: string; linkPreview?: boolean }
-): Promise<Api.Message> {
-  const messageOptions = {
-    text,
-    parseMode: options?.parseMode || undefined,
-    linkPreview: options?.linkPreview !== false,
-  };
+  options?: { linkPreview?: boolean }
+): Promise<MessageContext> {
+  const editOpts: any = { text };
+  if (options?.linkPreview === false) editOpts.disableWebPreview = true;
 
   try {
-    await msg.edit(messageOptions);
+    await msg.edit(editOpts);
     return msg;
   } catch (error) {
     console.log(`[TPM] 编辑消息失败，尝试发送新消息: ${error}`);
   }
 
-  const sendOptions: any = {
-    message: text,
-    parseMode: options?.parseMode || undefined,
-    linkPreview: options?.linkPreview !== false,
-  };
-
-  if (msg.replyTo?.replyToTopId || msg.replyTo?.replyToMsgId) {
-    sendOptions.replyTo = msg.replyTo?.replyToTopId || msg.replyTo?.replyToMsgId;
+  const client = await getGlobalClient();
+  if (!client) return msg;
+  const sendOpts: any = {};
+  if (msg.replyToMessage) sendOpts.replyTo = msg.replyToMessage.id;
+  try {
+    const newMsg = await client.sendText(msg.chat.id, text, sendOpts);
+    return newMsg as MessageContext;
+  } catch {
+    return msg;
   }
-
-  const newMsg = await msg.client?.sendMessage(msg.peerId, sendOptions);
-  return newMsg || msg;
 }
 
 /**
@@ -122,11 +119,11 @@ async function sendOrEditMessage(
  * / uninstallAll / update）都应通过它走。
  */
 async function reloadAndFinalize(
-  statusMsg: Api.Message,
+  statusMsg: MessageContext,
   finalText: string,
-  options?: { parseMode?: string; linkPreview?: boolean }
+  options?: { linkPreview?: boolean }
 ): Promise<void> {
-  const targetPeerId = statusMsg.peerId;
+  const targetPeerId = statusMsg.chat.id;
   const targetMsgId = statusMsg.id;
 
   try {
@@ -137,11 +134,10 @@ async function reloadAndFinalize(
 
   try {
     const freshClient = await getGlobalClient();
-    await freshClient.editMessage(targetPeerId, {
+    await freshClient.editMessage({
+      chatId: targetPeerId,
       message: targetMsgId,
       text: finalText,
-      parseMode: options?.parseMode,
-      linkPreview: options?.linkPreview !== false,
     });
   } catch (error) {
     console.log(`[TPM] 最终状态消息编辑失败 (reload 后): ${error}`);
@@ -149,13 +145,12 @@ async function reloadAndFinalize(
 }
 
 async function updateProgressMessage(
-  msg: Api.Message, 
+  msg: MessageContext, 
   text: string, 
-  options?: { parseMode?: string; linkPreview?: boolean }
+  options?: { linkPreview?: boolean }
 ): Promise<boolean> {
   const messageOptions = {
     text,
-    parseMode: options?.parseMode || undefined,
     linkPreview: options?.linkPreview !== false,
   };
 
@@ -205,9 +200,9 @@ function splitLongText(text: string, maxLength: number = MAX_MESSAGE_LENGTH): st
 }
 
 async function sendLongMessage(
-  msg: Api.Message,
+  msg: MessageContext,
   text: string,
-  options?: { parseMode?: string; linkPreview?: boolean },
+  options?: { linkPreview?: boolean },
   isEdit: boolean = true,
   footer?: string
 ): Promise<void> {
@@ -218,7 +213,6 @@ async function sendLongMessage(
   }
 
   const messageOptions = {
-    parseMode: options?.parseMode || undefined,
     linkPreview: options?.linkPreview !== false,
   };
 
@@ -232,25 +226,16 @@ async function sendLongMessage(
         ...messageOptions,
       });
     } catch (error) {
-      await msg.client?.sendMessage(msg.peerId, {
-        message: firstMessage,
-        ...messageOptions,
-        replyTo: msg.replyTo?.replyToTopId || msg.replyTo?.replyToMsgId,
-      });
+      const _client = await getGlobalClient();
+      await _client.sendText(msg.chat.id, firstMessage);
     }
   } else {
-    await msg.client?.sendMessage(msg.peerId, {
-      message: firstMessage,
-      ...messageOptions,
-      replyTo: msg.replyTo?.replyToTopId || msg.replyTo?.replyToMsgId,
-    });
+    const _client = await getGlobalClient();
+    await _client.sendText(msg.chat.id, firstMessage);
   }
 
   for (let i = 1; i < messages.length; i++) {
-    await msg.reply({
-      message: messages[i],
-      ...messageOptions,
-    });
+    await msg.replyText(messages[i]);
   }
 }
 
@@ -346,7 +331,7 @@ async function fetchWithRetry<T>(
   throw lastError;
 }
 
-async function installRemotePlugin(plugin: string, msg: Api.Message) {
+async function installRemotePlugin(plugin: string, msg: MessageContext) {
   const statusMsg = await sendOrEditMessage(msg, `正在安装插件 ${plugin}...`);
   const res = await fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL);
   if (res.status === 200) {
@@ -398,7 +383,7 @@ async function installRemotePlugin(plugin: string, msg: Api.Message) {
   }
 }
 
-async function installAllPlugins(msg: Api.Message) {
+async function installAllPlugins(msg: MessageContext) {
   const statusMsg = await sendOrEditMessage(msg, "🔍 正在获取远程插件列表...");
   try {
     const res = await fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL);
@@ -418,7 +403,7 @@ async function installAllPlugins(msg: Api.Message) {
     let failedCount = 0;
     const failedPlugins: string[] = [];
 
-    await sendOrEditMessage(statusMsg, `📦 开始安装 ${totalPlugins} 个插件...\n\n🔄 进度: 0/${totalPlugins} (0%)`, { parseMode: "html" });
+    await sendOrEditMessage(statusMsg, `📦 开始安装 ${totalPlugins} 个插件...\n\n🔄 进度: 0/${totalPlugins} (0%)`);
 
     for (let i = 0; i < plugins.length; i++) {
       const plugin = plugins[i];
@@ -428,7 +413,7 @@ async function installAllPlugins(msg: Api.Message) {
         if ([0, plugins.length - 1].includes(i) || i % 2 === 0) {
           await sendOrEditMessage(statusMsg, `📦 正在安装插件: ${codeTag(plugin)}\n\n${progressBar}\n🔄 进度: ${
               i + 1
-            }/${totalPlugins} (${progress}%)\n✅ 成功: ${installedCount}\n❌ 失败: ${failedCount}`, { parseMode: "html" });
+            }/${totalPlugins} (${progress}%)\n✅ 成功: ${installedCount}\n❌ 失败: ${failedCount}`);
         }
 
         const pluginData = res.data[plugin];
@@ -502,21 +487,21 @@ async function installAllPlugins(msg: Api.Message) {
     }
     resultMsg += `\n\n🔄 插件已重新加载，可以开始使用!`;
 
-    await reloadAndFinalize(statusMsg, resultMsg, { parseMode: "html" });
+    await reloadAndFinalize(statusMsg, resultMsg);
   } catch (error) {
     await sendOrEditMessage(statusMsg, `❌ 批量安装失败: ${error}`);
     console.error("[TPM] 批量安装插件失败:", error);
   }
 }
 
-async function installMultiplePlugins(pluginNames: string[], msg: Api.Message) {
+async function installMultiplePlugins(pluginNames: string[], msg: MessageContext) {
   const totalPlugins = pluginNames.length;
   if (totalPlugins === 0) {
     await sendOrEditMessage(msg, "❌ 未提供要安装的插件名称");
     return;
   }
 
-  const statusMsg = await sendOrEditMessage(msg, `🔍 正在获取远程插件列表...`, { parseMode: "html" });
+  const statusMsg = await sendOrEditMessage(msg, `🔍 正在获取远程插件列表...`);
 
   try {
     const res = await fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL);
@@ -530,7 +515,7 @@ async function installMultiplePlugins(pluginNames: string[], msg: Api.Message) {
     const failedPlugins: string[] = [];
     const notFoundPlugins: string[] = [];
 
-    await sendOrEditMessage(statusMsg, `📦 开始安装 ${totalPlugins} 个插件...\n\n🔄 进度: 0/${totalPlugins} (0%)`, { parseMode: "html" });
+    await sendOrEditMessage(statusMsg, `📦 开始安装 ${totalPlugins} 个插件...\n\n🔄 进度: 0/${totalPlugins} (0%)`);
 
     for (let i = 0; i < pluginNames.length; i++) {
       const pluginName = pluginNames[i];
@@ -541,7 +526,7 @@ async function installMultiplePlugins(pluginNames: string[], msg: Api.Message) {
         if ([0, pluginNames.length - 1].includes(i) || i % 2 === 0) {
           await sendOrEditMessage(statusMsg, `📦 正在安装插件: ${codeTag(pluginName)}\n\n${progressBar}\n🔄 进度: ${
               i + 1
-            }/${totalPlugins} (${progress}%)\n✅ 成功: ${installedCount}\n❌ 失败: ${failedCount}`, { parseMode: "html" });
+            }/${totalPlugins} (${progress}%)\n✅ 成功: ${installedCount}\n❌ 失败: ${failedCount}`);
         }
 
         if (!res.data[pluginName]) {
@@ -636,7 +621,7 @@ async function installMultiplePlugins(pluginNames: string[], msg: Api.Message) {
 
     resultMsg += `\n\n🔄 插件已重新加载，可以开始使用!`;
 
-    await reloadAndFinalize(statusMsg, resultMsg, { parseMode: "html" });
+    await reloadAndFinalize(statusMsg, resultMsg);
   } catch (error) {
     await sendOrEditMessage(statusMsg, `❌ 批量安装失败: ${error}`);
     console.error("[TPM] 批量安装插件失败:", error);
@@ -650,9 +635,9 @@ function generateProgressBar(percentage: number, length: number = 20): string {
   return `🔄 当前进度: [${bar}] ${percentage}%`;
 }
 
-async function installPlugin(args: string[], msg: Api.Message) {
+async function installPlugin(args: string[], msg: MessageContext) {
   if (args.length === 1) {
-    if (msg.isReply) {
+    if (!!msg.replyToMessage) {
       const replied = await safeGetReplyMessage(msg);
       if (replied?.media) {
         const fileName = await getMediaFileName(replied);
@@ -666,7 +651,7 @@ async function installPlugin(args: string[], msg: Api.Message) {
         const statusMsg = await sendOrEditMessage(msg, `🔍 正在验证插件 ${pluginName} ...`);
         const filePath = path.join(PLUGIN_PATH, fileName);
 
-        await msg.client?.downloadMedia(replied, { outputFile: filePath });
+        const _dlClient = await getGlobalClient(); const buf = await _dlClient.downloadAsBuffer(replied.media as any); fs.writeFileSync(filePath, buf as Buffer);
         
         try {
           const pluginModule = require(filePath);
@@ -705,7 +690,7 @@ async function installPlugin(args: string[], msg: Api.Message) {
         await reloadAndFinalize(
           statusMsg,
           `✅ 插件 ${htmlEscape(pluginName)} 已安装并加载成功${overrideMessage}`,
-          { parseMode: "html" }
+          
         );
       } else {
         await sendOrEditMessage(msg, "请回复一个插件文件");
@@ -726,7 +711,7 @@ async function installPlugin(args: string[], msg: Api.Message) {
   }
 }
 
-async function uninstallPlugin(plugin: string, msg: Api.Message) {
+async function uninstallPlugin(plugin: string, msg: MessageContext) {
   if (!plugin) {
     await sendOrEditMessage(msg, "请提供要卸载的插件名称");
     return;
@@ -755,7 +740,7 @@ async function uninstallPlugin(plugin: string, msg: Api.Message) {
 
 async function uninstallMultiplePlugins(
   pluginNames: string[],
-  msg: Api.Message
+  msg: MessageContext
 ) {
   if (!pluginNames || pluginNames.length === 0) {
     await sendOrEditMessage(msg, "请提供要卸载的插件名称");
@@ -854,7 +839,7 @@ async function uninstallMultiplePlugins(
   await reloadAndFinalize(statusMsg, resultText);
 }
 
-async function uninstallAllPlugins(msg: Api.Message) {
+async function uninstallAllPlugins(msg: MessageContext) {
   try {
     const statusMsg = await sendOrEditMessage(msg, "⚠️ 正在清空插件目录并刷新缓存...");
 
@@ -899,14 +884,14 @@ async function uninstallAllPlugins(msg: Api.Message) {
         failed.length > 10 ? `\n• ... 还有 ${failed.length - 10} 个失败` : ""
       }`;
     }
-    await reloadAndFinalize(statusMsg, text, { parseMode: "html" });
+    await reloadAndFinalize(statusMsg, text);
   } catch (error) {
     console.error("[TPM] 清空插件目录失败:", error);
     await sendOrEditMessage(msg, `❌ 清空插件目录失败: ${error}`);
   }
 }
 
-async function uploadPlugin(args: string[], msg: Api.Message) {
+async function uploadPlugin(args: string[], msg: MessageContext) {
   const pluginName = args[1];
   if (!pluginName) {
     await sendOrEditMessage(msg, "请提供插件名称");
@@ -926,11 +911,11 @@ async function uploadPlugin(args: string[], msg: Api.Message) {
     caption: `**TeleBox_Plugin ${pluginName} plugin.**`,
   };
 
-  if (msg.replyTo?.replyToTopId || msg.replyTo?.replyToMsgId) {
-    sendOptions.replyTo = msg.replyTo?.replyToTopId || msg.replyTo?.replyToMsgId;
+  if (msg.replyToMessage?.threadId || msg.replyToMessage?.id) {
+    sendOptions.replyTo = msg.replyToMessage?.threadId || msg.replyToMessage?.id;
   }
 
-  await msg.client?.sendFile(msg.peerId, sendOptions);
+  const _sendClient = await getGlobalClient(); await _sendClient.sendMedia(msg.chat.id, sendOptions);
   
   if (statusMsg.id !== msg.id) {
     await statusMsg.delete();
@@ -939,8 +924,8 @@ async function uploadPlugin(args: string[], msg: Api.Message) {
   }
 }
 
-async function search(msg: Api.Message) {
-  const text = msg.message;
+async function search(msg: MessageContext) {
+  const text = msg.text;
   const parts = text.trim().split(/\s+/);
   const keyword = parts.length > 2 ? parts[2].toLowerCase() : "";
   
@@ -988,7 +973,7 @@ async function search(msg: Api.Message) {
     const totalPlugins = filteredPlugins.length;
     
     if (totalPlugins === 0 && keyword) {
-      await sendOrEditMessage(statusMsg, `🔍 未找到包含 "<b>${htmlEscape(keyword)}</b>" 的插件`, { parseMode: "html" });
+      await sendOrEditMessage(statusMsg, `🔍 未找到包含 "<b>${htmlEscape(keyword)}</b>" 的插件`);
       return;
     }
 
@@ -1092,14 +1077,14 @@ async function search(msg: Api.Message) {
 
     const footer = installTip + repoLink;
 
-    await sendLongMessage(statusMsg, fullMessage, { parseMode: "html", linkPreview: false }, true, footer);
+    await sendLongMessage(statusMsg, fullMessage, { linkPreview: false }, true, footer);
   } catch (error) {
     console.error("[TPM] 搜索插件失败:", error);
     await sendOrEditMessage(msg, `❌ 搜索插件失败: ${error}`);
   }
 }
 
-async function showPluginRecords(msg: Api.Message, verbose?: boolean) {
+async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
   try {
     const statusMsg = await sendOrEditMessage(msg, "📚 正在读取插件数据...");
     const db = await getDatabase();
@@ -1227,14 +1212,14 @@ async function showPluginRecords(msg: Api.Message, verbose?: boolean) {
     ].join("\n");
     const fullMessage = messageParts.join("\n");
     
-    await sendLongMessage(statusMsg, fullMessage, { parseMode: "html", linkPreview: false }, true, footer);
+    await sendLongMessage(statusMsg, fullMessage, { linkPreview: false }, true, footer);
   } catch (error) {
     console.error("[TPM] 读取插件数据库失败:", error);
     await sendOrEditMessage(msg, `❌ 读取数据库失败: ${error}`);
   }
 }
 
-async function updateAllPlugins(msg: Api.Message) {
+async function updateAllPlugins(msg: MessageContext) {
   const statusMsg = await sendOrEditMessage(msg, "🔍 正在检查待更新的插件...");
   let canEdit = true;
   
@@ -1254,7 +1239,7 @@ async function updateAllPlugins(msg: Api.Message) {
     const failedPlugins: string[] = [];
 
     if (canEdit) {
-      canEdit = await updateProgressMessage(statusMsg, `📦 开始更新 ${totalPlugins} 个插件...\n\n🔄 进度: 0/${totalPlugins} (0%)`, { parseMode: "html" });
+      canEdit = await updateProgressMessage(statusMsg, `📦 开始更新 ${totalPlugins} 个插件...\n\n🔄 进度: 0/${totalPlugins} (0%)`);
     }
 
     for (let i = 0; i < dbPlugins.length; i++) {
@@ -1267,7 +1252,7 @@ async function updateAllPlugins(msg: Api.Message) {
         if (canEdit && ([0, dbPlugins.length - 1].includes(i) || i % 2 === 0)) {
           canEdit = await updateProgressMessage(statusMsg, `📦 正在更新插件: ${codeTag(pluginName)}\n\n${progressBar}\n🔄 进度: ${
               i + 1
-            }/${totalPlugins} (${progress}%)\n✅ 成功: ${updatedCount}\n⏭️ 跳过: ${skipCount}\n❌ 失败: ${failedCount}`, { parseMode: "html" });
+            }/${totalPlugins} (${progress}%)\n✅ 成功: ${updatedCount}\n⏭️ 跳过: ${skipCount}\n❌ 失败: ${failedCount}`);
         }
 
         if (!pluginRecord.url) {
@@ -1330,12 +1315,12 @@ async function updateAllPlugins(msg: Api.Message) {
     }
 
     const finalText = `✅ 更新完成 (成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个)`;
-    await reloadAndFinalize(statusMsg, finalText, { parseMode: "html" });
+    await reloadAndFinalize(statusMsg, finalText);
     console.log(`[TPM] 更新完成。统计: 成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个`);
   } catch (error) {
     console.error("[TPM] 一键更新失败:", error);
     try {
-      await statusMsg.edit({ text: `❌ 一键更新失败: ${htmlEscape(String(error))}`, parseMode: "html" });
+      await statusMsg.edit({ text: `❌ 一键更新失败: ${htmlEscape(String(error))}` });
     } catch (editError) {
       console.log(`[TPM] 错误消息编辑失败: ${editError}`);
     }
@@ -1370,12 +1355,12 @@ class TpmPlugin extends Plugin {
 
   ignoreEdited: boolean = true;
 
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     tpm: async (msg) => {
-      const text = msg.message;
+      const text = msg.text;
       const [, ...args] = text.split(" ");
       if (args.length === 0) {
-        await sendOrEditMessage(msg, this.description, { parseMode: "html" });
+        await sendOrEditMessage(msg, this.description);
         return;
       }
       const cmd = args[0];
@@ -1412,7 +1397,7 @@ class TpmPlugin extends Plugin {
       } else if (cmd === "update" || cmd === "updateAll" || cmd === "ua") {
         await updateAllPlugins(msg);
       } else {
-        await sendOrEditMessage(msg, `❌ 未知命令: ${codeTag(cmd)}\n\n${this.description}`, { parseMode: "html" });
+        await sendOrEditMessage(msg, `❌ 未知命令: ${codeTag(cmd)}\n\n${this.description}`);
       }
     },
   };
