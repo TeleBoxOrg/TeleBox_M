@@ -2,7 +2,7 @@ import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { Api } from "teleproto";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { npm_install_project_dependencies } from "@utils/npm_install";
 import { getGlobalClient } from "@utils/globalClient";
 import { executeExit } from "./reload";
@@ -59,7 +59,7 @@ async function findMainBranch(): Promise<{ remote: string; branch: string } | nu
   return null;
 }
 
-async function update(force = false, msg: Api.Message) {
+async function update(force = false, msg: MessageContext) {
   await msg.edit({ text: "🚀 正在更新项目..." });
   console.clear();
   console.log("🚀 开始更新项目...\n");
@@ -93,7 +93,7 @@ async function update(force = false, msg: Api.Message) {
 
     // 退出进程，pm2 拉起后由 reload 插件接管 exitFile：
     // 退出前显示 "🔄 正在重启进程..."；重启完成后编辑为 "✅ 更新完成，耗时 Xms"
-    await executeExit(msg, {
+    await executeExit(msg as any, {
       pendingText: "🔄 正在重启进程...",
       successText: "✅ 更新完成，耗时 {elapsedMs}ms",
     });
@@ -119,9 +119,9 @@ async function update(force = false, msg: Api.Message) {
       // 最后尝试通过新 client 发送
       try {
         const client = await getGlobalClient();
-        const targetChat = msg.chatId || msg.peerId;
+        const targetChat = msg.chat.id;
         if (client && targetChat) {
-          await client.sendMessage(targetChat, { message: errorText });
+          await client.sendText(targetChat, errorText);
         }
       } catch (sendError) {
         console.error("Failed to send error via fallback client:", sendError);
@@ -132,9 +132,9 @@ async function update(force = false, msg: Api.Message) {
 
 class UpdatePlugin extends Plugin {
   description: string = `更新项目：拉取最新代码并安装依赖\n<code>${mainPrefix}update -f/-force</code> 强制更新`;
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     update: async (msg) => {
-      const args = msg.message.slice(1).split(" ").slice(1);
+      const args = msg.text.slice(1).split(" ").slice(1);
       const force = args.includes("--force") || args.includes("-f");
       await update(force, msg);
     },
