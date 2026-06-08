@@ -1,5 +1,7 @@
 import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
-import { Api } from "teleproto";
+import { html } from "@mtcute/html-parser";
+import type { MessageContext } from "@mtcute/dispatcher";
+import type { Message } from "@mtcute/node";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
@@ -34,9 +36,11 @@ async function formatEntity(
   let id: any;
   let entity: any;
   try {
-    entity = target?.className
+    // If target is already an mtcute entity (has _type marker), use it directly;
+    // otherwise resolve it via getChat
+    entity = target?._type
       ? target
-      : ((await client?.getEntity(target)) as any);
+      : ((await client.getChat(target)) as any);
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
@@ -59,11 +63,11 @@ async function formatEntity(
 
   if (id) {
     displayParts.push(
-      entity instanceof Api.User
+      "firstName" in entity
         ? `<a href="tg://user?id=${id}">${id}</a>`
         : `<a href="https://t.me/c/${id}">${id}</a>`
     );
-  } else if (!target?.className) {
+  } else if (!target?._type) {
     displayParts.push(`<code>${target}</code>`);
   }
 
@@ -362,17 +366,16 @@ class BfPlugin extends Plugin {
 `;
 
   cmdHandlers = {
-    bf: async (msg: Api.Message) => {
+    bf: async (msg: MessageContext) => {
       const lifecycle = this.getLifecycle();
-      const args = msg.message.slice(1).split(" ").slice(1);
+      const args = (msg.text || "").slice(1).split(" ").slice(1);
       const cmd = args[0] || "";
 
       // 设置目标
       if (cmd === "set") {
         if (args.length < 2) {
           await msg.edit({
-            text: help_text,
-            parseMode: "html",
+            text: html(help_text),
           });
           return;
         }
@@ -394,14 +397,13 @@ class BfPlugin extends Plugin {
           });
 
         if (valid.length === 0) {
-          await msg.edit({ text: "❌ 无效的聊天ID", parseMode: "html" });
+          await msg.edit({ text: "❌ 无效的聊天ID" });
           return;
         }
 
         const targets = await ConfigManager.addTargets(valid);
         await msg.edit({
-          text: `✅ 目标已更新: ${targets.join(", ") || "无"}`,
-          parseMode: "html",
+          text: html(`✅ 目标已更新: ${targets.join(", ") || "无"}`),
         });
         return;
       }
@@ -410,8 +412,7 @@ class BfPlugin extends Plugin {
       if (cmd === "del") {
         if (args.length < 2) {
           await msg.edit({
-            text: help_text,
-            parseMode: "html",
+            text: html(help_text),
           });
           return;
         }
@@ -420,13 +421,13 @@ class BfPlugin extends Plugin {
         const remaining = await ConfigManager.removeTarget(target);
 
         await msg.edit({
-          text:
+          text: html(
             target === "all"
               ? "✅ 已清空所有目标"
               : `✅ 已删除 ${target}\n当前目标: ${
                   remaining.join(", ") || "无"
-                }`,
-          parseMode: "html",
+                }`
+          ),
         });
         return;
       }
@@ -436,8 +437,7 @@ class BfPlugin extends Plugin {
       if (cmd === "to") {
         if (args.length < 2) {
           await msg.edit({
-            text: help_text,
-            parseMode: "html",
+            text: html(help_text),
           });
           return;
         }
@@ -455,7 +455,7 @@ class BfPlugin extends Plugin {
             return id;
           });
         if (ids.length === 0) {
-          await msg.edit({ text: "❌ 无效的聊天ID", parseMode: "html" });
+          await msg.edit({ text: "❌ 无效的聊天ID" });
           return;
         }
         oneTimeTargets = ids;
@@ -465,7 +465,7 @@ class BfPlugin extends Plugin {
       const client = await getGlobalClient();
 
       try {
-        await msg.edit({ text: "🔄 正在创建备份...", parseMode: "html" });
+        await msg.edit({ text: "🔄 正在创建备份..." });
 
         const programDir = process.cwd();
         const backupName = generateBackupName();
@@ -530,7 +530,6 @@ class BfPlugin extends Plugin {
           if (dirsToBackup.length === 0) {
             await msg.edit({
               text: "❌ 没有找到可备份的目录",
-              parseMode: "html",
             });
             return;
           }
@@ -538,7 +537,7 @@ class BfPlugin extends Plugin {
           await createBackup(dirsToBackup, backupPath, lifecycle);
         }
 
-        await msg.edit({ text: "📤 正在上传备份...", parseMode: "html" });
+        await msg.edit({ text: "📤 正在上传备份..." });
 
         const stats = fs.statSync(backupPath);
         const backupType = cmd === "all" ? "全量备份" : "标准备份";
@@ -566,20 +565,20 @@ class BfPlugin extends Plugin {
           const { display } = await formatEntity(dest);
           destDisplays.push(display);
           try {
-            await client.sendFile(dest, {
+            await client.sendMedia(dest, {
+              type: "document",
               file: backupPath,
-              caption,
-              forceDocument: true,
-              parseMode: "html",
+              caption: html(caption),
+              fileName: backupName,
             });
           } catch (err) {
             console.error(`发送到 ${dest} 失败:`, err);
             if (dest !== "me") {
-              await client.sendFile("me", {
+              await client.sendMedia("me", {
+                type: "document",
                 file: backupPath,
-                caption: `⚠️ 发送到 ${dest} 失败\n\n${caption}`,
-                forceDocument: true,
-                parseMode: "html",
+                caption: html(`⚠️ 发送到 ${dest} 失败\n\n${caption}`),
+                fileName: backupName,
               });
             }
           }
@@ -591,17 +590,16 @@ class BfPlugin extends Plugin {
           : "plugins, assets";
         
         await msg.edit({
-          text:
+          text: html(
             `✅ <b>${backupTypeDisplay}完成</b>\n\n` +
             `🎯 <b>发送到</b>: ${destDisplays.join(", ")}\n` +
             `📦 <b>内容</b>: ${contentDisplay}\n` +
-            `💾 <b>大小</b>: ${(stats.size / 1024 / 1024).toFixed(2)} MB`,
-          parseMode: "html",
+            `💾 <b>大小</b>: ${(stats.size / 1024 / 1024).toFixed(2)} MB`
+          ),
         });
       } catch (error) {
         await msg.edit({
           text: `❌ 备份失败: ${String(error)}`,
-          parseMode: "html",
         });
       } finally {
         try {
@@ -616,27 +614,26 @@ class BfPlugin extends Plugin {
       }
     },
 
-    hf: async (msg: Api.Message) => {
+    hf: async (msg: MessageContext) => {
       const lifecycle = this.getLifecycle();
-      const args = msg.message.slice(1).split(" ").slice(1);
+      const args = (msg.text || "").slice(1).split(" ").slice(1);
       const cmd = args[0] || "";
 
       if (cmd === "help" || cmd === "帮助") {
         await msg.edit({
-          text:
+          text: html(
             "🔄 <b>TeleBox 恢复系统</b>\n\n" +
             "📁 回复备份文件消息，发送 <code>hf</code> 恢复\n" +
             "📦 支持格式: .tar.gz 备份文件\n" +
-            "🔄 恢复后会自动重载插件",
-          parseMode: "html",
+            "🔄 恢复后会自动重载插件"
+          ),
         });
         return;
       }
 
-      if (!msg.replyTo) {
+      if (!msg.replyToMessage) {
         await msg.edit({
-          text: "❌ 请回复一个备份文件消息后使用 <code>hf</code>",
-          parseMode: "html",
+          text: html("❌ 请回复一个备份文件消息后使用 <code>hf</code>"),
         });
         return;
       }
@@ -645,24 +642,26 @@ class BfPlugin extends Plugin {
 
       try {
         // 获取回复的消息
-        const messages = await safeGetMessages(client, msg.peerId, {
-          ids: [msg.replyTo.replyToMsgId!],
+        const messages = await safeGetMessages(client, msg.chat, {
+          ids: [msg.replyToMessage!.id!],
         });
 
         const backupMsg = messages[0];
-        if (!backupMsg?.file?.name?.endsWith(".tar.gz")) {
+        const fileName = (backupMsg?.media as any)?.fileName ?? "";
+        if (!fileName?.endsWith(".tar.gz")) {
           await msg.edit({
             text: "❌ 回复的消息不是有效的备份文件",
-            parseMode: "html",
           });
           return;
         }
 
-        await msg.edit({ text: "📥 正在下载备份...", parseMode: "html" });
+        await msg.edit({ text: "📥 正在下载备份..." });
 
-        // 下载文件
+        // Download file — backupMsg.media may be a Document (which extends FileLocation),
+        // but TypeScript can't verify that through the MessageMedia union, so we cast.
         const tempPath = path.join(os.tmpdir(), `restore_${Date.now()}.tar.gz`);
-        const buffer = await client.downloadMedia(backupMsg);
+        const media = backupMsg!.media as unknown as import("@mtcute/node").FileLocation;
+        const buffer = await client.downloadAsBuffer(media);
 
         if (!buffer) {
           throw new Error("下载失败");
@@ -670,12 +669,12 @@ class BfPlugin extends Plugin {
 
         fs.writeFileSync(tempPath, buffer);
 
-        await msg.edit({ text: "📦 正在解压备份...", parseMode: "html" });
+        await msg.edit({ text: "📦 正在解压备份..." });
 
         // 解压文件
         const extractPath = await extractBackup(tempPath, lifecycle);
 
-        await msg.edit({ text: "🔄 正在恢复备份...", parseMode: "html" });
+        await msg.edit({ text: "🔄 正在恢复备份..." });
 
         // 恢复备份
         await restoreBackup(extractPath);
@@ -693,24 +692,20 @@ class BfPlugin extends Plugin {
             await pluginManager.loadPlugins();
             await msg.edit({
               text: "✅ 恢复完成并已重载插件",
-              parseMode: "html",
             });
           } else {
             await msg.edit({
               text: "✅ 恢复完成，请重启程序",
-              parseMode: "html",
             });
           }
         } catch {
           await msg.edit({
             text: "✅ 恢复完成，请重启程序",
-            parseMode: "html",
           });
         }
       } catch (error) {
         await msg.edit({
           text: `❌ 恢复失败: ${String(error)}`,
-          parseMode: "html",
         });
       }
     },
