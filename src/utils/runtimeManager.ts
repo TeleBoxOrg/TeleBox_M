@@ -28,6 +28,7 @@ export interface TeleBoxRuntime {
   generation: number;
   state: RuntimeState;
   client: TelegramClient;
+  dispatcher?: import("@mtcute/dispatcher").Dispatcher;
   context: GenerationContext;
   signal: AbortSignal;
   createdAt: number;

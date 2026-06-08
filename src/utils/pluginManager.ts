@@ -2,26 +2,17 @@ import path from "path";
 import fs from "fs";
 import { isValidPlugin, Plugin } from "@utils/pluginBase";
 import { getGlobalClient, getCurrentGeneration } from "@utils/globalClient";
-import { NewMessageEvent, NewMessage } from "teleproto/events";
+import { Dispatcher, MessageContext } from "@mtcute/dispatcher";
+import { Message } from "@mtcute/node";
 import { AliasDB } from "./aliasDB";
-import { Api } from "teleproto";
 import { cronManager } from "./cronManager";
-import {
-  EditedMessage,
-  EditedMessageEvent,
-} from "teleproto/events/EditedMessage";
 import type { TeleBoxRuntime } from "./runtimeManager";
 
-type ClientEventBuilder = NonNullable<Parameters<TeleBoxRuntime["client"]["removeEventHandler"]>[1]>;
-
-type MessageWithText = Api.Message & {
-  text?: string;
+// mtcute Message exposes `.text` (string) and `.isOutgoing`. The legacy gramjs
+// code read `.message` for the raw text and `.out` for outgoing — those are
+// mapped to the mtcute equivalents throughout this module.
+type MessageWithText = Message & {
   savedPeerId?: unknown;
-};
-
-type MutableMessageWithText = MessageWithText & {
-  message: string;
-  text: string;
 };
 
 type PluginEntry = {
@@ -214,14 +205,14 @@ function listCommands(): string[] {
 }
 
 function getCommandFromMessage(
-  msg: Api.Message | string,
+  msg: MessageContext | string,
   diyPrefixes?: string[]
 ): string | null {
   let pfs = getPrefixes();
   if (diyPrefixes && diyPrefixes.length > 0) {
     pfs = diyPrefixes;
   }
-  const text = typeof msg === "string" ? msg : msg.message;
+  const text = typeof msg === "string" ? msg : msg.text;
 
   const matched = pfs.find((p) => text.startsWith(p));
   if (!matched) return null;
@@ -256,8 +247,8 @@ function getCommandFromMessage(
 async function dealCommandPluginWithMessage(param: {
   cmd: string;
   isEdited?: boolean;
-  msg: Api.Message;
-  trigger?: Api.Message;
+  msg: MessageContext;
+  trigger?: MessageContext;
 }) {
   const { cmd, msg, isEdited, trigger } = param;
   const pluginEntry = getPluginEntry(cmd);
@@ -271,12 +262,11 @@ async function dealCommandPluginWithMessage(param: {
 
     const original = pluginEntry.original;
     let targetCmd = original || cmd;
-    let targetMsg: Api.Message = msg;
+    let targetMsg: MessageContext = msg;
 
     if (original && pluginEntry.aliasFinal && pluginEntry.aliasFinal !== original) {
       const pfs = getPrefixes();
-      const base = msg as MessageWithText;
-      const text: string = base.message || base.text || "";
+      const text: string = msg.text || "";
       const matched = pfs.find((p) => text.startsWith(p)) || "";
       const rest = text.slice(matched.length).trim();
       const parts = rest.split(/\s+/).filter(Boolean);
@@ -292,21 +282,18 @@ async function dealCommandPluginWithMessage(param: {
         const newRest = [...finalParts, ...extraParts].join(" ");
         const newText = matched + newRest;
 
-        const newMsg = Object.create(Object.getPrototypeOf(base)) as MutableMessageWithText;
-        Object.assign(newMsg, base);
-
-        Object.defineProperty(newMsg, "message", {
-          value: newText,
-          writable: true,
-          configurable: true,
-        });
-        Object.defineProperty(newMsg, "text", {
-          value: newText,
-          writable: true,
-          configurable: true,
-        });
-
-        targetMsg = newMsg as Api.Message;
+        // mtcute Message.text is a class getter backed by raw.message, so we
+        // cannot Object.assign/defineProperty a fake message like gramjs did.
+        // Wrap the real MessageContext in a Proxy that overrides `text` while
+        // delegating every other property (and binding methods to the real
+        // context so `this` stays intact).
+        targetMsg = new Proxy(msg, {
+          get(target, prop, receiver) {
+            if (prop === "text") return newText;
+            const value = Reflect.get(target, prop, receiver);
+            return typeof value === "function" ? value.bind(target) : value;
+          },
+        }) as MessageContext;
       }
     }
 
@@ -326,25 +313,26 @@ async function dealCommandPluginWithMessage(param: {
 }
 
 async function dealCommandPlugin(
-  event: NewMessageEvent | EditedMessageEvent
+  msg: MessageContext,
+  isEdited: boolean
 ): Promise<void> {
-  const msg = event.message;
   const savedMessage = (msg as MessageWithText).savedPeerId;
-  if (msg.out || savedMessage) {
+  // gramjs `msg.out` → mtcute `msg.isOutgoing`. Only react to our own outgoing
+  // commands (or saved-messages), matching the userbot model.
+  if (msg.isOutgoing || savedMessage) {
     const cmd = getCommandFromMessage(msg);
     if (cmd) {
-      const isEdited = event instanceof EditedMessageEvent;
       await dealCommandPluginWithMessage({ cmd, msg, isEdited });
     }
   }
 }
 
-async function dealNewMsgEvent(event: NewMessageEvent): Promise<void> {
-  await dealCommandPlugin(event);
+async function dealNewMsgEvent(msg: MessageContext): Promise<void> {
+  await dealCommandPlugin(msg, false);
 }
 
-async function dealEditedMsgEvent(event: EditedMessageEvent): Promise<void> {
-  await dealCommandPlugin(event);
+async function dealEditedMsgEvent(msg: MessageContext): Promise<void> {
+  await dealCommandPlugin(msg, true);
 }
 
 const listenerHandleEdited =
@@ -374,75 +362,60 @@ async function runPluginSetup(plugin: Plugin, runtime: TeleBoxRuntime): Promise<
   );
 }
 
-function trackClientEventHandler<TEvent>(
-  runtime: TeleBoxRuntime,
-  handler: (event: TEvent) => void | Promise<void>,
-  eventBuilder: ClientEventBuilder,
-  label: string
-): void {
-  const { client } = runtime;
-  runtime.context.trackListener<TEvent>(
-    (trackedHandler) => client.addEventHandler(trackedHandler, eventBuilder),
-    (trackedHandler) => client.removeEventHandler(trackedHandler, eventBuilder),
-    (event) => {
-      if (runtime.generation !== getCurrentGeneration()) return;
-      return handler(event);
-    },
-    { label }
-  );
-}
-
-function dealListenMessagePlugin(runtime: TeleBoxRuntime): void {
+function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher): void {
   for (const plugin of validPlugins) {
     const messageHandler = plugin.listenMessageHandler;
     if (messageHandler) {
-      trackClientEventHandler<NewMessageEvent>(
-        runtime,
-        async (event) => {
-          try {
-            await messageHandler(event.message);
-          } catch (error) {
-            console.log("listenMessageHandler NewMessage error:", error);
-          }
-        },
-        new NewMessage(),
-        `listener:${plugin.name || "unknown"}:new-message`
-      );
+      dispatcher.onNewMessage(async (msg: MessageContext) => {
+        if (runtime.generation !== getCurrentGeneration()) return;
+        try {
+          await messageHandler(msg);
+        } catch (error) {
+          console.log("listenMessageHandler NewMessage error:", error);
+        }
+      });
 
       if (
         !plugin.listenMessageHandlerIgnoreEdited ||
         (plugin.name && listenerHandleEdited.includes(plugin.name))
       ) {
-        trackClientEventHandler<EditedMessageEvent>(
-          runtime,
-          async (event) => {
-            try {
-              await messageHandler(event.message, { isEdited: true });
-            } catch (error) {
-              console.log("listenMessageHandler EditedMessage error:", error);
-            }
-          },
-          new EditedMessage({}),
-          `listener:${plugin.name || "unknown"}:edited-message`
-        );
+        dispatcher.onEditMessage(async (msg: MessageContext) => {
+          if (runtime.generation !== getCurrentGeneration()) return;
+          try {
+            await messageHandler(msg, { isEdited: true });
+          } catch (error) {
+            console.log("listenMessageHandler EditedMessage error:", error);
+          }
+        });
       }
     }
 
+    // Raw event handlers: pluginBase exposes them as { kind, handler } where
+    // handler receives the update context (typed unknown in the contract).
+    // pluginManager narrows per kind here and wires them to the dispatcher.
     const eventHandlers = plugin.eventHandlers;
     if (Array.isArray(eventHandlers) && eventHandlers.length > 0) {
-      for (const { event, handler } of eventHandlers) {
-        trackClientEventHandler(
-          runtime,
-          async (ev: unknown) => {
-            try {
-              await handler(ev);
-            } catch (error) {
-              console.log("eventHandler error:", error);
-            }
-          },
-          event || new NewMessage(),
-          `event:${plugin.name || "unknown"}`
-        );
+      for (const eh of eventHandlers) {
+        const safeHandler = async (ctx: unknown) => {
+          if (runtime.generation !== getCurrentGeneration()) return;
+          try {
+            await eh.handler(ctx);
+          } catch (error) {
+            console.log("eventHandler error:", error);
+          }
+        };
+        switch (eh.kind) {
+          case "editMessage":
+            dispatcher.onEditMessage((msg: MessageContext) => safeHandler(msg));
+            break;
+          case "rawUpdate":
+            dispatcher.onRawUpdate((upd: unknown) => safeHandler(upd));
+            break;
+          case "newMessage":
+          default:
+            dispatcher.onNewMessage((msg: MessageContext) => safeHandler(msg));
+            break;
+        }
       }
     }
   }
@@ -491,7 +464,8 @@ async function unloadPluginsForRuntime(runtime: TeleBoxRuntime) {
   }
 
   const snapshot = runtime.context.snapshot();
-  const handlerCount = runtime.client.listEventHandlers().length;
+  // mtcute has no listEventHandlers(); the dispatcher is torn down via its
+  // tracked disposable (dispatcher.destroy()), counted among trackedDisposables.
   const disposableCount = snapshot.trackedDisposables;
   const resourceSummary = Object.entries(snapshot.stats)
     .filter(([, stat]) => stat.created > 0 || stat.active > 0)
@@ -502,7 +476,7 @@ async function unloadPluginsForRuntime(runtime: TeleBoxRuntime) {
     .map((resource) => `${resource.kind}:${resource.label}:${resource.state}:${resource.ageMs}ms`)
     .join("; ") || "none";
   console.log(
-    `[RELOAD] Generation ${runtime.generation} stopped ingress; ${handlerCount} client handlers and ${disposableCount} lifecycle disposables are awaiting drain. resources=[${resourceSummary}] residual=[${residualSummary}]`
+    `[RELOAD] Generation ${runtime.generation} stopped ingress; ${disposableCount} lifecycle disposables are awaiting drain. resources=[${resourceSummary}] residual=[${residualSummary}]`
   );
 
   validPlugins.length = 0;
@@ -537,21 +511,32 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
   }
 
   const { client } = runtime;
-  trackClientEventHandler<NewMessageEvent>(
-    runtime,
-    dealNewMsgEvent,
-    new NewMessage(),
-    "root:new-message"
+
+  // One Dispatcher per runtime generation. mtcute's Dispatcher.for(client)
+  // owns all update handlers; on reload we call dispatcher.destroy() (tracked
+  // as a single lifecycle disposable) instead of removing handlers one by one.
+  const dispatcher = Dispatcher.for(client);
+  runtime.dispatcher = dispatcher;
+  runtime.context.trackDisposable(
+    async () => {
+      await dispatcher.destroy();
+    },
+    { label: `dispatcher:gen-${runtime.generation}` }
   );
-  trackClientEventHandler<EditedMessageEvent>(
-    runtime,
-    dealEditedMsgEvent,
-    new EditedMessage({}),
-    "root:edited-message"
-  );
-  dealListenMessagePlugin(runtime);
+
+  // Root command router: outgoing messages → command dispatch.
+  dispatcher.onNewMessage(async (msg: MessageContext) => {
+    if (runtime.generation !== getCurrentGeneration()) return;
+    await dealNewMsgEvent(msg);
+  });
+  dispatcher.onEditMessage(async (msg: MessageContext) => {
+    if (runtime.generation !== getCurrentGeneration()) return;
+    await dealEditedMsgEvent(msg);
+  });
+
+  dealListenMessagePlugin(runtime, dispatcher);
   dealCronPlugin(runtime);
-  console.log(`[RELOAD] Event handlers registered after reload: ${client.listEventHandlers().length}`);
+  console.log("[RELOAD] Dispatcher + plugin handlers registered after reload.");
 }
 
 async function loadPlugins(): Promise<boolean> {
