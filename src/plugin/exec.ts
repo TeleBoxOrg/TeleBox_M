@@ -1,6 +1,7 @@
 import { exec } from "child_process";
 import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
-import { Api } from "teleproto";
+import { md } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import type { GenerationContext } from "@utils/generationContext";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
 
@@ -62,17 +63,17 @@ function runOwnedExec(shellCommand: string, lifecycle: GenerationContext): Promi
   );
 }
 
-async function handleExec(params: { msg: Api.Message; shellCommand: string; lifecycle: GenerationContext }) {
+async function handleExec(params: { msg: MessageContext; shellCommand: string; lifecycle: GenerationContext }) {
   const { msg, shellCommand, lifecycle } = params;
 
   const start = Date.now();
 
   await msg.edit({
-    text:
+    text: md(
       `✅ 已开始执行 shell 命令…\n` +
       `命令：\`${shellCommand}\`\n` +
-      `状态：运行中 0s`,
-    parseMode: "markdown",
+      `状态：运行中 0s`
+    ),
   });
 
   let stopped = false;
@@ -81,11 +82,11 @@ async function handleExec(params: { msg: Api.Message; shellCommand: string; life
     if (stopped) return;
     const cost = ((Date.now() - start) / 1000).toFixed(0);
     void msg.edit({
-      text:
+      text: md(
         `✅ 已开始执行 shell 命令…\n` +
         `命令：\`${shellCommand}\`\n` +
-        `状态：运行中 ${cost}s`,
-      parseMode: "markdown",
+        `状态：运行中 ${cost}s`
+      ),
     }).catch(() => undefined);
   }, 2000, { label: "exec:status-interval" });
 
@@ -106,8 +107,7 @@ async function handleExec(params: { msg: Api.Message; shellCommand: string; life
     }
 
     await msg.edit({
-      text: truncate(text),
-      parseMode: "markdown",
+      text: md(truncate(text)),
     });
   } catch (error) {
     stopped = true;
@@ -116,12 +116,11 @@ async function handleExec(params: { msg: Api.Message; shellCommand: string; life
     const costMs = Date.now() - start;
 
     await msg.edit({
-      text: truncate(
+      text: md(truncate(
         `❌ 执行失败（${(costMs / 1000).toFixed(2)}s）\n` +
           `命令：\`${shellCommand}\`\n\n` +
           `错误：${String(error)}`
-      ),
-      parseMode: "markdown",
+      )),
     });
   }
 }
@@ -157,10 +156,10 @@ class ExecPlugin extends Plugin {
   }
 
   description: string = `运行 shell 命令`;
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     exec: async (msg) => {
       const lifecycle = this.resolveLifecycle();
-      const shellCommand = msg.message.slice(1).replace(/^\S+\s+/, "");
+      const shellCommand = (msg.text || "").slice(1).replace(/^\S+\s+/, "");
       await handleExec({ msg, shellCommand, lifecycle });
     },
   };
