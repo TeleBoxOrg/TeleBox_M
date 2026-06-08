@@ -4,7 +4,8 @@ import os from "os";
 import path from "path";
 import fs from "fs/promises";
 import { SendLogDB } from "@utils/sendLogDB";
-import { Api } from "teleproto";
+import type { MessageContext } from "@mtcute/dispatcher";
+import { getGlobalClient } from "@utils/globalClient";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -75,10 +76,10 @@ function htmlEscape(text: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const fn = async (msg: Api.Message) => {
+const fn = async (msg: MessageContext) => {
   console.log("SendLog plugin triggered");
 
-  const parts = msg.message.trim().split(/\s+/);
+  const parts = msg.text.trim().split(/\s+/);
   if (parts.length >= 2 && parts[0].startsWith(".") && parts[1] === "set") {
     const target = parts[2];
     if (!target) {
@@ -177,7 +178,9 @@ const fn = async (msg: Api.Message) => {
         if (stats.size > 50 * 1024 * 1024) {
           results.push(`⚠️ 输出日志过大 (${sizeKB}KB)，已跳过`);
         } else {
-          await msg.client?.sendFile(target, {
+          const client = await getGlobalClient();
+          await client.sendMedia(target, {
+            type: "document",
             file: outLog,
             caption: `📄 输出日志 (${sizeKB}KB)\n📁 ${outLog}`,
           });
@@ -204,7 +207,9 @@ const fn = async (msg: Api.Message) => {
         if (stats.size > 50 * 1024 * 1024) {
           results.push(`⚠️ 错误日志过大 (${sizeKB}KB)，已跳过`);
         } else {
-          await msg.client?.sendFile(target, {
+          const client = await getGlobalClient();
+          await client.sendMedia(target, {
+            type: "document",
             file: errLog,
             caption: `🚨 错误日志 (${sizeKB}KB)\n📁 ${errLog}`,
           });
@@ -247,7 +252,7 @@ const fn = async (msg: Api.Message) => {
 class SendLogPlugin extends Plugin {
 
   description: string = `发送日志文件到收藏夹或自定义目标\n.sendlog set &lt;对话 ID|@用户名|me&gt; 设置发送目标 (默认 me)\n.sendlog clean 清理日志文件`;
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     sendlog: fn,
     logs: fn,
     log: fn,
