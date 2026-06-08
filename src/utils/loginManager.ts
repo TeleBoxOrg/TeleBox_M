@@ -1,20 +1,25 @@
-import { Api, TelegramClient } from "teleproto";
-import { StringSession } from "teleproto/sessions";
+import { TelegramClient, User } from "@mtcute/node";
 import { createInterface, Interface } from "readline/promises";
 import { stdin as input, stdout as output } from "process";
 import qr from "qrcode-terminal";
-import { storeStringSession } from "./apiConfig";
-import { isAuthKeyUnregisteredError, safeCheckAuthorization, safeGetMe } from "./authGuards";
 import type { GenerationContext } from "./generationContext";
 
+/**
+ * Native mtcute login manager.
+ *
+ * mtcute persists session state in its SQLite storage (session.db), so there
+ * is NO StringSession concept and no manual session save/load — the storage
+ * handles auth keys / DC / peer cache transparently. mtcute's `client.start()`
+ * also bundles the entire interactive login flow (phone + code + 2FA + QR),
+ * which replaces the hand-rolled gramjs QR polling loop.
+ *
+ * The legacy `config.json.session` (a gramjs StringSession) is NOT compatible
+ * with mtcute's session format and cannot be imported — first run requires a
+ * fresh interactive login that writes auth keys into session.db.
+ */
 
-const QR_REFRESH_INTERVAL = 2000;
-const QR_TIMEOUT_MS = 90_000;
-
-// 创建 readline 接口
 let rl: Interface | null = null;
 
-// 获取 readline 接口的辅助函数
 function getReadlineInterface(): Interface {
   if (!rl) {
     rl = createInterface({ input, output });
@@ -22,7 +27,6 @@ function getReadlineInterface(): Interface {
   return rl;
 }
 
-// 关闭 readline 接口
 function closeReadlineInterface(): void {
   if (rl) {
     rl.close();
@@ -42,7 +46,6 @@ function throwIfAborted(lifecycle?: GenerationContext): void {
   }
 }
 
-// 获取用户输入的辅助函数
 async function getUserInput(prompt: string, lifecycle?: GenerationContext): Promise<string> {
   throwIfAborted(lifecycle);
   const readline = getReadlineInterface();
@@ -84,179 +87,71 @@ async function getUserInput(prompt: string, lifecycle?: GenerationContext): Prom
   }, { label: "login:readline-question" });
 }
 
+/**
+ * Initialize / authorize the mtcute client.
+ *
+ * mtcute's `client.start()` is idempotent: if session.db already holds a valid
+ * authorization it returns the existing user without prompting. Otherwise it
+ * drives the interactive login flow (QR first if the user opts in, else phone).
+ */
 export async function initializeClientSession(
   client: TelegramClient,
   lifecycle?: GenerationContext
 ): Promise<{ meId?: string }> {
   console.log("Connecting to Telegram...");
-
-  throwIfAborted(lifecycle);
-  await client.connect();
   throwIfAborted(lifecycle);
 
+  // Fast path: if storage already has a valid session, getMe() succeeds without
+  // any interactive prompt.
   try {
-    if (await safeCheckAuthorization(client)) {
-      console.log("✅ Existing session detected. Logged in successfully.");
+    const me = await client.getMe();
+    if (me) {
+      console.log(`✅ Existing session detected. Logged in as ${me.displayName}.`);
       closeReadlineInterface();
-      const me = await safeGetMe(client);
-      return { meId: me?.id ? String(me.id) : undefined };
+      return { meId: me.id ? String(me.id) : undefined };
     }
-  } catch (error) {
-    if (!isAuthKeyUnregisteredError(error)) {
-      throw error;
-    }
-
-    console.warn(
-      "⚠️ Stored session is no longer valid. Clearing it and starting a fresh login."
-    );
-    await resetBrokenSession(client);
-    throwIfAborted(lifecycle);
-  }
-
-  const useQr = await getUserInput("Use QR code login? [y/N]: ", lifecycle);
-
-  let loggedIn = false;
-
-  if (useQr.trim().toLowerCase() === "y") {
-    loggedIn = await loginWithQr(client, lifecycle);
-  }
-
-  if (!loggedIn) {
-    throwIfAborted(lifecycle);
-    console.log("Falling back to phone login...");
-    await loginWithPhone(client, lifecycle);
+  } catch {
+    // No valid session yet — fall through to interactive login.
   }
 
   throwIfAborted(lifecycle);
-  const session = (client.session as StringSession).save();
-  storeStringSession(session);
+  const useQr = await getUserInput("Use QR code login? [y/N]: ", lifecycle);
+  const wantQr = useQr.trim().toLowerCase() === "y";
 
-  console.log("✅ Login completed. Session saved.");
+  let me: User;
+
+  if (wantQr) {
+    // mtcute start() drives QR login when qrCodeHandler is provided and phone
+    // is omitted. It still accepts a password callback for 2FA after scan.
+    me = await client.start({
+      qrCodeHandler: (url: string, expires: Date) => {
+        console.log("\nScan this QR code using Telegram:");
+        console.log("Settings → Devices → Link Desktop Device\n");
+        qr.generate(url, { small: true });
+        const remaining = Math.max(0, Math.ceil((expires.getTime() - Date.now()) / 1000));
+        console.log(`(QR expires in ~${remaining}s, will refresh automatically)`);
+      },
+      password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
+    });
+  } else {
+    console.log("Phone login...");
+    me = await client.start({
+      phone: async () => await getUserInput("Enter phone number (+86...): ", lifecycle),
+      code: async () => await getUserInput("Enter the verification code: ", lifecycle),
+      password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
+      invalidCodeCallback: (type) => {
+        console.warn(`❌ Invalid ${type}, please try again.`);
+      },
+    });
+  }
+
+  throwIfAborted(lifecycle);
+  console.log(`✅ Login completed as ${me.displayName}. Session saved to storage.`);
   closeReadlineInterface();
-  const me = await safeGetMe(client);
-  return { meId: me?.id ? String(me.id) : undefined };
+  return { meId: me.id ? String(me.id) : undefined };
 }
 
 export async function login(): Promise<void> {
   const { startRuntime }: typeof import("./runtimeManager") = require("./runtimeManager");
   await startRuntime();
 }
-
-async function loginWithPhone(client: TelegramClient, lifecycle?: GenerationContext): Promise<void> {
-  throwIfAborted(lifecycle);
-  await client.start({
-    phoneNumber: async () => await getUserInput("Enter phone number (+86...): ", lifecycle),
-    password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
-    phoneCode: async () => await getUserInput("Enter the verification code: ", lifecycle),
-    onError: (err: Error) => {
-      console.error("❌ Login error:", err);
-      closeReadlineInterface();
-    },
-  });
-  throwIfAborted(lifecycle);
-}
-
-async function loginWithQr(client: TelegramClient, lifecycle?: GenerationContext): Promise<boolean> {
-  console.log("\nRequesting QR login token...");
-
-  const startTime = Date.now();
-  let lastToken: string | null = null;
-  let lastRenderedSecond = -1;
-
-  while (Date.now() - startTime < QR_TIMEOUT_MS) {
-    throwIfAborted(lifecycle);
-    let result: Api.auth.LoginToken | Api.auth.LoginTokenSuccess | Api.auth.LoginTokenMigrateTo;
-
-    try {
-      result = await client.invoke(
-        new Api.auth.ExportLoginToken({
-          apiId: client.apiId,
-          apiHash: client.apiHash,
-          exceptIds: [],
-        })
-      );
-      throwIfAborted(lifecycle);
-    } catch {
-      await delay(QR_REFRESH_INTERVAL, lifecycle, "login:qr-refresh-retry");
-      continue;
-    }
-
-    if (result instanceof Api.auth.LoginToken) {
-      const token = result.token.toString("base64url");
-
-      if (token !== lastToken) {
-        lastToken = token;
-
-        console.log("\nScan this QR code using Telegram:");
-        console.log("Settings → Devices → Link Desktop Device\n");
-
-        qr.generate(`tg://login?token=${token}`, { small: true });
-      }
-
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(
-        0,
-        Math.ceil((QR_TIMEOUT_MS - elapsed) / 1000)
-      );
-
-      if (remaining !== lastRenderedSecond) {
-        renderProgressBar(remaining, QR_TIMEOUT_MS / 1000);
-        lastRenderedSecond = remaining;
-      }
-
-      await delay(QR_REFRESH_INTERVAL, lifecycle, "login:qr-refresh");
-      continue;
-    }
-
-    if (result instanceof Api.auth.LoginTokenSuccess) {
-      process.stdout.write("\n");
-      const me = await client.getMe();
-      const name = me && "firstName" in me ? me.firstName : "";
-      console.log(`✅ Login successful. Welcome, ${name}.`);
-      return true;
-    }
-
-    if (result instanceof Api.auth.LoginTokenMigrateTo) {
-      console.error(
-        `\n❌ Account is located in another DC (DC ${result.dcId}).`
-      );
-      return false;
-    }
-  }
-
-  process.stdout.write("\n");
-  console.warn("⚠️ QR login timed out.");
-  return false;
-}
-
-function renderProgressBar(remaining: number, total: number): void {
-  const width = 20;
-  const progress = Math.round(((total - remaining) / total) * width);
-  const bar =
-    "█".repeat(progress) + "░".repeat(Math.max(0, width - progress));
-
-  process.stdout.write(`\r${bar}  ${remaining}s remaining`);
-}
-
-function delay(ms: number, lifecycle?: GenerationContext, label = "login:delay"): Promise<void> {
-  if (lifecycle) {
-    return lifecycle.delay(ms, { label });
-  }
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-
-async function resetBrokenSession(client: TelegramClient): Promise<void> {
-  try {
-    await client.disconnect();
-  } catch {}
-
-  try {
-    await client.destroy();
-  } catch {}
-
-  (client.session as StringSession).delete();
-  storeStringSession("");
-  await client.connect();
-}
-
