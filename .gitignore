@@ -6,6 +6,10 @@
 *~
 
 config.json
+session.db
+session.db-journal
+session.db-wal
+session.db-shm
 assets/*
 !assets/.gitkeep
 plugins/*
