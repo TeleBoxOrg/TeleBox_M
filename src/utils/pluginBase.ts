@@ -1,5 +1,4 @@
-import { Api, TelegramClient } from "teleproto";
-import type { EventBuilder } from "teleproto/events/common";
+import { TelegramClient, Message } from "@mtcute/node";
 import type { GenerationContext } from "./generationContext";
 
 export interface PluginRuntimeContext {
@@ -19,9 +18,25 @@ type PluginDescription =
   | ((...args: unknown[]) => string | void)
   | ((...args: unknown[]) => Promise<string | void>);
 
+/**
+ * Native mtcute event handler descriptor.
+ *
+ * The legacy gramjs `eventHandlers` carried a teleproto `EventBuilder` plus a
+ * raw callback. mtcute drives all updates through @mtcute/dispatcher, so a
+ * plugin instead declares the dispatcher update kind it wants and a callback.
+ * pluginManager wires these onto the per-generation Dispatcher.
+ *
+ * `kind` mirrors the dispatcher registration method:
+ *   - "newMessage"  → dp.onNewMessage
+ *   - "editMessage" → dp.onEditMessage
+ *   - "rawUpdate"   → dp.onRawUpdate
+ * The handler receives the dispatcher context for that update kind. We keep the
+ * context typed as `unknown` here to avoid leaking dispatcher-internal generics
+ * into the plugin contract; pluginManager narrows per kind at registration.
+ */
 type PluginEventHandler = {
-  event?: EventBuilder;
-  handler: (event: unknown) => Promise<void>;
+  kind?: "newMessage" | "editMessage" | "rawUpdate";
+  handler: (ctx: unknown) => Promise<void>;
 };
 
 const cmdIgnoreEdited = !!JSON.parse(
@@ -37,11 +52,11 @@ abstract class Plugin {
   abstract description: PluginDescription;
   abstract cmdHandlers: Record<
     string,
-    (msg: Api.Message, trigger?: Api.Message) => Promise<void>
+    (msg: Message, trigger?: Message) => Promise<void>
   >;
   listenMessageHandlerIgnoreEdited?: boolean = true;
   listenMessageHandler?: (
-    msg: Api.Message,
+    msg: Message,
     options?: { isEdited?: boolean }
   ) => Promise<void>;
   eventHandlers?: PluginEventHandler[];
@@ -97,3 +112,4 @@ function isValidPlugin(obj: unknown): obj is Plugin {
 }
 
 export { Plugin, isValidPlugin };
+export type { PluginEventHandler, CronTask, PluginDescription };
