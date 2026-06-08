@@ -30,6 +30,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "@mtcute/dispatcher": "^0.29.7",
+    "@mtcute/node": "^0.29.7",
     "@types/archiver": "^6.0.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cron": "^2.0.1",
