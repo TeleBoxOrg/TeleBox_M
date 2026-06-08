@@ -1,7 +1,11 @@
-import { TelegramClient } from "teleproto";
-import { EntityLike } from "teleproto/define";
-import { NewMessage, NewMessageEvent } from "teleproto/events";
-import { Api } from "teleproto/tl";
+/**
+ * Conversation 工具 — 原生 mtcute 版本
+ * 直接使用 mtcute 内置的 Conversation 类，支持等待消息、发送、标记已读等
+ */
+
+import { TelegramClient, Conversation as MtcuteConversation } from "@mtcute/node";
+import type { InputPeerLike } from "@mtcute/node";
+import type { Message } from "@mtcute/node";
 import {
   getCurrentGeneration,
   tryGetCurrentGenerationContext,
@@ -17,225 +21,109 @@ type ConversationOptions = ConversationCancellationOptions & {
   timeout?: number;
 };
 
-type ResolvedConversationOptions = Required<Pick<ConversationOptions, "timeout">> & {
-  lifecycle?: GenerationContext;
-  signals: AbortSignal[];
-};
-
-function getAbortedSignal(signals: AbortSignal[]): AbortSignal | undefined {
-  return signals.find((signal) => signal.aborted);
-}
-
-function abortError(reason?: unknown): Error {
-  if (reason instanceof Error) return reason;
-  if (typeof reason === "string") return new Error(reason);
-  return new Error("Conversation wait aborted");
-}
-
-function throwIfAborted(signals: AbortSignal[]): void {
-  const signal = getAbortedSignal(signals);
-  if (signal) {
-    throw abortError(signal.reason);
-  }
-}
-
-function resolveConversationOptions(
-  timeoutOrOptions?: number | ConversationOptions
-): ResolvedConversationOptions {
-  const options = typeof timeoutOrOptions === "number"
-    ? { timeout: timeoutOrOptions }
-    : timeoutOrOptions ?? {};
-  const lifecycle = options.lifecycle ?? tryGetCurrentGenerationContext() ?? undefined;
-  return {
-    timeout: options.timeout ?? 10000,
-    lifecycle,
-    signals: [options.signal, lifecycle?.signal].filter((signal): signal is AbortSignal => Boolean(signal)),
-  };
-}
-
-function getPeerUserId(peerId: unknown): { equals(id: unknown): boolean } | undefined {
-  if (typeof peerId !== "object" || peerId === null || !("userId" in peerId)) {
-    return undefined;
-  }
-  const userId = peerId.userId;
-  if (
-    typeof userId === "object" &&
-    userId !== null &&
-    "equals" in userId &&
-    typeof userId.equals === "function"
-  ) {
-    return userId as { equals(id: unknown): boolean };
-  }
-  return undefined;
-}
-
-function getEntityId(entity: unknown): unknown {
-  if (typeof entity === "object" && entity !== null && "id" in entity) {
-    return entity.id;
-  }
-  return undefined;
-}
-
 /**
- * 一次性等待消息
- * 自动 add/remove listener，支持超时
+ * 一次性等待消息（从指定 peer 等待下一条消息）
+ * 使用 mtcute 内置 Conversation.waitForNewMessage
  */
 async function waitForMessage(
   client: TelegramClient,
-  peer: EntityLike,
+  peer: InputPeerLike,
   timeoutOrOptions?: number | ConversationOptions
-): Promise<NewMessageEvent> {
-  const options = resolveConversationOptions(timeoutOrOptions);
-  throwIfAborted(options.signals);
-  const generation = options.lifecycle?.generation ?? getCurrentGeneration();
-  const eventBuilder = new NewMessage({});
+): Promise<Message> {
+  const timeout = typeof timeoutOrOptions === "number"
+    ? timeoutOrOptions
+    : timeoutOrOptions?.timeout ?? 10000;
+  const lifecycle = typeof timeoutOrOptions === "object"
+    ? timeoutOrOptions?.lifecycle ?? tryGetCurrentGenerationContext() ?? undefined
+    : tryGetCurrentGenerationContext() ?? undefined;
 
-  const task = new Promise<NewMessageEvent>(async (resolve, reject) => {
-    let settled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let removeListener: (() => void | Promise<void>) | undefined;
+  const conv = new MtcuteConversation(client, peer);
+  await conv.start();
 
-    const cleanup = (): void => {
-      options.signals.forEach((signal) => signal.removeEventListener("abort", onAbort));
-      if (removeListener) {
-        void Promise.resolve(removeListener()).catch((error) => {
-          console.error("[CONVERSATION] Failed to remove message listener:", error);
-        });
-        removeListener = undefined;
-      }
-      if (timer) {
-        clearTimeout(timer);
-        timer = undefined;
-      }
-    };
-
-    const settle = (callback: () => void): void => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      callback();
-    };
-
-    const onAbort = (): void => {
-      settle(() => reject(abortError(getAbortedSignal(options.signals)?.reason)));
-    };
-
-    try {
-      const entity = await client.getEntity(peer);
-      throwIfAborted(options.signals);
-      const peerId = getEntityId(entity);
-
-      const listener = (event: NewMessageEvent) => {
-        if (settled) return;
-        if (generation !== getCurrentGeneration() || getAbortedSignal(options.signals)) {
-          onAbort();
-          return;
-        }
-        const userId = getPeerUserId(event.message?.peerId);
-        if (userId?.equals(peerId)) {
-          settle(() => resolve(event));
-        }
-      };
-
-      client.addEventHandler(listener, eventBuilder);
-      const disposeListener = (): void => client.removeEventHandler(listener, eventBuilder);
-      removeListener = options.lifecycle
-        ? options.lifecycle.trackDisposable(disposeListener, {
-          label: "conversation-wait-message:handler",
-          kind: "handler",
-        })
-        : disposeListener;
-
-      options.signals.forEach((signal) => signal.addEventListener("abort", onAbort, { once: true }));
-      timer = options.lifecycle
-        ? options.lifecycle.setTimeout(() => {
-          settle(() => reject(new Error("等待 Bot 回复超时")));
-        }, options.timeout, { label: "conversation-wait-message:timeout" })
-        : setTimeout(() => {
-          settle(() => reject(new Error("等待 Bot 回复超时")));
-        }, options.timeout);
-
-      if (getAbortedSignal(options.signals)) {
-        onAbort();
-      }
-    } catch (error) {
-      settle(() => reject(error));
-    }
-  });
-
-  return options.lifecycle
-    ? options.lifecycle.trackTask(task, { label: "conversation-wait-message", kind: "conversation" })
-    : task;
+  try {
+    const message = await conv.waitForNewMessage(undefined, timeout);
+    return message;
+  } finally {
+    conv.stop();
+  }
 }
 
 /**
- * Conversation 类
+ * Conversation 包装类
+ * 封装 mtcute 内置 Conversation，提供生命周期管理
  */
-class Conversation {
+class ConversationWrapper {
+  private conv: MtcuteConversation;
   private client: TelegramClient;
-  private peer: EntityLike;
+  private peer: InputPeerLike;
   private options: ConversationCancellationOptions;
 
-  constructor(client: TelegramClient, peer: EntityLike, options?: ConversationCancellationOptions) {
+  constructor(client: TelegramClient, peer: InputPeerLike, options?: ConversationCancellationOptions) {
     this.client = client;
     this.peer = peer;
     this.options = options ?? {};
+    this.conv = new MtcuteConversation(client, peer);
   }
 
   /** 发送文本消息 */
   async send(message: string): Promise<void> {
-    throwIfAborted(resolveConversationOptions(this.options).signals);
-    await this.client.sendMessage(this.peer, { message });
+    await this.conv.sendText(message);
   }
 
   /** 等待 Bot 回复 */
-  async getResponse(timeout?: number | ConversationOptions): Promise<Api.Message> {
-    const options = typeof timeout === "number"
-      ? { ...this.options, timeout }
-      : { ...this.options, ...timeout };
-    return (await waitForMessage(this.client, this.peer, options)).message;
+  async getResponse(timeout?: number | ConversationOptions): Promise<Message> {
+    const timeoutMs = typeof timeout === "number"
+      ? timeout
+      : timeout?.timeout ?? 10000;
+    return await this.conv.waitForNewMessage(undefined, timeoutMs);
   }
 
-  /** 标记信息为已读取 */
+  /** 标记信息为已读 */
   async markAsRead(): Promise<void> {
-    throwIfAborted(resolveConversationOptions(this.options).signals);
-    await this.client.markAsRead(this.peer);
+    await this.conv.markRead();
   }
 
   /** 点击 InlineKeyboard 按钮 */
   async clickButton(
-    message: Api.Message,
+    message: Message,
     rowIndex: number,
     colIndex: number
   ): Promise<void> {
-    if (
-      !message.replyMarkup ||
-      !(message.replyMarkup instanceof Api.ReplyInlineMarkup)
-    ) {
+    // mtcute Message.raw 包含完整 TL 数据，包括 replyMarkup
+    const raw = message.raw;
+    const keyboard = (raw as any).replyMarkup;
+    if (!keyboard || (keyboard as any)._ !== 'replyInlineMarkup') {
       throw new Error("消息没有 InlineKeyboard 按钮");
     }
 
-    const rows = message.replyMarkup.rows;
-    if (rowIndex >= rows.length || colIndex >= rows[rowIndex].buttons.length) {
+    // 通过行/列索引点击按钮
+    const rows = (keyboard as any).rows;
+    if (!rows || rowIndex >= rows.length || colIndex >= rows[rowIndex]?.buttons?.length) {
       throw new Error("按钮索引超出范围");
     }
 
     const button = rows[rowIndex].buttons[colIndex];
-    await this.client.invoke(
-      new Api.messages.GetBotCallbackAnswer({
-        peer: this.peer,
+    if (button?.data) {
+      // callback button — 使用 raw TL 调用
+      await this.client.call({
+        _: 'messages.getBotCallbackAnswer',
+        peer: await this.client.resolvePeer(this.peer),
         msgId: message.id,
-        data: (button as Api.KeyboardButtonCallback).data,
-      })
-    );
+        data: button.data,
+      });
+    }
+  }
+
+  async start(): Promise<void> {
+    await this.conv.start();
   }
 
   async close(): Promise<void> {
-    // 如果有需要清理的逻辑可以加在这里
+    this.conv.stop();
   }
 }
 
-type ConversationCallback = (conv: Conversation) => Promise<void>;
+type ConversationCallback = (conv: ConversationWrapper) => Promise<void>;
 
 function getConversationCancellationOptions(
   options?: ConversationCancellationOptions | ConversationCallback
@@ -245,7 +133,7 @@ function getConversationCancellationOptions(
 
 async function conversation(
   client?: TelegramClient,
-  peer?: EntityLike,
+  peer?: InputPeerLike,
   callbackOrOptions?: ConversationCallback | ConversationCancellationOptions,
   optionsOrCallback?: ConversationCancellationOptions | ConversationCallback
 ): Promise<void> {
@@ -262,8 +150,9 @@ async function conversation(
     ? optionsOrCallback
     : callbackOrOptions;
 
-  const conv = new Conversation(client, peer, getConversationCancellationOptions(options));
+  const conv = new ConversationWrapper(client, peer, getConversationCancellationOptions(options));
   try {
+    await conv.start();
     if (callback) {
       await callback(conv);
     }

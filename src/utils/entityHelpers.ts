@@ -1,6 +1,6 @@
-import { TelegramClient } from "teleproto";
-import { Api } from "teleproto/tl";
-import { Entity } from "teleproto/define";
+import { TelegramClient } from "@mtcute/node";
+import type { InputPeerLike } from "@mtcute/node";
+import type { Message } from "@mtcute/node";
 import {
   getCurrentGeneration,
   tryGetCurrentGenerationContext,
@@ -107,16 +107,16 @@ function getFloodWaitSeconds(error: unknown): number | null {
  */
 export async function getEntityWithHash(
   client: TelegramClient,
-  entityId: string | number | Entity
-): Promise<Entity> {
+  entityId: string | number | InputPeerLike
+): Promise<InputPeerLike> {
   try {
-    // 如果已经是实体对象，直接返回
-    if (typeof entityId === "object" && "className" in entityId) {
+    // 如果已经是对象，直接返回
+    if (typeof entityId === "object") {
       return entityId;
     }
 
-    // 使用getEntity获取完整实体信息
-    const entity = await client.getEntity(entityId);
+    // 使用 resolvePeer 获取完整 InputPeer
+    const entity = await client.resolvePeer(entityId);
     return entity;
   } catch (error) {
     console.error(`[EntityHelper] 获取实体失败: ${entityId}`, error);
@@ -142,7 +142,7 @@ export async function safeForwardMessage(
     silent?: boolean;
     dropAuthor?: boolean;
   }
-): Promise<Api.Message[]> {
+): Promise<Message[]> {
   const maxRetries = options?.maxRetries || 3;
   const cancellationContext = resolveCancellationContext(options);
   let lastError: unknown;
@@ -152,45 +152,16 @@ export async function safeForwardMessage(
     assertCurrentGeneration(cancellationContext.lifecycle);
 
     try {
-      // 获取完整实体信息
-      const fromEntity = await getEntityWithHash(client, fromChatId);
-      const toEntity = await getEntityWithHash(client, toChatId);
-
-      // 执行转发
-      // const result = await client.forwardMessages(toEntity, {
-      //   messages: [messageId],
-      //   fromPeer: fromEntity,
-      //   silent: options?.silent,
-      //   dropAuthor: options?.dropAuthor,
-      // });
-      // gramjs 转发不够完善 换底层方法 但是返回类型不同
-      const result = await client.invoke(
-        new Api.messages.ForwardMessages({
-          fromPeer: fromEntity,
-          id: [messageId!],
-          toPeer: toEntity,
-          silent: options?.silent,
-          dropAuthor: options?.dropAuthor,
-          // 如果在论坛话题中，指定话题的顶层消息 ID
-          ...(options?.replyTo ? { topMsgId: options.replyTo } : {}),
-        })
-      );
-
-      // 从 Updates 中提取消息
-      const messages: Api.Message[] = [];
-      if ("updates" in result) {
-        for (const update of result.updates) {
-          if (
-            update instanceof Api.UpdateNewMessage ||
-            update instanceof Api.UpdateNewChannelMessage
-          ) {
-            if (update.message instanceof Api.Message) {
-              messages.push(update.message);
-            }
-          }
-        }
-      }
-      return messages;
+      // mtcute 原生转发 API
+      const result = await client.forwardMessagesById({
+        fromChatId: fromChatId,
+        toChatId: toChatId,
+        messages: [messageId!],
+        silent: options?.silent,
+        noAuthor: options?.dropAuthor,
+        ...(options?.replyTo ? { replyTo: options.replyTo } : {}),
+      });
+      return result;
     } catch (error: unknown) {
       lastError = error;
       console.warn(
@@ -239,9 +210,9 @@ export async function getBatchEntitiesWithHash(
   client: TelegramClient,
   entityIds: (string | number)[],
   options?: EntityHelperCancellationContext
-): Promise<Entity[]> {
+): Promise<InputPeerLike[]> {
   const cancellationContext = resolveCancellationContext(options);
-  const entities: Entity[] = [];
+  const entities: InputPeerLike[] = [];
 
   for (const entityId of entityIds) {
     throwIfAborted(cancellationContext.signal);
@@ -302,7 +273,7 @@ export function parseEntityId(
  */
 export async function withEntityAccess<T>(
   client: TelegramClient,
-  operation: (resolvedEntities: Entity[]) => Promise<T>,
+  operation: (resolvedEntities: InputPeerLike[]) => Promise<T>,
   entities: (string | number)[],
   options: number | EntityHelperRetryOptions = 3
 ): Promise<T> {
