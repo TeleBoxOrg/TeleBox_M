@@ -1,7 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import { getGlobalClient } from "@utils/globalClient";
-import { html } from "@mtcute/node";
+import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -45,7 +45,18 @@ async function telegramTcpPing(
   port: number = 80,
   timeout: number = 3000
 ): Promise<number> {
-  return tcpPing(hostname, port, timeout);
+  const net = await import('net');
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const socket = net.createConnection(port, hostname, () => {
+      const end = performance.now();
+      socket.destroy();
+      resolve(Math.round(end - start));
+    });
+    socket.setTimeout(timeout);
+    socket.on('timeout', () => { socket.destroy(); resolve(-1); });
+    socket.on('error', () => { socket.destroy(); resolve(-1); });
+  });
 }
 
 /**
