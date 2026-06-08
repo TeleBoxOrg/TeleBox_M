@@ -1,12 +1,12 @@
 import { Plugin } from "@utils/pluginBase";
 import { AliasDB } from "@utils/aliasDB";
-import { Api } from "teleproto";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { loadPlugins, getPrefixes, getPluginEntry } from "@utils/pluginManager";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
-async function setAlias(args: string[], msg: Api.Message) {
+async function setAlias(args: string[], msg: MessageContext) {
   const tokens = args.slice(1).filter(Boolean);
 
   if (tokens.length < 2) {
@@ -79,7 +79,7 @@ async function setAlias(args: string[], msg: Api.Message) {
   await msg.edit({ text: `插件命令重命名成功，${final} -> ${original}` });
 }
 
-async function delAlias(args: string[], msg: Api.Message) {
+async function delAlias(args: string[], msg: MessageContext) {
   const alias = args.slice(1).join(" ").trim();
   if (!alias) {
     await msg.edit({
@@ -101,7 +101,7 @@ async function delAlias(args: string[], msg: Api.Message) {
   }
 }
 
-async function listAlias(args: string[], msg: Api.Message) {
+async function listAlias(args: string[], msg: MessageContext) {
   const db = new AliasDB();
   const list = db.list();
   db.close();
@@ -122,9 +122,9 @@ class AliasPlugin extends Plugin {
 <code>${mainPrefix}alias del a</code> - 删除别名
 <code>${mainPrefix}alias ls</code> - 查看所有别名`;
 
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     alias: async (msg) => {
-      const [, ...args] = msg.message.split(" ").filter(Boolean);
+      const [, ...args] = (msg.text || "").split(" ").filter(Boolean);
 
       if (args.length === 0) {
         await msg.edit({ text: "不知道你要干什么！" });

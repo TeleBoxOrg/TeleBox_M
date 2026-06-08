@@ -5,7 +5,8 @@ import {
 } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
 import { readDisplayVersion } from "@utils/teleboxInfoHelper";
-import { Api } from "teleproto";
+import { html } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { AliasDB } from "@utils/aliasDB";
 
 /* ============================================================
@@ -167,7 +168,7 @@ class HelpPlugin extends Plugin {
     h: this.handleHelp,
   };
 
-  private async handleHelp(msg: Api.Message) {
+  private async handleHelp(msg: MessageContext) {
     try {
       const args = msg.text.split(" ").slice(1);
       const commands = listCommands();
@@ -185,9 +186,8 @@ class HelpPlugin extends Plugin {
         const links = `🔗 <a href='https://github.com/TeleBoxDev/TeleBox'>📦仓库</a> | <a href='https://github.com/TeleBoxDev/TeleBox_Plugins'>🔌插件</a> | <a href='https://t.me/teleboxdevgroup'>👥群组</a> | <a href='https://t.me/teleboxdev'>📣频道</a> | <a href='https://telegra.ph/TeleBox-插件列表-03-03'>📚插件列表</a>`;
 
         await msg.edit({
-          text: [header, "", basic.text, "", prefixLine, helpTip, links].join("\n"),
-          parseMode: "html",
-          linkPreview: false,
+          text: html([header, "", basic.text, "", prefixLine, helpTip, links].join("\n")),
+          disableWebPreview: true,
         });
 
         /* ================= 模块列表 (消息2) ================= */
@@ -195,11 +195,10 @@ class HelpPlugin extends Plugin {
         const modules = formatModuleCommands(commands, modulePlanner);
 
         if (modules.text) {
-          await msg.reply({
-            message: modules.text + `\n💡 使用 <i><code>${mainPrefix}help [模块名]</code></i> 查看具体模块的使用方法`,
-            parseMode: "html",
-            linkPreview: false,
-          });
+          await msg.replyText(
+            html(modules.text + `\n💡 使用 <i><code>${mainPrefix}help [模块名]</code></i> 查看具体模块的使用方法`),
+            { disableWebPreview: true }
+          );
         }
         return;
       }
@@ -210,8 +209,7 @@ class HelpPlugin extends Plugin {
 
       if (!pluginEntry?.plugin) {
         await msg.edit({
-          text: `❌ 未找到命令 <code>${htmlEscape(command)}</code>\n\n💡 使用 <code>${mainPrefix}help</code> 查看所有命令`,
-          parseMode: "html",
+          text: html(`❌ 未找到命令 <code>${htmlEscape(command)}</code>\n\n💡 使用 <code>${mainPrefix}help</code> 查看所有命令`),
         });
         return;
       }
@@ -250,7 +248,7 @@ class HelpPlugin extends Plugin {
       }
 
       await msg.edit({
-        text: [
+        text: html([
           `🔧 <b>${htmlEscape(command.toUpperCase())}</b>`,
           "",
           `📝 <b>功能描述:</b>`,
@@ -263,15 +261,14 @@ class HelpPlugin extends Plugin {
           `<code>${mainPrefix}${command} [参数]</code>`,
           cronInfo,
           `💡 <i>提示: 使用</i> <code>${mainPrefix}help</code> <i>查看所有命令</i>`,
-        ].join("\n"),
-        parseMode: "html",
-        linkPreview: false,
+        ].join("\n")),
+        disableWebPreview: true,
       });
     } catch (e: any) {
       console.error("Help plugin error:", e);
       const errorMsg = e.message?.length > 100 ? e.message.substring(0, 100) + "..." : e.message;
       await msg.edit({
-        text: [
+        text: html([
           "⚠️ <b>系统错误</b>",
           "",
           "📋 <b>错误详情:</b>",
@@ -284,8 +281,7 @@ class HelpPlugin extends Plugin {
           "• 查看控制台获取详细日志",
           "",
           "🆘 <a href='https://github.com/TeleBoxDev/TeleBox/issues'>反馈问题</a>",
-        ].join("\n"),
-        parseMode: "html",
+        ].join("\n")),
       });
     }
   }

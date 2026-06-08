@@ -1,5 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
-import { Api } from "teleproto";
+import { html } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { getPrefixes, loadPlugins } from "@utils/pluginManager";
 import fs from "fs";
 import path from "path";
@@ -20,7 +21,7 @@ const help_text = `🛠 <b>前缀管理</b>
 class PrefixPlugin extends Plugin {
 
   description: string = help_text;
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     prefix: async (msg) => {
       const lines = msg.text?.trim()?.split(/\r?\n/g) || [];
       const parts = lines?.[0]?.split(/\s+/) || [];
@@ -29,29 +30,28 @@ class PrefixPlugin extends Plugin {
       if (!sub) {
         const ps = getPrefixes();
         await msg.edit({
-          text: `🔧 当前前缀: ${ps
+          text: html(`🔧 当前前缀: ${ps
             .map((p) => `<code>${htmlEscape(p)}</code>`)
-            .join(" • ")}\n用法: <code>${htmlEscape(ps[0])}prefix set . ！</code>`,
-          parseMode: "html",
+            .join(" • ")}\n用法: <code>${htmlEscape(ps[0])}prefix set . ！</code>`),
         });
         return;
       }
       if (sub === "help" || sub === "h") {
-        await msg.edit({ text: help_text, parseMode: "html" });
+        await msg.edit({ text: html(help_text) });
         return;
       }
       if (
         args[1] &&
         (args[1].toLowerCase() === "help" || args[1].toLowerCase() === "h")
       ) {
-        await msg.edit({ text: help_text, parseMode: "html" });
+        await msg.edit({ text: html(help_text) });
         return;
       }
       let base: string[] | undefined;
       if (sub === "add") {
         const adds = args.slice(1).filter(Boolean);
         if (adds.length === 0) {
-          await msg.edit({ text: `❌ 参数不足\n\n${help_text}`, parseMode: "html" });
+          await msg.edit({ text: html(`❌ 参数不足\n\n${help_text}`) });
           return;
         }
         base = Array.from(new Set([...getPrefixes(), ...adds]));
@@ -59,22 +59,22 @@ class PrefixPlugin extends Plugin {
       if (sub === "del") {
         const dels = new Set(args.slice(1).filter(Boolean));
         if (dels.size === 0) {
-          await msg.edit({ text: `❌ 参数不足\n\n${help_text}`, parseMode: "html" });
+          await msg.edit({ text: html(`❌ 参数不足\n\n${help_text}`) });
           return;
         }
         base = getPrefixes().filter((p) => !dels.has(p));
         if (base.length === 0) {
-          await msg.edit({ text: "❌ 至少保留一个前缀", parseMode: "html" });
+          await msg.edit({ text: "❌ 至少保留一个前缀" });
           return;
         }
       }
       if (sub !== "set" && !base) {
-        await msg.edit({ text: help_text, parseMode: "html" });
+        await msg.edit({ text: html(help_text) });
         return;
       }
       const list = (base ?? args.slice(1)).filter(Boolean);
       if (list.length === 0) {
-        await msg.edit({ text: `❌ 参数不足\n\n${help_text}`, parseMode: "html" });
+        await msg.edit({ text: html(`❌ 参数不足\n\n${help_text}`) });
         return;
       }
       const uniq = Array.from(new Set(list));
@@ -105,10 +105,9 @@ class PrefixPlugin extends Plugin {
       }
       await loadPlugins();
       await msg.edit({
-        text: `✅ 已设置前缀: ${uniq
+        text: html(`✅ 已设置前缀: ${uniq
           .map((p) => `<code>${htmlEscape(p)}</code>`)
-          .join(" • ")} ${persisted ? "(已写入 .env)" : "(.env 写入失败, 仅本次生效)"}`,
-        parseMode: "html",
+          .join(" • ")} ${persisted ? "(已写入 .env)" : "(.env 写入失败, 仅本次生效)"}`),
       });
     },
   };

@@ -1,11 +1,11 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import { getGlobalClient } from "@utils/globalClient";
-import { Api } from "teleproto";
+import { html } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { createConnection } from "net";
-import { PromisedNetSockets } from "teleproto/extensions";
 import * as dns from "dns";
 
 import { safeGetMe } from "../utils/authGuards";
@@ -35,34 +35,17 @@ function htmlEscape(text: string): string {
 }
 
 /**
- * 使用Telegram网络栈的TCP连接测试
+ * TCP连接测试(Telegram 网络栈测试)。
+ *
+ * 旧版用 gramjs 的 PromisedNetSockets 走 Telegram 网络栈;mtcute 不暴露该底层
+ * socket,这里改用 Node 原生 TCP 连接(与 tcpPing 等价)。
  */
 async function telegramTcpPing(
   hostname: string,
   port: number = 80,
   timeout: number = 3000
 ): Promise<number> {
-  return new Promise(async (resolve) => {
-    try {
-      const socket = new PromisedNetSockets();
-      const start = performance.now();
-
-      // 设置超时
-      const timeoutId = setTimeout(() => {
-        socket.close();
-        resolve(-1);
-      }, timeout);
-
-      await socket.connect(port, hostname);
-      const end = performance.now();
-
-      clearTimeout(timeoutId);
-      await socket.close();
-      resolve(Math.round(end - start));
-    } catch (error) {
-      resolve(-1);
-    }
-  });
+  return tcpPing(hostname, port, timeout);
 }
 
 /**
@@ -272,7 +255,7 @@ function parseTarget(input: string): {
 class PingPlugin extends Plugin {
 
   description: string = `🏓 网络延迟测试工具\n\n• ${mainPrefix}ping - Telegram API延迟\n• ${mainPrefix}ping &lt;IP/域名&gt; - ICMP ping测试\n• ${mainPrefix}ping dc1-dc5 - 数据中心延迟\n• ${mainPrefix}ping all - 所有数据中心延迟`;
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     ping: async (msg) => {
       const client = await getGlobalClient();
 
@@ -284,7 +267,7 @@ class PingPlugin extends Plugin {
       }
 
       try {
-        const args = msg.message.split(" ").slice(1);
+        const args = (msg.text || "").split(" ").slice(1);
         const target = args[0]?.toLowerCase();
 
         // 无参数 - 基础Telegram延迟测试
@@ -305,13 +288,12 @@ class PingPlugin extends Plugin {
 
           // 显示结果
           await msg.edit({
-            text: `🏓 <b>Pong!</b>
+            text: html(`🏓 <b>Pong!</b>
 
 📡 <b>API延迟:</b> <code>${apiLatency}ms</code>
 ✏️ <b>消息延迟:</b> <code>${msgLatency}ms</code>
 
-⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`,
-            parseMode: "html",
+⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
           });
           return;
         }
@@ -325,10 +307,9 @@ class PingPlugin extends Plugin {
           const dcResults = await pingDataCenters();
 
           await msg.edit({
-            text: `🌐 <b>Telegram数据中心延迟</b>\n\n${dcResults.join(
+            text: html(`🌐 <b>Telegram数据中心延迟</b>\n\n${dcResults.join(
               "\n"
-            )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`,
-            parseMode: "html",
+            )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
           });
           return;
         }
@@ -336,16 +317,14 @@ class PingPlugin extends Plugin {
         // 帮助信息
         if (target === "help" || target === "h") {
           await msg.edit({
-            text: `🏓 <b>Ping工具使用说明</b>\n\n<b>基础用法:</b>\n• <code>${mainPrefix}ping</code> - Telegram延迟测试\n• <code>${mainPrefix}ping all</code> - 所有数据中心延迟\n\n<b>网络测试:</b>\n• <code>${mainPrefix}ping 8.8.8.8</code> - IP地址ping\n• <code>${mainPrefix}ping google.com</code> - 域名ping\n• <code>${mainPrefix}ping dc1</code> - 指定数据中心\n\n<b>数据中心:</b>\n• DC1-DC5: 分别对应不同地区服务器\n\n💡 <i>支持ICMP和TCP连接测试</i>`,
-            parseMode: "html",
+            text: html(`🏓 <b>Ping工具使用说明</b>\n\n<b>基础用法:</b>\n• <code>${mainPrefix}ping</code> - Telegram延迟测试\n• <code>${mainPrefix}ping all</code> - 所有数据中心延迟\n\n<b>网络测试:</b>\n• <code>${mainPrefix}ping 8.8.8.8</code> - IP地址ping\n• <code>${mainPrefix}ping google.com</code> - 域名ping\n• <code>${mainPrefix}ping dc1</code> - 指定数据中心\n\n<b>数据中心:</b>\n• DC1-DC5: 分别对应不同地区服务器\n\n💡 <i>支持ICMP和TCP连接测试</i>`),
           });
           return;
         }
 
         // 网络目标测试
         await msg.edit({
-          text: `🔍 正在测试 <code>${htmlEscape(target)}</code>...`,
-          parseMode: "html",
+          text: html(`🔍 正在测试 <code>${htmlEscape(target)}</code>...`),
         });
 
         const parsed = parseTarget(target);
@@ -451,15 +430,13 @@ class PingPlugin extends Plugin {
         }
 
         await msg.edit({
-          text: `${displayText}${results.join(
+          text: html(`${displayText}${results.join(
             "\n"
-          )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`,
-          parseMode: "html",
+          )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
         });
       } catch (error: any) {
         await msg.edit({
-          text: `❌ 测试失败: ${htmlEscape(error.message)}`,
-          parseMode: "html",
+          text: html(`❌ 测试失败: ${htmlEscape(error.message)}`),
         });
       }
     },

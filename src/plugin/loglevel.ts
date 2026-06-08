@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { Api } from "teleproto";
+import { html } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { logger, LogLevel } from "@utils/logger";
 
 import { getGlobalClient } from "@utils/globalClient";
@@ -28,7 +29,7 @@ class LogLevelPlugin extends Plugin {
     loglevel: this.handleLogLevel.bind(this)
   };
 
-  private async handleLogLevel(msg: Api.Message): Promise<void> {
+  private async handleLogLevel(msg: MessageContext): Promise<void> {
     const text = (msg.text || "").trim();
     const parts = text.split(/\s+/);
     
@@ -37,8 +38,7 @@ class LogLevelPlugin extends Plugin {
       const currentLevel = logger.getLevel();
       const levelName = logger.getLevelName(currentLevel);
       await msg.edit({
-        text: `📋 <b>当前日志等级：</b> <code>${levelName}</code>`,
-        parseMode: "html"
+        text: html(`📋 <b>当前日志等级：</b> <code>${levelName}</code>`),
       });
       return;
     }
@@ -68,9 +68,8 @@ class LogLevelPlugin extends Plugin {
         break;
       default:
         await msg.edit({
-          text: "❌ <b>无效的日志等级</b>\n\n" +
-                "💡 可用等级：<code>debug</code>, <code>info</code>, <code>warning</code>, <code>error</code>, <code>silent</code>",
-          parseMode: "html"
+          text: html("❌ <b>无效的日志等级</b>\n\n" +
+                "💡 可用等级：<code>debug</code>, <code>info</code>, <code>warning</code>, <code>error</code>, <code>silent</code>"),
         });
         return;
     }
@@ -80,17 +79,17 @@ class LogLevelPlugin extends Plugin {
     // 尝试动态更新当前客户端的日志等级
     try {
         const client = await getGlobalClient();
-        if (client) {
-            client.setLogLevel(logger.getGramJSLogLevel() as any);
+        const lvl = logger.getGramJSLogLevel?.();
+        if (client && typeof lvl === "number" && (client as any).log) {
+            (client as any).log.level = lvl;
         }
     } catch (e) {
         // 忽略客户端尚未初始化的错误
     }
 
     await msg.edit({
-      text: `✅ <b>日志等级已设置为：</b> <code>${logger.getLevelName(newLevel)}</code>\n` +
-            `🔄 GramJS日志等级已同步更新`,
-      parseMode: "html"
+      text: html(`✅ <b>日志等级已设置为：</b> <code>${logger.getLevelName(newLevel)}</code>\n` +
+            `🔄 客户端日志等级已同步更新`),
     });
   }
 }
