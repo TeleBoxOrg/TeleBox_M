@@ -1,13 +1,17 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { Api } from "teleproto";
 import { SudoDB } from "@utils/sudoDB";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
-import { sleep } from "teleproto/Helpers";
+import { html } from "@mtcute/html-parser";
+import type { MessageContext } from "@mtcute/dispatcher";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,
 } from "@utils/pluginManager";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -42,13 +46,6 @@ function getSudoCids() {
   return sudoCache.cids;
 }
 
-function extractId(from: any): number | null {
-  const raw = from?.chatId || from?.channelId || from?.userId;
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
 function buildDisplay(
   id: number,
   entity: any,
@@ -72,7 +69,7 @@ function buildDisplay(
 }
 
 async function handleAddDel(
-  msg: Api.Message,
+  msg: MessageContext,
   target: string,
   action: "add" | "del",
 ) {
@@ -81,20 +78,20 @@ async function handleAddDel(
   let display: any;
   if (target) {
     try {
-      entity = await msg.client?.getEntity(target);
+      entity = await msg.client?.getChat(target);
       uid = entity?.id;
       if (!uid) {
         await msg.edit({ text: "无法获取用户 ID" });
         return;
       }
       uid = Number(uid);
-      display = buildDisplay(uid, entity, entity instanceof Api.User);
+      display = buildDisplay(uid, entity, entity?.type === "user");
     } catch {
       await msg.edit({ text: "无法获取用户信息" });
       return;
     }
   } else {
-    if (!msg.isReply) {
+    if (!msg.replyToMessage) {
       await msg.edit({ text: "请回复目标用户的消息或带上 uid/@username" });
       return;
     }
@@ -103,17 +100,17 @@ async function handleAddDel(
       await msg.edit({ text: "无法获取回复消息" });
       return;
     }
-    uid = extractId(reply.fromId as any);
+    uid = reply.sender?.id;
     if (!uid) {
       await msg.edit({ text: "无法获取用户 ID" });
       return;
     }
     try {
-      entity = await msg.client?.getEntity(uid);
+      entity = await msg.client?.getChat(uid);
     } catch {
       /* ignore */
     }
-    display = buildDisplay(uid, entity, !!(reply.fromId as any)?.userId);
+    display = buildDisplay(uid, entity, reply.sender?.type === "user");
   }
 
   withSudoDB((db) => {
@@ -123,26 +120,25 @@ async function handleAddDel(
   sudoCache.ts = 0; // 失效缓存
 
   await msg.edit({
-    text: `已${action === "add" ? "添加" : "删除"}: ${display}`,
-    parseMode: "html",
+    text: html`已${action === "add" ? "添加" : "删除"}: ${display}`,
   });
   await sleep(2000);
   await msg.delete();
 }
 
-async function handleList(msg: Api.Message) {
+async function handleList(msg: MessageContext) {
   const users = withSudoDB((db) => db.ls());
   if (users.length === 0) {
     await msg.edit({ text: "当前没有任何用户" });
     return;
   }
   await msg.edit({
-    text: `当前用户列表：\n${users.map((u) => "- " + u.username).join("\n")}`,
-    parseMode: "html",
+    text: html`当前用户列表：
+${users.map((u) => "- " + u.username).join("\n")}`,
   });
 }
 async function handleChatAddDel(
-  msg: Api.Message,
+  msg: MessageContext,
   target: any,
   action: "add" | "del",
 ) {
@@ -151,30 +147,30 @@ async function handleChatAddDel(
   let display: any;
   if (target) {
     try {
-      entity = await msg.client?.getEntity(target);
+      entity = await msg.client?.getChat(target);
       cid = entity?.id;
       if (!cid) {
         await msg.edit({ text: "无法获取对话 ID" });
         return;
       }
       cid = Number(cid);
-      display = buildDisplay(cid, entity, entity instanceof Api.User);
+      display = buildDisplay(cid, entity, entity?.type === "user");
     } catch {
       await msg.edit({ text: "无法获取对话信息" });
       return;
     }
   } else {
-    cid = extractId(msg.peerId as any);
+    cid = msg.chat.id;
     if (!cid) {
       await msg.edit({ text: "无法获取对话 ID" });
       return;
     }
     try {
-      entity = await msg.client?.getEntity(cid);
+      entity = await msg.client?.getChat(cid);
     } catch {
       /* ignore */
     }
-    display = buildDisplay(cid, entity, !!(msg.peerId as any)?.userId);
+    display = buildDisplay(cid, entity, msg.chat?.type === "user");
   }
 
   withSudoDB((db) => {
@@ -184,21 +180,20 @@ async function handleChatAddDel(
   sudoCache.ts = 0; // 失效缓存
 
   await msg.edit({
-    text: `已${action === "add" ? "添加" : "删除"}: ${display}`,
-    parseMode: "html",
+    text: html`已${action === "add" ? "添加" : "删除"}: ${display}`,
   });
   await sleep(2000);
   await msg.delete();
 }
-async function handleChatList(msg: Api.Message) {
+async function handleChatList(msg: MessageContext) {
   const chats = withSudoDB((db) => db.lsChats());
   if (chats.length === 0) {
     await msg.edit({ text: "⚠️ 未设置对话白名单, 所有对话中均可使用" });
     return;
   }
   await msg.edit({
-    text: `对话白名单列表：\n${chats.map((c) => "- " + c.name).join("\n")}`,
-    parseMode: "html",
+    text: html`对话白名单列表：
+${chats.map((c) => "- " + c.name).join("\n")}`,
   });
 }
 class sudoPlugin extends Plugin {
@@ -218,9 +213,9 @@ class sudoPlugin extends Plugin {
     }
     return text;
   };
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext, trigger?: MessageContext) => Promise<void>> = {
     sudo: async (msg) => {
-      const parts = msg.message.trim().split(/\s+/);
+      const parts = msg.text.trim().split(/\s+/);
       let command = parts[1];
       if (command === "chat") {
         let subCommand = parts[2];
@@ -243,17 +238,16 @@ class sudoPlugin extends Plugin {
         return;
       }
       await msg.edit({
-        text: "未知命令, ",
-        parseMode: "html",
+        text: html`未知命令, `,
       });
     },
   };
 
-  listenMessageHandler?: ((msg: Api.Message) => Promise<void>) | undefined =
+  listenMessageHandler?: (msg: MessageContext, options?: { isEdited?: boolean }) => Promise<void> =
     async (msg) => {
-      if (msg.fwdFrom) return;
-      const uid = extractId(msg.fromId as any);
-      const cid = extractId(msg.peerId as any);
+      if (msg.forward) return;
+      const uid = msg.sender.id;
+      const cid = msg.chat.id;
       if (!uid || !cid) return;
       if (!getSudoIds().includes(uid)) return;
       const cids = getSudoCids();
@@ -261,17 +255,20 @@ class sudoPlugin extends Plugin {
       const cmd = getCommandFromMessage(msg, envPrefixes);
       if (!cmd) return;
       // await dealCommandPluginWithMessage({ cmd, msg });
-      const sudoMsg = await msg.client?.sendMessage(msg.peerId, {
-        message: msg.message,
-        replyTo:
-          (msg.replyTo?.forumTopic ? msg.replyTo?.replyToTopId : undefined) ||
-          msg.replyToMsgId,
-        formattingEntities: msg.entities,
-      });
+      const replyInfo = msg.replyToMessage;
+      const replyTo =
+        replyInfo?.isForumTopic
+          ? replyInfo.threadId
+          : replyInfo?.id;
+      const sudoMsg = await msg.client?.sendText(
+        msg.chat.id,
+        msg.text,
+        replyTo ? { replyTo } : undefined,
+      );
       if (sudoMsg)
         await dealCommandPluginWithMessage({
           cmd,
-          msg: sudoMsg,
+          msg: sudoMsg as MessageContext,
           trigger: msg,
           isEdited: false,
         });
