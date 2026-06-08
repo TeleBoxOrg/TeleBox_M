@@ -1,8 +1,9 @@
 import { getPrefixes } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
-import { Api, TelegramClient } from "teleproto";
-import { RPCError } from "teleproto/errors";
-import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
+import type { MessageContext } from "@mtcute/dispatcher";
+import { TelegramClient, Message } from "@mtcute/node";
+import { getGlobalClient } from "@utils/globalClient";
+import { safeGetReplyMessage } from "@utils/safeGetMessages";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -11,27 +12,29 @@ class RePlugin extends Plugin {
   description: string = `复读\n回复一条消息即可复读\n<code>${mainPrefix}re [消息数] [复读次数]</code>`;
   cmdHandlers: Record<
     string,
-    (msg: Api.Message, trigger?: Api.Message) => Promise<void>
+    (msg: MessageContext, trigger?: MessageContext) => Promise<void>
   > = {
     re: async (msg, trigger) => {
       const [, ...args] = msg.text.slice(1).split(" ");
       const count = parseInt(args[0]) || 1;
       const repeat = parseInt(args[1]) || 1;
 
+      const client = await getGlobalClient();
+
       try {
-        if (!msg.isReply) {
+        if (!msg.replyToMessage) {
           await msg.edit({ text: "你必须回复一条消息才能够进行复读" });
           return;
         }
         let replied = await safeGetReplyMessage(msg);
-        if (!replied?.peerId) {
-          await msg.client?.sendMessage(msg.peerId, {
-            message: "无法获取被回复的消息，请重试。",
-          });
+        if (!replied?.chat) {
+          await client.sendText(msg.chat.id, "无法获取被回复的消息，请重试。");
           return;
         }
-        const messages = await safeGetMessages(msg.client, replied.peerId, {
-          offsetId: replied!.id - 1,
+
+        // 获取从被回复消息开始的消息
+        const messages = await client.getHistory(replied.chat.id, {
+          offset: { id: replied!.id, date: 0 },
           limit: count,
           reverse: true,
         });
@@ -44,24 +47,22 @@ class RePlugin extends Plugin {
         for (let i = 0; i < repeat; i++) {
           if (messages && messages.length > 0) {
             try {
-              // 使用原始 API 以支持论坛话题 (topMsgId)
-              const toPeer = await msg.getInputChat();
-              const fromPeer = await replied!.getInputChat();
+              // 使用 mtcute forwardMessagesById 以支持论坛话题 (threadId)
+              const toPeer = msg.chat.id;
+              const fromPeer = replied!.chat.id;
               const ids = messages.map((m) => m.id);
-              const topMsgId =
-                replied?.replyTo?.replyToTopId || replied?.replyTo?.replyToMsgId;
+              const threadId: number | undefined =
+                replied!.replyToMessage?.threadId ?? replied!.replyToMessage?.id ?? undefined;
 
-              await msg.client?.invoke(
-                new Api.messages.ForwardMessages({
-                  fromPeer,
-                  id: ids,
-                  toPeer,
-                  // 如果在论坛话题中，指定话题的顶层消息 ID
-                  ...(topMsgId ? { topMsgId } : {}),
-                })
-              );
+              await client.forwardMessagesById({
+                fromChatId: fromPeer,
+                messages: ids,
+                toChatId: toPeer,
+                // 如果在论坛话题中，指定话题的线程 ID
+                ...(threadId ? { toThreadId: threadId } : {}),
+              });
             } catch (error) {
-              if (error instanceof RPCError && error.errorMessage === "CHAT_FORWARDS_RESTRICTED") {
+              if (error instanceof Error && error.message.includes("CHAT_FORWARDS_RESTRICTED")) {
                 forwardFailed = true;
                 break;
               } else {
@@ -75,19 +76,15 @@ class RePlugin extends Plugin {
         if (forwardFailed && messages && messages.length > 0) {
           for (let i = 0; i < repeat; i++) {
             for (const message of messages) {
-              await this.copyMessage(msg.client!, msg.peerId, message, replied?.replyTo?.replyToTopId || replied?.replyTo?.replyToMsgId);
+              await this.copyMessage(client, msg.chat.id, message, replied!.replyToMessage?.threadId ?? replied!.replyToMessage?.id ?? undefined);
             }
           }
         }
       } catch (error) {
-        if (error instanceof RPCError) {
-          await msg.client?.sendMessage(msg.peerId, {
-            message: error.message || "发生错误，无法复读消息。请稍后再试。",
-          });
+        if (error instanceof Error) {
+          await client.sendText(msg.chat.id, error.message || "发生错误，无法复读消息。请稍后再试。");
         } else {
-          await msg.client?.sendMessage(msg.peerId, {
-            message: "发生未知错误，无法复读消息。请稍后再试。",
-          });
+          await client.sendText(msg.chat.id, "发生未知错误，无法复读消息。请稍后再试。");
         }
       }
       if (trigger) {
@@ -100,37 +97,17 @@ class RePlugin extends Plugin {
   private async copyMessage(
     client: TelegramClient,
     peerId: any,
-    message: Api.Message,
+    message: Message,
     topMsgId?: number
   ): Promise<void> {
     try {
-      const sendOptions: any = {
+      // 使用 mtcute sendCopy API 复制消息
+      await client.sendCopy({
+        fromChatId: message.chat.id,
+        message: message.id,
+        toChatId: peerId,
         ...(topMsgId ? { replyTo: topMsgId } : {}),
-      };
-
-      // 处理不同类型的消息
-      if (message.media) {
-        // 有媒体的消息
-        sendOptions.file = message.media;
-        sendOptions.message = message.message || "";
-        
-        // 复制消息格式（加粗、斜体等）
-        if (message.entities && message.entities.length > 0) {
-          sendOptions.formattingEntities = message.entities;
-        }
-        
-        await client.sendFile(peerId, sendOptions);
-      } else if (message.message) {
-        // 纯文本消息
-        sendOptions.message = message.message;
-        
-        // 复制消息格式
-        if (message.entities && message.entities.length > 0) {
-          sendOptions.formattingEntities = message.entities;
-        }
-        
-        await client.sendMessage(peerId, sendOptions);
-      }
+      });
     } catch (error) {
       console.error("复制消息失败:", error);
       throw error;
