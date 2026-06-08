@@ -32,6 +32,36 @@ deleteMessagesById(chatId: InputPeerLike, ids: number[], params?): Promise<void>
 
 便捷方法(send-reply / send-answer 存在):`msg.replyText(...)` / `msg.answerText(...)`。
 
+## ⚠️ 文本格式化:parseMode 已移除(0.29 重大变更)
+
+mtcute 0.29 **删除了 `parseMode: "html"|"markdown"` 字符串参数**。所有 send/edit 方法的 `text`/caption 参数类型是 `InputText = string | TextWithEntities`。纯文本直接传 string;要带格式必须用 `@mtcute/node` 重新导出的解析函数把 HTML/Markdown 字符串转成 `TextWithEntities`:
+
+```ts
+import { html, md } from "@mtcute/node";   // node 包 re-export @mtcute/html-parser + markdown-parser
+
+// 旧: await msg.edit({ text: "🏓 <b>Pong!</b>", parseMode: "html" });
+await msg.edit({ text: html("🏓 <b>Pong!</b>") });
+
+// 旧: parseMode: "markdown"
+await msg.edit({ text: md("**bold** `code`") });
+
+// 纯文本无需包装
+await msg.edit({ text: "plain text" });
+```
+
+要点:
+- `html("...")` / `md("...")` 单字符串入参可用(已实测),解析 tag + 原生处理 `&lt;`/`&amp;` 等实体。**旧 telegram.patch.ts 的 HTML 实体保护 hack 不再需要**。
+- `linkPreview: false`(gramjs)→ `disableWebPreview: true`(mtcute,send-text + edit-message 都有此键)。
+- `replyTo` 键名不变(`number | Message`)。
+- 迁移每个 plugin 时:删 `parseMode: "html"`/`"markdown"`,改 `text:` 值为 `html(...)`/`md(...)`;`linkPreview:false`→`disableWebPreview:true`;import `{ html, md }` from `@mtcute/node` 按需。
+
+## 命令 handler 契约(已定稿)
+
+- `cmdHandlers` / `listenMessageHandler` 收到的参数类型是 **`MessageContext`**(from `@mtcute/dispatcher`),不是裸 `Message`。
+- `MessageContext extends Message`,额外带:`.edit()`、`.delete()`、`.replyText()`、`.replyMedia()`、`.answerText()`、`.getReplyTo()`、`.react()`、`.pin()`、`.forwardTo()`、`.copy()`。裸 `Message` 没有这些方法,所以契约必须用 `MessageContext`。
+- TeleBox 自定义 `.deleteWithDelay(delay, throw?)` / `.safeDelete({revoke?})` 由 `src/hook/patches/telegram.patch.ts` 挂到 `MessageContext.prototype`,类型在 `src/hook/types/telegram.d.ts` 用 `declare module "@mtcute/dispatcher"` 增广。
+- `msg.message`(gramjs 文本)→ `msg.text`;`msg.getReplyMessage()` → `msg.getReplyTo()`。
+
 ## 方法映射(高频)
 
 | gramjs 用法 | mtcute 等价 |

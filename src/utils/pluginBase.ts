@@ -1,4 +1,5 @@
-import { TelegramClient, Message } from "@mtcute/node";
+import { TelegramClient } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import type { GenerationContext } from "./generationContext";
 
 export interface PluginRuntimeContext {
@@ -52,11 +53,11 @@ abstract class Plugin {
   abstract description: PluginDescription;
   abstract cmdHandlers: Record<
     string,
-    (msg: Message, trigger?: Message) => Promise<void>
+    (msg: MessageContext, trigger?: MessageContext) => Promise<void>
   >;
   listenMessageHandlerIgnoreEdited?: boolean = true;
   listenMessageHandler?: (
-    msg: Message,
+    msg: MessageContext,
     options?: { isEdited?: boolean }
   ) => Promise<void>;
   eventHandlers?: PluginEventHandler[];

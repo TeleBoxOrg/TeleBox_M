@@ -1,48 +1,29 @@
-import { Api } from "teleproto/tl";
-import { sleep } from "teleproto/Helpers";
+import { MessageContext } from "@mtcute/dispatcher";
 
-const { HTMLParser } = require("teleproto/extensions/html");
+/**
+ * TeleBox 自定义 MessageContext 便捷方法。
+ *
+ * 旧 gramjs 版本把这些挂在 `Api.Message.prototype`,并额外做 HTML 实体保护 hack
+ * (因为 gramjs 的 HTMLParser 会错误处理 `&lt;` 等)。mtcute 0.29 的 `html` 解析器
+ * 原生正确处理实体,所以实体保护 hack 已删除。
+ *
+ * 命令 handler 收到的是 MessageContext(继承 Message),因此这些方法挂在
+ * MessageContext.prototype 上即可被插件直接调用。类型增广见
+ * src/hook/types/telegram.d.ts。
+ */
 
-const ENTITY_SENTINELS = {
-  lt: "\uE000",
-  gt: "\uE001",
-  amp: "\uE002",
-  quot: "\uE003",
-  apos: "\uE004",
-} as const;
-
-function protectHtmlEntities(input: string): string {
-  return input
-    .replace(/&lt;/g, ENTITY_SENTINELS.lt)
-    .replace(/&gt;/g, ENTITY_SENTINELS.gt)
-    .replace(/&quot;/g, ENTITY_SENTINELS.quot)
-    .replace(/&#39;/g, ENTITY_SENTINELS.apos)
-    .replace(/&amp;/g, ENTITY_SENTINELS.amp);
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function restoreHtmlEntities(input: string): string {
-  return input
-    .replace(new RegExp(ENTITY_SENTINELS.lt, "g"), "<")
-    .replace(new RegExp(ENTITY_SENTINELS.gt, "g"), ">")
-    .replace(new RegExp(ENTITY_SENTINELS.quot, "g"), '"')
-    .replace(new RegExp(ENTITY_SENTINELS.apos, "g"), "'")
-    .replace(new RegExp(ENTITY_SENTINELS.amp, "g"), "&");
-}
-
-const originalHtmlParse = HTMLParser.parse.bind(HTMLParser);
-
-HTMLParser.parse = function patchedHtmlParse(html: string) {
-  const [text, entities] = originalHtmlParse(protectHtmlEntities(html));
-  return [restoreHtmlEntities(text), entities];
-};
-
-Api.Message.prototype.deleteWithDelay = async function (
+MessageContext.prototype.deleteWithDelay = async function (
+  this: MessageContext,
   delay: number,
-  shouldThrowError: boolean
-) {
+  shouldThrowError: boolean = false
+): Promise<void> {
   await sleep(delay);
   try {
-    return this.delete();
+    await this.delete();
   } catch (e) {
     console.error(e);
     if (shouldThrowError) {
@@ -51,11 +32,12 @@ Api.Message.prototype.deleteWithDelay = async function (
   }
 };
 
-Api.Message.prototype.safeDelete = async function (
-  { revoke }: { revoke: boolean } = { revoke: false }
-) {
+MessageContext.prototype.safeDelete = async function (
+  this: MessageContext,
+  { revoke }: { revoke?: boolean } = { revoke: false }
+): Promise<void> {
   try {
-    return this.delete({ revoke });
+    await this.delete({ revoke });
   } catch (error) {
     console.log("safeDelete catch error:", error);
   }
