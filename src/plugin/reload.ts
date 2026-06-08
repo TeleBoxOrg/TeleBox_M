@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { Api } from "teleproto";
+import { html, TelegramClient } from "@mtcute/node";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { createDirectoryInTemp, createDirectoryInAssets } from "@utils/pathHelpers";
 import fs from "fs";
 import path from "path";
@@ -16,7 +17,7 @@ const mainPrefix = prefixes[0];
 const execAsync = promisify(exec);
 
 const htmlEscape = (text: string): string =>
-  text.replace(/[&<>"']/g, m => ({
+  text.replace(/[&<"']/g, m => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
@@ -31,28 +32,25 @@ const configPath = path.join(assetsDir, "config.json");
 const pendingExitTimers = new Set<ReturnType<typeof setTimeout>>();
 
 async function updateReloadStatus(params: {
-  client: Api.Message["client"];
+  client: TelegramClient;
   targetChat: any;
   targetMessageId: number;
   text: string;
-  parseMode?: "html";
+  isHtml?: boolean;
 }) {
-  const { client, targetChat, targetMessageId, text, parseMode } = params;
+  const { client, targetChat, targetMessageId, text, isHtml } = params;
   try {
-    await client?.editMessage(targetChat, {
+    await client?.editMessage({
+      chatId: targetChat,
       message: targetMessageId,
-      text,
-      parseMode,
+      text: isHtml ? html(text) : text,
     });
   } catch (error) {
-    console.error("Failed to edit reload status message, falling back to sendMessage:", error);
+    console.error("Failed to edit reload status message, falling back to sendText:", error);
     try {
-      await client?.sendMessage(targetChat, {
-        message: text,
-        parseMode,
-      });
+      await client?.sendText(targetChat, isHtml ? html(text) : text);
     } catch (sendError) {
-      console.error("Fallback sendMessage also failed (client may be destroyed):", sendError);
+      console.error("Fallback sendText also failed (client may be destroyed):", sendError);
     }
   }
 }
@@ -151,7 +149,7 @@ function buildMemoryAlertText(params: {
   growth: ReturnType<typeof getGrowthStatus>;
 }) {
   const { memory, config, reasons, growth } = params;
-  return (
+  return html(
     `⚠️ <b>内存监控告警</b>\n\n` +
     `触发原因：\n• ${reasons.join("\n• ")}\n\n` +
     `当前内存：\n` +
@@ -186,22 +184,17 @@ function scheduleTrackedTimeout(
 const editExitMsg = async () => {
   try {
     const data = fs.readFileSync(exitFile, "utf-8");
-    const { messageId, chatId, time, successText, parseMode } = JSON.parse(data);
+    const { messageId, chatId, time, successText, isHtml } = JSON.parse(data);
     const client = await getGlobalClient();
     if (client) {
-      let targetChat: any = chatId;
-      try {
-        targetChat = await client.getEntity(chatId);
-      } catch (innerE) {
-        console.error("Failed to resolve entity for exit message:", innerE);
-      }
+      const targetChat = chatId;
       const elapsedMs = Date.now() - time;
       const tmpl: string = successText || "✅ 重启完成，耗时 {elapsedMs}ms";
       const text = tmpl.replace(/\{elapsedMs\}/g, String(elapsedMs));
-      await client.editMessage(targetChat, {
+      await client.editMessage({
+        chatId: targetChat,
         message: messageId,
-        text,
-        ...(parseMode ? { parseMode } : {}),
+        text: isHtml ? html(text) : text,
       });
       fs.unlinkSync(exitFile);
     }
@@ -215,27 +208,26 @@ if (fs.existsSync(exitFile)) {
 }
 
 export async function executeExit(
-  msg: Api.Message,
+  msg: MessageContext,
   options?: {
     pendingText?: string;
     successText?: string;
-    parseMode?: "html" | "markdown";
+    isHtml?: boolean;
   }
 ) {
   const pendingText = options?.pendingText ?? "🔄 正在结束进程...";
   const result = await msg.edit({
-    text: pendingText,
-    ...(options?.parseMode ? { parseMode: options.parseMode } : {}),
+    text: options?.isHtml ? html(pendingText) : pendingText,
   });
   if (result) {
     fs.writeFileSync(
       exitFile,
       JSON.stringify({
         messageId: result.id,
-        chatId: result.chatId || result.peerId,
+        chatId: result.chat.id,
         time: Date.now(),
         successText: options?.successText,
-        parseMode: options?.parseMode,
+        isHtml: options?.isHtml,
       }),
       "utf-8"
     );
@@ -300,10 +292,7 @@ async function memoryMonitorTask() {
       console.log(`[Memory Monitor] 触发保护动作: ${reasons.join("; ")}`);
       const client = await getGlobalClient();
       if (client && !config.silentEnabled) {
-        await client.sendMessage("me", {
-          message: buildMemoryAlertText({ memory, config, reasons, growth }),
-          parseMode: "html"
-        });
+        await client.sendText("me", buildMemoryAlertText({ memory, config, reasons, growth }));
       }
 
       let reloaded = false;
@@ -327,26 +316,22 @@ async function memoryMonitorTask() {
         if (stillExceeded) {
           console.log("[Memory Monitor] Runtime 重建后内存仍超限，准备退出进程");
           if (!config.silentEnabled) {
-            await runtime.client.sendMessage("me", {
-              message:
-                `⚠️ <b>Memory优化</b>\n\n` +
-                `已先尝试自动整理内存，但占用仍然偏高。\n` +
-                `• 当前内存：<code>${afterReloadMemory.heapUsed.toFixed(2)} MB</code>\n` +
-                `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>\n\n` +
-                `即将重启整个程序。`,
-              parseMode: "html"
-            });
+            await runtime.client.sendText("me", html(
+              `⚠️ <b>Memory优化</b>\n\n` +
+              `已先尝试自动整理内存，但占用仍然偏高。\n` +
+              `• 当前内存：<code>${afterReloadMemory.heapUsed.toFixed(2)} MB</code>\n` +
+              `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>\n\n` +
+              `即将重启整个程序。`
+            ));
           }
           scheduleTrackedTimeout(() => process.exit(0), 1000);
         } else if (!config.silentEnabled) {
-          await runtime.client.sendMessage("me", {
-            message:
-                `✅ <b>Memory优化</b>\n\n` +
-              `已自动重建 Runtime，内存已恢复到安全范围。\n` +
-              `• 当前内存：<code>${afterReloadMemory.heapUsed.toFixed(2)} MB</code>\n` +
-              `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>`,
-            parseMode: "html"
-          });
+          await runtime.client.sendText("me", html(
+            `✅ <b>Memory优化</b>\n\n` +
+            `已自动重建 Runtime，内存已恢复到安全范围。\n` +
+            `• 当前内存：<code>${afterReloadMemory.heapUsed.toFixed(2)} MB</code>\n` +
+            `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>`
+          ));
         }
       } catch (reloadError) {
         console.error("[Memory Monitor] 自动重建 Runtime 失败:", reloadError);
@@ -354,12 +339,10 @@ async function memoryMonitorTask() {
 
       if (!reloaded) {
         if (client && !config.silentEnabled) {
-          await client.sendMessage("me", {
-            message:
-              `⚠️ <b>Memory优化</b>\n\n` +
-              `自动重建 Runtime 失败，准备直接重启整个程序。`,
-            parseMode: "html"
-          });
+          await client.sendText("me", html(
+            `⚠️ <b>Memory优化</b>\n\n` +
+            `自动重建 Runtime 失败，准备直接重启整个程序。`
+          ));
         }
         scheduleTrackedTimeout(() => process.exit(0), 1000);
       }
@@ -404,7 +387,7 @@ const HELP_TEXT = `🔄 Reload - 插件重载与内存管理
 • <code>aggressive</code> - 更宽松，减少打扰，适合内存本来就偏高的大插件环境
 
 工作方式:
-✅ 定时检查“内存 / 总内存 / 相对基线增长”
+✅ 定时检查"内存 / 总内存 / 相对基线增长"
 ✅ 超过阈值时，先尝试自动重建 Runtime
 ✅ 如果自动整理后仍然过高，再重启整个程序
 ✅ 开启后可以用 <code>${mainPrefix}memory status</code> 查看当前状态与建议动作`;
@@ -427,12 +410,12 @@ class ReloadPlugin extends Plugin {
   };
   private lastReloadMemoryMb: number | null = null;
 
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     reload: async (msg) => {
       const beforeMemory = getMemoryUsage();
       const lastReloadMemoryMb = beforeMemory.heapUsed;
       const statusMessage = await msg.edit({ text: "🔄 正在重新加载插件..." });
-      const targetChat = statusMessage?.chatId || statusMessage?.peerId || msg.chatId || msg.peerId;
+      const targetChat = statusMessage?.chat?.id || msg.chat.id;
       const targetMessageId = statusMessage?.id || msg.id;
       try {
         const startTime = Date.now();
@@ -460,7 +443,7 @@ class ReloadPlugin extends Plugin {
           targetChat,
           targetMessageId,
           text: output,
-          parseMode: "html",
+          isHtml: false,
         });
       } catch (error) {
         console.error("Plugin reload failed:", error);
@@ -472,6 +455,7 @@ class ReloadPlugin extends Plugin {
             targetChat,
             targetMessageId,
             text: `❌ 插件重新加载失败\n错误信息：${errorMessage}\n请检查控制台日志获取详细信息`,
+            isHtml: false,
           });
         } catch (editError) {
           console.error("Failed to update reload status message:", editError);
@@ -510,13 +494,13 @@ class ReloadPlugin extends Plugin {
           statusText = "警告";
         }
 
-        const fullText = `${infoText}\n\n<b>状态：</b> ${statusEmoji} ${statusText}`;
-        await msg.edit({ text: fullText, parseMode: "html" });
+        await msg.edit({
+          text: html(`${infoText}\n\n<b>状态：</b> ${statusEmoji} ${statusText}`),
+        });
       } catch (error) {
         console.error("[Health] 命令执行失败:", error);
         await msg.edit({
-          text: `❌ 获取内存信息失败：${htmlEscape(error instanceof Error ? error.message : String(error))}`,
-          parseMode: "html"
+          text: html(`❌ 获取内存信息失败：${htmlEscape(error instanceof Error ? error.message : String(error))}`),
         });
       }
     },
@@ -533,18 +517,16 @@ class ReloadPlugin extends Plugin {
         }
         await configDB.write();
         await msg.edit({
-          text: `✅ <b>Memory优化已启用</b>\n\n` +
+          text: html(`✅ <b>Memory优化已启用</b>\n\n` +
                 `🛠️ 内存偏高时，会先自动尝试恢复\n` +
                 `🔁 如果恢复后还是偏高，会自动重启程序\n` +
-                `📝 当前记录方式：${formatBaselineMode(configDB.data.baselineMode)}`,
-          parseMode: "html"
+                `📝 当前记录方式：${formatBaselineMode(configDB.data.baselineMode)}`),
         });
       } else if (subCmd === "off") {
         configDB.data.leakfixEnabled = false;
         await configDB.write();
         await msg.edit({
-          text: "❌ <b>Memory优化已关闭</b>\n\n系统将不再自动处理内存偏高的情况。",
-          parseMode: "html"
+          text: html("❌ <b>Memory优化已关闭</b>\n\n系统将不再自动处理内存偏高的情况。"),
         });
       } else if (subCmd === "set") {
         const target = parts[2]?.toLowerCase();
@@ -560,22 +542,20 @@ class ReloadPlugin extends Plugin {
                 ? "更宽松，减少打扰"
                 : "平衡模式，适合大多数情况";
           await msg.edit({
-            text: `✅ <b>已切换内存预设</b>\n\n` +
+            text: html(`✅ <b>已切换内存预设</b>\n\n` +
                   `🎛️ 当前预设：<code>${target}</code>\n` +
-                  `💡 说明：${presetText}`,
-            parseMode: "html"
+                  `💡 说明：${presetText}`),
           });
           return;
         }
 
         if (isNaN(threshold) || threshold <= 0) {
           await msg.edit({
-            text: `❌ <b>参数错误</b>\n\n请提供有效的内存阈值（正整数，单位：MB）\n\n` +
+            text: html(`❌ <b>参数错误</b>\n\n请提供有效的内存阈值（正整数，单位：MB）\n\n` +
                   `快速预设：<code>${mainPrefix}memory set safe</code> / <code>normal</code> / <code>aggressive</code>\n` +
                   `示例：<code>${mainPrefix}memory set heap 150</code>\n` +
                   `<code>${mainPrefix}memory set rss 512</code>\n` +
-                  `<code>${mainPrefix}memory set growth 120</code>`,
-            parseMode: "html"
+                  `<code>${mainPrefix}memory set growth 120</code>`),
           });
           return;
         }
@@ -588,33 +568,29 @@ class ReloadPlugin extends Plugin {
           configDB.data.runtimeGrowthThreshold = threshold;
         } else {
           await msg.edit({
-            text: `❌ <b>未知阈值类型</b>\n\n` +
-                  `支持：<code>heap</code> / <code>rss</code> / <code>growth</code>`,
-            parseMode: "html"
+            text: html(`❌ <b>未知阈值类型</b>\n\n` +
+                  `支持：<code>heap</code> / <code>rss</code> / <code>growth</code>`),
           });
           return;
         }
 
         await configDB.write();
         await msg.edit({
-          text: `✅ <b>设置已更新</b>\n\n` +
+          text: html(`✅ <b>设置已更新</b>\n\n` +
                 `⚙️ 项目：<code>${target}</code>\n` +
-                `📏 新值：<code>${threshold} MB</code>`,
-          parseMode: "html"
+                `📏 新值：<code>${threshold} MB</code>`),
         });
       } else if (subCmd === "reset") {
         updateMemoryBaseline(configDB.data, getMemoryUsage());
         await configDB.write();
         await msg.edit({
-          text: `✅ <b>已重新记录当前内存状态</b>\n\n📝 之后的“增长”会从现在开始重新计算。`,
-          parseMode: "html"
+          text: html(`✅ <b>已重新记录当前内存状态</b>\n\n📝 之后的"增长"会从现在开始重新计算。`),
         });
       } else if (subCmd === "mode") {
         const mode = parseBaselineMode(parts[2]?.toLowerCase());
         if (!mode) {
           await msg.edit({
-            text: `❌ <b>未知模式</b>\n\n可用：<code>auto</code> / <code>manual</code> / <code>reload</code>`,
-            parseMode: "html"
+            text: html(`❌ <b>未知模式</b>\n\n可用：<code>auto</code> / <code>manual</code> / <code>reload</code>`),
           });
           return;
         }
@@ -625,9 +601,8 @@ class ReloadPlugin extends Plugin {
         }
         await configDB.write();
         await msg.edit({
-          text: `✅ <b>记录方式已更新</b>\n\n` +
-                `📝 当前方式：${formatBaselineMode(mode)}`,
-          parseMode: "html"
+          text: html(`✅ <b>记录方式已更新</b>\n\n` +
+                `📝 当前方式：${formatBaselineMode(mode)}`),
         });
       } else if (subCmd === "baseline") {
         const action = parts[2]?.toLowerCase() || "status";
@@ -635,18 +610,16 @@ class ReloadPlugin extends Plugin {
           updateMemoryBaseline(configDB.data, getMemoryUsage());
           await configDB.write();
           await msg.edit({
-            text: `✅ <b>已重新记录当前内存状态</b>\n\n` +
-                  `📝 当前记录方式：${formatBaselineMode(configDB.data.baselineMode)}`,
-            parseMode: "html"
+            text: html(`✅ <b>已重新记录当前内存状态</b>\n\n` +
+                  `📝 当前记录方式：${formatBaselineMode(configDB.data.baselineMode)}`),
           });
         } else if (action === "mode") {
           const mode = parseBaselineMode(parts[3]?.toLowerCase());
           if (!mode) {
             await msg.edit({
-              text: `❌ <b>未知基线策略</b>\n\n` +
+              text: html(`❌ <b>未知基线策略</b>\n\n` +
                     `支持：<code>auto</code> / <code>manual</code> / <code>reload</code>\n\n` +
-                    `示例：<code>${mainPrefix}memory mode reload</code>`,
-              parseMode: "html"
+                    `示例：<code>${mainPrefix}memory mode reload</code>`),
             });
             return;
           }
@@ -657,19 +630,17 @@ class ReloadPlugin extends Plugin {
           }
           await configDB.write();
           await msg.edit({
-            text: `✅ <b>记录方式已更新</b>\n\n` +
-                  `📝 当前方式：${formatBaselineMode(mode)}`,
-            parseMode: "html"
+            text: html(`✅ <b>记录方式已更新</b>\n\n` +
+                  `📝 当前方式：${formatBaselineMode(mode)}`),
           });
         } else {
           await msg.edit({
-            text: `📏 <b>运行时内存基线</b>\n\n` +
+            text: html(`📏 <b>运行时内存基线</b>\n\n` +
                   `🧠 内存基线：<code>${formatMb(configDB.data.baselineHeapUsed)}</code>\n` +
                   `🖥️ 总内存基线：<code>${formatMb(configDB.data.baselineRss)}</code>\n` +
                   `📝 当前方式：${formatBaselineMode(configDB.data.baselineMode)}\n\n` +
                   `🔄 重置命令：<code>${mainPrefix}memory reset</code>\n` +
-                  `⚙️ 设置命令：<code>${mainPrefix}memory mode auto|manual|reload</code>`,
-            parseMode: "html"
+                  `⚙️ 设置命令：<code>${mainPrefix}memory mode auto|manual|reload</code>`),
           });
         }
       } else if (subCmd === "silent") {
@@ -678,25 +649,22 @@ class ReloadPlugin extends Plugin {
           configDB.data.silentEnabled = true;
           await configDB.write();
           await msg.edit({
-            text: `✅ <b>静默模式已启用</b>\n\n` +
+            text: html(`✅ <b>静默模式已启用</b>\n\n` +
                   `• 内存超限自动重启时将<b>不发送</b>通知\n` +
-                  `• 仍会在控制台记录日志`,
-            parseMode: "html"
+                  `• 仍会在控制台记录日志`),
           });
         } else if (silentCmd === "off") {
           configDB.data.silentEnabled = false;
           await configDB.write();
           await msg.edit({
-            text: `✅ <b>静默模式已关闭</b>\n\n` +
-                  `• 内存超限自动重启时将<b>发送</b>通知到 "me"`,
-            parseMode: "html"
+            text: html(`✅ <b>静默模式已关闭</b>\n\n` +
+                  `• 内存超限自动重启时将<b>发送</b>通知到 "me"`),
           });
         } else {
           await msg.edit({
-            text: `📊 <b>Memory优化静默模式</b>\n\n` +
+            text: html(`📊 <b>Memory优化静默模式</b>\n\n` +
                   `🔕 <code>${mainPrefix}memory silent on/off</code> - 启用或禁用静默模式\n\n` +
-                  `当前状态：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}`,
-            parseMode: "html"
+                  `当前状态：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}`),
           });
         }
       } else if (subCmd === "status" || subCmd === "s") {
@@ -731,9 +699,9 @@ class ReloadPlugin extends Plugin {
           advice = `建议继续观察；如果上涨持续，可执行 <code>${mainPrefix}memory reset</code> 重新记基线，或用 <code>${mainPrefix}reload</code> 整理内存。`;
         }
         await msg.edit({
-          text: `📊 <b>Memory优化状态</b>\n\n` +
+          text: html(`📊 <b>Memory优化状态</b>\n\n` +
                 `🧩 功能：${configDB.data.leakfixEnabled ? "✅ 已启用" : "❌ 未启用"}\n` +
-                `🔕 静默模式：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}\n` + 
+                `🔕 静默模式：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}\n` +
                 `🚦 状态：${statusEmoji} <code>${statusText}</code>\n` +
                 `📝 记录方式：${formatBaselineMode(configDB.data.baselineMode)}\n\n` +
                 `📦 当前使用：\n` +
@@ -746,11 +714,10 @@ class ReloadPlugin extends Plugin {
                 `📈 从基线开始增长：\n` +
                 `• 内存：<code>${formatMb(growth.heapGrowth)}</code>\n` +
                 `• 总内存：<code>${formatMb(growth.rssGrowth)}</code>\n\n` +
-                `💡 建议动作：\n• ${advice}`,
-          parseMode: "html"
+                `💡 建议动作：\n• ${advice}`),
         });
       } else {
-        await msg.edit({ text: HELP_TEXT, parseMode: "html" });
+        await msg.edit({ text: html(HELP_TEXT) });
       }
     }
   };
