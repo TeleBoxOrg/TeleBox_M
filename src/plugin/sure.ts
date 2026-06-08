@@ -1,26 +1,20 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { Api } from "teleproto";
+import { html } from "@mtcute/html-parser";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { SureDB } from "@utils/sureDB";
-import { sleep } from "teleproto/Helpers";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,
 } from "@utils/pluginManager";
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
-
-// HTML escape function
-function htmlEscape(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
 
 // 简单缓存 sure 用户 ID，减少频繁 IO
 let sureCache = {
@@ -58,13 +52,6 @@ function getSureMsgs() {
   return sureCache.msgs;
 }
 
-function extractId(from: any): number | null {
-  const raw = from?.chatId || from?.channelId || from?.userId;
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
 function buildDisplay(
   id: number,
   entity: any,
@@ -88,7 +75,7 @@ function buildDisplay(
 }
 
 async function handleAddDel(
-  msg: Api.Message,
+  msg: MessageContext,
   target: string,
   action: "add" | "del",
 ) {
@@ -97,20 +84,20 @@ async function handleAddDel(
   let display: any;
   if (target) {
     try {
-      entity = await msg.client?.getEntity(target);
+      entity = await msg.client?.getChat(target);
       uid = entity?.id;
       if (!uid) {
         await msg.edit({ text: "无法获取用户 ID" });
         return;
       }
       uid = Number(uid);
-      display = buildDisplay(uid, entity, entity instanceof Api.User);
+      display = buildDisplay(uid, entity, entity?.type === "user");
     } catch {
       await msg.edit({ text: "无法获取用户信息" });
       return;
     }
   } else {
-    if (!msg.isReply) {
+    if (!msg.replyToMessage) {
       await msg.edit({ text: "请回复目标用户的消息或带上 uid/@username" });
       return;
     }
@@ -119,17 +106,17 @@ async function handleAddDel(
       await msg.edit({ text: "无法获取回复消息" });
       return;
     }
-    uid = extractId(reply.fromId as any);
+    uid = reply.sender?.id;
     if (!uid) {
       await msg.edit({ text: "无法获取用户 ID" });
       return;
     }
     try {
-      entity = await msg.client?.getEntity(uid);
+      entity = await msg.client?.getChat(uid);
     } catch {
       /* ignore */
     }
-    display = buildDisplay(uid, entity, !!(reply.fromId as any)?.userId);
+    display = buildDisplay(uid, entity, reply.sender?.type === "user");
   }
 
   withSureDB((db) => {
@@ -139,25 +126,24 @@ async function handleAddDel(
   sureCache.ts = 0; // 失效缓存
 
   await msg.edit({
-    text: `已${action === "add" ? "添加" : "删除"}: ${display}`,
-    parseMode: "html",
+    text: html`已${action === "add" ? "添加" : "删除"}: ${display}`,
   });
   await msg.deleteWithDelay(5000);
 }
 
-async function handleList(msg: Api.Message) {
+async function handleList(msg: MessageContext) {
   const users = withSureDB((db) => db.ls());
   if (users.length === 0) {
     await msg.edit({ text: "当前没有任何用户" });
     return;
   }
   await msg.edit({
-    text: `当前用户列表：\n${users.map((u) => "- " + u.username).join("\n")}`,
-    parseMode: "html",
+    text: html`当前用户列表：
+${users.map((u) => "- " + u.username).join("\n")}`,
   });
 }
 async function handleChatAddDel(
-  msg: Api.Message,
+  msg: MessageContext,
   target: any,
   action: "add" | "del",
 ) {
@@ -166,30 +152,30 @@ async function handleChatAddDel(
   let display: any;
   if (target) {
     try {
-      entity = await msg.client?.getEntity(target);
+      entity = await msg.client?.getChat(target);
       cid = entity?.id;
       if (!cid) {
         await msg.edit({ text: "无法获取对话 ID" });
         return;
       }
       cid = Number(cid);
-      display = buildDisplay(cid, entity, entity instanceof Api.User);
+      display = buildDisplay(cid, entity, entity?.type === "user");
     } catch {
       await msg.edit({ text: "无法获取对话信息" });
       return;
     }
   } else {
-    cid = extractId(msg.peerId as any);
+    cid = msg.chat.id;
     if (!cid) {
       await msg.edit({ text: "无法获取对话 ID" });
       return;
     }
     try {
-      entity = await msg.client?.getEntity(cid);
+      entity = await msg.client?.getChat(cid);
     } catch {
       /* ignore */
     }
-    display = buildDisplay(cid, entity, !!(msg.peerId as any)?.userId);
+    display = buildDisplay(cid, entity, msg.chat?.type === "user");
   }
 
   withSureDB((db) => {
@@ -199,24 +185,23 @@ async function handleChatAddDel(
   sureCache.ts = 0; // 失效缓存
 
   await msg.edit({
-    text: `已${action === "add" ? "添加" : "删除"}: ${display}`,
-    parseMode: "html",
+    text: html`已${action === "add" ? "添加" : "删除"}: ${display}`,
   });
   await msg.deleteWithDelay(5000);
 }
-async function handleChatList(msg: Api.Message) {
+async function handleChatList(msg: MessageContext) {
   const chats = withSureDB((db) => db.lsChats());
   if (chats.length === 0) {
     await msg.edit({ text: "⚠️ 未设置对话白名单, 所有对话中均可使用" });
     return;
   }
   await msg.edit({
-    text: `对话白名单列表：\n${chats.map((c) => "- " + c.name).join("\n")}`,
-    parseMode: "html",
+    text: html`对话白名单列表：
+${chats.map((c) => "- " + c.name).join("\n")}`,
   });
 }
 async function handleMsgAddDel(
-  msg: Api.Message,
+  msg: MessageContext,
   input: any,
   action: "add" | "del",
   id?: string,
@@ -240,30 +225,27 @@ async function handleMsgAddDel(
   await msg.edit({
     text:
       raw && !input
-        ? ` 已清除 ${raw} 的重定向`
-        : `已${action === "add" ? "添加" : "删除"}: <code>${
-            raw ? `${raw} -> ${input}` : input
-          }</code>`,
-    parseMode: "html",
+        ? `已清除 ${raw} 的重定向`
+        : html`已${action === "add" ? "添加" : "删除"}: <code>${raw ? `${raw} -> ${input}` : input}</code>`,
   });
   await msg.deleteWithDelay(5000);
 }
-async function handleMsgList(msg: Api.Message) {
+async function handleMsgList(msg: MessageContext) {
   const msgs = withSureDB((db) => db.lsMsgs());
   if (msgs.length === 0) {
     await msg.edit({ text: "⚠️ 未设置消息白名单 需设置消息白名单方可使用" });
     return;
   }
   await msg.edit({
-    text: `消息白名单列表：\n${msgs
-      .map(
-        (m) =>
-          `<code>${m.id}</code>: <code>${m.msg}</code>${
-            m.redirect ? ` -> <code>${m.redirect}</code>` : ""
-          }`,
-      )
-      .join("\n")}`,
-    parseMode: "html",
+    text: html`消息白名单列表：
+${msgs
+  .map(
+    (m) =>
+      `<code>${m.id}</code>: <code>${m.msg}</code>${
+        m.redirect ? ` -> <code>${m.redirect}</code>` : ""
+      }`,
+  )
+  .join("\n")}`,
   });
 }
 
@@ -277,9 +259,9 @@ class surePlugin extends Plugin {
   }
 
   description: string = `赋予其他用户使用 bot 身份发送消息(支持重定向)的权限\n<code>${mainPrefix}sure add (回复目标用户的消息或带上 uid/@username)</code> - 添加用户\n<code>${mainPrefix}sure del (回复目标用户的消息或带上 uid/@username)</code> - 删除用户\n<code>${mainPrefix}sure ls</code> - 列出所有用户\n\n⚠️ 若未设置对话白名单, 所有对话中均可使用\n<code>${mainPrefix}sure chat add (在当前对话中使用 或带上 id/@name)</code> - 添加对话到白名单\n<code>${mainPrefix}sure chat del (在当前对话中使用 或带上 id/@name)</code> - 从白名单删除对话\n<code>${mainPrefix}sure chat ls/list</code> - 列出对话白名单\n\n⚠️ 需设置消息白名单方可使用\n<code>${mainPrefix}sure msg add 消息(使用原始字符串, 即可包含空格)</code> - 添加消息白名单\n⚠️ 若以 <code>_command:</code> 开头, 认为此消息是命令, 即 <code>_command:/sb</code> 可匹配 <code>/sb</code> 和 <code>/sb uid</code>. 若设置了重定向为 <code>/spam</code>, 则会自动变成 <code>/spam</code> 和 <code>/spam uid</code>\n<code>${mainPrefix}sure msg redirect ID 重定向消息(使用原始字符串, 即可包含空格)</code> - 使用消息的 ID 为消息设置重定向(设置空即为清除重定向)\n<code>${mainPrefix}sure msg del ID</code> - 使用消息的 ID 从白名单删除消息\n<code>${mainPrefix}sure msg ls/list</code> - 列出消息白名单\n\n一个典型的使用场景:\n设置 <code>_command:/sb</code> 重定向到 <code>${mainPrefix}ban</code>, 然后给普通群成员权限, 他们发送 /sb 时, 会自动调用 <code>${mainPrefix}ban</code> 命令`;
-  cmdHandlers: Record<string, (msg: Api.Message) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     sure: async (msg) => {
-      const parts = msg.message.trim().split(/\s+/);
+      const parts = msg.text.trim().split(/\s+/);
       let command = parts[1];
       if (command === "chat") {
         let subCommand = parts[2];
@@ -300,8 +282,8 @@ class surePlugin extends Plugin {
             return;
           }
           const subCommandTxt = ` ${subCommand} `;
-          const input = msg.message.substring(
-            msg.message.indexOf(subCommandTxt) + subCommandTxt.length,
+          const input = msg.text.substring(
+            msg.text.indexOf(subCommandTxt) + subCommandTxt.length,
           );
           if (input) {
             await handleMsgAddDel(msg, input, subCommand);
@@ -316,8 +298,8 @@ class surePlugin extends Plugin {
           }
           const subCommandTxt = ` ${id} `;
           const input = parts[4]
-            ? msg.message.substring(
-                msg.message.indexOf(subCommandTxt) + subCommandTxt.length,
+            ? msg.text.substring(
+                msg.text.indexOf(subCommandTxt) + subCommandTxt.length,
               )
             : "";
           if (id) {
@@ -340,17 +322,16 @@ class surePlugin extends Plugin {
         return;
       }
       await msg.edit({
-        text: "未知命令, ",
-        parseMode: "html",
+        text: html`未知命令, `,
       });
     },
   };
 
-  listenMessageHandler?: ((msg: Api.Message) => Promise<void>) | undefined =
+  listenMessageHandler?: (msg: MessageContext, options?: { isEdited?: boolean }) => Promise<void> =
     async (msg) => {
-      if (msg.fwdFrom) return;
-      const uid = extractId(msg.fromId as any);
-      const cid = extractId(msg.peerId as any);
+      if (msg.forward) return;
+      const uid = msg.sender.id;
+      const cid = msg.chat.id;
       if (!uid || !cid) return;
       if (!getSureIds().includes(uid)) return;
       const cids = getSureCids();
@@ -360,43 +341,39 @@ class surePlugin extends Plugin {
       const matchedMsg = msgs.find((m) => {
         if (m.msg.startsWith("_command:")) {
           const prefix = m.msg.replace("_command:", "");
-          const isStartsWith = msg.message.startsWith(prefix);
-          const suffix = msg.message.replace(prefix, "");
+          const isStartsWith = msg.text.startsWith(prefix);
+          const suffix = msg.text.replace(prefix, "");
           const matched = isStartsWith && (!suffix || suffix.startsWith(" "));
           if (matched && m.redirect) {
-            replacedMsg = msg.message.replace(prefix, m.redirect);
+            replacedMsg = msg.text.replace(prefix, m.redirect);
           }
           return matched;
         }
-        return m.msg === msg.message;
+        return m.msg === msg.text;
       });
       if (!matchedMsg) return;
 
-      const message = replacedMsg || matchedMsg.redirect || msg.message;
-      const cmd = await getCommandFromMessage(message);
+      const message = replacedMsg || matchedMsg.redirect || msg.text;
+      const cmd = getCommandFromMessage(message);
 
-      const sudoMsg = await msg.client?.sendMessage(msg.peerId, {
+      const replyInfo = msg.replyToMessage;
+      const replyTo =
+        replyInfo?.isForumTopic
+          ? replyInfo.threadId
+          : replyInfo?.id;
+
+      const sudoMsg = await msg.client?.sendText(
+        msg.chat.id,
         message,
-        replyTo:
-          (msg.replyTo?.forumTopic ? msg.replyTo?.replyToTopId : undefined) ||
-          msg.replyToMsgId,
-        formattingEntities: message.entities,
-      });
+        replyTo ? { replyTo } : undefined,
+      );
       if (cmd && sudoMsg)
         await dealCommandPluginWithMessage({
           cmd,
-          msg: sudoMsg,
+          msg: sudoMsg as MessageContext,
           trigger: msg,
           isEdited: false,
         });
-      // if (cmd) {
-      //   await dealCommandPluginWithMessage({ cmd, msg });
-      // } else {
-      //   await msg.client?.sendMessage(msg.peerId, {
-      //     message,
-      //     replyTo: msg.replyToMsgId,
-      //   });
-      // }
       await msg.deleteWithDelay(5000);
     };
 }
