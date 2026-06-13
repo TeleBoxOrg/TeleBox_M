@@ -107,6 +107,15 @@ export async function initializeClientSession(
     const me = await client.getMe();
     if (me) {
       console.log(`✅ Existing session detected. Logged in as ${me.displayName}.`);
+      // CRITICAL: client.start() bundles startUpdatesLoop() for fresh logins,
+      // but the fast-path here only calls getMe() which connects but does NOT
+      // start the updates loop. Without it, Dispatcher.for(client) silently
+      // receives ZERO updates — commands never trigger. Explicitly start it.
+      try {
+        await (client as any).startUpdatesLoop?.();
+      } catch (e) {
+        console.warn("[LOGIN] startUpdatesLoop failed (updates may be inactive):", e);
+      }
       closeReadlineInterface();
       return { meId: me.id ? String(me.id) : undefined };
     }

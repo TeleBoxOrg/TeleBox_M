@@ -2,18 +2,11 @@ import path from "path";
 import fs from "fs";
 import { isValidPlugin, Plugin } from "@utils/pluginBase";
 import { getGlobalClient, getCurrentGeneration } from "@utils/globalClient";
+import { tryGetCurrentRuntime } from "./runtimeManager";
 import { Dispatcher, MessageContext } from "@mtcute/dispatcher";
-import { Message } from "@mtcute/node";
 import { AliasDB } from "./aliasDB";
 import { cronManager } from "./cronManager";
 import type { TeleBoxRuntime } from "./runtimeManager";
-
-// mtcute Message exposes `.text` (string) and `.isOutgoing`. The legacy gramjs
-// code read `.message` for the raw text and `.out` for outgoing — those are
-// mapped to the mtcute equivalents throughout this module.
-type MessageWithText = Message & {
-  savedPeerId?: unknown;
-};
 
 type PluginEntry = {
   original?: string;
@@ -316,10 +309,16 @@ async function dealCommandPlugin(
   msg: MessageContext,
   isEdited: boolean
 ): Promise<void> {
-  const savedMessage = (msg as MessageWithText).savedPeerId;
+  // gramjs exposed `msg.savedPeerId` to flag Saved Messages; mtcute has no such
+  // property, so that check was always undefined and effectively dead. In
+  // mtcute, a message is in Saved Messages when its chat id equals our own user
+  // id. Compare against the self id cached on the runtime at login (avoids an
+  // extra getMe() round-trip per message).
+  const meId = tryGetCurrentRuntime()?.meId;
+  const isSavedMessage = meId != null && String(msg.chat.id) === meId;
   // gramjs `msg.out` → mtcute `msg.isOutgoing`. Only react to our own outgoing
   // commands (or saved-messages), matching the userbot model.
-  if (msg.isOutgoing || savedMessage) {
+  if (msg.isOutgoing || isSavedMessage) {
     const cmd = getCommandFromMessage(msg);
     if (cmd) {
       await dealCommandPluginWithMessage({ cmd, msg, isEdited });
