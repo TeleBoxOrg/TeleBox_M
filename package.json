@@ -45,6 +45,7 @@
     "archiver": "^7.0.1",
     "axios": "^1.11.0",
     "better-sqlite3": "^12.2.0",
+    "big-integer": "^1.6.52",
     "canvas": "^3.2.1",
     "cheerio": "^1.2.0",
     "cron": "^4.3.3",
@@ -66,12 +67,12 @@
     "smartcrop-sharp": "^2.0.8",
     "ssh2": "^1.15.0",
     "telegraf": "^4.16.3",
-    "teleproto": "^1.225.4",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
   },
   "devDependencies": {
+    "@types/big-integer": "^0.0.30",
     "vitest": "^4.1.8"
   }
 }

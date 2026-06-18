@@ -26,7 +26,7 @@ const DEFAULT_TEMPLATE = `<b>📊 TeleBox 运行状态</b>
 
 <b>📦 版本信息</b>
 • <b>Node.js版本:</b> <code>{nodejs}</code>
-• <b>Teleproto版本:</b> <code>{teleproto}</code>
+• <b>mtcute版本:</b> <code>{mtcute}</code>
 • <b>TeleBox版本:</b> <code>{telebox}</code>
 
 <b>📈 资源使用</b>
@@ -71,6 +71,7 @@ const HELP_TEXT = `<b>⚙️ Status 系统状态插件</b>
 <b>📦 版本信息</b>
 • <code>{nodejs}</code> - <b>Node.js版本</b>
 • <code>{teleproto}</code> - <b>Teleproto库版本</b>
+• <code>{mtcute}</code> - <b>mtcute库版本</b>
 • <code>{telebox}</code> - <b>TeleBox版本</b>
 
 <b>📈 资源使用</b>
@@ -133,7 +134,8 @@ interface StatusData {
   kernelInfo: string;
   locale: string;
   nodejsVersion: string;
-  teleprotoVersion: string;
+  teleprotoVersion: string;  // backward compat alias
+  mtcuteVersion: string;
   teleboxVersion: string;
   osInfo: string;
   packages: string;
@@ -150,6 +152,7 @@ interface StatusData {
   kernel: string;             // 内核版本
   nodejs: string;             // Node.js版本
   teleproto: string;           // Teleproto库版本
+  mtcute: string;              // mtcute库版本
   telebox: string;            // TeleBox版本
   os: string;                 // 操作系统信息
   loadaverage: string;        // 负载平均
@@ -186,6 +189,7 @@ interface SystemDetails {
 interface VersionInfo {
   nodejs: string;
   teleproto: string;
+  mtcute: string;
   telebox: string;
 }
 
@@ -435,6 +439,7 @@ class TeleBoxSystemMonitor extends Plugin {
       locale,
       nodejsVersion: versions.nodejs,
       teleprotoVersion: versions.teleproto,
+      mtcuteVersion: versions.mtcute,
       teleboxVersion: versions.telebox,
       osInfo: systemDetails.osInfo,
       packages: systemDetails.packages,
@@ -453,6 +458,7 @@ class TeleBoxSystemMonitor extends Plugin {
       kernel: baseData.kernelInfo,
       nodejs: baseData.nodejsVersion,
       teleproto: baseData.teleprotoVersion,
+      mtcute: baseData.mtcuteVersion,
       telebox: baseData.teleboxVersion,
       os: baseData.osInfo,
       loadaverage: baseData.loadavgStr,
@@ -810,12 +816,14 @@ Scan Time: ${scanTime}ms
       return {
         nodejs: process.version,
         teleproto: packageJson.dependencies?.teleproto?.replace('^', '') || 'unknown',
+        mtcute: packageJson.dependencies?.['@mtcute/node']?.replace('^', '') || 'unknown',
         telebox: readDisplayVersion()
       };
     } catch {
       return {
         nodejs: process.version,
         teleproto: 'unknown',
+        mtcute: 'unknown',
         telebox: readDisplayVersion()
       };
     }
