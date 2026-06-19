@@ -394,8 +394,9 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
         info += `· Members: ${entity.membersCount}<br>`;
     } else {
       info += `<b>ENTITY</b><br>`;
-      info += `· Type: ${(entity as any).type}<br>`;
-      info += `· ID: <code>${(entity as any).id}</code><br>`;
+      const genericEntity = entity as unknown as { type?: string; id?: number | string };
+      info += `· Type: ${genericEntity.type}<br>`;
+      info += `· ID: <code>${genericEntity.id}</code><br>`;
     }
 
     return info;
@@ -448,7 +449,7 @@ async function formatMessageInfo(msg: Message): Promise<string> {
           info += `· Original Chat ID: <code>${fullChannelId}</code><br>`;
         } else {
           // AnonymousSender
-          const anonSender = fwdSender as any;
+          const anonSender = fwdSender as unknown as { displayName?: string };
           if (anonSender?.displayName) {
             info += `· Hidden User: ${anonSender.displayName}<br>`;
           }

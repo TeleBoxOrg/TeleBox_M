@@ -90,14 +90,14 @@ class ConversationWrapper {
     colIndex: number
   ): Promise<void> {
     // mtcute Message.raw 包含完整 TL 数据，包括 replyMarkup
-    const raw = message.raw;
-    const keyboard = (raw as any).replyMarkup;
-    if (!keyboard || (keyboard as any)._ !== 'replyInlineMarkup') {
+    const raw = message.raw as unknown as { replyMarkup?: { _?: string; rows?: Array<{ buttons: Array<{ data?: Uint8Array }> }> } };
+    const keyboard = raw.replyMarkup;
+    if (!keyboard || keyboard._ !== 'replyInlineMarkup') {
       throw new Error("消息没有 InlineKeyboard 按钮");
     }
 
     // 通过行/列索引点击按钮
-    const rows = (keyboard as any).rows;
+    const rows = keyboard.rows;
     if (!rows || rowIndex >= rows.length || colIndex >= rows[rowIndex]?.buttons?.length) {
       throw new Error("按钮索引超出范围");
     }

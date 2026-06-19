@@ -123,23 +123,27 @@ export async function getBannedUsers(
     });
 
     for (const member of members) {
-      // member 可以是 ChatMember 类型
-      const memberAny = member as any;
+      // member 可以是 ChatMember 类型，使用接口描述运行时属性
+      const memberAny = member as unknown as {
+        kickedBy?: { id?: number };
+        date?: number;
+        peer?: { userId?: number; channelId?: number; chatId?: number };
+        user?: { id?: number; firstName?: string; username?: string; title?: string };
+      };
 
       if (memberAny.kickedBy !== undefined || memberAny.date !== undefined) {
         // Banned member
-        const peer = memberAny.peer || memberAny.user;
         let entityId: number = 0;
         let entityType: 'user' | 'channel' | 'chat' = 'user';
 
-        if (peer?.userId) {
-          entityId = Number(peer.userId);
+        if (memberAny.peer?.userId) {
+          entityId = Number(memberAny.peer.userId);
           entityType = 'user';
-        } else if (peer?.channelId) {
-          entityId = Number(peer.channelId);
+        } else if (memberAny.peer?.channelId) {
+          entityId = Number(memberAny.peer.channelId);
           entityType = 'channel';
-        } else if (peer?.chatId) {
-          entityId = Number(peer.chatId);
+        } else if (memberAny.peer?.chatId) {
+          entityId = Number(memberAny.peer.chatId);
           entityType = 'chat';
         } else if (memberAny.user?.id) {
           entityId = Number(memberAny.user.id);

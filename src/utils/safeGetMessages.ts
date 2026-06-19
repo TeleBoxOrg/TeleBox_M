@@ -71,7 +71,7 @@ export async function safeGetReplyMessage(
   const replyToMsgId = replyInfo?.id;
   if (!replyToMsgId) return undefined;
 
-  const client = (msg as any).client as TelegramClient | undefined;
+  const client = (msg as unknown as { client?: TelegramClient }).client;
   if (!client) return undefined;
 
   const [replyMsg] = await safeGetMessages(client, msg.chat, { ids: [replyToMsgId] });

@@ -246,8 +246,8 @@ async function getDatabase() {
 }
 
 async function getMediaFileName(msg: any): Promise<string> {
-  const metadata = msg.media as any;
-  return metadata.document.attributes[0].fileName;
+  const metadata = msg.media as unknown as { document?: { attributes?: Array<{ fileName?: string }> } };
+  return metadata.document!.attributes![0].fileName!;
 }
 
 function normalizeGithubUrl(input: string): string {
@@ -651,7 +651,7 @@ async function installPlugin(args: string[], msg: MessageContext) {
         const statusMsg = await sendOrEditMessage(msg, `🔍 正在验证插件 ${pluginName} ...`);
         const filePath = path.join(PLUGIN_PATH, fileName);
 
-        const _dlClient = await getGlobalClient(); const buf = await _dlClient.downloadAsBuffer(replied.media as any); fs.writeFileSync(filePath, buf as Buffer);
+        const _dlClient = await getGlobalClient(); const buf = await _dlClient.downloadAsBuffer(replied.media as unknown as Parameters<typeof _dlClient.downloadAsBuffer>[0]); fs.writeFileSync(filePath, buf as Buffer);
         
         try {
           const pluginModule = require(filePath);
@@ -1412,10 +1412,10 @@ if (require.main === module) {
     console.log("Usage: node tpm.ts install plugin1 plugin2 ...");
   }
   installPlugin(args, {
-    edit: async ({ text }: any) => {
+    edit: async ({ text }: { text: string }) => {
       console.log(text);
     },
-  } as any)
+  } as unknown as MessageContext)
     .then(() => {
       console.log("Plugins processed successfully");
     })

@@ -112,7 +112,7 @@ export async function initializeClientSession(
       // start the updates loop. Without it, Dispatcher.for(client) silently
       // receives ZERO updates — commands never trigger. Explicitly start it.
       try {
-        await (client as any).startUpdatesLoop?.();
+        await (client as unknown as { startUpdatesLoop?: () => Promise<void> }).startUpdatesLoop?.();
       } catch (e) {
         console.warn("[LOGIN] startUpdatesLoop failed (updates may be inactive):", e);
       }

@@ -40,7 +40,7 @@ async function formatEntity(
     // otherwise resolve it via getChat
     entity = target?._type
       ? target
-      : ((await client.getChat(target)) as any);
+      : await client.getChat(target);
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
@@ -649,7 +649,7 @@ class BfPlugin extends Plugin {
         });
 
         const backupMsg = messages[0];
-        const fileName = (backupMsg?.media as any)?.fileName ?? "";
+        const fileName = (backupMsg?.media as unknown as { fileName?: string })?.fileName ?? "";
         if (!fileName?.endsWith(".tar.gz")) {
           await msg.edit({
             text: "❌ 回复的消息不是有效的备份文件",

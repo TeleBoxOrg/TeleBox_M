@@ -87,7 +87,7 @@ class PrefixPlugin extends Plugin {
         console.log('[prefix] setPrefixes 不可用，使用备用方案');
       }
       const value = uniq.join(" ");
-      (process.env as any).TB_PREFIX = value;
+      process.env.TB_PREFIX = value;
       let persisted = true;
       try {
         const envPath = path.join(process.cwd(), ".env");

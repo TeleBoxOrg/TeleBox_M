@@ -93,7 +93,7 @@ async function update(force = false, msg: MessageContext) {
 
     // 退出进程，pm2 拉起后由 reload 插件接管 exitFile：
     // 退出前显示 "🔄 正在重启进程..."；重启完成后编辑为 "✅ 更新完成，耗时 Xms"
-    await executeExit(msg as any, {
+    await executeExit(msg, {
       pendingText: "🔄 正在重启进程...",
       successText: "✅ 更新完成，耗时 {elapsedMs}ms",
     });
