@@ -2,6 +2,7 @@ import { Plugin } from "@utils/pluginBase";
 import { getGlobalClient } from "@utils/globalClient";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getPrefixes } from "@utils/pluginManager";
+import { getRawObject } from "@utils/entityTypeGuards";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -97,7 +98,7 @@ class ClearStickerPlugin extends Plugin {
           
           for (const message of history) {
             if (message.media) {
-              const raw = (message as any).raw;
+              const raw = getRawObject(message);
               if (raw?.media?._ === 'messageMediaDocument') {
                 const document = raw.media.document;
                 if (document?._ === 'document') {

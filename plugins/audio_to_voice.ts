@@ -2,6 +2,7 @@ import { Plugin } from "@utils/pluginBase";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
+import { getRawObject } from "@utils/entityTypeGuards";
 import fs from "fs";
 import path from "path";
 import { createDirectoryInTemp } from "@utils/pathHelpers";
@@ -35,7 +36,7 @@ class AudioToVoicePlugin extends Plugin {
     if (!msg.media) return false;
     
     // Check if media is a document with audio
-    const raw = (msg as any).raw;
+    const raw = getRawObject(msg);
     if (!raw?.media) return false;
     
     const media = raw.media;
@@ -51,7 +52,7 @@ class AudioToVoicePlugin extends Plugin {
   }
 
   private getAudioDuration(msg: MessageContext): number {
-    const raw = (msg as any).raw;
+    const raw = getRawObject(msg);
     if (!raw?.media) return 0;
     
     const media = raw.media;
@@ -85,7 +86,7 @@ class AudioToVoicePlugin extends Plugin {
         });
         if (replyMessages && replyMessages.length > 0) {
           // Check if the reply message has audio
-          const replyRaw = (replyMessages[0] as any).raw;
+          const replyRaw = getRawObject(replyMessages[0]);
           if (replyRaw?.media?._ === 'messageMediaDocument') {
             const doc = replyRaw.media.document;
             if (doc?._ === 'document' && (
