@@ -14,7 +14,7 @@ import { Chat, User } from "@mtcute/node";
  * Replaces: `(entity as any)?._ === 'user'`
  */
 export function isUser(entity: unknown): entity is User {
-  return entity instanceof User || (entity as any)?.type === 'user';
+  return entity instanceof User || (entity as { type?: string } | null)?.type === 'user';
 }
 
 /**
@@ -22,7 +22,7 @@ export function isUser(entity: unknown): entity is User {
  * Replaces: `(entity as any)?._ === 'chat'`
  */
 export function isChat(entity: unknown): entity is Chat {
-  return entity instanceof Chat || (entity as any)?.type === 'chat';
+  return entity instanceof Chat || (entity as { type?: string } | null)?.type === 'chat';
 }
 
 /**
@@ -32,7 +32,7 @@ export function isChat(entity: unknown): entity is Chat {
 export function isChannel(entity: unknown): boolean {
   if (!isChat(entity)) return false;
   // In mtcute, channels are Chat objects where raw._ is 'channel' and not a megagroup
-  const raw = entity.raw as any;
+  const raw = entity.raw as { _?: string; megagroup?: boolean; broadcast?: boolean };
   return raw?._ === 'channel' && !raw?.megagroup && !raw?.broadcast;
 }
 
@@ -61,7 +61,7 @@ export function getEntityType(entity: unknown): string {
   if (isUser(entity)) return 'user';
   if (isChat(entity)) {
     if (entity.isGroup) return 'group';
-    const raw = entity.raw as any;
+    const raw = entity.raw as { _?: string };
     if (raw?._ === 'channel') return 'channel';
     return 'chat';
   }
