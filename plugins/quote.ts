@@ -122,6 +122,7 @@ function quoteResourcesReady(): boolean {
   const quoteDir = path.join(quotePluginDir(), "quote");
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
+    /* ignored */
   try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { /* version file optional */ }
   if (currentVersion !== QUOTE_PLUGIN_VERSION) return false;
   if (QUOTE_DEP_FILES.some((rel) => !fs.existsSync(path.join(quoteDir, rel)))) return false;
@@ -134,6 +135,7 @@ async function ensureQuoteAssets(): Promise<void> {
   const quoteDir = path.join(quotePluginDir(), "quote");
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
+    /* ignored */
   try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { /* version file optional */ }
 
   if (currentVersion !== QUOTE_PLUGIN_VERSION) {
@@ -261,6 +263,7 @@ function parseArgs(text: string): QuoteArgs {
 
 function asBigInt(value: any): bigint | undefined {
   if (value === undefined || value === null) return undefined;
+    /* ignored */
   try { return BigInt(value.value ?? value); } catch (_) { return undefined; }
 }
 
@@ -343,6 +346,7 @@ async function forwardedSource(msg: MessageContext): Promise<{ peer?: any; entit
 function stableEntityKey(entity: any): string | undefined {
   const raw = entity?.id ?? entity?.userId ?? entity?.channelId ?? entity?.chatId ?? entity?.accessHash ?? entity;
   if (!raw) return undefined;
+    /* ignored */
   try { return typeof raw === "bigint" ? raw.toString() : JSON.stringify(raw, (_, v) => typeof v === "bigint" ? v.toString() : v); } catch (_) { return String(raw); }
 }
 
@@ -370,6 +374,7 @@ async function senderEntity(msg: MessageContext): Promise<any | undefined> {
       if (key) entityCache.set(key, sender);
       return sender;
     }
+    /* ignored */
   } catch (_) { /* fall through to getPeerEntity */ }
   const client = await getGlobalClient().catch(() => null as any);
   const entity = await getPeerEntity(client, peer);
@@ -566,11 +571,13 @@ async function waitForStableFile(filePath: string, timeoutMs = 8000): Promise<Bu
           lastSize = size;
         }
       }
+      /* ignored */
     } catch (_) { /* polling interrupted, try final read */ }
     await sleepMs(120);
   }
   try {
     if (fs.existsSync(filePath) && fs.statSync(filePath).size > 0) return fs.readFileSync(filePath);
+    /* ignored */
   } catch (_) { /* file unreadable */ }
   return undefined;
 }
@@ -702,6 +709,7 @@ async function probeAnimatedInfo(buffer: Buffer): Promise<{ fps: number; duratio
     console.warn("quote animated probe failed", err?.message || err);
     return { fps: 12, duration: 2 };
   } finally {
+      /* ignored */
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
   }
 }
@@ -740,7 +748,9 @@ async function convertAnimatedEmojiToPng(buffer: Buffer): Promise<Buffer | undef
   } catch (_) {
     // keep fallback quiet; normal static buffers and unsupported tgs land here
   } finally {
+      /* ignored */
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+      /* ignored */
     try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
   }
 
@@ -775,7 +785,9 @@ async function extractAnimatedFrames(buffer: Buffer, size: number, frameCount: n
     console.warn("quote animated frame extract failed", err?.message || err);
     return [];
   } finally {
+      /* ignored */
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+      /* ignored */
     try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { /* cleanup */ }
   }
 }
@@ -870,6 +882,7 @@ async function probeWebmAlpha(buffer: Buffer): Promise<string> {
   } catch (err: any) {
     return `probe-failed:${err?.message || err}`;
   } finally {
+      /* ignored */
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
   }
 }
@@ -945,7 +958,9 @@ async function encodeFramesToWebm(frames: Buffer[], fps = TG_STICKER_FPS): Promi
     quoteTiming("webm.encode_total", t0, { frames: frames.length, bytes: best?.length || 0, crf: bestCrf });
     return best || Buffer.alloc(0);
   } finally {
+      /* ignored */
     for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
+      /* ignored */
     try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { /* cleanup */ }
   }
 }
@@ -1038,6 +1053,7 @@ async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs):
     const probe = await loadImage(rendered[0]);
     width = probe.width;
     height = probe.height;
+    /* ignored */
   } catch (_) { /* use default 512x512 */ }
   const encoded = await encodeFramesToWebm(rendered, fps);
   const tprobe = Date.now();
@@ -1284,6 +1300,7 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
       });
     }
   } catch (_) {
+      /* ignored */
     try { await msg.replyText(text); } catch (_) { /* last resort failed */ }
   }
 }

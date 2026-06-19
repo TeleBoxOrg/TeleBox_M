@@ -394,7 +394,8 @@ function getTargetLookup(target: TargetRecord): any {
     if (Number.isFinite(num)) return num;
     try {
       return BigInt(target.chatId);
-    } catch {}
+      /* ignored */
+    } catch { /* ignored */ }
     return target.chatId;
   }
   return target.target;

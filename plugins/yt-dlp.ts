@@ -84,6 +84,7 @@ class GeminiConfigManager {
             this.db = new Database(GEMINI_CONFIG_DB_PATH);
             this.db.exec(`CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
             this.initialized = true;
+          /* ignored */
         } catch (error) { console.error("[yt-dlp] 初始化 Gemini 配置数据库失败:", error); }
     }
     static get(key: string, defaultValue?: string): string {
@@ -92,6 +93,7 @@ class GeminiConfigManager {
         try {
             const row = this.db.prepare("SELECT value FROM config WHERE key = ?").get(key) as { value: string } | undefined;
             return row ? row.value : (defaultValue || GEMINI_DEFAULT_CONFIG[key] || "");
+          /* ignored */
         } catch (error) { console.error("[yt-dlp] 读取配置失败:", error); return ""; }
     }
     static set(key: string, value: string): void {
@@ -99,6 +101,7 @@ class GeminiConfigManager {
         if (!this.db) return;
         try {
             this.db.prepare(`INSERT OR REPLACE INTO config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`).run(key, value);
+          /* ignored */
         } catch (error) { console.error("[yt-dlp] 保存配置失败:", error); }
     }
 
@@ -106,7 +109,8 @@ class GeminiConfigManager {
         if (this.db) {
             try {
                 this.db.close();
-            } catch {}
+              /* ignored */
+            } catch { /* ignored */ }
         }
         this.db = null;
         this.initialized = false;

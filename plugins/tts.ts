@@ -27,7 +27,8 @@ async function deleteCommandMessage(msg: MessageContext) {
         } else {
             await msg.delete(); // 普通删除
         }
-    } catch { }
+      /* ignored */
+    } catch { /* ignored */ }
 }
 
 /** 清理文本（emoji/不在白名单的符号；合并连续标点） */

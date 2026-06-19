@@ -252,6 +252,7 @@ function clearChannelStateOnClient(
     if (um.channelFailRetryTimers && typeof um.channelFailRetryTimers.get === "function") {
       const t = um.channelFailRetryTimers.get(channelId);
       if (t) {
+          /* ignored */
         try { clearTimeout(t); } catch { /* ignore */ }
         um.channelFailRetryTimers.delete(channelId);
         cleared = true;
