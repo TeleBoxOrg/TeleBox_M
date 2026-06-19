@@ -2,7 +2,12 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2020",
-    "lib": ["dom", "es7", "ES2019", "ES2020"],
+    "lib": [
+      "dom",
+      "es7",
+      "ES2019",
+      "ES2020"
+    ],
     "sourceMap": false,
     "downlevelIteration": true,
     "allowJs": true,
@@ -16,9 +21,22 @@
     "outDir": "./dist",
     "baseUrl": "./src",
     "paths": {
-      "@utils/*": ["utils/*"]
+      "@utils/*": [
+        "utils/*"
+      ],
+      "@mtcute/html-parser": [
+        "utils/html"
+      ]
     }
   },
-  "exclude": ["node_modules", "dist", "temp", "temp/**/*"],
-  "include": ["src/**/*", "plugins/**/*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "temp",
+    "temp/**/*"
+  ],
+  "include": [
+    "src/**/*",
+    "plugins/**/*"
+  ]
 }
