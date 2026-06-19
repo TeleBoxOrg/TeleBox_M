@@ -128,6 +128,7 @@ async function fetchFromBincheck(bin: string): Promise<Partial<{ scheme: string;
       return { scheme, bank, country };
     }
   } catch (e) {
+    console.error("[bin] ignore, fallback will be used:", e);
     // ignore, fallback will be used
   }
   return {};

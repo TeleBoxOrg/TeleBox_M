@@ -147,6 +147,7 @@ class LuBsPlugin extends Plugin {
           try {
             await client.deleteMessagesById(chatId, [lastMsgId], { revoke: true });
           } catch (error) {
+            console.error("[lu_bs] 忽略删除失败的情况（消息可能已过期）:", error);
             // 忽略删除失败的情况（消息可能已过期）
           }
         }

@@ -513,19 +513,17 @@ class KeywordTasks {
       const aliasId = keywordAlias.get(chatId);
       if (aliasId) {
         const aliasTasks = this.getTasksForChat(aliasId);
-        for (const task of aliasTasks) {
-          if (task.checkNeedReply(message)) {
-            await task.processKeyword(message);
-          }
-        }
+        const aliasPromises = aliasTasks
+          .filter(task => task.checkNeedReply(message))
+          .map(task => task.processKeyword(message));
+        await Promise.all(aliasPromises);
       }
 
       const tasks = this.getTasksForChat(chatId);
-      for (const task of tasks) {
-        if (task.checkNeedReply(message)) {
-          await task.processKeyword(message);
-        }
-      }
+      const promises = tasks
+        .filter(task => task.checkNeedReply(message))
+        .map(task => task.processKeyword(message));
+      await Promise.all(promises);
     } catch (error) {
       console.error("Check and reply error:", error);
     }
