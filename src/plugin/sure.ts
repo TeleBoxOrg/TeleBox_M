@@ -3,7 +3,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
-import { SureDB } from "@utils/sureDB";
+import { SureDB, type MsgRecord } from "@utils/sureDB";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,
@@ -20,7 +20,7 @@ const mainPrefix = prefixes[0];
 let sureCache = {
   ids: [] as number[],
   cids: [] as number[],
-  msgs: [] as any[],
+  msgs: [] as MsgRecord[],
   ts: 0,
 };
 const SURE_CACHE_TTL = 10_000; // 10s

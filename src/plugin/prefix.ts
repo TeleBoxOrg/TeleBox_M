@@ -7,7 +7,7 @@ import path from "path";
 
 const htmlEscape = (t: string) =>
   t.replace(/[&<>"']/g, (m) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" } as any)[m] || m
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" } as Record<string, string>)[m] || m
   );
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
