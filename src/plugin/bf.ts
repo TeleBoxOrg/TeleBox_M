@@ -227,7 +227,8 @@ async function createBackup(
     // 清理临时目录
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
-    } catch {}
+      /* ignored */
+    } catch { /* ignored */ }
   }
 }
 
@@ -610,7 +611,8 @@ class BfPlugin extends Plugin {
           for (const f of tempFiles) {
             fs.unlinkSync(path.join(os.tmpdir(), f));
           }
-        } catch {}
+          /* ignored */
+        } catch { /* ignored */ }
       }
     },
 
@@ -683,7 +685,8 @@ class BfPlugin extends Plugin {
         try {
           fs.unlinkSync(tempPath);
           fs.rmSync(extractPath, { recursive: true, force: true });
-        } catch {}
+          /* ignored */
+        } catch { /* ignored */ }
 
         // 尝试重载插件
         try {

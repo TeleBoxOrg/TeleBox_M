@@ -1164,7 +1164,8 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
         try {
           const stat = fs.statSync(filePath);
           mtime = stat.mtime.toLocaleString("zh-CN");
-        } catch {}
+          /* ignored */
+        } catch { /* ignored */ }
         localLinesVerbose.push(`${nameTag} 🗄 ${mtime}`);
       } else {
         localLinesSimple.push(nameTag);
