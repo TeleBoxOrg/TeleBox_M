@@ -351,7 +351,7 @@ class TmpAdminPlugin extends Plugin {
     this.jobs.clear();
   }
 
-  description: string = `<br>临时管理员<br><br>${helpText}`;
+  description: string = `\n临时管理员\n\n${helpText}`;
 
   cmdHandlers: Record<
     string,
@@ -468,7 +468,7 @@ class TmpAdminPlugin extends Plugin {
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text:
-          `查询当前管理员状态失败：${codeTag(e?.message || e)}<br>` +
+          `查询当前管理员状态失败：${codeTag(e?.message || e)}\n` +
           "为避免覆盖现有管理员权限, 已取消设置。",
       });
       return;
@@ -527,7 +527,7 @@ class TmpAdminPlugin extends Plugin {
       try {
         await this.persistJob(key, job);
       } catch (e: any) {
-        persistenceWarning = `<br>持久化失败: ${codeTag(e?.message || e)}`;
+        persistenceWarning = `\n持久化失败: ${codeTag(e?.message || e)}`;
       }
 
       await sleep(1200);
@@ -540,13 +540,13 @@ class TmpAdminPlugin extends Plugin {
         }
       } catch (e: any) {
         verificationWarning =
-          `<br>状态校验失败, 已保留到期解除任务: ${codeTag(e?.message || e)}`;
+          `\n状态校验失败, 已保留到期解除任务: ${codeTag(e?.message || e)}`;
       }
 
       await respondToCommand(msg, trigger, {
         text:
-          `已设置临时管理员: ${user.display}<br>` +
-          `头衔: ${codeTag(tempTitle)}<br>` +
+          `已设置临时管理员: ${user.display}\n` +
+          `头衔: ${codeTag(tempTitle)}\n` +
           `时长: ${codeTag(formatDuration(durationMinutes))}` +
           `${persistenceWarning}${verificationWarning}`,
       }, true);
@@ -588,7 +588,7 @@ class TmpAdminPlugin extends Plugin {
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text:
-          `查询当前管理员状态失败：${codeTag(e?.message || e)}<br>` +
+          `查询当前管理员状态失败：${codeTag(e?.message || e)}\n` +
           "已保留临时管理员记录, 未执行解除。",
       });
       return;
@@ -862,7 +862,7 @@ class TmpAdminPlugin extends Plugin {
     });
 
     await respondToCommand(msg, trigger, {
-      text: `当前临时管理员：<br>${lines.join("<br>")}`,
+      text: `当前临时管理员：\n${lines.join("\n")}`,
     });
   }
 
