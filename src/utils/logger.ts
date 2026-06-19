@@ -383,8 +383,14 @@ class Logger {
     // "Channel 1680975844 difference too long" (after ANSI strip)
     m = clean.match(/Channel (\d+)/);
     if (m) return m[1];
-    // last-resort: any 8+ digit integer
-    m = clean.match(/(\d{8,})/);
+    // teleproto 1.225.x format: "... WRN updates <channelId>" at end of message
+    // This pattern appears in: "[USER 123] error fetching difference for %d: 500 PERSISTENT_TIMESTAMP_OUTDATED ... WRN updates 1680975844"
+    m = clean.match(/WRN updates (\d+)\s*$/);
+    if (m) return m[1];
+    // last-resort: any 8+ digit integer (but avoid matching user IDs in [USER xxx] prefix)
+    // Remove [USER xxx] prefix first to avoid false matches
+    const withoutUserPrefix = clean.replace(/\[USER \d+\]/g, '');
+    m = withoutUserPrefix.match(/(\d{8,})/);
     return m ? m[1] : null;
   }
 }

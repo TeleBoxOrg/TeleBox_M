@@ -385,8 +385,10 @@ class PingPlugin extends Plugin {
         }
 
         // 使用Telegram网络栈测试TCP连接
-        const telegramTcp80 = await telegramTcpPing(testTarget, 80, 5000);
-        const telegramTcp443 = await telegramTcpPing(testTarget, 443, 5000);
+        const [telegramTcp80, telegramTcp443] = await Promise.all([
+          telegramTcpPing(testTarget, 80, 5000),
+          telegramTcpPing(testTarget, 443, 5000)
+        ]);
 
         // 如果Telegram网络栈失败，回退到传统方法
         const tcp80 =
