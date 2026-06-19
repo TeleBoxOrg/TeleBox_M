@@ -254,11 +254,11 @@ class TTSPlugin extends Plugin {
                         return `${gender} ${codeTag(v.ShortName)} (${htmlEscape(v.LocalName)})`;
                     });
 
-                    const resultText = `📋 <b>可用音色列表</b> (${htmlEscape(filter)})<br><br>${lines.join("<br>")}<br><br>使用 <code>${mainPrefix}tts voice &lt;Name&gt;</code> 设置`;
+                    const resultText = `📋 <b>可用音色列表</b> (${htmlEscape(filter)})\n\n${lines.join("\n")}\n\n使用 <code>${mainPrefix}tts voice &lt;Name&gt;</code> 设置`;
 
                     // 如果太长，发送文件
                     if (resultText.length > 4000) {
-                        const buffer = Buffer.from(lines.join("<br>"));
+                        const buffer = Buffer.from(lines.join("\n"));
                         const client = await getGlobalClient();
                         if (!client) {
                             await msg.edit({ text: html`❌ 客户端不可用` });

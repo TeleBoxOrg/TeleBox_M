@@ -172,13 +172,13 @@ class PicToStickerPlugin extends Plugin {
     try {
       // 显示当前配置
       if (!option) {
-        const configDisplay = `⚙️ <b>当前配置</b><br><br>` +
-          `<b>默认表情:</b> ${this.config.defaultEmoji}<br>` +
-          `<b>贴纸尺寸:</b> ${this.config.size}x${this.config.size}<br>` +
-          `<b>图片质量:</b> ${this.config.quality}%<br>` +
-          `<b>背景颜色:</b> ${this.config.background}<br>` +
-          `<b>自动删除:</b> ${this.config.autoDelete ? '开启' : '关闭'}<br>` +
-          `<b>压缩等级:</b> ${this.config.compressionLevel}<br><br>` +
+        const configDisplay = `⚙️ <b>当前配置</b>\n\n` +
+          `<b>默认表情:</b> ${this.config.defaultEmoji}\n` +
+          `<b>贴纸尺寸:</b> ${this.config.size}x${this.config.size}\n` +
+          `<b>图片质量:</b> ${this.config.quality}%\n` +
+          `<b>背景颜色:</b> ${this.config.background}\n` +
+          `<b>自动删除:</b> ${this.config.autoDelete ? '开启' : '关闭'}\n` +
+          `<b>压缩等级:</b> ${this.config.compressionLevel}\n\n` +
           `💡 使用 <code>${mainPrefix}pts config [选项] [值]</code> 修改配置`;
         
         await msg.edit({ text: html`${configDisplay}` });
@@ -321,7 +321,7 @@ class PicToStickerPlugin extends Plugin {
       }
 
       const resultMessage = processedCount > 0 
-        ? `✅ <b>批量转换完成</b><br><br>成功: ${processedCount} 张<br>失败: ${failedCount} 张`
+        ? `✅ <b>批量转换完成</b>\n\n成功: ${processedCount} 张\n失败: ${failedCount} 张`
         : `❌ 未找到可转换的图片`;
 
       await msg.edit({ text: html`${resultMessage}` });
@@ -398,7 +398,7 @@ class PicToStickerPlugin extends Plugin {
         errorMsg = "❌ <b>无效的图片文件</b>";
       } else if (error.message?.includes('FLOOD_WAIT')) {
         const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
-        errorMsg = `❌ <b>请求过于频繁</b><br><br>请等待 ${waitTime} 秒后重试`;
+        errorMsg = `❌ <b>请求过于频繁</b>\n\n请等待 ${waitTime} 秒后重试`;
       }
       
       await msg.edit({ text: html`${errorMsg}` });
