@@ -1,6 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import { getGlobalClient } from "@utils/globalClient";
-import { TelegramClient } from "@mtcute/node";
+
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { createDirectoryInAssets } from "@utils/pathHelpers";

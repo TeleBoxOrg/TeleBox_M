@@ -7,9 +7,9 @@ import {
 import path from "path";
 import fs from "fs";
 import axios from "axios";
-import { html } from "@mtcute/html-parser";
+
 import type { MessageContext } from "@mtcute/dispatcher";
-import { TelegramClient } from "@mtcute/node";
+
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { JSONFilePreset } from "lowdb/node";
 import { getPrefixes } from "@utils/pluginManager";

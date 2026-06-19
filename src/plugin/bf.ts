@@ -1,7 +1,7 @@
 import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
-import type { Message } from "@mtcute/node";
+
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
