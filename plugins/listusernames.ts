@@ -53,16 +53,16 @@ class ListUsernamesPlugin extends Plugin {
 
         if (!result.chats || result.chats.length === 0) {
           await msg.edit({ 
-            text: html`📭 <b>没有找到公开群组/频道</b>
-
+            text: html`📭 <b>没有找到公开群组/频道</b><br><br>
+<br><br>
 您目前没有拥有任何公开群组或频道` 
           });
           return;
         }
 
         // 构建输出消息
-        let output = `📋 <b>属于我的公开群组/频道</b>\n\n`;
-        output += `共找到 <b>${result.chats.length}</b> 个公开群组/频道：\n\n`;
+        let output = `📋 <b>属于我的公开群组/频道</b><br><br>`;
+        output += `共找到 <b>${result.chats.length}</b> 个公开群组/频道：<br><br>`;
 
         result.chats.forEach((chat: any, index: number) => {
           const title = chat.title ? htmlEscape(chat.title) : "未知标题";
@@ -70,24 +70,24 @@ class ListUsernamesPlugin extends Plugin {
           const chatType = chat.broadcast ? "📢 频道" : "👥 群组";
           const chatId = chat.id ? chat.id.toString() : "未知ID";
           
-          output += `<b>${index + 1}.</b> ${title} (${htmlEscape(chatType)})\n`;
-          output += `   👤 用户名: ${codeTag(username)}\n`;
-          output += `   🆔 ID: ${codeTag(chatId)}\n\n`;
+          output += `<b>${index + 1}.</b> ${title} (${htmlEscape(chatType)})<br>`;
+          output += `   👤 用户名: ${codeTag(username)}<br>`;
+          output += `   🆔 ID: ${codeTag(chatId)}<br><br>`;
         });
 
         // 添加统计信息
         const channelCount = result.chats.filter((chat: any) => chat.broadcast).length;
         const groupCount = result.chats.length - channelCount;
         
-        output += `📊 <b>统计信息：</b>\n`;
-        output += `• 频道数量: ${channelCount}\n`;
-        output += `• 群组数量: ${groupCount}\n`;
+        output += `📊 <b>统计信息：</b><br>`;
+        output += `• 频道数量: ${channelCount}<br>`;
+        output += `• 群组数量: ${groupCount}<br>`;
         output += `• 总计: ${result.chats.length}`;
 
         // 检查消息长度（Telegram限制4096字符）
         if (output.length > 4096) {
           // 如果消息过长，分割发送第一部分
-          const part1 = output.substring(0, 4000) + "\n\n... (消息过长，已截断)";
+          const part1 = output.substring(0, 4000) + "<br><br>... (消息过长，已截断)";
           await msg.edit({ text: html`${part1}` });
           
           // 发送剩余部分作为新消息
@@ -102,7 +102,7 @@ class ListUsernamesPlugin extends Plugin {
       } catch (error: any) {
         console.error("[listusernames] 错误:", error);
         
-        let errorMessage = "❌ <b>获取列表失败</b>\n\n";
+        let errorMessage = "❌ <b>获取列表失败</b><br><br>";
         
         if (error.message?.includes("AUTH_KEY_UNREGISTERED")) {
           errorMessage += "会话已失效，请重新登录";

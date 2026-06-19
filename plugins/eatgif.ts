@@ -117,7 +117,7 @@ async function assetBufferFor(filePath: string): Promise<Buffer> {
 
 class EatGifPlugin extends Plugin {
 
-  description: string = `生成头像融合动图\n\n${help_text}`;
+  description: string = `生成头像融合动图<br><br>${help_text}`;
   cmdHandlers: Record<
     string,
     (msg: MessageContext, trigger?: MessageContext) => Promise<void>
@@ -155,14 +155,14 @@ class EatGifPlugin extends Plugin {
       if (!Object.keys(config).includes(sub)) {
         const text = `❌ 未找到 <code>${htmlEscape(
           sub
-        )}</code>\n\n${this.listAllStickers()}`;
+        )}</code><br><br>${this.listAllStickers()}`;
         await msg.edit({ text: html(text) });
         return;
       }
 
       if (!msg.replyToMessage && !trigger?.replyToMessage) {
         await msg.edit({
-          text: html`💡 请先回复一个用户的消息再执行\n\n使用：<code>${commandName} list</code> 查看表情列表`,
+          text: html`💡 请先回复一个用户的消息再执行<br><br>使用：<code>${commandName} list</code> 查看表情列表`,
         });
         return;
       }
@@ -183,8 +183,8 @@ class EatGifPlugin extends Plugin {
     const items = keys.map(
       (k) => `• <code>${htmlEscape(k)}</code> - ${htmlEscape(config[k].desc)}`
     );
-    const header = `🧩 <b>可用表情列表</b>\n使用：<code>${commandName} &lt;名称&gt;</code>（需回复Ta）\n\n`;
-    return header + items.join("\n");
+    const header = `🧩 <b>可用表情列表</b><br>使用：<code>${commandName} &lt;名称&gt;</code>（需回复Ta）<br><br>`;
+    return header + items.join("<br>");
   }
 
   private async clearRes(msg: MessageContext): Promise<void> {

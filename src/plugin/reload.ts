@@ -150,8 +150,8 @@ function buildMemoryAlertText(params: {
 }) {
   const { memory, config, reasons, growth } = params;
   return html(
-    `⚠️ <b>内存监控告警</b>\n\n` +
-    `触发原因：\n• ${reasons.join("\n• ")}\n\n` +
+    `⚠️ <b>内存监控告警</b><br><br>` +
+    `触发原因：<br>• ${reasons.join("<br>• ")}\n\n` +
     `当前内存：\n` +
     `• Heap：<code>${memory.heapUsed.toFixed(2)} MB</code> / 阈值 <code>${config.memoryThreshold} MB</code>\n` +
     `• RSS：<code>${memory.rss.toFixed(2)} MB</code> / 阈值 <code>${config.rssThreshold} MB</code>\n\n` +
@@ -317,8 +317,8 @@ async function memoryMonitorTask() {
           console.log("[Memory Monitor] Runtime 重建后内存仍超限，准备退出进程");
           if (!config.silentEnabled) {
             await runtime.client.sendText("me", html(
-              `⚠️ <b>Memory优化</b>\n\n` +
-              `已先尝试自动整理内存，但占用仍然偏高。\n` +
+              `⚠️ <b>Memory优化</b><br><br>` +
+              `已先尝试自动整理内存，但占用仍然偏高。<br>` +
               `• 当前内存：<code>${afterReloadMemory.heapUsed.toFixed(2)} MB</code>\n` +
               `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>\n\n` +
               `即将重启整个程序。`
@@ -327,8 +327,8 @@ async function memoryMonitorTask() {
           scheduleTrackedTimeout(() => process.exit(0), 1000);
         } else if (!config.silentEnabled) {
           await runtime.client.sendText("me", html(
-            `✅ <b>Memory优化</b>\n\n` +
-            `已自动重建 Runtime，内存已恢复到安全范围。\n` +
+            `✅ <b>Memory优化</b><br><br>` +
+            `已自动重建 Runtime，内存已恢复到安全范围。<br>` +
             `• 当前内存：<code>${afterReloadMemory.heapUsed.toFixed(2)} MB</code>\n` +
             `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>`
           ));
@@ -340,7 +340,7 @@ async function memoryMonitorTask() {
       if (!reloaded) {
         if (client && !config.silentEnabled) {
           await client.sendText("me", html(
-            `⚠️ <b>Memory优化</b>\n\n` +
+            `⚠️ <b>Memory优化</b><br><br>` +
             `自动重建 Runtime 失败，准备直接重启整个程序。`
           ));
         }
@@ -495,7 +495,7 @@ class ReloadPlugin extends Plugin {
         }
 
         await msg.edit({
-          text: html(`${infoText}\n\n<b>状态：</b> ${statusEmoji} ${statusText}`),
+          text: html(`${infoText}<br><br><b>状态：</b> ${statusEmoji} ${statusText}`),
         });
       } catch (error) {
         console.error("[Health] 命令执行失败:", error);
@@ -517,16 +517,16 @@ class ReloadPlugin extends Plugin {
         }
         await configDB.write();
         await msg.edit({
-          text: html(`✅ <b>Memory优化已启用</b>\n\n` +
-                `🛠️ 内存偏高时，会先自动尝试恢复\n` +
-                `🔁 如果恢复后还是偏高，会自动重启程序\n` +
+          text: html(`✅ <b>Memory优化已启用</b><br><br>` +
+                `🛠️ 内存偏高时，会先自动尝试恢复<br>` +
+                `🔁 如果恢复后还是偏高，会自动重启程序<br>` +
                 `📝 当前记录方式：${formatBaselineMode(configDB.data.baselineMode)}`),
         });
       } else if (subCmd === "off") {
         configDB.data.leakfixEnabled = false;
         await configDB.write();
         await msg.edit({
-          text: html("❌ <b>Memory优化已关闭</b>\n\n系统将不再自动处理内存偏高的情况。"),
+          text: html("❌ <b>Memory优化已关闭</b><br><br>系统将不再自动处理内存偏高的情况。"),
         });
       } else if (subCmd === "set") {
         const target = parts[2]?.toLowerCase();
@@ -542,8 +542,8 @@ class ReloadPlugin extends Plugin {
                 ? "更宽松，减少打扰"
                 : "平衡模式，适合大多数情况";
           await msg.edit({
-            text: html(`✅ <b>已切换内存预设</b>\n\n` +
-                  `🎛️ 当前预设：<code>${target}</code>\n` +
+            text: html(`✅ <b>已切换内存预设</b><br><br>` +
+                  `🎛️ 当前预设：<code>${target}</code><br>` +
                   `💡 说明：${presetText}`),
           });
           return;
@@ -551,10 +551,10 @@ class ReloadPlugin extends Plugin {
 
         if (isNaN(threshold) || threshold <= 0) {
           await msg.edit({
-            text: html(`❌ <b>参数错误</b>\n\n请提供有效的内存阈值（正整数，单位：MB）\n\n` +
-                  `快速预设：<code>${mainPrefix}memory set safe</code> / <code>normal</code> / <code>aggressive</code>\n` +
-                  `示例：<code>${mainPrefix}memory set heap 150</code>\n` +
-                  `<code>${mainPrefix}memory set rss 512</code>\n` +
+            text: html(`❌ <b>参数错误</b><br><br>请提供有效的内存阈值（正整数，单位：MB）<br><br>` +
+                  `快速预设：<code>${mainPrefix}memory set safe</code> / <code>normal</code> / <code>aggressive</code><br>` +
+                  `示例：<code>${mainPrefix}memory set heap 150</code><br>` +
+                  `<code>${mainPrefix}memory set rss 512</code><br>` +
                   `<code>${mainPrefix}memory set growth 120</code>`),
           });
           return;
@@ -568,7 +568,7 @@ class ReloadPlugin extends Plugin {
           configDB.data.runtimeGrowthThreshold = threshold;
         } else {
           await msg.edit({
-            text: html(`❌ <b>未知阈值类型</b>\n\n` +
+            text: html(`❌ <b>未知阈值类型</b><br><br>` +
                   `支持：<code>heap</code> / <code>rss</code> / <code>growth</code>`),
           });
           return;
@@ -576,21 +576,21 @@ class ReloadPlugin extends Plugin {
 
         await configDB.write();
         await msg.edit({
-          text: html(`✅ <b>设置已更新</b>\n\n` +
-                `⚙️ 项目：<code>${target}</code>\n` +
+          text: html(`✅ <b>设置已更新</b><br><br>` +
+                `⚙️ 项目：<code>${target}</code><br>` +
                 `📏 新值：<code>${threshold} MB</code>`),
         });
       } else if (subCmd === "reset") {
         updateMemoryBaseline(configDB.data, getMemoryUsage());
         await configDB.write();
         await msg.edit({
-          text: html(`✅ <b>已重新记录当前内存状态</b>\n\n📝 之后的"增长"会从现在开始重新计算。`),
+          text: html(`✅ <b>已重新记录当前内存状态</b><br><br>📝 之后的"增长"会从现在开始重新计算。`),
         });
       } else if (subCmd === "mode") {
         const mode = parseBaselineMode(parts[2]?.toLowerCase());
         if (!mode) {
           await msg.edit({
-            text: html(`❌ <b>未知模式</b>\n\n可用：<code>auto</code> / <code>manual</code> / <code>reload</code>`),
+            text: html(`❌ <b>未知模式</b><br><br>可用：<code>auto</code> / <code>manual</code> / <code>reload</code>`),
           });
           return;
         }
@@ -601,7 +601,7 @@ class ReloadPlugin extends Plugin {
         }
         await configDB.write();
         await msg.edit({
-          text: html(`✅ <b>记录方式已更新</b>\n\n` +
+          text: html(`✅ <b>记录方式已更新</b><br><br>` +
                 `📝 当前方式：${formatBaselineMode(mode)}`),
         });
       } else if (subCmd === "baseline") {
@@ -610,15 +610,15 @@ class ReloadPlugin extends Plugin {
           updateMemoryBaseline(configDB.data, getMemoryUsage());
           await configDB.write();
           await msg.edit({
-            text: html(`✅ <b>已重新记录当前内存状态</b>\n\n` +
+            text: html(`✅ <b>已重新记录当前内存状态</b><br><br>` +
                   `📝 当前记录方式：${formatBaselineMode(configDB.data.baselineMode)}`),
           });
         } else if (action === "mode") {
           const mode = parseBaselineMode(parts[3]?.toLowerCase());
           if (!mode) {
             await msg.edit({
-              text: html(`❌ <b>未知基线策略</b>\n\n` +
-                    `支持：<code>auto</code> / <code>manual</code> / <code>reload</code>\n\n` +
+              text: html(`❌ <b>未知基线策略</b><br><br>` +
+                    `支持：<code>auto</code> / <code>manual</code> / <code>reload</code><br><br>` +
                     `示例：<code>${mainPrefix}memory mode reload</code>`),
             });
             return;
@@ -630,12 +630,12 @@ class ReloadPlugin extends Plugin {
           }
           await configDB.write();
           await msg.edit({
-            text: html(`✅ <b>记录方式已更新</b>\n\n` +
+            text: html(`✅ <b>记录方式已更新</b><br><br>` +
                   `📝 当前方式：${formatBaselineMode(mode)}`),
           });
         } else {
           await msg.edit({
-            text: html(`📏 <b>运行时内存基线</b>\n\n` +
+            text: html(`📏 <b>运行时内存基线</b><br><br>` +
                   `🧠 内存基线：<code>${formatMb(configDB.data.baselineHeapUsed)}</code>\n` +
                   `🖥️ 总内存基线：<code>${formatMb(configDB.data.baselineRss)}</code>\n` +
                   `📝 当前方式：${formatBaselineMode(configDB.data.baselineMode)}\n\n` +
@@ -649,21 +649,21 @@ class ReloadPlugin extends Plugin {
           configDB.data.silentEnabled = true;
           await configDB.write();
           await msg.edit({
-            text: html(`✅ <b>静默模式已启用</b>\n\n` +
-                  `• 内存超限自动重启时将<b>不发送</b>通知\n` +
+            text: html(`✅ <b>静默模式已启用</b><br><br>` +
+                  `• 内存超限自动重启时将<b>不发送</b>通知<br>` +
                   `• 仍会在控制台记录日志`),
           });
         } else if (silentCmd === "off") {
           configDB.data.silentEnabled = false;
           await configDB.write();
           await msg.edit({
-            text: html(`✅ <b>静默模式已关闭</b>\n\n` +
+            text: html(`✅ <b>静默模式已关闭</b><br><br>` +
                   `• 内存超限自动重启时将<b>发送</b>通知到 "me"`),
           });
         } else {
           await msg.edit({
-            text: html(`📊 <b>Memory优化静默模式</b>\n\n` +
-                  `🔕 <code>${mainPrefix}memory silent on/off</code> - 启用或禁用静默模式\n\n` +
+            text: html(`📊 <b>Memory优化静默模式</b><br><br>` +
+                  `🔕 <code>${mainPrefix}memory silent on/off</code> - 启用或禁用静默模式<br><br>` +
                   `当前状态：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}`),
           });
         }
@@ -699,10 +699,10 @@ class ReloadPlugin extends Plugin {
           advice = `建议继续观察；如果上涨持续，可执行 <code>${mainPrefix}memory reset</code> 重新记基线，或用 <code>${mainPrefix}reload</code> 整理内存。`;
         }
         await msg.edit({
-          text: html(`📊 <b>Memory优化状态</b>\n\n` +
-                `🧩 功能：${configDB.data.leakfixEnabled ? "✅ 已启用" : "❌ 未启用"}\n` +
-                `🔕 静默模式：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}\n` +
-                `🚦 状态：${statusEmoji} <code>${statusText}</code>\n` +
+          text: html(`📊 <b>Memory优化状态</b><br><br>` +
+                `🧩 功能：${configDB.data.leakfixEnabled ? "✅ 已启用" : "❌ 未启用"}<br>` +
+                `🔕 静默模式：${configDB.data.silentEnabled ? "✅ 已启用" : "❌ 未启用"}<br>` +
+                `🚦 状态：${statusEmoji} <code>${statusText}</code><br>` +
                 `📝 记录方式：${formatBaselineMode(configDB.data.baselineMode)}\n\n` +
                 `📦 当前使用：\n` +
                 `• 内存：<code>${memory.heapUsed.toFixed(2)} MB</code>\n` +

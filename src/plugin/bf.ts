@@ -424,7 +424,7 @@ class BfPlugin extends Plugin {
           text: html(
             target === "all"
               ? "✅ 已清空所有目标"
-              : `✅ 已删除 ${target}\n当前目标: ${
+              : `✅ 已删除 ${target}<br>当前目标: ${
                   remaining.join(", ") || "无"
                 }`
           ),
@@ -577,7 +577,7 @@ class BfPlugin extends Plugin {
               await client.sendMedia("me", {
                 type: "document",
                 file: backupPath,
-                caption: html(`⚠️ 发送到 ${dest} 失败\n\n${caption}`),
+                caption: html(`⚠️ 发送到 ${dest} 失败<br><br>${caption}`),
                 fileName: backupName,
               });
             }
@@ -591,7 +591,7 @@ class BfPlugin extends Plugin {
         
         await msg.edit({
           text: html(
-            `✅ <b>${backupTypeDisplay}完成</b>\n\n` +
+            `✅ <b>${backupTypeDisplay}完成</b><br><br>` +
             `🎯 <b>发送到</b>: ${destDisplays.join(", ")}\n` +
             `📦 <b>内容</b>: ${contentDisplay}\n` +
             `💾 <b>大小</b>: ${(stats.size / 1024 / 1024).toFixed(2)} MB`
@@ -622,9 +622,9 @@ class BfPlugin extends Plugin {
       if (cmd === "help" || cmd === "帮助") {
         await msg.edit({
           text: html(
-            "🔄 <b>TeleBox 恢复系统</b>\n\n" +
-            "📁 回复备份文件消息，发送 <code>hf</code> 恢复\n" +
-            "📦 支持格式: .tar.gz 备份文件\n" +
+            "🔄 <b>TeleBox 恢复系统</b><br><br>" +
+            "📁 回复备份文件消息，发送 <code>hf</code> 恢复<br>" +
+            "📦 支持格式: .tar.gz 备份文件<br>" +
             "🔄 恢复后会自动重载插件"
           ),
         });

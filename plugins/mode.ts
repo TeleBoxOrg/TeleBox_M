@@ -178,7 +178,7 @@ class MessageModePlugin extends Plugin {
         const black = this.isBlack(chatId);
 
         await msg.edit({
-          text: html`🔍 <b>当前会话模式：</b> <code>${mode}</code>\n🌐 <b>全局模式：</b> <code>${global}</code>\n⚪ <b>白名单：</b> ${white ? "✔ 是" : "✖ 否"}\n⚫ <b>黑名单：</b> ${black ? "✔ 是" : "✖ 否"}`,
+          text: html`🔍 <b>当前会话模式：</b> <code>${mode}</code><br>🌐 <b>全局模式：</b> <code>${global}</code><br>⚪ <b>白名单：</b> ${white ? "✔ 是" : "✖ 否"}<br>⚫ <b>黑名单：</b> ${black ? "✔ 是" : "✖ 否"}`,
         });
         return;
       }
@@ -243,7 +243,7 @@ class MessageModePlugin extends Plugin {
 
       case "list":
         await msg.edit({
-          text: html`⚪ 白名单列表：\n<code>${htmlEscape(list.join("\n")) || "空"}</code>`,
+          text: html`⚪ 白名单列表：<br><code>${list.map(htmlEscape).join("<br>") || "空"}</code>`,
         });
         return;
 
@@ -277,7 +277,7 @@ class MessageModePlugin extends Plugin {
 
       case "list":
         await msg.edit({
-          text: html`⚫ 黑名单列表：\n<code>${htmlEscape(list.join("\n")) || "空"}</code>`,
+          text: html`⚫ 黑名单列表：<br><code>${list.map(htmlEscape).join("<br>") || "空"}</code>`,
         });
         return;
 

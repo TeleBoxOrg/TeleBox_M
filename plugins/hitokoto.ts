@@ -168,7 +168,7 @@ class HitokotoPlugin extends Plugin {
 
     // 构建最终消息
     const finalText = sourceInfo 
-      ? `💬 ${htmlEscape(hitokotoData.hitokoto)}\n\n📚 ${sourceInfo}`
+      ? `💬 ${htmlEscape(hitokotoData.hitokoto)}<br><br>📚 ${sourceInfo}`
       : `💬 ${htmlEscape(hitokotoData.hitokoto)}`;
 
     // 编辑消息显示结果

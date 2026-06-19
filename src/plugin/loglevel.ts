@@ -68,7 +68,7 @@ class LogLevelPlugin extends Plugin {
         break;
       default:
         await msg.edit({
-          text: html("❌ <b>无效的日志等级</b>\n\n" +
+          text: html("❌ <b>无效的日志等级</b><br><br>" +
                 "💡 可用等级：<code>debug</code>, <code>info</code>, <code>warning</code>, <code>error</code>, <code>silent</code>"),
         });
         return;

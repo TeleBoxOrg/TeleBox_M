@@ -1277,7 +1277,11 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
     if (typeof (msg as any).edit === "function") await (msg as any).edit({ text });
     else {
       const client = await getGlobalClient().catch(() => null as any);
-      if (client) await client.editMessage(msg.chat.id, { message: msg.id, text });
+      if (client) await (client as any).editMessage({
+        peer: msg.chat.id,
+        message: msg.id,
+        text,
+      });
     }
   } catch (_) {
     try { await msg.replyText(text); } catch (_) {}

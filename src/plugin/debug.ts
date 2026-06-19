@@ -91,7 +91,7 @@ class DebugPlugin extends Plugin {
               if (parseResult.type === "message") {
                 // 消息链接解析结果
                 const parsedMsg = parseResult.data as Message;
-                targetInfo += `🔗 ${parseResult.info}\n\n`;
+                targetInfo += `🔗 ${parseResult.info}<br><br>`;
 
                 if (parsedMsg.sender) {
                   targetInfo += await formatUserInfo(
@@ -100,15 +100,15 @@ class DebugPlugin extends Plugin {
                     "LINK MESSAGE SENDER",
                     true
                   );
-                  targetInfo += "\n";
+                  targetInfo += "<br>";
                 }
                 targetInfo += await formatMessageInfo(parsedMsg);
-                targetInfo += "\n";
+                targetInfo += "<br>";
                 targetInfo += await formatChatInfo(client, parsedMsg);
               } else if (parseResult.type === "entity") {
                 // 实体链接解析结果
                 const entity = parseResult.data as Peer;
-                targetInfo += `🔗 ${parseResult.info}\n\n`;
+                targetInfo += `🔗 ${parseResult.info}<br><br>`;
                 targetInfo += await formatEntityInfo(entity);
               }
             } else {
@@ -126,18 +126,18 @@ class DebugPlugin extends Plugin {
                 "REPLIED USER",
                 true
               );
-              targetInfo += "\n";
+              targetInfo += "<br>";
             }
           }
 
           // 显示消息详细信息
           targetInfo += await formatMessageInfo(msg);
-          targetInfo += "\n";
+          targetInfo += "<br>";
 
           if (!msg.replyToMessage) {
             // 没有回复消息时，显示自己的信息
             targetInfo += await formatSelfInfo(client);
-            targetInfo += "\n";
+            targetInfo += "<br>";
           }
 
           // 显示聊天信息
@@ -368,34 +368,34 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
     let info = "";
 
     if (isUser(entity)) {
-      info += `<b>USER</b>\n`;
+      info += `<b>USER</b><br>`;
       info +=
         `· Name: ${entity.firstName || ""} ${entity.lastName || ""}`.trim() +
-        "\n";
+        "<br>";
       info += `· Username: ${
         entity.username ? "@" + entity.username : "N/A"
-      }\n`;
-      info += `· ID: <code>${entity.id}</code>\n`;
-      if (entity.isBot) info += `· Type: Bot\n`;
-      if (entity.isVerified) info += `· Verified\n`;
-      if (entity.isPremium) info += `· Premium\n`;
+      }<br>`;
+      info += `· ID: <code>${entity.id}</code><br>`;
+      if (entity.isBot) info += `· Type: Bot<br>`;
+      if (entity.isVerified) info += `· Verified<br>`;
+      if (entity.isPremium) info += `· Premium<br>`;
     } else if (isChat(entity)) {
       const isChannel = entity.chatType === "channel";
-      info += `<b>${isChannel ? "CHANNEL" : "SUPERGROUP"}</b>\n`;
-      info += `· Title: ${entity.title}\n`;
+      info += `<b>${isChannel ? "CHANNEL" : "SUPERGROUP"}</b><br>`;
+      info += `· Title: ${entity.title}<br>`;
       info += `· Username: ${
         entity.username ? "@" + entity.username : "N/A"
-      }\n`;
+      }<br>`;
       const entityId = entity.id.toString();
       const fullId = entityId.startsWith("-100") ? entityId : `-100${entityId}`;
-      info += `· ID: <code>${fullId}</code>\n`;
-      if (entity.isVerified) info += `· Verified\n`;
+      info += `· ID: <code>${fullId}</code><br>`;
+      if (entity.isVerified) info += `· Verified<br>`;
       if (entity.membersCount)
-        info += `· Members: ${entity.membersCount}\n`;
+        info += `· Members: ${entity.membersCount}<br>`;
     } else {
-      info += `<b>ENTITY</b>\n`;
-      info += `· Type: ${(entity as any).type}\n`;
-      info += `· ID: <code>${(entity as any).id}</code>\n`;
+      info += `<b>ENTITY</b><br>`;
+      info += `· Type: ${(entity as any).type}<br>`;
+      info += `· ID: <code>${(entity as any).id}</code><br>`;
     }
 
     return info;
@@ -407,24 +407,24 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
 // 格式化消息信息
 async function formatMessageInfo(msg: Message): Promise<string> {
   try {
-    let info = `<b>MESSAGE</b>\n`;
+    let info = `<b>MESSAGE</b><br>`;
 
     if (msg.replyToMessage?.id) {
-      info += `· Reply to: <code>${msg.replyToMessage.id}</code>\n`;
+      info += `· Reply to: <code>${msg.replyToMessage.id}</code><br>`;
     }
 
-    info += `· ID: <code>${msg.id}</code>\n`;
-    info += `· Sender: <code>${msg.sender?.id || "N/A"}</code>\n`;
-    info += `· Chat: <code>${msg.chat?.id || "N/A"}</code>\n`;
+    info += `· ID: <code>${msg.id}</code><br>`;
+    info += `· Sender: <code>${msg.sender?.id || "N/A"}</code><br>`;
+    info += `· Chat: <code>${msg.chat?.id || "N/A"}</code><br>`;
 
     if (msg.date) {
-      info += `· Time: ${msg.date.toLocaleString("zh-CN")}\n`;
+      info += `· Time: ${msg.date.toLocaleString("zh-CN")}<br>`;
     }
 
     // 增强转发消息信息显示
     if (msg.forward) {
       const fwd = msg.forward;
-      info += `\n<b>FORWARD INFO</b>\n`;
+      info += `<br><b>FORWARD INFO</b><br>`;
       
       // 原始发送者信息
       const fwdSender = fwd.sender;
@@ -432,46 +432,46 @@ async function formatMessageInfo(msg: Message): Promise<string> {
         if (isUser(fwdSender as Peer)) {
           const user = fwdSender as User;
           const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "N/A";
-          info += `· Original Name: ${fullName}\n`;
+          info += `· Original Name: ${fullName}<br>`;
           if (user.username) {
-            info += `· Original Username: @${user.username}\n`;
+            info += `· Original Username: @${user.username}<br>`;
           }
-          info += `· Original Sender ID: <code>${user.id}</code>\n`;
+          info += `· Original Sender ID: <code>${user.id}</code><br>`;
         } else if (isChat(fwdSender as Peer)) {
           const chat = fwdSender as Chat;
-          info += `· Original Channel: ${chat.title}\n`;
+          info += `· Original Channel: ${chat.title}<br>`;
           if (chat.username) {
-            info += `· Original Username: @${chat.username}\n`;
+            info += `· Original Username: @${chat.username}<br>`;
           }
           const channelId = chat.id.toString();
           const fullChannelId = channelId.startsWith("-100") ? channelId : `-100${channelId}`;
-          info += `· Original Chat ID: <code>${fullChannelId}</code>\n`;
+          info += `· Original Chat ID: <code>${fullChannelId}</code><br>`;
         } else {
           // AnonymousSender
           const anonSender = fwdSender as any;
           if (anonSender?.displayName) {
-            info += `· Hidden User: ${anonSender.displayName}\n`;
+            info += `· Hidden User: ${anonSender.displayName}<br>`;
           }
         }
       }
       
       // 原始消息ID（用于频道消息）
       if (fwd.fromMessageId) {
-        info += `· Original Message ID: <code>${fwd.fromMessageId}</code>\n`;
+        info += `· Original Message ID: <code>${fwd.fromMessageId}</code><br>`;
       }
       
       // 转发时间
-      info += `· Forward Time: ${fwd.date.toLocaleString("zh-CN")}\n`;
+      info += `· Forward Time: ${fwd.date.toLocaleString("zh-CN")}<br>`;
       
       // 如果有签名
       if (fwd.signature) {
-        info += `· Post Author: ${fwd.signature}\n`;
+        info += `· Post Author: ${fwd.signature}<br>`;
       }
     }
 
     return info;
   } catch (error: any) {
-    return `<b>MESSAGE</b>\nError: ${error.message}\n`;
+    return `<b>MESSAGE</b><br>Error: ${error.message}<br>`;
   }
 }
 
@@ -484,34 +484,34 @@ async function formatUserInfo(
 ): Promise<string> {
   try {
     const peer = await resolvePeer(client, userId);
-    let info = `<b>${title}</b>\n`;
+    let info = `<b>${title}</b><br>`;
 
     if (peer && isUser(peer)) {
       const fullName =
         [peer.firstName, peer.lastName].filter(Boolean).join(" ") ||
         "N/A";
 
-      info += `· Name: ${fullName}\n`;
+      info += `· Name: ${fullName}<br>`;
       info += `· Username: ${
         peer.username ? "@" + peer.username : "N/A"
-      }\n`;
-      info += `· ID: <code>${peer.id}</code>\n`;
+      }<br>`;
+      info += `· ID: <code>${peer.id}</code><br>`;
 
-      if (peer.isBot) info += `· Type: Bot\n`;
-      if (peer.isVerified) info += `· Verified\n`;
-      if (peer.isPremium) info += `· Premium\n`;
+      if (peer.isBot) info += `· Type: Bot<br>`;
+      if (peer.isVerified) info += `· Verified<br>`;
+      if (peer.isPremium) info += `· Premium<br>`;
     } else if (peer && isChat(peer)) {
-      info += `· ID: <code>${peer.id}</code>\n`;
-      info += `· Type: ${peer.chatType}\n`;
-      info += `· Title: ${peer.title}\n`;
+      info += `· ID: <code>${peer.id}</code><br>`;
+      info += `· Type: ${peer.chatType}<br>`;
+      info += `· Title: ${peer.title}<br>`;
     } else {
-      info += `· ID: <code>${userId}</code>\n`;
-      info += `· Type: Unknown\n`;
+      info += `· ID: <code>${userId}</code><br>`;
+      info += `· Type: Unknown<br>`;
     }
 
     return info;
   } catch (error: any) {
-    return `<b>${title}</b>\nError: ${error.message}\n`;
+    return `<b>${title}</b><br>Error: ${error.message}<br>`;
   }
 }
 
@@ -522,7 +522,7 @@ async function formatSelfInfo(client: TelegramClient): Promise<string> {
     if (!me) return "";
     return await formatUserInfo(client, me.id, "SELF", false);
   } catch (error: any) {
-    return `<b>SELF</b>\nError: ${error.message}\n`;
+    return `<b>SELF</b><br>Error: ${error.message}<br>`;
   }
 }
 
@@ -533,12 +533,12 @@ async function formatChatInfo(
 ): Promise<string> {
   try {
     if (!msg.chat?.id) {
-      return `<b>CHAT</b>\nError: No chat ID\n`;
+      return `<b>CHAT</b><br>Error: No chat ID<br>`;
     }
 
     const peer = await resolvePeer(client, msg.chat.id);
     if (!peer) {
-      return `<b>CHAT</b>\nError: Could not resolve chat\n`;
+      return `<b>CHAT</b><br>Error: Could not resolve chat<br>`;
     }
     let info = "";
 
@@ -546,40 +546,40 @@ async function formatChatInfo(
       info += await formatUserInfo(client, peer.id, "PRIVATE", false);
     } else if (isChat(peer)) {
       if (peer.chatType === "group") {
-        info += `<b>GROUP</b>\n`;
-        info += `· Title: ${peer.title}\n`;
+        info += `<b>GROUP</b><br>`;
+        info += `· Title: ${peer.title}<br>`;
         const groupId = peer.id.toString();
         const fullGroupId = groupId.startsWith("-") ? groupId : `-${groupId}`;
-        info += `· ID: <code>${fullGroupId}</code>\n`;
+        info += `· ID: <code>${fullGroupId}</code><br>`;
       } else {
         // channel or supergroup
         const isChannel = peer.chatType === "channel";
-        info += `<b>${isChannel ? "CHANNEL" : "GROUP"}</b>\n`;
-        info += `· Title: ${peer.title}\n`;
+        info += `<b>${isChannel ? "CHANNEL" : "GROUP"}</b><br>`;
+        info += `· Title: ${peer.title}<br>`;
         info += `· Username: ${
           peer.username ? "@" + peer.username : "N/A"
-        }\n`;
+        }<br>`;
         const chatId = peer.id.toString();
         const fullChatId = chatId.startsWith("-100") ? chatId : `-100${chatId}`;
-        info += `· ID: <code>${fullChatId}</code>\n`;
+        info += `· ID: <code>${fullChatId}</code><br>`;
 
         if (peer.isVerified) {
-          info += `· Verified\n`;
+          info += `· Verified<br>`;
         }
       }
     }
 
     return info;
   } catch (error: any) {
-    return `<b>CHAT</b>\nError: ${error.message}\n`;
+    return `<b>CHAT</b><br>Error: ${error.message}<br>`;
   }
 }
 
 // 解析群组ID功能
 async function parseGroupId(client: TelegramClient, chatId: string): Promise<string> {
   try {
-    let info = `🆔 <b>群组ID解析结果</b>\n\n`;
-    info += `· 输入ID: <code>${chatId}</code>\n`;
+    let info = `🆔 <b>群组ID解析结果</b><br><br>`;
+    info += `· 输入ID: <code>${chatId}</code><br>`;
 
     // 尝试获取群组信息
     let entity: Peer | null = null;
@@ -589,83 +589,83 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
       entity = await client.getPeer(chatId);
       entityFound = true;
     } catch (error: any) {
-      info += `· 状态: ❌ 无法访问此群组\n`;
-      info += `· 错误: ${error.message}\n\n`;
+      info += `· 状态: ❌ 无法访问此群组<br>`;
+      info += `· 错误: ${error.message}<br><br>`;
     }
 
     if (entityFound && entity) {
-      info += `· 状态: ✅ 群组信息获取成功\n\n`;
+      info += `· 状态: ✅ 群组信息获取成功<br><br>`;
       
       // 群组基本信息
-      info += `<b>📋 群组信息</b>\n`;
+      info += `<b>📋 群组信息</b><br>`;
       
       if (isChat(entity)) {
         if (entity.chatType === "channel" || entity.chatType === "supergroup") {
           const isChannel = entity.chatType === "channel";
-          info += `· 类型: ${isChannel ? "频道" : "超级群组"}\n`;
-          info += `· 名称: ${entity.title}\n`;
+          info += `· 类型: ${isChannel ? "频道" : "超级群组"}<br>`;
+          info += `· 名称: ${entity.title}<br>`;
           
           if (entity.username) {
-            info += `· 用户名: @${entity.username}\n`;
-            info += `· 公开链接: https://t.me/${entity.username}\n`;
+            info += `· 用户名: @${entity.username}<br>`;
+            info += `· 公开链接: https://t.me/${entity.username}<br>`;
           } else {
-            info += `· 用户名: 无（私有群组）\n`;
+            info += `· 用户名: 无（私有群组）<br>`;
           }
           
           // 生成跳转链接
           const numericId = entity.id.toString().replace("-100", "");
-          info += `· 私有链接: https://t.me/c/${numericId}/1\n`;
+          info += `· 私有链接: https://t.me/c/${numericId}/1<br>`;
           
           if (entity.membersCount) {
-            info += `· 成员数: ${entity.membersCount}\n`;
+            info += `· 成员数: ${entity.membersCount}<br>`;
           }
           
           if (entity.isVerified) {
-            info += `· 已验证: ✅\n`;
+            info += `· 已验证: ✅<br>`;
           }
           
         } else if (entity.chatType === "group") {
-          info += `· 类型: 普通群组\n`;
-          info += `· 名称: ${entity.title}\n`;
-          info += `· 用户名: 无（普通群组无用户名）\n`;
+          info += `· 类型: 普通群组<br>`;
+          info += `· 名称: ${entity.title}<br>`;
+          info += `· 用户名: 无（普通群组无用户名）<br>`;
           
           if (entity.membersCount) {
-            info += `· 成员数: ${entity.membersCount}\n`;
+            info += `· 成员数: ${entity.membersCount}<br>`;
           }
         }
       } else if (isUser(entity)) {
-        info += `· 类型: 用户\n`;
-        info += `· 名称: ${entity.displayName}\n`;
+        info += `· 类型: 用户<br>`;
+        info += `· 名称: ${entity.displayName}<br>`;
         if (entity.username) {
-          info += `· 用户名: @${entity.username}\n`;
+          info += `· 用户名: @${entity.username}<br>`;
         }
       }
       
     } else {
       // 即使无法访问，也提供一些基本的ID解析信息
-      info += `<b>📋 ID格式分析</b>\n`;
+      info += `<b>📋 ID格式分析</b><br>`;
       
       if (chatId.startsWith("-100")) {
         const numericId = chatId.replace("-100", "");
-        info += `· 类型: 超级群组/频道ID\n`;
-        info += `· 数字ID: ${numericId}\n`;
-        info += `· 私有链接: https://t.me/c/${numericId}/1\n`;
+        info += `· 类型: 超级群组/频道ID<br>`;
+        info += `· 数字ID: ${numericId}<br>`;
+        info += `· 私有链接: https://t.me/c/${numericId}/1<br>`;
       } else if (chatId.startsWith("-")) {
-        info += `· 类型: 普通群组ID\n`;
+        info += `· 类型: 普通群组ID<br>`;
       } else {
-        info += `· 类型: 用户ID或其他\n`;
+        info += `· 类型: 用户ID或其他<br>`;
       }
     }
 
-    info += `\n<b>🔗 可用链接格式</b>\n`;
+    info += `<br><b>🔗 可用链接格式</b><br>`;
     if (entityFound && entity && isChat(entity) && entity.username) {
-      info += `· 公开链接: https://t.me/${entity.username}\n`;
+      info += `· 公开链接: https://t.me/${entity.username}<br>`;
     }
     
     if (chatId.startsWith("-100")) {
       const numericId = chatId.replace("-100", "");
-      info += `· 私有链接: https://t.me/c/${numericId}/1\n`;
-      info += `· 邀请链接: 需要管理员权限生成\n`;
+      info += `· 私有链接: https://t.me/c/${numericId}/1<br>`;
+      info += `· 邀请链接: 需要管理员权限生成<br>`;
     }
 
     return info;

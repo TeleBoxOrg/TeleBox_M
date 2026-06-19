@@ -318,8 +318,8 @@ class PingPlugin extends Plugin {
           const dcResults = await pingDataCenters();
 
           await msg.edit({
-            text: html(`🌐 <b>Telegram数据中心延迟</b>\n\n${dcResults.join(
-              "\n"
+            text: html(`🌐 <b>Telegram数据中心延迟</b><br><br>${dcResults.join(
+              "<br>"
             )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
           });
           return;
@@ -328,7 +328,7 @@ class PingPlugin extends Plugin {
         // 帮助信息
         if (target === "help" || target === "h") {
           await msg.edit({
-            text: html(`🏓 <b>Ping工具使用说明</b>\n\n<b>基础用法:</b>\n• <code>${mainPrefix}ping</code> - Telegram延迟测试\n• <code>${mainPrefix}ping all</code> - 所有数据中心延迟\n\n<b>网络测试:</b>\n• <code>${mainPrefix}ping 8.8.8.8</code> - IP地址ping\n• <code>${mainPrefix}ping google.com</code> - 域名ping\n• <code>${mainPrefix}ping dc1</code> - 指定数据中心\n\n<b>数据中心:</b>\n• DC1-DC5: 分别对应不同地区服务器\n\n💡 <i>支持ICMP和TCP连接测试</i>`),
+            text: html(`🏓 <b>Ping工具使用说明</b><br><br><b>基础用法:</b><br>• <code>${mainPrefix}ping</code> - Telegram延迟测试<br>• <code>${mainPrefix}ping all</code> - 所有数据中心延迟<br><br><b>网络测试:</b><br>• <code>${mainPrefix}ping 8.8.8.8</code> - IP地址ping<br>• <code>${mainPrefix}ping google.com</code> - 域名ping<br>• <code>${mainPrefix}ping dc1</code> - 指定数据中心<br><br><b>数据中心:</b><br>• DC1-DC5: 分别对应不同地区服务器<br><br>💡 <i>支持ICMP和TCP连接测试</i>`),
           });
           return;
         }
@@ -442,7 +442,7 @@ class PingPlugin extends Plugin {
 
         await msg.edit({
           text: html(`${displayText}${results.join(
-            "\n"
+            "<br>"
           )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
         });
       } catch (error: any) {

@@ -362,7 +362,7 @@ class TeleBoxSystemMonitor extends Plugin {
     const escaped = template.replace(/[&<>"']/g, (m: string) => htmlMap[m] || m);
 
     await msg.edit({
-      text: html(`<b>📄 当前模板内容:</b>\n\n<code>${escaped}</code>`),
+      text: html(`<b>📄 当前模板内容:</b><br><br><code>${escaped}</code>`),
     });
   }
 

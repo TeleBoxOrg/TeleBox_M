@@ -68,13 +68,13 @@ type TempAdminJob = {
 };
 
 type StoredChannel = {
-  className: "InputPeerChannel" | "InputChannel";
+  className: "any" | "InputChannel";
   channelId: string;
   accessHash: string;
 };
 
 type StoredUser = {
-  className: "InputPeerUser" | "InputUser";
+  className: "any" | "InputUser";
   userId: string;
   accessHash: string;
 };
@@ -221,7 +221,7 @@ function longToString(value: any): string {
 }
 
 function serializeChannel(channel: any): StoredChannel {
-  const cn = channel?._ === "inputPeerChannel" ? "InputPeerChannel"
+  const cn = channel?._ === "inputPeerChannel" ? "any"
            : channel?._ === "inputChannel" ? "InputChannel"
            : undefined;
   if (!cn) {
@@ -236,7 +236,7 @@ function serializeChannel(channel: any): StoredChannel {
 }
 
 function serializeUser(user: any): StoredUser {
-  const cn = user?._ === "inputPeerUser" ? "InputPeerUser"
+  const cn = user?._ === "inputPeerUser" ? "any"
            : user?._ === "inputUser" ? "InputUser"
            : undefined;
   if (!cn) {
@@ -351,7 +351,7 @@ class TmpAdminPlugin extends Plugin {
     this.jobs.clear();
   }
 
-  description: string = `\n临时管理员\n\n${helpText}`;
+  description: string = `<br>临时管理员<br><br>${helpText}`;
 
   cmdHandlers: Record<
     string,
@@ -363,7 +363,7 @@ class TmpAdminPlugin extends Plugin {
       const sub = (parts[1] || "").toLowerCase();
 
       if (["help", "h"].includes(sub)) {
-        await respondToCommand(msg, trigger, { text: helpText, parseMode: "html" });
+        await respondToCommand(msg, trigger, { text: helpText });
         return;
       }
 
@@ -371,7 +371,6 @@ class TmpAdminPlugin extends Plugin {
       if (!isInChannel) {
         await respondToCommand(msg, trigger, {
           text: `请在超级群/频道中使用 <code>${commandName}</code> 命令`,
-          parseMode: "html",
         });
         return;
       }
@@ -425,7 +424,7 @@ class TmpAdminPlugin extends Plugin {
         return;
       }
 
-      await respondToCommand(msg, trigger, { text: helpText, parseMode: "html" });
+      await respondToCommand(msg, trigger, { text: helpText });
     },
   };
 
@@ -446,7 +445,6 @@ class TmpAdminPlugin extends Plugin {
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text: `设置临时管理员失败：${codeTag(e?.message || e)}`,
-        parseMode: "html",
       });
       return;
     }
@@ -470,9 +468,8 @@ class TmpAdminPlugin extends Plugin {
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text:
-          `查询当前管理员状态失败：${codeTag(e?.message || e)}\n` +
+          `查询当前管理员状态失败：${codeTag(e?.message || e)}<br>` +
           "为避免覆盖现有管理员权限, 已取消设置。",
-        parseMode: "html",
       });
       return;
     }
@@ -530,7 +527,7 @@ class TmpAdminPlugin extends Plugin {
       try {
         await this.persistJob(key, job);
       } catch (e: any) {
-        persistenceWarning = `\n持久化失败: ${codeTag(e?.message || e)}`;
+        persistenceWarning = `<br>持久化失败: ${codeTag(e?.message || e)}`;
       }
 
       await sleep(1200);
@@ -543,21 +540,19 @@ class TmpAdminPlugin extends Plugin {
         }
       } catch (e: any) {
         verificationWarning =
-          `\n状态校验失败, 已保留到期解除任务: ${codeTag(e?.message || e)}`;
+          `<br>状态校验失败, 已保留到期解除任务: ${codeTag(e?.message || e)}`;
       }
 
       await respondToCommand(msg, trigger, {
         text:
-          `已设置临时管理员: ${user.display}\n` +
-          `头衔: ${codeTag(tempTitle)}\n` +
+          `已设置临时管理员: ${user.display}<br>` +
+          `头衔: ${codeTag(tempTitle)}<br>` +
           `时长: ${codeTag(formatDuration(durationMinutes))}` +
           `${persistenceWarning}${verificationWarning}`,
-        parseMode: "html",
       }, true);
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text: `设置临时管理员失败：${codeTag(e?.message || e)}`,
-        parseMode: "html",
       }, true);
     }
   }
@@ -593,9 +588,8 @@ class TmpAdminPlugin extends Plugin {
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text:
-          `查询当前管理员状态失败：${codeTag(e?.message || e)}\n` +
+          `查询当前管理员状态失败：${codeTag(e?.message || e)}<br>` +
           "已保留临时管理员记录, 未执行解除。",
-        parseMode: "html",
       });
       return;
     }
@@ -627,12 +621,10 @@ class TmpAdminPlugin extends Plugin {
       const user = await formatEntity(userId || userEntity, true);
       await respondToCommand(msg, trigger, {
         text: `${manual ? "已提前解除" : "已解除"}临时管理员: ${user.display}`,
-        parseMode: "html",
       }, true);
     } catch (e: any) {
       await respondToCommand(msg, trigger, {
         text: `解除临时管理员失败：${codeTag(e?.message || e)}`,
-        parseMode: "html",
       }, true);
     }
   }
@@ -870,8 +862,7 @@ class TmpAdminPlugin extends Plugin {
     });
 
     await respondToCommand(msg, trigger, {
-      text: `当前临时管理员：\n${lines.join("\n")}`,
-      parseMode: "html",
+      text: `当前临时管理员：<br>${lines.join("<br>")}`,
     });
   }
 

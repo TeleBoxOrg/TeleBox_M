@@ -160,7 +160,7 @@ class TTSPlugin extends Plugin {
 
                 // 遮挡 Key 显示
                 const maskedKey = key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : "***";
-                await msg.edit({ text: html`✅ 配置已更新\nKey: ${codeTag(maskedKey)}\nRegion: ${codeTag(region)}` });
+                await msg.edit({ text: html`✅ 配置已更新<br>Key: ${codeTag(maskedKey)}<br>Region: ${codeTag(region)}` });
                 return;
             }
 
@@ -182,7 +182,7 @@ class TTSPlugin extends Plugin {
                 const { key, region, voice, style, rate } = db.data;
                 const maskedKey = key ? (key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : "***") : "未设置";
                 await msg.edit({
-                    text: html`📋 <b>当前配置</b>\n\nKey: ${codeTag(maskedKey)}\nRegion: ${codeTag(region)}\nVoice: ${codeTag(voice)}\nStyle: ${codeTag(style || "默认")}\nRate: ${codeTag(rate || "1.0")}`,
+                    text: html`📋 <b>当前配置</b><br><br>Key: ${codeTag(maskedKey)}<br>Region: ${codeTag(region)}<br>Voice: ${codeTag(voice)}<br>Style: ${codeTag(style || "默认")}<br>Rate: ${codeTag(rate || "1.0")}`,
                 });
                 return;
             }
@@ -254,11 +254,11 @@ class TTSPlugin extends Plugin {
                         return `${gender} ${codeTag(v.ShortName)} (${htmlEscape(v.LocalName)})`;
                     });
 
-                    const resultText = `📋 <b>可用音色列表</b> (${htmlEscape(filter)})\n\n${lines.join("\n")}\n\n使用 <code>${mainPrefix}tts voice &lt;Name&gt;</code> 设置`;
+                    const resultText = `📋 <b>可用音色列表</b> (${htmlEscape(filter)})<br><br>${lines.join("<br>")}<br><br>使用 <code>${mainPrefix}tts voice &lt;Name&gt;</code> 设置`;
 
                     // 如果太长，发送文件
                     if (resultText.length > 4000) {
-                        const buffer = Buffer.from(lines.join("\n"));
+                        const buffer = Buffer.from(lines.join("<br>"));
                         const client = await getGlobalClient();
                         if (!client) {
                             await msg.edit({ text: html`❌ 客户端不可用` });
@@ -310,7 +310,7 @@ class TTSPlugin extends Plugin {
             }
 
             if (!db.data.key || !db.data.region) {
-                await msg.edit({ text: html`❌ 请先配置 Azure API Key 和 Region\n使用: <code>${mainPrefix}tts config &lt;key&gt; &lt;region&gt;</code>` });
+                await msg.edit({ text: html`❌ 请先配置 Azure API Key 和 Region<br>使用: <code>${mainPrefix}tts config &lt;key&gt; &lt;region&gt;</code>` });
                 return;
             }
 

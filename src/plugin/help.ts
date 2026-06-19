@@ -186,7 +186,7 @@ class HelpPlugin extends Plugin {
         const links = `🔗 <a href='https://github.com/TeleBoxDev/TeleBox'>📦仓库</a> | <a href='https://github.com/TeleBoxDev/TeleBox_Plugins'>🔌插件</a> | <a href='https://t.me/teleboxdevgroup'>👥群组</a> | <a href='https://t.me/teleboxdev'>📣频道</a> | <a href='https://telegra.ph/TeleBox-插件列表-03-03'>📚插件列表</a>`;
 
         await msg.edit({
-          text: html([header, "", basic.text, "", prefixLine, helpTip, links].join("\n")),
+          text: html([header, "", basic.text, "", prefixLine, helpTip, links].join("<br>")),
           disableWebPreview: true,
         });
 
@@ -196,7 +196,7 @@ class HelpPlugin extends Plugin {
 
         if (modules.text) {
           await msg.replyText(
-            html(modules.text + `\n💡 使用 <i><code>${mainPrefix}help [模块名]</code></i> 查看具体模块的使用方法`),
+            html(modules.text + `<br>💡 使用 <i><code>${mainPrefix}help [模块名]</code></i> 查看具体模块的使用方法`),
             { disableWebPreview: true }
           );
         }

@@ -51,7 +51,7 @@ class PrefixPlugin extends Plugin {
       if (sub === "add") {
         const adds = args.slice(1).filter(Boolean);
         if (adds.length === 0) {
-          await msg.edit({ text: html(`❌ 参数不足\n\n${help_text}`) });
+          await msg.edit({ text: html(`❌ 参数不足<br><br>${help_text}`) });
           return;
         }
         base = Array.from(new Set([...getPrefixes(), ...adds]));
@@ -59,7 +59,7 @@ class PrefixPlugin extends Plugin {
       if (sub === "del") {
         const dels = new Set(args.slice(1).filter(Boolean));
         if (dels.size === 0) {
-          await msg.edit({ text: html(`❌ 参数不足\n\n${help_text}`) });
+          await msg.edit({ text: html(`❌ 参数不足<br><br>${help_text}`) });
           return;
         }
         base = getPrefixes().filter((p) => !dels.has(p));
@@ -74,7 +74,7 @@ class PrefixPlugin extends Plugin {
       }
       const list = (base ?? args.slice(1)).filter(Boolean);
       if (list.length === 0) {
-        await msg.edit({ text: html(`❌ 参数不足\n\n${help_text}`) });
+        await msg.edit({ text: html(`❌ 参数不足<br><br>${help_text}`) });
         return;
       }
       const uniq = Array.from(new Set(list));

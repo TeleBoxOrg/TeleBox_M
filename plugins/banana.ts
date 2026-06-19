@@ -30,10 +30,10 @@ const CONFIG_DEFAULTS: BananaConfig = {
 };
 
 const help_text =
-  "🎯 <b>Nano-Banana 图像编辑插件</b>\n" +
-  `• 回复图片并附带 <code>${mainPrefix}banana 提示词</code> 调用 Gemini Nano-Banana 修改图像\n` +
-  `• <code>${mainPrefix}banana key ＜密钥＞</code> 配置 Gemini API Key\n` +
-  `• <code>${mainPrefix}banana limit ＜数值/MB＞</code> 调整图片大小上限（默认 10MB，可用 default 重置）\n` +
+  "🎯 <b>Nano-Banana 图像编辑插件</b><br>" +
+  `• 回复图片并附带 <code>${mainPrefix}banana 提示词</code> 调用 Gemini Nano-Banana 修改图像<br>` +
+  `• <code>${mainPrefix}banana key ＜密钥＞</code> 配置 Gemini API Key<br>` +
+  `• <code>${mainPrefix}banana limit ＜数值/MB＞</code> 调整图片大小上限（默认 10MB，可用 default 重置）<br>` +
   "• 使用 ";
 
 const dataDir = createDirectoryInAssets("banana");
@@ -186,7 +186,7 @@ async function handleConfig(
       if (!subValue) {
         const current = await resolveMaxImageBytes();
         await msg.edit({
-          text: html`当前图片大小上限：${formatBytes(current)}（范围 ${formatBytes(MIN_ALLOWED_IMAGE_BYTES)} - ${formatBytes(MAX_ALLOWED_IMAGE_BYTES)}）\n使用 <code>${mainPrefix}banana limit default</code> 可恢复默认值`,
+          text: html`当前图片大小上限：${formatBytes(current)}（范围 ${formatBytes(MIN_ALLOWED_IMAGE_BYTES)} - ${formatBytes(MAX_ALLOWED_IMAGE_BYTES)}）<br>使用 <code>${mainPrefix}banana limit default</code> 可恢复默认值`,
         });
         return;
       }
@@ -234,7 +234,7 @@ async function handleConfig(
         resolveMaxImageBytes(),
       ]);
       await msg.edit({
-        text: `🔧 当前配置\n• API Key: ${maskKey(apiKey)}\n• 图片大小上限: ${formatBytes(maxBytes)}`,
+        text: `🔧 当前配置<br>• API Key: ${maskKey(apiKey)}<br>• 图片大小上限: ${formatBytes(maxBytes)}`,
       });
       return;
     }
@@ -393,7 +393,7 @@ async function handleImageEdit(
   }
 
   const extraText = textParts.length
-    ? `\n\n${textParts.join("\n")}`
+    ? `<br><br>${textParts.join("<br>")}`
     : "";
   const captionHtml = html`<b>提示:</b> ${prompt}${extraText}`;
 
@@ -458,7 +458,7 @@ async function handleBananaCommand(msg: MessageContext): Promise<void> {
 
 class BananaPlugin extends Plugin {
 
-  description: string = `Nano-Banana 图像编辑插件\n\n${help_text}`;
+  description: string = `Nano-Banana 图像编辑插件<br><br>${help_text}`;
   cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     banana: handleBananaCommand,
   };

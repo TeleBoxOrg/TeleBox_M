@@ -538,22 +538,22 @@ function buildListText(targets: TargetRecord[], mode: BsMode): string {
   lines.push(`当前模式：<b>${formatMode(mode)}</b>`);
 
   if (enabled.length > 0) {
-    lines.push("\n🔛 已启用的目标：");
-    lines.push(enabled.map((target) => `- ${renderTarget(target)}`).join("\n"));
+    lines.push("<br>🔛 已启用的目标：");
+    lines.push(enabled.map((target) => `- ${renderTarget(target)}`).join("<br>"));
   }
 
   if (disabled.length > 0) {
-    lines.push("\n⏹ 已禁用的目标：");
+    lines.push("<br>⏹ 已禁用的目标：");
     lines.push(
-      disabled.map((target) => `- ${renderTarget(target)}`).join("\n")
+      disabled.map((target) => `- ${renderTarget(target)}`).join("<br>")
     );
   }
 
   if (enabled.length === 0 && disabled.length === 0) {
-    lines.push("\n暂无目标，请使用 <code>add</code> 命令添加");
+    lines.push("<br>暂无目标，请使用 <code>add</code> 命令添加");
   }
 
-  return lines.join("\n");
+  return lines.join("<br>");
 }
 
 async function collectMessages(
@@ -623,14 +623,13 @@ async function sendSourceFeedback(options: {
   if (!responses.length) return;
 
   try {
-    // await client.sendMessage(fromPeer, {
-    //   message: `亲爱的被观察者 您的 ${responses.join("\n")}`,
+    // await client.sendText(fromPeer, "")`,
     //
     //
     //   replyTo: buildReplyToForMessage(replyMessage),
     // });
     await msg.edit({
-      text: `亲爱的被观察者 您的 ${responses.join("\n")}`
+      text: `亲爱的被观察者 您的 ${responses.join("<br>")}`
     });
   } catch (error) {
     console.warn("[bs] 回复原消息失败", error);
@@ -708,12 +707,12 @@ class BsPlugin extends Plugin {
     [pluginName]: async (msg: MessageContext) => {
       const client = await getGlobalClient();
       if (!client) {
-        await msg.edit({ text: "❌ <b>客户端未初始化</b>"});
+        await msg.edit({ text: html`❌ <b>客户端未初始化</b>` });
         return;
       }
 
       const text = msg.text || "";
-      const lines = text.trim().split(/\r?\n/);
+      const lines = text.trim().split(/\r?<br>/);
       const head = lines[0] || "";
       const parts = head.trim().split(/\s+/).filter(Boolean);
       const args = parts.slice(1);
@@ -757,7 +756,7 @@ class BsPlugin extends Plugin {
 
         if (messageIds.length === 0) {
           await msg.edit({
-            text: html("❌ <b>未找到可转发的消息</b>\n请确认消息未被删除")
+            text: html("❌ <b>未找到可转发的消息</b><br>请确认消息未被删除")
           });
           return;
         }
@@ -837,7 +836,7 @@ class BsPlugin extends Plugin {
         if (successes.length === 0) {
           const errorText =
             errors.length > 0
-              ? `失败原因：\n${errors.map((line) => `- ${line}`).join("\n")}`
+              ? `失败原因：\n${errors.map((line) => `- ${line}`).join("<br>")}`
               : "未找到可用的目标";
           await msg.edit({
             text: html(`❌ ${errorText}`)
@@ -879,7 +878,7 @@ class BsPlugin extends Plugin {
         // } else {
         //   const list = successes
         //     .map(({ target }) => `- ${renderTarget(target)}`)
-        //     .join("\n");
+        //     .join("<br>");
         //   await msg.edit({
         //     text: `✅ 已尝试保送至以下目标：\n${list}`,
         //

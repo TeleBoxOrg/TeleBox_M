@@ -31,7 +31,7 @@ const help_text = `🖼️ <b>搜图插件</b>
 
 class SoutuPlugin extends Plugin {
 
-  description: string = `回复图片进行搜图\n\n${help_text}`;
+  description: string = `回复图片进行搜图<br><br>${help_text}`;
 
   cmdHandlers = {
     [pluginName]: async (msg: MessageContext) => {

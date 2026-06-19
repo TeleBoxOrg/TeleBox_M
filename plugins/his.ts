@@ -66,7 +66,7 @@ const MEDIA_TYPES: Record<string, string> = {
 class HisPlugin extends Plugin {
 
   // 必须在 description 中引用 help_text
-  description: string = `消息历史查询插件\n\n${help_text}`;
+  description: string = `消息历史查询插件<br><br>${help_text}`;
   
   constructor() {
     super();
@@ -165,14 +165,14 @@ class HisPlugin extends Plugin {
         if (error.message?.includes("FLOOD_WAIT")) {
           const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
           await msg.edit({
-            text: html`⏳ <b>请求过于频繁</b>\n\n需要等待 ${waitTime} 秒后重试`,
+            text: html`⏳ <b>请求过于频繁</b><br><br>需要等待 ${waitTime} 秒后重试`,
           });
           return;
         }
         
         if (error.message?.includes("MESSAGE_TOO_LONG")) {
           await msg.edit({
-            text: html`❌ <b>消息过长</b>\n\n请减少查询数量`,
+            text: html`❌ <b>消息过长</b><br><br>请减少查询数量`,
           });
           return;
         }
@@ -295,12 +295,12 @@ class HisPlugin extends Plugin {
       }
 
       // 构建结果消息
-      const header = `📜 <b>消息历史查询</b>\n\n` +
-                    `👤 <b>目标:</b> ${htmlEscape(targetDisplay)}\n` +
-                    `💬 <b>消息数:</b> ${messages.length}\n` +
-                    `━━━━━━━━━━━━━━━━\n\n`;
+      const header = `📜 <b>消息历史查询</b><br><br>` +
+                    `👤 <b>目标:</b> ${htmlEscape(targetDisplay)}<br>` +
+                    `💬 <b>消息数:</b> ${messages.length}<br>` +
+                    `━━━━━━━━━━━━━━━━<br><br>`;
       
-      const results = header + messages.join("\n");
+      const results = header + messages.join("<br>");
 
       // 分片发送长消息
       const MAX_LENGTH = 3500;
@@ -309,11 +309,11 @@ class HisPlugin extends Plugin {
         let currentChunk = header;
         
         for (const message of messages) {
-          if ((currentChunk + "\n" + message).length > MAX_LENGTH) {
+          if ((currentChunk + "<br>" + message).length > MAX_LENGTH) {
             chunks.push(currentChunk);
             currentChunk = message;
           } else {
-            currentChunk += (currentChunk ? "\n" : "") + message;
+            currentChunk += (currentChunk ? "<br>" : "") + message;
           }
         }
         if (currentChunk) {
