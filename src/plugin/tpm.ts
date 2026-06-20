@@ -333,8 +333,10 @@ async function fetchWithRetry<T>(
 }
 
 async function installRemotePlugin(plugin: string, msg: MessageContext) {
-  const statusMsg = await sendOrEditMessage(msg, `正在安装插件 ${plugin}...`);
-  const res = await fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL);
+  const [statusMsg, res] = await Promise.all([
+    sendOrEditMessage(msg, `正在安装插件 ${plugin}...`),
+    fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL),
+  ]);
   if (res.status === 200) {
     if (!res.data[plugin]) {
       await sendOrEditMessage(statusMsg, `未找到插件 ${plugin} 的远程资源`);
@@ -931,13 +933,15 @@ async function search(msg: MessageContext) {
   const keyword = parts.length > 2 ? parts[2].toLowerCase() : "";
   
   try {
-    const statusMsg = await sendOrEditMessage(msg, keyword ? `🔍 正在搜索插件: ${keyword}` : "🔍 正在获取插件列表...");
-    const res = await fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL, {
-      headers: {
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
-    });
+    const [statusMsg, res] = await Promise.all([
+      sendOrEditMessage(msg, keyword ? `🔍 正在搜索插件: ${keyword}` : "🔍 正在获取插件列表..."),
+      fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL, {
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      }),
+    ]);
     if (res.status !== 200) {
       await sendOrEditMessage(statusMsg, `❌ 无法获取远程插件库`);
       return;
@@ -1087,8 +1091,10 @@ async function search(msg: MessageContext) {
 
 async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
   try {
-    const statusMsg = await sendOrEditMessage(msg, "📚 正在读取插件数据...");
-    const db = await getDatabase();
+    const [statusMsg, db] = await Promise.all([
+      sendOrEditMessage(msg, "📚 正在读取插件数据..."),
+      getDatabase(),
+    ]);
     const dbNames = Object.keys(db.data);
 
     let filePlugins: string[] = [];
