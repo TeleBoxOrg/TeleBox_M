@@ -137,13 +137,13 @@ anim.save_animation(sys.argv[2])
   } finally {
     try {
       fs.unlinkSync(tgsPath);
-    } catch (e) {}
+    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(gifPath);
-    } catch (e) {}
+    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(webmPath);
-    } catch (e) {}
+    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
   }
 }
 
@@ -208,10 +208,10 @@ async function convertMp4ToWebm(mp4Buffer: Buffer): Promise<Buffer> {
   } finally {
     try {
       fs.unlinkSync(mp4Path);
-    } catch (e) {}
+    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(webmPath);
-    } catch (e) {}
+    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
   }
 }
 
@@ -630,7 +630,7 @@ class YvluPlugin extends Plugin {
                 const peerId =
                   (message as any).peerId || (message as any).fromId;
                 if (peerId) {
-                  sender = await client.getEntity(peerId);
+                  sender = await client.resolvePeer(peerId);
                 }
               } catch (e) {
                 console.warn("从 peerId 获取发送者失败", e);
@@ -1009,7 +1009,7 @@ class YvluPlugin extends Plugin {
               } finally {
                 try {
                   fs.unlinkSync(webmPath);
-                } catch (e) {}
+                } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
               }
             } else {
               // webp/png 格式：发送为静态贴纸
