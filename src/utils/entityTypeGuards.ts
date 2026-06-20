@@ -186,3 +186,180 @@ export function getRawObject(obj: unknown): any {
   if (!obj || typeof obj !== 'object') return undefined;
   return (obj as { raw?: any }).raw;
 }
+
+/**
+ * Get message text content.
+ * Replaces: `(msg as any).text`
+ */
+export function getMessageText(msg: unknown): string | undefined {
+  if (!msg || typeof obj !== 'object') return undefined;
+  return (msg as { text?: string }).text;
+}
+
+/**
+ * Get sender object from a message.
+ * Replaces: `(msg as any).sender`
+ */
+export function getMessageSender(msg: unknown): unknown {
+  if (!msg || typeof msg !== 'object') return undefined;
+  return (msg as { sender?: unknown }).sender;
+}
+
+/**
+ * Get replyTo info from a message.
+ * Replaces: `(msg as any).replyTo`
+ */
+export function getMessageReplyTo(msg: unknown): unknown {
+  if (!msg || typeof msg !== 'object') return undefined;
+  return (msg as { replyTo?: unknown }).replyTo;
+}
+
+/**
+ * Get replyToMessageId from a message.
+ * Replaces: `(msg as any).replyToMsgId`
+ */
+export function getMessageReplyToId(msg: unknown): number | undefined {
+  if (!msg || typeof msg !== 'object') return undefined;
+  return (msg as { replyToMsgId?: number }).replyToMsgId;
+}
+
+/**
+ * Get forward info from a message.
+ * Replaces: `(msg as any).fwdFrom`
+ */
+export function getMessageFwdFrom(msg: unknown): unknown {
+  if (!msg || typeof msg !== 'object') return undefined;
+  return (msg as { fwdFrom?: unknown }).fwdFrom;
+}
+
+/**
+ * Get entities from a message.
+ * Replaces: `(msg as any).entities`
+ */
+export function getMessageEntities(msg: unknown): unknown[] {
+  if (!msg || typeof msg !== 'object') return [];
+  return (msg as { entities?: unknown[] }).entities ?? [];
+}
+
+/**
+ * Get groupedId from a message (for grouped media).
+ * Replaces: `(msg as any).groupedId`
+ */
+export function getMessageGroupedId(msg: unknown): string | undefined {
+  if (!msg || typeof msg !== 'object') return undefined;
+  return (msg as { groupedId?: string }).groupedId;
+}
+
+/**
+ * Get message ID.
+ * Replaces: `(msg as any).id`
+ */
+export function getMessageId(msg: unknown): number | undefined {
+  if (!msg || typeof msg !== 'object') return undefined;
+  return (msg as { id?: number }).id;
+}
+
+/**
+ * Get chat ID from various object types.
+ * Replaces: `(obj as any).chatId`
+ */
+export function getChatId(obj: unknown): number | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as { chatId?: number }).chatId;
+}
+
+/**
+ * Get peer ID from various object types.
+ * Replaces: `(obj as any).peerId`
+ */
+export function getPeerId(obj: unknown): unknown {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as { peerId?: unknown }).peerId;
+}
+
+/**
+ * Get username from a user or channel entity.
+ * Replaces: `(entity as any).username`
+ */
+export function getUsername(obj: unknown): string | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as { username?: string }).username;
+}
+
+/**
+ * Get title from a chat/channel entity.
+ * Replaces: `(entity as any).title`
+ */
+export function getTitle(obj: unknown): string | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as { title?: string }).title;
+}
+
+/**
+ * Get user ID from a user entity or message sender.
+ * Replaces: `(entity as any).id`
+ */
+export function getUserId(obj: unknown): number | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as { id?: number }).id;
+}
+
+/**
+ * Get participant object from a user entity.
+ * Replaces: `(user as any).participant`
+ */
+export function getParticipant(obj: unknown): unknown {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as { participant?: unknown }).participant;
+}
+
+/**
+ * Get sticker object from document attributes.
+ * Replaces: `(attr as any).sticker`
+ */
+export function getDocumentSticker(attr: unknown): unknown {
+  if (!attr || typeof attr !== 'object') return undefined;
+  return (attr as { sticker?: unknown }).sticker;
+}
+
+/**
+ * Check if a participant is an admin.
+ * Replaces: checking `(p as any)._ === 'channelParticipantAdmin'`
+ */
+export function isParticipantAdmin(p: unknown): boolean {
+  return hasRawType(p, 'channelParticipantAdmin');
+}
+
+/**
+ * Check if a participant is the channel creator/owner.
+ * Replaces: checking `(p as any)._ === 'channelParticipantCreator'`
+ */
+export function isParticipantCreator(p: unknown): boolean {
+  return hasRawType(p, 'channelParticipantCreator');
+}
+
+/**
+ * Check if a participant is a regular member.
+ * Replaces: checking `(p as any)._ === 'channelParticipant'`
+ */
+export function isParticipantMember(p: unknown): boolean {
+  return hasRawType(p, 'channelParticipant');
+}
+
+/**
+ * Get megagroup flag from a channel entity.
+ * Replaces: `(entity as any).megagroup`
+ */
+export function isMegagroup(entity: unknown): boolean {
+  if (!entity || typeof entity !== 'object') return false;
+  return Boolean((entity as { megagroup?: boolean }).megagroup);
+}
+
+/**
+ * Get document ID from a document object.
+ * Replaces: `(doc as any).documentId`
+ */
+export function getDocumentId(doc: unknown): string | number | undefined {
+  if (!doc || typeof doc !== 'object') return undefined;
+  return (doc as { documentId?: string | number }).documentId;
+}
