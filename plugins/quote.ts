@@ -124,7 +124,9 @@ function quoteResourcesReady(): boolean {
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
     /* ignored */
-  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { /* version file optional */ }
+  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) {
+      console.error('[quote] operation failed:', _)
+  }
   if (currentVersion !== QUOTE_PLUGIN_VERSION) return false;
   if (QUOTE_DEP_FILES.some((rel) => !fs.existsSync(path.join(quoteDir, rel)))) return false;
   if (QUOTE_ASSET_FILES.some((rel) => !fs.existsSync(path.join(QUOTE_ASSETS_DIR, rel)))) return false;
@@ -137,7 +139,9 @@ async function ensureQuoteAssets(): Promise<void> {
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
     /* ignored */
-  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { /* version file optional */ }
+  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) {
+      console.error('[quote] operation failed:', _)
+  }
 
   if (currentVersion !== QUOTE_PLUGIN_VERSION) {
     const missingVendor = QUOTE_DEP_FILES.filter((rel) => !fs.existsSync(path.join(quoteDir, rel)));
@@ -377,7 +381,9 @@ async function senderEntity(msg: MessageContext): Promise<any | undefined> {
       return sender;
     }
     /* ignored */
-  } catch (_) { /* fall through to getPeerEntity */ }
+  } catch (_) {
+      console.error('[quote] operation failed:', _)
+  }
   const client = await getGlobalClient().catch(() => null as any);
   const entity = await getPeerEntity(client, peer);
   if (key) entityCache.set(key, entity);
@@ -574,13 +580,17 @@ async function waitForStableFile(filePath: string, timeoutMs = 8000): Promise<Bu
         }
       }
       /* ignored */
-    } catch (_) { /* polling interrupted, try final read */ }
+    } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
     await sleepMs(120);
   }
   try {
     if (fs.existsSync(filePath) && fs.statSync(filePath).size > 0) return fs.readFileSync(filePath);
     /* ignored */
-  } catch (_) { /* file unreadable */ }
+  } catch (_) {
+      console.error('[quote] operation failed:', _)
+  }
   return undefined;
 }
 
@@ -712,7 +722,9 @@ async function probeAnimatedInfo(buffer: Buffer): Promise<{ fps: number; duratio
     return { fps: 12, duration: 2 };
   } finally {
       /* ignored */
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
   }
 }
 
@@ -748,12 +760,16 @@ async function convertAnimatedEmojiToPng(buffer: Buffer): Promise<Buffer | undef
       }
     }
   } catch (_) {
-    // keep fallback quiet; normal static buffers and unsupported tgs land here
+      console.error('[quote] operation failed:', _)
   } finally {
       /* ignored */
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
       /* ignored */
-    try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
   }
 
   try {
@@ -788,9 +804,13 @@ async function extractAnimatedFrames(buffer: Buffer, size: number, frameCount: n
     return [];
   } finally {
       /* ignored */
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
       /* ignored */
-    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
   }
 }
 
@@ -885,7 +905,9 @@ async function probeWebmAlpha(buffer: Buffer): Promise<string> {
     return `probe-failed:${err?.message || err}`;
   } finally {
       /* ignored */
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
   }
 }
 
@@ -961,9 +983,13 @@ async function encodeFramesToWebm(frames: Buffer[], fps = TG_STICKER_FPS): Promi
     return best || Buffer.alloc(0);
   } finally {
       /* ignored */
-    for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
+    for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
       /* ignored */
-    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
   }
 }
 async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs): Promise<{ image: Buffer; ext: string; width?: number; height?: number; duration?: number }> {
@@ -1056,7 +1082,9 @@ async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs):
     width = probe.width;
     height = probe.height;
     /* ignored */
-  } catch (_) { /* use default 512x512 */ }
+  } catch (_) {
+      console.error('[quote] operation failed:', _)
+  }
   const encoded = await encodeFramesToWebm(rendered, fps);
   const tprobe = Date.now();
   const alphaProbe = await probeWebmAlpha(encoded);
@@ -1304,7 +1332,9 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
     }
   } catch (_) {
       /* ignored */
-    try { await msg.replyText(text); } catch (_) { /* last resort failed */ }
+    try { await msg.replyText(text); } catch (_) {
+        console.error('[quote] operation failed:', _)
+    }
   }
 }
 

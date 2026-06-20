@@ -139,15 +139,19 @@ anim.save_animation(sys.argv[2])
     try {
       fs.unlinkSync(tgsPath);
       /* ignored */
-    } catch (e) { /* cleanup */ }
+    } catch (e) {
+        console.error('[yvlu] operation failed:', e)
+    }
     try {
       fs.unlinkSync(gifPath);
       /* ignored */
-    } catch (e) { /* cleanup */ }
+    } catch (e) {
+        console.error('[yvlu] operation failed:', e)
+    }
     try {
       fs.unlinkSync(webmPath);
     } catch (e) {
-      // Cleanup: temp file deletion failure is non-critical
+        console.error('[yvlu] operation failed:', e)
     }
   }
 }
@@ -214,12 +218,12 @@ async function convertMp4ToWebm(mp4Buffer: Buffer): Promise<Buffer> {
     try {
       fs.unlinkSync(mp4Path);
     } catch (e) {
-      // Cleanup: temp file deletion failure is non-critical
+        console.error('[yvlu] operation failed:', e)
     }
     try {
       fs.unlinkSync(webmPath);
     } catch (e) {
-      // Cleanup: temp file deletion failure is non-critical
+        console.error('[yvlu] operation failed:', e)
     }
   }
 }
@@ -763,7 +767,9 @@ class YvluPlugin extends Plugin {
                       }
                     }
                     /* ignored */
-                  } catch (e) { /* reply name resolution optional */ }
+                  } catch (e) {
+                      console.error('[yvlu] operation failed:', e)
+                  }
 
                   // 实体
                   const revived = reviveEntities(replyHeader.quoteEntities);
@@ -814,7 +820,9 @@ class YvluPlugin extends Plugin {
                       }
                     }
                     /* ignored */
-                  } catch (e) { /* reply block construction optional */ }
+                  } catch (e) {
+                      console.error('[yvlu] operation failed:', e)
+                  }
                 }
               } catch (e) {
                 console.warn("处理回复引用失败: ", e);
@@ -1027,7 +1035,7 @@ class YvluPlugin extends Plugin {
                 try {
                   fs.unlinkSync(webmPath);
                 } catch (e) {
-                  // Cleanup: temp file deletion failure is non-critical
+                    console.error('[yvlu] operation failed:', e)
                 }
               }
             } else {
