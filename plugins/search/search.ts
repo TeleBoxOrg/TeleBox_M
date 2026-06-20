@@ -348,7 +348,7 @@ class SearchService {
 
     // Helper to edit the admin message using client.editMessage
     const editAdmin = async (params: { text: string }) => {
-      await this.client.editMessage({ chatId: msg.chat.id, messageId: adminMsg.id, ...params });
+      await this.client.editMessage({ chatId: msg.chat.id, message: adminMsg.id, ...params });
     };
 
     try {
@@ -518,7 +518,7 @@ class SearchService {
     const backupFilePath = path.join(process.cwd(), "temp", "so_channels_backup.txt");
     await fs.mkdir(path.dirname(backupFilePath), { recursive: true });
     await fs.writeFile(backupFilePath, backupContent);
-    await this.client.sendFile(msg.chat.id, { file: backupFilePath, caption: `✅ 您的频道源已导出。`, replyTo: msg.id });
+    await this.client.sendMedia(msg.chat.id, backupFilePath, { caption: `✅ 您的频道源已导出。`, replyTo: msg.id });
     await fs.unlink(backupFilePath);
   }
 
@@ -527,7 +527,7 @@ class SearchService {
     const docMedia = replied ? getMessageDocumentMedia(replied) : null;
     if (!replied || !docMedia) throw new Error("❌ 请回复备份文件。");
 
-    const buffer = await this.client.downloadAsBuffer(replied.media);
+    const buffer = await this.client.downloadAsBuffer(replied.media as unknown as import("@mtcute/core").FileLocation);
     if (!buffer) throw new Error("下载文件失败。");
 
     const handles = buffer.toString().split("\n").map((h: string) => h.trim()).filter(Boolean);
@@ -634,7 +634,7 @@ class SearchService {
                 if (processedGroupIds.has(groupIdStr)) continue;
 
                 const historyResult: any = await this.client.call({
-                  _: 'messages.getHistory',
+                  _: 'messages.getHistory' as const,
                   peer: entity,
                   limit: 20,
                   offsetId: foundMsg.id + 10,
@@ -642,8 +642,7 @@ class SearchService {
                   addOffset: 0,
                   maxId: 0,
                   minId: 0,
-                  hash: 0,
-                });
+                } as any);
                 const surroundingMessages: Message[] = (historyResult?.messages || []).filter((m: any) => m != null);
 
                 const groupedId = foundMsg.groupedId;
@@ -761,7 +760,7 @@ class SearchService {
 
     if (!useSpoiler && isMessageOutgoing(originalMsg)) {
       try {
-        await this.client.deleteMessages(originalMsg.chat.id, [originalMsg.id]);
+        await this.client.deleteMessagesById(originalMsg.chat.id, [originalMsg.id]);
       } catch (e) {
         logger.warn("删除原始消息失败，可能已被删除");
       }
@@ -773,10 +772,11 @@ class SearchService {
       await this.downloadAndUploadVideo(originalMsg, video, true, caption);
     } else {
       try {
-        await this.client.forwardMessages(
-          originalMsg.chat.id,
-          { messages: [video.id], fromPeer: getMessageChatId(video) }
-        );
+        await this.client.forwardMessagesById({
+          fromChatId: getMessageChatId(video),
+          messages: [video.id],
+          toChatId: originalMsg.chat.id,
+        });
       } catch (forwardError: any) {
         logger.info(`转发失败，自动转为下载上传: ${forwardError.message}`);
         await this.downloadAndUploadVideo(originalMsg, video, false, caption);
@@ -792,33 +792,27 @@ class SearchService {
     const statusMsg = await this.client.sendText(originalMsg.chat.id, `🔥 正在下载视频...`, { replyTo: originalMsg.id });
 
     try {
-      const buffer = await this.client.downloadAsBuffer(video.media);
+      const buffer = await this.client.downloadAsBuffer(video.media as unknown as import("@mtcute/core").FileLocation);
       await fs.writeFile(tempFilePath, Buffer.from(buffer));
-      await this.client.editMessage({ chatId: originalMsg.chat.id, messageId: statusMsg.id, text: `✅ 下载完成，正在上传...` });
+      await this.client.editMessage({ chatId: originalMsg.chat.id, message: statusMsg.id, text: `✅ 下载完成，正在上传...` });
 
       const videoMedia = getMessageVideo(video);
       if (!videoMedia) throw new Error("消息不包含有效的视频媒体。");
 
       const videoAttr = getVideoAttribute(videoMedia);
 
-      await this.client.sendFile(originalMsg.chat.id, {
+      const mediaInput = {
+          type: 'video' as const,
           file: tempFilePath,
           caption: caption || getMessageTextSafe(video) || "",
-          forceDocument: false,
+          duration: videoAttr?.duration ?? 0,
+          w: videoAttr?.w ?? 0,
+          h: videoAttr?.h ?? 0,
+          supportsStreaming: true,
           spoiler: spoiler,
-          attributes: [
-              {
-                  _: 'documentAttributeVideo' as const,
-                  duration: videoAttr?.duration ?? 0,
-                  w: videoAttr?.w ?? 0,
-                  h: videoAttr?.h ?? 0,
-                  supportsStreaming: true,
-              } satisfies tl.RawDocumentAttributeVideo,
-              {
-                  _: 'documentAttributeFilename' as const,
-                  fileName: path.basename(tempFilePath),
-              } satisfies tl.RawDocumentAttributeFilename,
-          ],
+      };
+
+      await this.client.sendMedia(originalMsg.chat.id, mediaInput, {
           replyTo: originalMsg.id
       });
       await this.client.deleteMessagesById(originalMsg.chat.id, [statusMsg.id]);
@@ -827,7 +821,7 @@ class SearchService {
       }
     } catch (error: any) {
       logger.error("下载上传视频时出错:", error);
-      await this.client.editMessage({ chatId: originalMsg.chat.id, messageId: statusMsg.id, text: `❌ 发送视频失败: ${error.message}` });
+      await this.client.editMessage({ chatId: originalMsg.chat.id, message: statusMsg.id, text: `❌ 发送视频失败: ${error.message}` });
     } finally {
       try {
         await fs.unlink(tempFilePath);
