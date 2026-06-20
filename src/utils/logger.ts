@@ -344,6 +344,50 @@ class Logger {
     }
   }
 
+  /** Structured logging convenience methods */
+  public info(...args: any[]): void {
+    if (this.level <= LogLevel.INFO) {
+      Logger.originalLog(this.formatLog("INFO ", args));
+    }
+  }
+
+  public warn(...args: any[]): void {
+    if (this.level <= LogLevel.WARNING) {
+      Logger.originalWarn(this.formatLog("WARN ", args));
+    }
+  }
+
+  public error(...args: any[]): void {
+    // Downgrade known non-actionable Telegram RPC errors from ERROR to WARN
+    const msg = args.map(a => typeof a === 'string' ? a : (a instanceof Error ? a.message + ' ' + a.stack : (a?.message ? String(a.message) : ''))).join(' ');
+    if (this.isChannelGapFailure(msg)) {
+      const channelId = this.extractChannelId(msg);
+      if (channelId) {
+        recordChannelGapFailure(channelId);
+        if (isChannelCircuitBroken(channelId)) return;
+      }
+      const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';
+      const now = Date.now();
+      const lastLogged = Logger.downgradeLastLogged.get(rateKey) || 0;
+      if (now - lastLogged >= Logger.DOWNGRADE_LOG_INTERVAL_MS) {
+        Logger.downgradeLastLogged.set(rateKey, now);
+        if (this.level <= LogLevel.WARNING) {
+          Logger.originalLog(this.formatLog("WARN ", args, true));
+        }
+      }
+      return;
+    }
+    if (this.level <= LogLevel.ERROR) {
+      Logger.originalError(this.formatLog("ERROR", args));
+    }
+  }
+
+  public debug(...args: any[]): void {
+    if (this.level <= LogLevel.DEBUG) {
+      Logger.originalDebug(this.formatLog("DEBUG", args));
+    }
+  }
+
   /**
    * Detect channel-gap-related failures across teleproto versions:
    *   - 1.224.x: "Error recovering channel gap for <id>: PERSISTENT_TIMESTAMP_OUTDATED / HISTORY_GET_FAILED"

@@ -6,6 +6,7 @@ import { tryGetCurrentRuntime } from "./runtimeManager";
 import { Dispatcher, MessageContext } from "@mtcute/dispatcher";
 import { AliasDB } from "./aliasDB";
 import { cronManager } from "./cronManager";
+import { logger } from "./logger";
 import type { TeleBoxRuntime } from "./runtimeManager";
 
 type PluginEntry = {
@@ -56,7 +57,7 @@ if (envPrefixes.length > 0) {
 } else if (process.env.NODE_ENV === "development") {
   prefixes = ["!", "！"];
 }
-console.log(
+logger.info(
   `[PREFIXES] ${prefixes.join(" ")} (${envPrefixes.length > 0 ? "" : "可"}使用环境变量 TB_PREFIX 覆盖, 多个前缀用空格分隔)`
 );
 
@@ -127,7 +128,7 @@ function purgeModuleCache(modulePaths: Iterable<string>): void {
   }
 
   if (idsToDelete.size > 0) {
-    console.log(`[RELOAD] Purged ${idsToDelete.size} module cache entries.`);
+    logger.info(`[RELOAD] Purged ${idsToDelete.size} module cache entries.`);
   }
 }
 
@@ -138,7 +139,7 @@ function dynamicRequireWithDeps(filePath: string) {
     delete require.cache[require.resolve(normalized)];
     return require(normalized);
   } catch (err) {
-    console.error(`Failed to require ${filePath}:`, err);
+    logger.error(`Failed to require ${filePath}:`, err);
     return null;
   }
 }
@@ -295,12 +296,12 @@ async function dealCommandPluginWithMessage(param: {
       await handler(targetMsg, trigger);
     }
   } catch (error) {
-    console.error("Command handler error:", error);
+    logger.error("Command handler error:", error);
     const errorMsg = `处理命令时出错：${error instanceof Error ? error.message : String(error)}`;
     try {
       await msg.edit({ text: errorMsg });
     } catch (editError) {
-      console.error("Failed to show command error message (client may be destroyed):", editError);
+      logger.error("Failed to show command error message (client may be destroyed):", editError);
     }
   }
 }
@@ -339,7 +340,7 @@ const listenerHandleEdited =
     (p) => p.length > 0
   ) || [];
 
-console.log(
+logger.info(
   `[LISTENER_HANDLE_EDITED] 不忽略监听编辑的消息的插件: ${
     listenerHandleEdited.length === 0
       ? "未设置"
@@ -370,7 +371,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
         try {
           await messageHandler(msg);
         } catch (error) {
-          console.log("listenMessageHandler NewMessage error:", error);
+          logger.error("listenMessageHandler NewMessage error:", error);
         }
       });
 
@@ -383,7 +384,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
           try {
             await messageHandler(msg, { isEdited: true });
           } catch (error) {
-            console.log("listenMessageHandler EditedMessage error:", error);
+            logger.error("listenMessageHandler EditedMessage error:", error);
           }
         });
       }
@@ -400,7 +401,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
           try {
             await eh.handler(ctx);
           } catch (error) {
-            console.log("eventHandler error:", error);
+            logger.error("eventHandler error:", error);
           }
         };
         switch (eh.kind) {
@@ -446,7 +447,7 @@ async function runPluginCleanup(plugin: Plugin, runtime: TeleBoxRuntime): Promis
   try {
     await plugin.cleanup?.();
   } catch (error) {
-    console.error(`[RELOAD] Plugin cleanup failed: ${plugin.name || "unknown"}`, error);
+    logger.error(`[RELOAD] Plugin cleanup failed: ${plugin.name || "unknown"}`, error);
   }
 }
 
@@ -474,7 +475,7 @@ async function unloadPluginsForRuntime(runtime: TeleBoxRuntime) {
     .slice(0, 10)
     .map((resource) => `${resource.kind}:${resource.label}:${resource.state}:${resource.ageMs}ms`)
     .join("; ") || "none";
-  console.log(
+  logger.info(
     `[RELOAD] Generation ${runtime.generation} stopped ingress; ${disposableCount} lifecycle disposables are awaiting drain. resources=[${resourceSummary}] residual=[${residualSummary}]`
   );
 
@@ -502,7 +503,7 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
     try {
       await runPluginSetup(plugin, runtime);
     } catch (error) {
-      console.error(
+      logger.error(
         `[RELOAD] Plugin setup failed: ${plugin.name || "unknown"} (continuing with remaining plugins)`,
         error
       );
@@ -535,14 +536,14 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
 
   dealListenMessagePlugin(runtime, dispatcher);
   dealCronPlugin(runtime);
-  console.log("[RELOAD] Dispatcher + plugin handlers registered after reload.");
+  logger.info("[RELOAD] Dispatcher + plugin handlers registered after reload.");
 }
 
 async function loadPlugins(): Promise<boolean> {
   const { reloadRuntime }: typeof import("./runtimeManager") = require("./runtimeManager");
 
   if (isPluginLoadInProgress()) {
-    console.warn(
+    logger.warn(
       "[RELOAD] Skip nested plugin reload while plugins are still being required. Move loadPlugins() out of module top-level initialization."
     );
     return false;
@@ -562,7 +563,7 @@ async function loadPlugins(): Promise<boolean> {
     await reloadRuntime();
     return true;
   } catch (error) {
-    console.error("[RELOAD] loadPlugins via reloadRuntime failed:", error);
+    logger.error("[RELOAD] loadPlugins via reloadRuntime failed:", error);
     return false;
   }
 }
