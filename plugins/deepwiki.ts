@@ -73,7 +73,7 @@ const getRepliedMessageText = async (msg: MessageContext): Promise<string> => {
     const replied = await safeGetReplyMessage(msg);
     return getMessageText(replied).trim();
     /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error("[quality] ignored error:", e); }
 
   return "";
 };
@@ -87,7 +87,7 @@ const getRepliedMessageId = async (msg: MessageContext): Promise<number | undefi
     const rid = (replied as any)?.id;
     if (typeof rid === "number") return rid;
     /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error("[quality] ignored error:", e); }
 
   return undefined;
 };
@@ -955,7 +955,7 @@ class DeepWikiPlugin extends Plugin {
         try {
           await original.delete();
           /* ignored */
-        } catch { /* ignored */ }
+        } catch (e) { console.error("[quality] ignored error:", e); }
       } catch (err: any) {
         await MessageSender.sendOrEdit(original, this.formatError(err), "html");
       }

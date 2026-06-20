@@ -1201,7 +1201,7 @@ async function importRules(jsonData: string, merge = false): Promise<void> {
     try {
       parsed = JSON.parse(parsed);
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
   }
   const newRules = parsed as { [key: string]: ShiftRule };
 

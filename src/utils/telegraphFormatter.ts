@@ -119,7 +119,7 @@ const sanitizeUrl = (url: string): string => {
     const u = new URL(url);
     if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
     /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error("[quality] ignored error:", e); }
   return "";
 };
 

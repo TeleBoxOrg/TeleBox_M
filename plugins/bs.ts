@@ -395,7 +395,7 @@ function getTargetLookup(target: TargetRecord): any {
     try {
       return BigInt(target.chatId);
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
     return target.chatId;
   }
   return target.target;

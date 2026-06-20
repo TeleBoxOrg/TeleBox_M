@@ -683,11 +683,11 @@ class PrometheusPlugin extends Plugin {
           try {
             await fs.unlink(filePath);
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
         })
       );
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
   }
 
   private async saveMediaToLocal(

@@ -328,8 +328,7 @@ async function fetchUserInfo(client: TelegramClient, userId: number): Promise<an
     const e = await client.getChat(userId);
     cacheUserFromSender(e);
     return e;
-    /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error('[pmcaptcha] fetchUserInfo getChat failed:', e); }
 
   try {
     const input = await client.resolvePeer(userId);
@@ -489,7 +488,7 @@ async function tryGetCanvas(): Promise<any> {
     log(LogLevel.INFO, "canvas module loaded");
     return _canvas;
     /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error("[quality] ignored error:", e); }
 
   if (_canvasInstalling) {
     const deadline = Date.now() + 60_000;
@@ -516,7 +515,7 @@ async function tryGetCanvas(): Promise<any> {
     const canvasId = require.resolve("canvas");
     if (require.cache[canvasId]) delete require.cache[canvasId];
     /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error("[quality] ignored error:", e); }
 
   try {
     _canvas = await import("canvas");
@@ -693,7 +692,7 @@ async function cleanupCaptchaMessages(client: TelegramClient, userId: number, st
   for (const id of state.msgIds) {
     if (!isStateCurrent(state)) return;
       /* ignored */
-    try { await client.deleteMessagesById(userId, [id]); } catch { /* ignored */ }
+    try { await client.deleteMessagesById(userId, [id]); } catch (e) { console.error("[quality] ignored error:", e); }
   }
 }
 
@@ -936,7 +935,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
           try {
             await client.sendText(userId, "❌ 验证服务暂时不可用，请稍后再试。");
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
           return;
         }
 
@@ -993,7 +992,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
           try {
             await client.sendText(userId, html("⏰ 验证超时，对话已被限制。"));
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
           if (!isStateCurrent(state)) return;
           await runFailActions(client, userId);
         }, { label: `pmcaptcha-timeout:${userId}` }).catch((error) => {
@@ -1039,7 +1038,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     removeCaptchaState(userId);
     await cleanupCaptchaMessages(client, userId, state);
       /* ignored */
-    try { await client.sendText(userId, html("❌ 验证状态异常，请联系对方重置。")); } catch { /* ignored */ }
+    try { await client.sendText(userId, html("❌ 验证状态异常，请联系对方重置。")); } catch (e) { console.error("[quality] ignored error:", e); }
     return;
   }
 
@@ -1064,7 +1063,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     try {
       await client.sendText(userId, html("✅ 验证通过！欢迎与我对话。"));
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
     return;
   }
 
@@ -1083,7 +1082,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     try {
       await client.sendText(userId, html("❌ 验证失败次数过多，对话已被限制。"));
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
     if (!isStateCurrent(state)) return;
     await runFailActions(client, userId);
   } else {
@@ -1093,7 +1092,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
       if (!isStateCurrent(state)) return;
       state.msgIds.push(hintMsg.id);
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
   }
 }
 
@@ -1195,7 +1194,7 @@ async function resolveUser(client: TelegramClient, arg: string): Promise<number 
     }
     return null;
     /* ignored */
-  } catch { return null; }
+  } catch (e) { console.error("[quality] ignored error:", e); return null; }
 }
 
 function fmtTime(iso: string): string {
@@ -1413,7 +1412,7 @@ const pmcaptcha = async (message: MessageContext) => {
         ? "✅ <b>PMCaptcha 已启用</b>"
         : `🚫 <b>PMCaptcha 已禁用</b>\n验证配置已保留，下次启用后自动恢复`));
         /* ignored */
-      try { await message.delete(); } catch { /* ignored */ }
+      try { await message.delete(); } catch (e) { console.error("[quality] ignored error:", e); }
       getActiveLifecycle()?.setTimeout(() => {
         void (tmp as any).delete?.().catch(() => undefined);
       }, 3000, { label: "pmcaptcha-command-cleanup" });
@@ -1428,7 +1427,7 @@ const pmcaptcha = async (message: MessageContext) => {
     } catch (e: any) {
       if (String(e).includes("Could not find the input entity")) {
           /* ignored */
-        try { await message.replyText(html(text), { disableWebPreview: true } as any); } catch { /* ignored */ }
+        try { await message.replyText(html(text), { disableWebPreview: true } as any); } catch (e) { console.error("[quality] ignored error:", e); }
       } else {
         throw e;
       }
@@ -1726,7 +1725,7 @@ const pmcaptcha = async (message: MessageContext) => {
             const r = await safeGetMessages(client, message.chat.id, { ids: [message.replyToMessage.id] });
             if (r[0]?.sender?.id) tid = Number(r[0].sender.id);
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
         }
         if (!tid && args[1]) tid = await resolveUser(client, args[1]);
         if (!tid || tid <= 0) {
@@ -1788,7 +1787,7 @@ const pmcaptcha = async (message: MessageContext) => {
               const r = await safeGetMessages(client, message.chat.id, { ids: [message.replyToMessage.id] });
               if (r[0]?.sender?.id) tid = Number(r[0].sender.id);
               /* ignored */
-            } catch { /* ignored */ }
+            } catch (e) { console.error("[quality] ignored error:", e); }
           }
           if (!tid && args[2]) tid = await resolveUser(client, args[2]);
           if (!tid || tid <= 0) { await edit("❌ 请提供有效的用户 ID / 用户名，或回复用户消息"); break; }
@@ -1966,7 +1965,7 @@ const pmcaptcha = async (message: MessageContext) => {
   } catch (e) {
     log(LogLevel.ERROR, "Command error", e);
       /* ignored */
-    try { await edit(`❌ 命令执行失败: ${htmlEscape(e)}`); } catch { /* ignored */ }
+    try { await edit(`❌ 命令执行失败: ${htmlEscape(e)}`); } catch (e) { console.error("[quality] ignored error:", e); }
   }
 };
 
