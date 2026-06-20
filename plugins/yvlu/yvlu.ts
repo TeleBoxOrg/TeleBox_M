@@ -23,6 +23,7 @@ import {
 } from "@utils/pluginManager";
 import { sleep } from "teleproto/Helpers";
 import { safeGetReplyMessage, safeGetMessages } from "@utils/safeGetMessages";
+import { logger } from "@utils/logger";
 import dayjs from "dayjs";
 import { CustomFile } from "teleproto/client/uploads.js";
 import * as zlib from "zlib";
@@ -137,13 +138,13 @@ anim.save_animation(sys.argv[2])
   } finally {
     try {
       fs.unlinkSync(tgsPath);
-    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(gifPath);
-    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(webmPath);
-    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
   }
 }
 
@@ -208,10 +209,10 @@ async function convertMp4ToWebm(mp4Buffer: Buffer): Promise<Buffer> {
   } finally {
     try {
       fs.unlinkSync(mp4Path);
-    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(webmPath);
-    } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
   }
 }
 
@@ -263,10 +264,10 @@ function getWebPDimensions(imageBuffer: any): {
     }
 
     // 如果无法解析，返回默认尺寸
-    console.warn("Unknown WebP format, using default dimensions");
+    logger.warn("Unknown WebP format, using default dimensions");
     return { width: 512, height: 768 };
   } catch (error) {
-    console.warn("Failed to parse WebP dimensions:", error);
+    logger.warn("Failed to parse WebP dimensions:", error);
     return { width: 512, height: 768 };
   }
 }
@@ -318,7 +319,7 @@ const resolveForwardSenderFromHeader = async (
     } catch (error) {
       const errMsg = (error?.errorMessage || error?.message || "").toString();
       if (!errMsg.includes("CHANNEL_PRIVATE")) {
-        console.warn("解析转发发送者失败", error);
+        logger.warn("解析转发发送者失败", error);
       }
     }
   }
@@ -445,7 +446,7 @@ async function generateQuote(
       ),
     });
 
-    console.log("quote-api响应状态:", response.status);
+    logger.info("quote-api响应状态:", response.status);
 
     // // 检查响应格式
     // if (!response.data.ok || !response.data.result) {
@@ -482,13 +483,13 @@ async function generateQuote(
     return { buffer: response.data, ext: "webp" };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error(`quote-api请求失败:`, {
+      logger.error(`quote-api请求失败:`, {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
       });
     } else {
-      console.error(`调用quote-api失败: ${error}`);
+      logger.error(`调用quote-api失败: ${error}`);
     }
     throw error;
   }
@@ -510,7 +511,7 @@ class YvluPlugin extends Plugin {
     const configDir = createDirectoryInAssets("yvlu");
     this.configPath = path.join(configDir, "config.json");
 
-    console.log(`yvlu配置文件路径: ${this.configPath}`);
+    logger.info(`yvlu配置文件路径: ${this.configPath}`);
 
     // 如果配置文件不存在,创建默认配置
     if (!fs.existsSync(this.configPath)) {
@@ -524,7 +525,7 @@ class YvluPlugin extends Plugin {
         JSON.stringify(defaultConfig, null, 2),
         "utf-8",
       );
-      console.log(`已创建默认配置文件: ${this.configPath}`);
+      logger.info(`已创建默认配置文件: ${this.configPath}`);
     }
 
     // 加载配置
@@ -537,22 +538,22 @@ class YvluPlugin extends Plugin {
       if (!this.configPath || this.configPath === "") {
         const configDir = createDirectoryInAssets("yvlu");
         this.configPath = path.join(configDir, "config.json");
-        console.log(`重新初始化配置文件路径: ${this.configPath}`);
+        logger.info(`重新初始化配置文件路径: ${this.configPath}`);
       }
 
       if (!fs.existsSync(this.configPath)) {
-        console.error(`配置文件不存在: ${this.configPath}`);
-        console.log(`请手动创建配置文件: ${this.configPath}`);
+        logger.error(`配置文件不存在: ${this.configPath}`);
+        logger.info(`请手动创建配置文件: ${this.configPath}`);
         this.config = { stickerSetShortName: "" };
         return;
       }
 
       const configData = fs.readFileSync(this.configPath, "utf-8");
       this.config = JSON.parse(configData);
-      console.log("yvlu配置已加载:", this.config);
-      console.log("stickerSetShortName:", this.config?.stickerSetShortName);
+      logger.info("yvlu配置已加载:", this.config);
+      logger.info("stickerSetShortName:", this.config?.stickerSetShortName);
     } catch (error) {
-      console.error("加载yvlu配置失败:", error);
+      logger.error("加载yvlu配置失败:", error);
       this.config = { stickerSetShortName: "" };
     }
   }
@@ -633,7 +634,7 @@ class YvluPlugin extends Plugin {
                   sender = await client.resolvePeer(peerId);
                 }
               } catch (e) {
-                console.warn("从 peerId 获取发送者失败", e);
+                logger.warn("从 peerId 获取发送者失败", e);
               }
             }
 
@@ -645,7 +646,7 @@ class YvluPlugin extends Plugin {
                 try {
                   forwardedSender = await message.forward?.getSender();
                 } catch (error) {
-                  console.warn("获取转发发送者失败", error);
+                  logger.warn("获取转发发送者失败", error);
                 }
               }
 
@@ -711,10 +712,10 @@ class YvluPlugin extends Plugin {
                     url: `data:image/jpeg;base64,${base64}`,
                   };
                 } else {
-                  console.warn("下载的头像数据无效或用户无头像");
+                  logger.warn("下载的头像数据无效或用户无头像");
                 }
               } catch (e) {
-                console.warn("下载用户头像失败", e);
+                logger.warn("下载用户头像失败", e);
               }
             }
 
@@ -758,7 +759,7 @@ class YvluPlugin extends Plugin {
                       }
                     }
                   } catch (e) {
-                    console.warn('[yvlu] 解析回复发送者信息失败:', e);
+                    logger.warn('[yvlu] 解析回复发送者信息失败:', e);
                   }
 
                   // 实体
@@ -810,11 +811,11 @@ class YvluPlugin extends Plugin {
                       }
                     }
                   } catch (e) {
-                    console.warn('[yvlu] 解析回复引用信息失败:', e);
+                    logger.warn('[yvlu] 解析回复引用信息失败:', e);
                   }
                 }
               } catch (e) {
-                console.warn("处理回复引用失败: ", e);
+                logger.warn("处理回复引用失败: ", e);
               }
             }
 
@@ -870,32 +871,32 @@ class YvluPlugin extends Plugin {
                     try {
                       const depCheck = await checkTgsDependencies();
                       if (!depCheck.ok) {
-                        console.error(`[yvlu] ${depCheck.message}`);
+                        logger.error(`[yvlu] ${depCheck.message}`);
                       } else {
-                        console.log(
+                        logger.info(
                           `[yvlu] 检测到 TGS 贴纸，开始转换为 WebM...`,
                         );
                         finalBuffer = await convertTgsToWebm(buffer);
                         finalMime = "video/webm";
-                        console.log(
+                        logger.info(
                           `[yvlu] TGS -> WebM 转换成功，大小: ${finalBuffer.length}`,
                         );
                       }
                     } catch (convertError) {
-                      console.error(`[yvlu] TGS 转换失败:`, convertError);
+                      logger.error(`[yvlu] TGS 转换失败:`, convertError);
                     }
                   }
                   // 如果是 MP4/GIF，转换为 WebM
                   else if (isGifOrMp4 || isMp4Format(buffer)) {
                     try {
-                      console.log(`[yvlu] 检测到 GIF/MP4，开始转换为 WebM...`);
+                      logger.info(`[yvlu] 检测到 GIF/MP4，开始转换为 WebM...`);
                       finalBuffer = await convertMp4ToWebm(buffer);
                       finalMime = "video/webm";
-                      console.log(
+                      logger.info(
                         `[yvlu] MP4 -> WebM 转换成功，大小: ${finalBuffer.length}`,
                       );
                     } catch (convertError) {
-                      console.error(`[yvlu] MP4 转换失败:`, convertError);
+                      logger.error(`[yvlu] MP4 转换失败:`, convertError);
                       // 转换失败时保持原格式
                     }
                   }
@@ -908,13 +909,13 @@ class YvluPlugin extends Plugin {
                       : "image/jpeg");
                   const base64 = finalBuffer.toString("base64");
                   media = { url: `data:${mime};base64,${base64}` };
-                  console.log(
+                  logger.info(
                     `媒体下载: mimeType=${mimeType}, isAnimated=${isAnimatedContent}, isTgs=${isTgsSticker}, isGif=${isGifOrMp4}, size=${finalBuffer.length}`,
                   );
                 }
               }
             } catch (e) {
-              console.error("下载媒体失败", e);
+              logger.error("下载媒体失败", e);
             }
 
             items.push({
@@ -963,10 +964,10 @@ class YvluPlugin extends Plugin {
             return;
           }
 
-          console.log(
+          logger.info(
             `[yvlu] API返回: buffer长度=${imageBuffer?.length}, ext=${imageExt}`,
           );
-          console.log(
+          logger.info(
             `[yvlu] buffer前20字节: ${imageBuffer
               ?.slice(0, 20)
               .toString("hex")}`,
@@ -980,7 +981,7 @@ class YvluPlugin extends Plugin {
             const isWebm = isWebmFormat(imageBuffer);
             const isAnimated = isAnimatedWebP(imageBuffer);
 
-            console.log(
+            logger.info(
               `检测到的图片尺寸: ${dimensions.width}x${
                 dimensions.height
               }, 格式: ${isWebm ? "webm" : "webp"}, 动态: ${
@@ -1009,11 +1010,11 @@ class YvluPlugin extends Plugin {
                   replyTo: replied?.id,
                 });
 
-                console.log("[yvlu] 动态贴纸发送成功 (webm)");
+                logger.info("[yvlu] 动态贴纸发送成功 (webm)");
               } finally {
                 try {
                   fs.unlinkSync(webmPath);
-                } catch (e) { console.warn('[yvlu] 清理临时文件失败:', e) }
+                } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
               }
             } else {
               // webp/png 格式：发送为静态贴纸
@@ -1045,12 +1046,12 @@ class YvluPlugin extends Plugin {
                 replyTo: replied?.id,
               });
 
-              console.log("[yvlu] 静态贴纸发送成功");
+              logger.info("[yvlu] 静态贴纸发送成功");
             }
 
-            console.log("[yvlu] 文件发送成功");
+            logger.info("[yvlu] 文件发送成功");
           } catch (fileError) {
-            console.error(`发送文件失败: ${fileError}`);
+            logger.error(`发送文件失败: ${fileError}`);
             await msg.edit({ text: `发送文件失败: ${htmlEscape(String(fileError))}`, parseMode: "html" });
             return;
           }
@@ -1058,9 +1059,9 @@ class YvluPlugin extends Plugin {
           await msg.delete();
 
           const end = Date.now();
-          console.log(`语录生成耗时: ${end - start}ms`);
+          logger.info(`语录生成耗时: ${end - start}ms`);
         } catch (error) {
-          console.error(`语录生成失败: ${error}`);
+          logger.error(`语录生成失败: ${error}`);
           await msg.edit({ text: `语录生成失败: ${htmlEscape(String(error))}`, parseMode: "html" });
         }
       } else {
@@ -1165,7 +1166,7 @@ ${codeTag(this.configPath)}
           });
       }
     } catch (error: any) {
-      console.error("处理配置命令失败:", error);
+      logger.error("处理配置命令失败:", error);
       await msg.edit({
         text: `❌ 配置操作失败: ${htmlEscape(error.message || String(error))}`,
         parseMode: "html",
@@ -1192,7 +1193,7 @@ ${codeTag(this.configPath)}
             JSON.stringify(defaultConfig, null, 2),
             "utf-8",
           );
-          console.log(`已创建默认配置文件: ${this.configPath}`);
+          logger.info(`已创建默认配置文件: ${this.configPath}`);
         }
       }
 
@@ -1302,7 +1303,7 @@ ${codeTag(this.configPath)}
             parseMode: "html",
           });
         } catch (error: any) {
-          console.error("添加贴纸失败:", error);
+          logger.error("添加贴纸失败:", error);
           await msg.edit({
             text: `❌ 添加贴纸失败: ${htmlEscape(error.message || String(error))}`,
             parseMode: "html",
@@ -1355,7 +1356,7 @@ ${codeTag(this.configPath)}
             parseMode: "html",
           });
         } catch (error: any) {
-          console.error("处理图片失败:", error);
+          logger.error("处理图片失败:", error);
           await msg.edit({
             text: `❌ 处理图片失败: ${htmlEscape(error.message || String(error))}`,
             parseMode: "html",
@@ -1364,7 +1365,7 @@ ${codeTag(this.configPath)}
         return;
       }
     } catch (error: any) {
-      console.error("保存贴纸到贴纸包失败:", error);
+      logger.error("保存贴纸到贴纸包失败:", error);
       await msg.edit({
         text: `❌ 操作失败: ${htmlEscape(error.message || String(error))}`,
         parseMode: "html",
@@ -1438,7 +1439,7 @@ ${codeTag(this.configPath)}
         parseMode: "html",
       });
     } catch (error: any) {
-      console.error("创建贴纸包失败:", error);
+      logger.error("创建贴纸包失败:", error);
       await msg.edit({
         text: `❌ 创建贴纸包失败: ${htmlEscape(error.message || String(error))}`,
         parseMode: "html",
