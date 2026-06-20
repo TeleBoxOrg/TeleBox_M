@@ -3,7 +3,9 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInTemp } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { Chat } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
+import { getRawType } from "@utils/entityTypeGuards";
 import { exec } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
@@ -155,7 +157,8 @@ class SubStorePlugin extends Plugin {
       //   await msg.edit({ text: "⚠️ 此插件仅限在「收藏夹」中使用" });
       //   return;
       // }
-      if ((msg as any).isGroup || (msg as any).isChannel) {
+      const chat = msg.chat as Chat;
+      if (chat.isGroup || getRawType(chat) === 'channel') {
         await msg.edit({
           text: "❌ 为保护用户隐私，禁止在公共对话环境使用",
         });
@@ -470,7 +473,7 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
               const client = await getGlobalClient();
               const me = await client?.getMe();
               if (client && me) {
-                await (client as any).sendMedia(me.id, {
+                await client.sendMedia(me.id, {
                   type: "document",
                   file: logFile,
                   fileName: `sub-store-logs-${today}.txt`,
@@ -506,7 +509,7 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
             const client = await getGlobalClient();
             const me = await client?.getMe();
             if (client && me) {
-              await (client as any).sendMedia(me.id, {
+              await client.sendMedia(me.id, {
                 type: "document",
                 file: backupFile,
                 fileName: `sub-store-backup.tgz`,
@@ -518,13 +521,13 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
 
           case "restore":
             const reply = await safeGetReplyMessage(msg);
-            if (!reply || !(reply as any).media) {
+            if (!reply || !reply.media) {
               await msg.edit({ text: "❌ 请回复备份文件" });
               return;
             }
             await msg.edit({ text: "♻️ 恢复中..." });
             const _restoreClient = await getGlobalClient();
-            const buf = await (_restoreClient as any).downloadAsBuffer((reply as any).media);
+            const buf = await _restoreClient.downloadAsBuffer(reply.media as any);
             const restoreFile = `/tmp/restore_${Date.now()}.tgz`;
             fs.writeFileSync(restoreFile, Buffer.from(buf));
 

@@ -3,6 +3,7 @@ import _ from "lodash";
 import { getPrefixes } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { User, Chat } from "@mtcute/node";
 import { html, thtml } from "@mtcute/html-parser";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { cronManager } from "@utils/cronManager";
@@ -18,6 +19,7 @@ import {
 import dayjs from "dayjs";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getRawType, getTitle, getUsername, getUserId } from "@utils/entityTypeGuards";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -93,15 +95,15 @@ async function formatEntity(
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
   if (!target) throw new Error("无效的目标");
-  let id: any;
-  let entity: any;
+  let id: number | undefined;
+  let entity: User | Chat | null = null;
   try {
     entity =
       typeof target !== "string" && target?.id
-        ? target
-        : ((await client?.getChat(target)) as any);
+        ? target as User | Chat
+        : await client?.getChat(target) as User | Chat;
     if (!entity) throw new Error("无法获取 entity");
-    id = entity.id;
+    id = getUserId(entity) ?? undefined;
     if (!id) throw new Error("无法获取 entity id");
   } catch (e: any) {
     logger.error(e);
@@ -112,17 +114,20 @@ async function formatEntity(
   }
   const displayParts: string[] = [];
 
-  if (entity?.title) displayParts.push(htmlEscape(entity.title));
-  if (entity?.firstName) displayParts.push(htmlEscape(entity.firstName));
-  if (entity?.lastName) displayParts.push(htmlEscape(entity.lastName));
-  if (entity?.username)
+  const entityTitle = getTitle(entity);
+  const entityUsername = getUsername(entity);
+  const entityRaw = entity ? (entity as { raw?: { firstName?: string; lastName?: string } }).raw : undefined;
+  if (entityTitle) displayParts.push(htmlEscape(entityTitle));
+  if (entityRaw?.firstName) displayParts.push(htmlEscape(entityRaw.firstName));
+  if (entityRaw?.lastName) displayParts.push(htmlEscape(entityRaw.lastName));
+  if (entityUsername)
     displayParts.push(
-      mention ? htmlEscape(`@${entity.username}`) : codeTag(`@${entity.username}`)
+      mention ? htmlEscape(`@${entityUsername}`) : codeTag(`@${entityUsername}`)
     );
 
   if (id) {
     displayParts.push(
-      (entity as any)._ === 'user'
+      getRawType(entity) === 'user'
         ? `<a href="tg://user?id=${attrEscape(id)}">${htmlEscape(id)}</a>`
         : `<a href="https://t.me/c/${attrEscape(id)}">${htmlEscape(id)}</a>`
     );
