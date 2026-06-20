@@ -192,7 +192,7 @@ export function getRawObject(obj: unknown): any {
  * Replaces: `(msg as any).text`
  */
 export function getMessageText(msg: unknown): string | undefined {
-  if (!msg || typeof obj !== 'object') return undefined;
+  if (!msg || typeof msg !== 'object') return undefined;
   return (msg as { text?: string }).text;
 }
 
