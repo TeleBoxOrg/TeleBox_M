@@ -16,6 +16,7 @@ import crypto from "crypto";
 // SSH2模块直接导入 - 跳过类型检查
 // @ts-ignore
 import { Client as SSH2Client } from 'ssh2';
+import { logger } from "@utils/logger";
 
 const execAsync = promisify(exec);
 const prefixes = getPrefixes();
@@ -181,7 +182,7 @@ class ConfigManager {
       );
       this.initialized = true;
     } catch (error) {
-      console.error("[ssh] 初始化配置失败:", error);
+      logger.error("[ssh] 初始化配置失败:", error);
     } finally {
       this.initLock = false;
     }
@@ -202,7 +203,7 @@ class ConfigManager {
       await this.db.write();
       return true;
     } catch (error) {
-      console.error(`[ssh] 设置配置失败 ${key}:`, error);
+      logger.error(`[ssh] 设置配置失败 ${key}:`, error);
       return false;
     }
   }
@@ -430,7 +431,7 @@ class SSHPlugin extends Plugin {
           });
       }
     } catch (error: any) {
-      console.error("[ssh] 执行失败:", error);
+      logger.error("[ssh] 执行失败:", error);
       await msg.edit({
         text: `❌ <b>执行失败:</b> ${htmlEscape(error.message || "未知错误")}`,
       });
@@ -477,7 +478,7 @@ class SSHPlugin extends Plugin {
           await execAsync('puttygen --version');
         } catch (e) {
           // puttygen 不可用，尝试安装 putty-tools
-          console.log("[ssh] puttygen 未找到，正在安装 putty-tools...");
+          logger.info("[ssh] puttygen 未找到，正在安装 putty-tools...");
           try {
             await execAsync('apt-get update && apt-get install -y putty-tools');
           } catch (e) {
@@ -488,9 +489,9 @@ class SSHPlugin extends Plugin {
         // 转换为PPK格式
         await execAsync(`puttygen ${escapedPath} -o ${escapedPath}.ppk`);
         ppkKey = fs.readFileSync(`${keyPath}.ppk`, "utf-8");
-        console.log("[ssh] PPK格式密钥生成成功");
+        logger.info("[ssh] PPK格式密钥生成成功");
       } catch (error: any) {
-        console.log(`[ssh] PPK转换失败: ${error.message}，跳过PPK格式`);
+        logger.info(`[ssh] PPK转换失败: ${error.message}，跳过PPK格式`);
       }
 
       // 获取服务器信息
@@ -573,7 +574,7 @@ class SSHPlugin extends Plugin {
           await modifySSHConfig("PubkeyAuthentication", "yes", false);
           await modifySSHConfig("AuthorizedKeysFile", "/root/.ssh/authorized_keys", false);
         } catch (configError) {
-          console.log("[ssh] SSH配置优化失败，但密钥已正确设置:", configError);
+          logger.info("[ssh] SSH配置优化失败，但密钥已正确设置:", configError);
         }
       }
 
@@ -954,11 +955,11 @@ ${keysContent}`;
           try {
             await execAsync(`service iptables save`);
           } catch (e) {
-            console.log("[ssh] 无法持久化iptables规则");
+            logger.info("[ssh] 无法持久化iptables规则");
           }
         }
       } catch (firewallError: any) {
-        console.warn("[ssh] 防火墙端口开放失败:", firewallError.message);
+        logger.warn("[ssh] 防火墙端口开放失败:", firewallError.message);
       }
       
       await msg.edit({ text: `🔄 防火墙已配置，正在重启SSH服务...` });
@@ -1271,7 +1272,7 @@ ${keysContent}`;
         try {
           await execAsync(`service iptables save`);
         } catch (e) {
-          console.log("[sshkey] 无法持久化iptables规则");
+          logger.info("[sshkey] 无法持久化iptables规则");
         }
       }
 
@@ -1312,7 +1313,7 @@ ${keysContent}`;
         try {
           await execAsync(`service iptables save`);
         } catch (e) {
-          console.log("[sshkey] 无法持久化iptables规则");
+          logger.info("[sshkey] 无法持久化iptables规则");
         }
       }
 
@@ -1434,7 +1435,7 @@ ${keysContent}`;
         actualPort = portMatch ? portMatch[1] : "22(默认)";
         
       } catch (error) {
-        console.log("[ssh] 无法读取sshd_config:", error);
+        logger.info("[ssh] 无法读取sshd_config:", error);
       }
 
       // 检查authorized_keys文件
@@ -1484,7 +1485,7 @@ ${keysContent}`;
       });
 
       output.on('close', () => {
-        console.log(`[ssh] 压缩包创建成功: ${archive.pointer()} bytes`);
+        logger.info(`[ssh] 压缩包创建成功: ${archive.pointer()} bytes`);
         resolve();
       });
 

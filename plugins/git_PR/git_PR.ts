@@ -7,6 +7,7 @@ import { JSONFilePreset } from "lowdb/node";
 import * as path from "path";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import axios from "axios";
+import { logger } from "@utils/logger";
 
 // HTML转义函数
 const htmlEscape = (text: string): string =>
@@ -95,7 +96,7 @@ class ConfigManager {
       );
       this.initialized = true;
     } catch (error) {
-      console.error("[git] 初始化配置失败:", error);
+      logger.error("[git] 初始化配置失败:", error);
     }
   }
 
@@ -112,7 +113,7 @@ class ConfigManager {
       await this.db.write();
       return true;
     } catch (error) {
-      console.error(`[git] 设置配置失败 ${key}:`, error);
+      logger.error(`[git] 设置配置失败 ${key}:`, error);
       return false;
     }
   }
@@ -184,7 +185,7 @@ class GitManagerPlugin extends Plugin {
             await msg.edit({ text: html`❌ <b>未知子命令:</b> <code>${htmlEscape(sub)}</code><br><br>${help_text}` });
         }
       } catch (error: any) {
-        console.error('[git] 插件执行失败:', error);
+        logger.error('[git] 插件执行失败:', error);
         await msg.edit({ text: html`❌ <b>操作失败:</b> ${htmlEscape(error.message)}` });
       }
     },

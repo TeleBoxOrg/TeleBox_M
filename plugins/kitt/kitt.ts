@@ -17,6 +17,7 @@ import {
 } from "@utils/pluginManager";
 import dayjs from "dayjs";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { logger } from "@utils/logger";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -103,7 +104,7 @@ async function formatEntity(
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
   } catch (e: any) {
-    console.error(e);
+    logger.error(e);
     if (throwErrorIfFailed)
       throw new Error(
         `无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`
@@ -408,19 +409,19 @@ class KittPlugin extends Plugin {
         try {
           matched = await exec(match, msg, undefined, options);
         } catch (e) {
-          console.error(
+          logger.error(
             `[KITT] 任务 ${id}${remark ? ` ${remark}` : ""} 匹配时出错:`,
             e
           );
         }
         if (matched) {
           try {
-            console.log(
+            logger.info(
               `[KITT] 任务 ${id}${remark ? ` ${remark}` : ""} 匹配成功`
             );
             await exec(action, msg, undefined, options);
           } catch (e) {
-            console.error(
+            logger.error(
               `[KITT] 任务 ${id}${remark ? ` ${remark}` : ""} 执行时出错:`,
               e
             );

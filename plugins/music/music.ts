@@ -21,6 +21,7 @@ import { promisify } from "util";
 import * as https from "https";
 import * as http from "http";
 import { JSONFilePreset } from "lowdb/node";
+import { logger } from "@utils/logger";
 
 const execAsync = promisify(exec);
 
@@ -64,7 +65,7 @@ function runTrackedProcess(command: string, args: string[], label: string): Prom
       } else {
         const idMatch = errorData.match(/\[youtube\]\s+([a-zA-Z0-9_-]{11}):/);
         if (idMatch && idMatch[1]) {
-          console.log(`[Music] Extracted video ID from error log: ${idMatch[1]}`);
+          logger.info(`[Music] Extracted video ID from error log: ${idMatch[1]}`);
           resolve(idMatch[1]);
         } else {
           reject(new Error(errorData || `Process exited with code ${code}`));
@@ -170,12 +171,12 @@ class DependencyManager {
   static async checkAndInstallDependencies(): Promise<boolean> {
     for (const pkg of this.requiredPackages) {
       if (!this.isPackageInstalled(pkg)) {
-        console.log(`[music] Installing ${pkg}...`);
+        logger.info(`[music] Installing ${pkg}...`);
         try {
           await execAsync(`npm install ${pkg}`);
-          console.log(`[music] ${pkg} installed successfully`);
+          logger.info(`[music] ${pkg} installed successfully`);
         } catch (error) {
-          console.error(`[music] Failed to install ${pkg}:`, error);
+          logger.error(`[music] Failed to install ${pkg}:`, error);
           return false;
         }
       }
@@ -204,7 +205,7 @@ class DependencyManager {
     for (const cmd of commands) {
       try {
         await execAsync(cmd);
-        console.log(`[music] yt-dlp found: ${cmd}`);
+        logger.info(`[music] yt-dlp found: ${cmd}`);
         return true;
       } catch (e) {
         continue;
@@ -216,10 +217,10 @@ class DependencyManager {
   static async checkFfmpeg(): Promise<boolean> {
     try {
       await execAsync("ffmpeg -version");
-      console.log("[Music] FFmpeg 已就绪");
+      logger.info("[Music] FFmpeg 已就绪");
       return true;
     } catch (e) {
-      console.log("[Music] FFmpeg 未找到");
+      logger.info("[Music] FFmpeg 未找到");
       return false;
     }
   }
@@ -343,9 +344,9 @@ class ConfigManager {
         defaultData
       );
       this.initialized = true;
-      // console.log("[music] 配置管理器初始化成功 (lowdb)");
+      // logger.info("[music] 配置管理器初始化成功 (lowdb)");
     } catch (error) {
-      console.error("[music] 初始化配置失败:", error);
+      logger.error("[music] 初始化配置失败:", error);
     }
   }
 
@@ -397,7 +398,7 @@ class ConfigManager {
       await this.db.write(); // 自动保存
       return true;
     } catch (error) {
-      console.error(`[music] 设置配置失败 ${key}:`, error);
+      logger.error(`[music] 设置配置失败 ${key}:`, error);
       return false;
     }
   }
@@ -413,7 +414,7 @@ class ConfigManager {
       await this.db.write();
       return true;
     } catch (error) {
-      console.error(`[Music] Failed to remove ${key}:`, error);
+      logger.error(`[Music] Failed to remove ${key}:`, error);
       return false;
     }
   }
@@ -453,7 +454,7 @@ class ConfigManager {
       await this.db.write(); // 自动保存
       return true;
     } catch (error) {
-      console.error(`[music] 删除配置失败 ${key}:`, error);
+      logger.error(`[music] 删除配置失败 ${key}:`, error);
       return false;
     }
   }
@@ -573,7 +574,7 @@ class GeminiClient {
     const topP = parseFloat(await ConfigManager.get(CONFIG.KEYS.TOP_P, "0.5"));
     const topK = parseInt(await ConfigManager.get(CONFIG.KEYS.TOP_K, "5"), 10);
     
-    console.log(`[Music] Gemini参数: temperature=${temperature}, topP=${topP}, topK=${topK}`);
+    logger.info(`[Music] Gemini参数: temperature=${temperature}, topP=${topP}, topK=${topK}`);
 
     const systemPrompt = `只输出以下3行，且不要任何其他内容。若未知则留空：
 
@@ -641,7 +642,7 @@ class GeminiClient {
       if (retryCount < CONFIG.DEFAULTS.MAX_RETRIES && 
           (error.message.includes('超时') || error.message.includes('timeout') || 
            error.message.includes('网络') || error.message.includes('ECONNRESET'))) {
-        console.log(`[music] AI请求失败，重试 ${retryCount + 1}/${CONFIG.DEFAULTS.MAX_RETRIES}: ${error.message}`);
+        logger.info(`[music] AI请求失败，重试 ${retryCount + 1}/${CONFIG.DEFAULTS.MAX_RETRIES}: ${error.message}`);
         await lifecycleDelay(2000 * (retryCount + 1), "music:gemini-retry"); // Exponential backoff
         return this.searchMusic(query, retryCount + 1);
       }
@@ -744,7 +745,7 @@ class CookieConverter {
 
       return netscapeLines.join("\n");
     } catch (error) {
-      console.error("Failed to convert JSON to Netscape:", error);
+      logger.error("Failed to convert JSON to Netscape:", error);
       return input;
     }
   }
@@ -917,10 +918,10 @@ class Downloader {
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
           if (versionDate < thirtyDaysAgo) {
-            console.log(`[Music] yt-dlp版本较旧 (${version})，建议更新: yt-dlp -U 或 pip install -U yt-dlp`);
+            logger.info(`[Music] yt-dlp版本较旧 (${version})，建议更新: yt-dlp -U 或 pip install -U yt-dlp`);
           }
         }
-        console.log(`[Music] Found yt-dlp via: ${cmd.split(" ")[0]}`);
+        logger.info(`[Music] Found yt-dlp via: ${cmd.split(" ")[0]}`);
         break;
       } catch (e) { /* noop */ }
     }
@@ -931,7 +932,7 @@ class Downloader {
       result.ffmpeg = true;
       // 静默检查，不输出日志
     } catch (e) {
-      console.log("[Music] FFmpeg 未找到，音频处理功能受限");
+      logger.info("[Music] FFmpeg 未找到，音频处理功能受限");
     }
 
     return result;
@@ -956,11 +957,11 @@ class Downloader {
           // 构建搜索词：歌手 + 歌曲名 + Lyrics
           if (songInfo.artist && songInfo.title) {
             finalQuery = `${songInfo.artist} ${songInfo.title} Lyrics`;
-            console.log(`[Music] AI构建搜索词: ${finalQuery}`);
+            logger.info(`[Music] AI构建搜索词: ${finalQuery}`);
           }
         }
       } catch (error) {
-        console.log(`[Music] AI识别失败，使用原始搜索词: ${error}`);
+        logger.info(`[Music] AI识别失败，使用原始搜索词: ${error}`);
       }
 
       // The query will be passed as an argument, so no shell escaping is needed.
@@ -1033,11 +1034,11 @@ class Downloader {
           );
 
           if (stdout) {
-            console.log(`[Music] Search successful with: ${config.command}`);
+            logger.info(`[Music] Search successful with: ${config.command}`);
             break;
           }
         } catch (error) {
-          console.log(`[Music] Search failed with: ${config.command}. Error:`, error);
+          logger.info(`[Music] Search failed with: ${config.command}. Error:`, error);
         }
       }
 
@@ -1047,7 +1048,7 @@ class Downloader {
       if (!stdout.includes('{')) {
         const firstId = stdout.split('\n')[0].trim();
         if (firstId) {
-          console.log(`[Music] 选中第一个结果 (ID): ${firstId}`);
+          logger.info(`[Music] 选中第一个结果 (ID): ${firstId}`);
           return `https://www.youtube.com/watch?v=${firstId}`;
         }
       }
@@ -1058,16 +1059,16 @@ class Downloader {
         const firstEntry = result.entries ? result.entries[0] : result;
 
         if (firstEntry && firstEntry.id) {
-          console.log(`[Music] 选中第一个结果 (JSON): ${firstEntry.title}`);
+          logger.info(`[Music] 选中第一个结果 (JSON): ${firstEntry.title}`);
           return `https://www.youtube.com/watch?v=${firstEntry.id}`;
         }
       } catch (e) {
-        console.error('[Music] Failed to parse JSON, returning null.', e);
+        logger.error('[Music] Failed to parse JSON, returning null.', e);
       }
 
       return null;
     } catch (error) {
-      console.error("[Music] Search error:", error);
+      logger.error("[Music] Search error:", error);
       return null;
     }
   }
@@ -1193,7 +1194,7 @@ class Downloader {
 
           const ok = await this.downloadImageToFile(picUrl, destPath);
           if (ok) {
-            console.log(`[Music] 已从API获取专辑封面: ${source}`);
+            logger.info(`[Music] 已从API获取专辑封面: ${source}`);
             return true;
           }
         } catch (e) {
@@ -1314,14 +1315,14 @@ class Downloader {
               metadata.album = videoInfo.album;
             }
           }
-          console.log(
+          logger.info(
             `[music] 元数据: ${metadata.artist} - ${metadata.title}${
               metadata.album ? " - " + metadata.album : ""
             }`
           );
         }
       } catch (error) {
-        console.log("[music] 无法获取视频信息，使用已有元数据");
+        logger.info("[music] 无法获取视频信息，使用已有元数据");
       }
 
       // 若 API 未获取到封面，则回退到视频缩略图
@@ -1352,12 +1353,12 @@ class Downloader {
                 fs.renameSync(`${thumbnailPath}_temp.jpg`, thumbnailPath);
               }
               hasThumbnail = true;
-              console.log(`[music] 缩略图已下载: ${thumbnailPath}`);
+              logger.info(`[music] 缩略图已下载: ${thumbnailPath}`);
               break;
             }
           }
         } catch (error) {
-          console.log("[music] 缩略图下载失败，继续下载音频");
+          logger.info("[music] 缩略图下载失败，继续下载音频");
         }
       }
 
@@ -1397,20 +1398,20 @@ class Downloader {
 
       for (const cmd of commands) {
         try {
-          console.log(`[music] 尝试下载命令: ${cmd.split(" ")[0]}`);
+          logger.info(`[music] 尝试下载命令: ${cmd.split(" ")[0]}`);
           const { stdout, stderr } = await execAsync(cmd);
-          console.log(`[music] 下载成功`);
+          logger.info(`[music] 下载成功`);
           success = true;
           break;
         } catch (error: any) {
           lastError = error;
-          console.log(`[music] 下载失败: ${error.message}`);
+          logger.info(`[music] 下载失败: ${error.message}`);
           continue;
         }
       }
 
       if (!success) {
-        console.error("[music] 所有下载策略失败:", lastError?.message);
+        logger.error("[music] 所有下载策略失败:", lastError?.message);
         return { audioPath: null };
       }
 
@@ -1439,7 +1440,7 @@ class Downloader {
           const filePath = path.join(this.tempDir, audioFile);
           const stats = await fs.promises.stat(filePath);
           const formatInfo = this.getFormatInfo(ext);
-          console.log(
+          logger.info(
             `[music] 下载完成: ${audioFile} (${Utils.formatSize(
               stats.size
             )}, ${formatInfo})`
@@ -1461,7 +1462,7 @@ class Downloader {
 
       return { audioPath: null };
     } catch (error) {
-      console.error("[music] 下载失败:", error);
+      logger.error("[music] 下载失败:", error);
       return { audioPath: null };
     }
   }
@@ -1487,22 +1488,22 @@ class Downloader {
   ): Promise<string> {
     // 如果没有元数据和封面，直接返回原文件
     if (!metadata && !thumbnailPath) {
-      console.log("[music] 没有元数据和封面，跳过嵌入");
+      logger.info("[music] 没有元数据和封面，跳过嵌入");
       return audioPath;
     }
 
     // 打印要嵌入的元数据
     if (metadata) {
-      console.log("[music] 准备嵌入元数据:");
-      console.log(`  - 标题: ${metadata.title || "无"}`);
-      console.log(`  - 艺术家: ${metadata.artist || "无"}`);
-      console.log(`  - 专辑: ${metadata.album || "无"}`);
+      logger.info("[music] 准备嵌入元数据:");
+      logger.info(`  - 标题: ${metadata.title || "无"}`);
+      logger.info(`  - 艺术家: ${metadata.artist || "无"}`);
+      logger.info(`  - 专辑: ${metadata.album || "无"}`);
     }
 
     // OPUS 格式特殊处理 - 转换为 MP3 以确保兼容性
     const ext = path.extname(audioPath).toLowerCase();
     if (ext === ".opus") {
-      console.log("[music] OPUS 格式：转换为 MP3 以确保 Telegram 兼容性");
+      logger.info("[music] OPUS 格式：转换为 MP3 以确保 Telegram 兼容性");
       const mp3Path = await this.embedMetadataOnly(audioPath, metadata);
 
       // 如果有缩略图，为 MP3 嵌入封面
@@ -1538,21 +1539,21 @@ class Downloader {
             /"/g,
             '\\"'
           )}"`;
-          console.log(`[music] 添加标题: ${metadata.title}`);
+          logger.info(`[music] 添加标题: ${metadata.title}`);
         }
         if (metadata.artist && metadata.artist !== "Unknown Artist") {
           ffmpegCmd += ` -metadata artist="${metadata.artist.replace(
             /"/g,
             '\\"'
           )}"`;
-          console.log(`[music] 添加艺术家: ${metadata.artist}`);
+          logger.info(`[music] 添加艺术家: ${metadata.artist}`);
         }
         if (metadata.album) {
           ffmpegCmd += ` -metadata album="${metadata.album.replace(
             /"/g,
             '\\"'
           )}"`;
-          console.log(`[music] 添加专辑: ${metadata.album}`);
+          logger.info(`[music] 添加专辑: ${metadata.album}`);
         }
         // 添加更多元数据
         ffmpegCmd += ` -metadata comment="Downloaded by TeleBox Music Plugin"`;
@@ -1575,7 +1576,7 @@ class Downloader {
           // OPUS 格式保持原始格式，不嵌入封面避免格式转换
           ffmpegCmd += " -map 0:a -c:a copy";
           // OPUS 格式的封面需要特殊处理，暂时跳过
-          console.log("[music] OPUS 格式暂不支持封面嵌入，保持原始格式");
+          logger.info("[music] OPUS 格式暂不支持封面嵌入，保持原始格式");
         } else if (ext === ".ogg") {
           // OGG Vorbis 格式
           ffmpegCmd += " -map 0:a";
@@ -1595,20 +1596,20 @@ class Downloader {
       // 这里不再强制使用 `-f auto`（无效），仅在特殊需要时才指定格式。
       ffmpegCmd += ` -y "${outputPath}"`;
 
-      console.log("[music] 正在嵌入元数据和封面...");
+      logger.info("[music] 正在嵌入元数据和封面...");
       const { stderr } = await execAsync(ffmpegCmd);
 
       // 检查输出文件是否创建成功
       if (!fs.existsSync(outputPath)) {
-        console.error("[music] FFmpeg 输出文件未创建");
-        if (stderr) console.error("[music] FFmpeg 错误:", stderr);
+        logger.error("[music] FFmpeg 输出文件未创建");
+        if (stderr) logger.error("[music] FFmpeg 错误:", stderr);
         return audioPath;
       }
 
       // 检查新文件大小
       const newSize = fs.statSync(outputPath).size;
       if (newSize === 0) {
-        console.error("[music] FFmpeg 输出文件为空");
+        logger.error("[music] FFmpeg 输出文件为空");
         fs.unlinkSync(outputPath);
         return audioPath;
       }
@@ -1617,10 +1618,10 @@ class Downloader {
       fs.unlinkSync(audioPath);
       fs.renameSync(outputPath, audioPath);
 
-      console.log("[music] 元数据和封面嵌入成功");
+      logger.info("[music] 元数据和封面嵌入成功");
       return audioPath;
     } catch (error) {
-      console.error("[music] 元数据嵌入失败:", error);
+      logger.error("[music] 元数据嵌入失败:", error);
       // 如果失败，返回原文件
       return audioPath;
     }
@@ -1632,11 +1633,11 @@ class Downloader {
   ): Promise<string> {
     // OPUS 格式转换为 MP3 以确保 Telegram 兼容性
     if (!metadata) {
-      console.log("[music] OPUS: 没有元数据，跳过嵌入");
+      logger.info("[music] OPUS: 没有元数据，跳过嵌入");
       return audioPath;
     }
 
-    console.log("[music] OPUS 转换为 MP3 并嵌入元数据...");
+    logger.info("[music] OPUS 转换为 MP3 并嵌入元数据...");
 
     try {
       const ext = path.extname(audioPath).toLowerCase();
@@ -1655,21 +1656,21 @@ class Downloader {
           /"/g,
           '\\"'
         )}"`;
-        console.log(`[music] 添加标题: ${metadata.title}`);
+        logger.info(`[music] 添加标题: ${metadata.title}`);
       }
       if (metadata.artist && metadata.artist !== "Unknown Artist") {
         ffmpegCmd += ` -metadata artist="${metadata.artist.replace(
           /"/g,
           '\\"'
         )}"`;
-        console.log(`[music] 添加艺术家: ${metadata.artist}`);
+        logger.info(`[music] 添加艺术家: ${metadata.artist}`);
       }
       if (metadata.album) {
         ffmpegCmd += ` -metadata album="${metadata.album.replace(
           /"/g,
           '\\"'
         )}"`;
-        console.log(`[music] 添加专辑: ${metadata.album}`);
+        logger.info(`[music] 添加专辑: ${metadata.album}`);
       }
 
       // 添加 ID3v2 标签版本
@@ -1678,15 +1679,15 @@ class Downloader {
       // 输出文件
       ffmpegCmd += ` -y "${outputPath}"`;
 
-      console.log("[music] 执行 FFmpeg 转换命令...");
+      logger.info("[music] 执行 FFmpeg 转换命令...");
       const { stderr } = await execAsync(ffmpegCmd);
       if (stderr) {
-        console.log("[music] FFmpeg 输出:", stderr);
+        logger.info("[music] FFmpeg 输出:", stderr);
       }
 
       // 验证输出文件
       if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size === 0) {
-        console.error("[music] 转换失败");
+        logger.error("[music] 转换失败");
         return audioPath;
       }
 
@@ -1694,10 +1695,10 @@ class Downloader {
       fs.unlinkSync(audioPath);
 
       const newSize = fs.statSync(outputPath).size;
-      console.log(`[music] OPUS 转 MP3 成功 (${Utils.formatSize(newSize)})`);
+      logger.info(`[music] OPUS 转 MP3 成功 (${Utils.formatSize(newSize)})`);
       return outputPath;
     } catch (error) {
-      console.error("[music] OPUS 转换错误:", error);
+      logger.error("[music] OPUS 转换错误:", error);
       return audioPath;
     }
   }
@@ -1746,18 +1747,18 @@ class Downloader {
       ffmpegCmd += " -id3v2_version 3";
       ffmpegCmd += ` -y "${outputPath}"`;
 
-      console.log("[music] 嵌入封面到 MP3...");
+      logger.info("[music] 嵌入封面到 MP3...");
       await execAsync(ffmpegCmd);
 
       if (fs.existsSync(outputPath)) {
         fs.unlinkSync(mp3Path);
-        console.log("[music] MP3 封面嵌入成功");
+        logger.info("[music] MP3 封面嵌入成功");
         return outputPath;
       }
 
       return mp3Path;
     } catch (error) {
-      console.error("[music] MP3 封面嵌入失败:", error);
+      logger.error("[music] MP3 封面嵌入失败:", error);
       return mp3Path;
     }
   }
@@ -1774,11 +1775,11 @@ class Downloader {
         const stats = await fs.promises.stat(filePath);
         if (now - stats.mtimeMs > maxAge) {
           await fs.promises.unlink(filePath);
-          console.log(`[music] Cleaned old temp file: ${file}`);
+          logger.info(`[music] Cleaned old temp file: ${file}`);
         }
       }
     } catch (error) {
-      console.error("[music] Clean temp files error:", error);
+      logger.error("[music] Clean temp files error:", error);
     }
   }
 }
@@ -1804,36 +1805,36 @@ class MusicPlugin extends Plugin {
   async initialize(): Promise<void> {
     if (MusicPlugin.initialized) return;
 
-    console.log("[music] 初始化 Music Plugin...");
+    logger.info("[music] 初始化 Music Plugin...");
 
     // 检查并安装依赖
     const depsInstalled = await DependencyManager.checkAndInstallDependencies();
     if (!depsInstalled) {
-      console.error("[music] 依赖安装失败");
+      logger.error("[music] 依赖安装失败");
     }
 
     // 检查 yt-dlp
     const ytdlpAvailable = await DependencyManager.checkYtDlp();
     if (!ytdlpAvailable) {
-      console.warn("[music] yt-dlp 未安装，请手动安装: sudo pip install --upgrade --force-reinstall yt-dlp --break-system-packages");
+      logger.warn("[music] yt-dlp 未安装，请手动安装: sudo pip install --upgrade --force-reinstall yt-dlp --break-system-packages");
     } else {
       // 尝试自动更新yt-dlp到最新版本
       try {
-        console.log("[music] 正在检查yt-dlp更新...");
+        logger.info("[music] 正在检查yt-dlp更新...");
         const { stdout } = await execAsync("yt-dlp -U");
         if (stdout.includes("up to date")) {
-          console.log("[music] yt-dlp已是最新版本");
+          logger.info("[music] yt-dlp已是最新版本");
         } else if (stdout.includes("Updated")) {
-          console.log("[music] yt-dlp已更新到最新版本");
+          logger.info("[music] yt-dlp已更新到最新版本");
         }
       } catch (error) {
-        console.log("[music] 无法自动更新yt-dlp，请手动更新: yt-dlp -U");
+        logger.info("[music] 无法自动更新yt-dlp，请手动更新: yt-dlp -U");
       }
     }
 
     const ffmpegInstalled = await DependencyManager.checkFfmpeg();
     if (!ffmpegInstalled) {
-      console.warn("[music] ffmpeg 未安装，音频转换功能受限");
+      logger.warn("[music] ffmpeg 未安装，音频转换功能受限");
     }
 
     MusicPlugin.initialized = true;
@@ -2151,7 +2152,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
       } else {
         // 解析查询获取元数据（可能使用 AI）
         metadata = await this.parseQuery(query);
-        console.log(
+        logger.info(
           `[music] 查询解析结果: ${metadata.artist} - ${metadata.title}`
         );
 
@@ -2191,7 +2192,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
       });
 
       // 传递元数据给下载器
-      console.log(
+      logger.info(
         `[music] 开始下载，元数据: ${metadata?.artist || "无"} - ${
           metadata?.title || "无"
         }`
@@ -2271,7 +2272,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
             fs.unlinkSync(downloadResult.thumbnailPath);
           }
         } catch (error) {
-          console.log("[music] 清理临时文件失败:", error);
+          logger.info("[music] 清理临时文件失败:", error);
         }
       }
       pendingCleanupTimers.add(timer);
@@ -2305,22 +2306,22 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
     const apiKey = await ConfigManager.get(CONFIG.KEYS.API);
     if (apiKey) {
       try {
-        console.log("[music] 使用 AI 解析歌曲信息...");
+        logger.info("[music] 使用 AI 解析歌曲信息...");
         const baseUrl = await ConfigManager.get(CONFIG.KEYS.BASE_URL);
         const gemini = new GeminiClient(apiKey, baseUrl);
         const aiResponse = await gemini.searchMusic(query);
         const songInfo = await extractSongInfo(aiResponse, query);
-        console.log(
+        logger.info(
           `[music] AI 识别结果: ${songInfo.artist} - ${songInfo.title}${
             songInfo.album ? " - " + songInfo.album : ""
           }`
         );
         return songInfo;
       } catch (error) {
-        console.log("[music] AI 解析失败，使用默认解析:", error);
+        logger.info("[music] AI 解析失败，使用默认解析:", error);
       }
     } else {
-      console.log("[music] 未配置 Gemini API，使用默认解析");
+      logger.info("[music] 未配置 Gemini API，使用默认解析");
     }
 
     // 默认解析

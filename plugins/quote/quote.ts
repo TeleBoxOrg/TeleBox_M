@@ -8,6 +8,7 @@ import { npm_install } from "@utils/npm_install";
 const { execFile } = require("child_process");
 import { safeGetReplyMessage, safeGetMessages } from "@utils/safeGetMessages";
 import { getPrefixes } from "@utils/pluginManager";
+import { logger } from "@utils/logger";
 
 const DEFAULT_BACKGROUND = "#231d2b/#372e44";
 const DEFAULT_EMOJI_BRAND = "apple";
@@ -102,7 +103,7 @@ function requireOrInstall(pkg: string): any {
   } catch (err: any) {
     const code = err?.code;
     if (code !== "MODULE_NOT_FOUND" && code !== "ERR_MODULE_NOT_FOUND") throw err;
-    console.warn("quote loader installing npm package", { pkg });
+    logger.warn("quote loader installing npm package", { pkg });
     npm_install(pkg);
     return require(pkg);
   }
@@ -139,7 +140,7 @@ async function ensureQuoteAssets(): Promise<void> {
   if (currentVersion !== QUOTE_PLUGIN_VERSION) {
     const missingVendor = QUOTE_DEP_FILES.filter((rel) => !fs.existsSync(path.join(quoteDir, rel)));
     if (missingVendor.length > 0) {
-      console.warn("quote loader installing missing vendor", { from: currentVersion || undefined, to: QUOTE_PLUGIN_VERSION, count: missingVendor.length });
+      logger.warn("quote loader installing missing vendor", { from: currentVersion || undefined, to: QUOTE_PLUGIN_VERSION, count: missingVendor.length });
       for (const rel of missingVendor) {
         await downloadFileIfMissingOrChanged(`${QUOTE_BASE_URL}/${rel}`, path.join(quoteDir, rel));
       }
@@ -151,7 +152,7 @@ async function ensureQuoteAssets(): Promise<void> {
   for (const rel of QUOTE_ASSET_FILES) {
     const filePath = path.join(QUOTE_ASSETS_DIR, rel);
     if (!fs.existsSync(filePath)) {
-      console.warn("quote loader downloading asset", { rel });
+      logger.warn("quote loader downloading asset", { rel });
       await downloadFileIfMissingOrChanged(`${QUOTE_ASSETS_BASE_URL}/${rel}`, filePath);
     }
   }
@@ -159,7 +160,7 @@ async function ensureQuoteAssets(): Promise<void> {
   for (const font of QUOTE_FONT_FILES) {
     const filePath = path.join(QUOTE_ASSETS_DIR, font.name);
     if (!fs.existsSync(filePath)) {
-      console.warn("quote loader downloading CJK font", { name: font.name });
+      logger.warn("quote loader downloading CJK font", { name: font.name });
       await downloadFileIfMissingOrChanged(font.url, filePath);
     }
   }
@@ -182,7 +183,7 @@ function quoteMs(start: number): number {
 }
 
 function quoteTiming(label: string, start: number, extra?: Record<string, any>): void {
-  console.warn("quote timing", label, `${quoteMs(start)}ms`, extra || "");
+  logger.warn("quote timing", label, `${quoteMs(start)}ms`, extra || "");
 }
 
 type QuoteArgs = {
@@ -504,7 +505,7 @@ async function normalizeAvatarBuffer(buffer: Buffer): Promise<Buffer | undefined
       .png()
       .toBuffer();
   } catch (err: any) {
-    console.warn("quote avatar normalize failed", err?.message || err);
+    logger.warn("quote avatar normalize failed", err?.message || err);
     return buffer.length > 0 ? buffer : undefined;
   }
 }
@@ -530,7 +531,7 @@ async function downloadEntityAvatar(client: any, entity: any): Promise<Buffer | 
       const buffer = await client.downloadAsBuffer(location).catch(() => null as any);
       return Buffer.isBuffer(buffer) && buffer.length > 0 ? buffer : undefined;
     } catch (err: any) {
-      console.warn(`quote avatar ${isBig ? "big" : "small"} download failed`, err?.message || err);
+      logger.warn(`quote avatar ${isBig ? "big" : "small"} download failed`, err?.message || err);
       return undefined;
     }
   };
@@ -583,7 +584,7 @@ async function downloadMediaToBuffer(client: any, target: any): Promise<Buffer |
     const buffer = await client.downloadAsBuffer(media as any);
     return buffer && buffer.length > 0 ? Buffer.from(buffer) : undefined;
   } catch (err: any) {
-    console.warn("quote media download failed", err?.message || err);
+    logger.warn("quote media download failed", err?.message || err);
     return undefined;
   }
 }
@@ -613,7 +614,7 @@ async function mediaBufferToCanvas(buffer: Buffer | undefined, kind: string | un
     ctx.drawImage(img, 0, 0);
     return canvas;
   } catch (err: any) {
-    console.warn("quote media canvas failed", kind, err?.message || err);
+    logger.warn("quote media canvas failed", kind, err?.message || err);
     return undefined;
   }
 }
@@ -699,7 +700,7 @@ async function probeAnimatedInfo(buffer: Buffer): Promise<{ fps: number; duratio
     const duration = Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : 2;
     return { fps, duration };
   } catch (err: any) {
-    console.warn("quote animated probe failed", err?.message || err);
+    logger.warn("quote animated probe failed", err?.message || err);
     return { fps: 12, duration: 2 };
   } finally {
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) {}
@@ -772,7 +773,7 @@ async function extractAnimatedFrames(buffer: Buffer, size: number, frameCount: n
     const files = fs.readdirSync(dir).filter((f) => f.endsWith(".png")).sort();
     return files.map((f) => fs.readFileSync(path.join(dir, f))).filter((b) => b.length > 0);
   } catch (err: any) {
-    console.warn("quote animated frame extract failed", err?.message || err);
+    logger.warn("quote animated frame extract failed", err?.message || err);
     return [];
   } finally {
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) {}
@@ -887,10 +888,10 @@ async function downloadCustomEmojiAnimatedPreferred(client: any, doc: any): Prom
   const id = String(doc?.id ?? doc?.documentId ?? doc?.document_id ?? "");
   const mime = doc?.mimeType || doc?.mime_type || "";
   const thumbs = customEmojiThumbs(doc);
-  console.warn("quote emoji source scan", id, "docMime", mime, "thumbs", thumbs.map((t: any) => `${t?.className || t?.constructor?.name || typeof t}:${t?.type || ""}:${t?.size || ""}`).join(","), "mode", "skip-thumbs-use-original");
+  logger.warn("quote emoji source scan", id, "docMime", mime, "thumbs", thumbs.map((t: any) => `${t?.className || t?.constructor?.name || typeof t}:${t?.type || ""}:${t?.size || ""}`).join(","), "mode", "skip-thumbs-use-original");
   const td = Date.now();
   const original = await downloadMediaToBuffer(client, doc).catch(() => undefined);
-  console.warn("quote emoji source selected", id, "original", original?.length || 0, bufferKind(original), "downloadMs", quoteMs(td), "totalMs", quoteMs(t0));
+  logger.warn("quote emoji source selected", id, "original", original?.length || 0, bufferKind(original), "downloadMs", quoteMs(td), "totalMs", quoteMs(t0));
   return original;
 }
 function collectAnimatedMediaMessages(messages: any[]): any[] {
@@ -1043,7 +1044,7 @@ async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs):
   const tprobe = Date.now();
   const alphaProbe = await probeWebmAlpha(encoded);
   quoteTiming("webm.alpha_probe", tprobe);
-  console.warn("quote webm generated", "bytes", encoded.length, "fps", fps, "frames", rendered.length, "size", `${width}x${height}`, "alpha", alphaProbe);
+  logger.warn("quote webm generated", "bytes", encoded.length, "fps", fps, "frames", rendered.length, "size", `${width}x${height}`, "alpha", alphaProbe);
   quoteTiming("animated.total", t0, { frames: rendered.length, bytes: encoded.length });
   return { image: encoded, ext: "webm", width, height, duration: Math.ceil(duration) };
 }
@@ -1070,7 +1071,7 @@ async function getCustomEmojiDocuments(client: any, ids: string[]): Promise<any[
       documentId: unique.map((id) => BigInt(id)),
     });
   } catch (err: any) {
-    console.warn("quote custom emoji fetch failed", err?.message || err);
+    logger.warn("quote custom emoji fetch failed", err?.message || err);
     return [];
   }
 }
@@ -1099,12 +1100,12 @@ async function hydrateCustomEmojiBuffers(client: any, messages: any[]): Promise<
     if (isAnimatedRasterBuffer(rawBuffer)) animatedCustomEmojiCache.set(id, rawBuffer);
     const buffer = await normalizeCustomEmojiBuffer(rawBuffer);
     customEmojiCache.set(id, buffer);
-    console.warn("quote custom emoji loaded", id, buffer ? buffer.length : 0, wasAnimated ? "animated-converted" : "static", "source", isGifBuffer(rawBuffer) ? "gif" : isWebmBuffer(rawBuffer) ? "webm" : "other", "mime", doc.mimeType || doc.mime_type || "", "thumbs", doc.thumbs?.length || 0, "videoThumbs", doc.videoThumbs?.length || doc.video_thumbs?.length || 0);
+    logger.warn("quote custom emoji loaded", id, buffer ? buffer.length : 0, wasAnimated ? "animated-converted" : "static", "source", isGifBuffer(rawBuffer) ? "gif" : isWebmBuffer(rawBuffer) ? "webm" : "other", "mime", doc.mimeType || doc.mime_type || "", "thumbs", doc.thumbs?.length || 0, "videoThumbs", doc.videoThumbs?.length || doc.video_thumbs?.length || 0);
   });
   const loadedDocIds = new Set(docs.map((doc: any) => String(doc.id ?? doc.documentId ?? doc.document_id ?? "")).filter(Boolean));
   ids.forEach((id) => {
-    if (!loadedDocIds.has(id)) console.warn("quote custom emoji document missing", id);
-    else if (!customEmojiCache.get(id)) console.warn("quote custom emoji buffer missing", id);
+    if (!loadedDocIds.has(id)) logger.warn("quote custom emoji document missing", id);
+    else if (!customEmojiCache.get(id)) logger.warn("quote custom emoji buffer missing", id);
   });
 
   const applyEntity = (entity: any) => {
@@ -1112,7 +1113,7 @@ async function hydrateCustomEmojiBuffers(client: any, messages: any[]): Promise<
     if (!id) return;
     const buffer = customEmojiCache.get(String(id));
     if (buffer) entity.customEmojiBuffer = buffer;
-    else console.warn("quote custom emoji apply missing", String(id));
+    else logger.warn("quote custom emoji apply missing", String(id));
   };
   const applyMessage = (message: any) => {
     (message.entities || []).forEach(applyEntity);
@@ -1121,11 +1122,11 @@ async function hydrateCustomEmojiBuffers(client: any, messages: any[]): Promise<
     if (statusId) {
       const buffer = customEmojiCache.get(String(statusId));
       if (buffer) {
-        console.warn("quote sender emoji status cached", String(statusId), buffer.length);
+        logger.warn("quote sender emoji status cached", String(statusId), buffer.length);
         if (message.from?.emoji_status) message.from.emoji_status.customEmojiBuffer = buffer;
         if (message.emoji_status) message.emoji_status.customEmojiBuffer = buffer;
       } else {
-        console.warn("quote sender emoji status missing", String(statusId));
+        logger.warn("quote sender emoji status missing", String(statusId));
       }
     }
     if (message.replyMessage) applyMessage(message.replyMessage);
@@ -1189,7 +1190,7 @@ async function toQuoteMessage(msg: MessageContext, args: QuoteArgs): Promise<any
   let emojiBuffer: Buffer | undefined;
   if (emojiId) {
     emojiBuffer = customEmojiCache.get(emojiId);
-    console.warn("quote sender emoji status", emojiId, emojiBuffer ? emojiBuffer.length : 0);
+    logger.warn("quote sender emoji status", emojiId, emojiBuffer ? emojiBuffer.length : 0);
   }
   const user: QuoteUser = {
     id: fwd?.peer ? peerIdNumber(fwd.peer) : senderIdNumber(msg),
@@ -1241,7 +1242,7 @@ async function collectMessages(msg: MessageContext, args: QuoteArgs): Promise<an
       : { offsetId: baseId + 1, limit };
     const messages = await safeGetMessages(client, peer, params as any).catch(() => []);
     const result = (Array.isArray(messages) ? messages : []).filter(isApiMessage).sort((a: any, b: any) => a.id - b.id);
-    console.warn("quote collect messages", { reply: true, count, baseId, params, got: result.map((m: any) => m.id) });
+    logger.warn("quote collect messages", { reply: true, count, baseId, params, got: result.map((m: any) => m.id) });
     return result.length ? result : [reply];
   }
 
@@ -1253,7 +1254,7 @@ async function collectMessages(msg: MessageContext, args: QuoteArgs): Promise<an
     : { offsetId: commandId + 1, limit };
   const messages = await safeGetMessages(client, peer, params as any).catch(() => []);
   const result = (Array.isArray(messages) ? messages : []).filter(isApiMessage).sort((a: any, b: any) => a.id - b.id);
-  console.warn("quote collect messages", { reply: false, count, commandId, params, got: result.map((m: any) => m.id) });
+  logger.warn("quote collect messages", { reply: false, count, commandId, params, got: result.map((m: any) => m.id) });
   return result.length ? result : [msg];
 }
 
@@ -1300,7 +1301,7 @@ export class QuotePlugin {
       const argsText = getCommandArgsText(msg, command);
       const args = parseArgs(argsText);
       const quoteStartedAt = Date.now();
-      console.warn("quote command triggered", { command, text: rawText, argsText, out: (msg as any).isOutgoing, replyTo: !!(msg as any).replyTo, backgroundColor: args.backgroundColor });
+      logger.warn("quote command triggered", { command, text: rawText, argsText, out: (msg as any).isOutgoing, replyTo: !!(msg as any).replyTo, backgroundColor: args.backgroundColor });
       await editProgress(msg, quoteResourcesReady() ? "⏳ 正在生成 quote…" : "⏳ 首次使用，正在初始化 quote 资源…");
 
       try {
@@ -1359,7 +1360,7 @@ export class QuotePlugin {
               },
             ],
           };
-          console.warn("quote webm send options", { bytes: result.image.length, mimeType: sendOptions.mimeType, width, height, duration });
+          logger.warn("quote webm send options", { bytes: result.image.length, mimeType: sendOptions.mimeType, width, height, duration });
           await sendClient.sendMedia(msg.chat.id, sendOptions);
         } else {
           const sendOptions: any = {
@@ -1374,13 +1375,13 @@ export class QuotePlugin {
         quoteTiming("main.send_reply", tSend, { ext: result.ext, bytes: result.image?.length || 0 });
         try {
           await msg.delete();
-          console.warn("quote command source deleted", { id: msg.id });
+          logger.warn("quote command source deleted", { id: msg.id });
         } catch (deleteErr: any) {
-          console.warn("quote command source delete failed", deleteErr?.message || deleteErr);
+          logger.warn("quote command source delete failed", deleteErr?.message || deleteErr);
         }
-        console.warn("quote command finished", { ms: Date.now() - quoteStartedAt, bytes: result.image?.length, ext: result.ext, replyTo: replyTargetId });
+        logger.warn("quote command finished", { ms: Date.now() - quoteStartedAt, bytes: result.image?.length, ext: result.ext, replyTo: replyTargetId });
       } catch (err: any) {
-        console.error("quote command failed", err?.stack || err?.message || err);
+        logger.error("quote command failed", err?.stack || err?.message || err);
         await editProgress(msg, `❌ quote 失败：${err?.message || err}`);
       }
   }

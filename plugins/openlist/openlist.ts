@@ -12,6 +12,7 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -655,7 +656,7 @@ class OpenListPlugin extends Plugin {
       await msg.edit({ text: `✅ 文件已上传到 OpenList: ${codeTag(fullPath)}` });
 
     } catch (error: any) {
-      console.error("OpenList Upload Error:", error);
+      logger.error("OpenList Upload Error:", error);
       const errMsg = error?.response?.data?.message || error.message || "未知错误";
       throw new Error(`上传失败: ${errMsg}`);
     }
@@ -695,7 +696,7 @@ class OpenListPlugin extends Plugin {
           }
         }
       } catch (e) {
-        console.error("Error reading config:", e);
+        logger.error("Error reading config:", e);
       }
     }
 
