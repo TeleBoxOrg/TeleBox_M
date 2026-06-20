@@ -488,9 +488,9 @@ const resolveResponsesEndpointUrl = (
   return resolveEndpointUrl(responsesBaseUrl, "responses");
 };
 
-const getMessageText = (m?: any): string => {
+const getMessageText = (m?: { message?: string; text?: string } | null): string => {
   if (!m) return "";
-  const text = (m as any).message ?? (m as any).text ?? "";
+  const text = m.message ?? m.text ?? "";
   return typeof text === "string" ? text : "";
 };
 
@@ -788,7 +788,7 @@ const getMessageImageParts = async (
 
   const parts: AIContentPart[] = [];
 
-  const rawGroupedId = (msg as any).groupedId;
+  const rawGroupedId = msg.groupedId;
   const groupedId = rawGroupedId ? rawGroupedId.toString() : undefined;
 
   if (!groupedId) {
@@ -822,7 +822,7 @@ const getMessageImageParts = async (
 
 const getGroupedMessageIds = async (msg: MessageContext): Promise<number[]> => {
   if (!msg?.client) return [];
-  const rawGroupedId = (msg as any).groupedId;
+  const rawGroupedId = msg.groupedId;
   const groupedId = rawGroupedId ? rawGroupedId.toString() : undefined;
   if (!groupedId) return [];
 
@@ -850,7 +850,7 @@ const deleteMessageOrGroup = async (msg: MessageContext): Promise<void> => {
     const ids = await getGroupedMessageIds(msg);
 
     if (ids.length > 1) {
-      await (msg.client as any).deleteMessages({peer: peer, messages: ids, revoke: true});
+      await msg.client.deleteMessagesById(peer, ids, { revoke: true });
       return;
     }
     await msg.delete();
@@ -1149,8 +1149,9 @@ const shouldFallbackToReplyOnEditError = (error: any): boolean => {
 };
 
 const getTopicRootId = (msg: MessageContext): number | undefined => {
-  const typedMsg = msg as any;
-  return typedMsg.replyTo?.replyToTopId ?? typedMsg.replyTo?.replyToMsgId ?? typedMsg.replyToMsgId;
+  // Access reply info via raw TL object for compatibility
+  const rawReply = msg.replyToMessage;
+  return rawReply?.threadId ?? rawReply?.id ?? undefined;
 };
 
 class MessageSender {
@@ -1190,7 +1191,7 @@ class MessageSender {
 
     const topicRootId = getTopicRootId(msg);
     const replyTo = replyToId ?? topicRootId;
-    return await (msg.client as any).sendText(msg.chat.id, text, {
+    return await msg.client.sendText(msg.chat.id, text, {
       ...(options || {}),
       ...(replyTo ? { replyTo } : {}),
     });
