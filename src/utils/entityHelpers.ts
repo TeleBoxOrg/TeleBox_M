@@ -6,6 +6,7 @@ import {
   tryGetCurrentGenerationContext,
   type GenerationContext,
 } from "./globalClient";
+import { logger } from "@utils/logger";
 
 type EntityHelperCancellationContext = {
   signal?: AbortSignal;
@@ -119,7 +120,7 @@ export async function getEntityWithHash(
     const entity = await client.resolvePeer(entityId);
     return entity;
   } catch (error) {
-    console.error(`[EntityHelper] 获取实体失败: ${entityId}`, error);
+    logger.error(`[EntityHelper] 获取实体失败: ${entityId}`, error);
     throw new Error(`无法获取实体: ${entityId}`);
   }
 }
@@ -164,7 +165,7 @@ export async function safeForwardMessage(
       return result;
     } catch (error: unknown) {
       lastError = error;
-      console.warn(
+      logger.warn(
         `[EntityHelper] 转发尝试 ${attempt}/${maxRetries} 失败: ${fromChatId} -> ${toChatId}`,
         error
       );
@@ -172,7 +173,7 @@ export async function safeForwardMessage(
       // 处理 FLOOD_WAIT 错误
       const floodWaitSeconds = getFloodWaitSeconds(error);
       if (floodWaitSeconds !== null) {
-        console.log(`[EntityHelper] FloodWait ${floodWaitSeconds}s, 等待重试`);
+        logger.info(`[EntityHelper] FloodWait ${floodWaitSeconds}s, 等待重试`);
         await abortableDelay(
           (floodWaitSeconds + 1) * 1000,
           cancellationContext,
@@ -193,7 +194,7 @@ export async function safeForwardMessage(
     }
   }
 
-  console.error(
+  logger.error(
     `[EntityHelper] 转发最终失败: ${fromChatId} -> ${toChatId}`,
     lastError
   );
@@ -222,7 +223,7 @@ export async function getBatchEntitiesWithHash(
       const entity = await getEntityWithHash(client, entityId);
       entities.push(entity);
     } catch (error) {
-      console.warn(`[EntityHelper] 跳过无效实体: ${entityId}`, error);
+      logger.warn(`[EntityHelper] 跳过无效实体: ${entityId}`, error);
     }
   }
 
@@ -299,7 +300,7 @@ export async function withEntityAccess<T>(
       return await operation(resolvedEntities);
     } catch (error: unknown) {
       lastError = error;
-      console.warn(
+      logger.warn(
         `[EntityHelper] 操作尝试 ${attempt}/${maxRetries} 失败:`,
         error
       );
@@ -307,7 +308,7 @@ export async function withEntityAccess<T>(
       // 处理 FLOOD_WAIT 错误
       const floodWaitSeconds = getFloodWaitSeconds(error);
       if (floodWaitSeconds !== null) {
-        console.log(`[EntityHelper] FloodWait ${floodWaitSeconds}s, 等待重试`);
+        logger.info(`[EntityHelper] FloodWait ${floodWaitSeconds}s, 等待重试`);
         await abortableDelay(
           (floodWaitSeconds + 1) * 1000,
           cancellationContext,
@@ -328,6 +329,6 @@ export async function withEntityAccess<T>(
     }
   }
 
-  console.error(`[EntityHelper] 操作最终失败:`, lastError);
+  logger.error(`[EntityHelper] 操作最终失败:`, lastError);
   throw lastError;
 }

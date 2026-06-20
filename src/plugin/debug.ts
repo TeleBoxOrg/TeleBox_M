@@ -10,6 +10,7 @@ import { createDirectoryInTemp } from "@utils/pathHelpers";
 import * as fs from "fs";
 import * as path from "path";
 import { safeGetMe } from "../utils/authGuards";
+import { logger } from "@utils/logger";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -167,7 +168,7 @@ class DebugPlugin extends Plugin {
       }
 
       const txt = JSON.stringify(entity, null, 2);
-      console.log(txt);
+      logger.info(txt);
 
       try {
         await msg.edit({
@@ -207,7 +208,7 @@ class DebugPlugin extends Plugin {
         return;
       }
       const txt = JSON.stringify(reply, null, 2);
-      console.log(txt);
+      logger.info(txt);
 
       try {
         await msg.edit({
@@ -262,12 +263,12 @@ class DebugPlugin extends Plugin {
           await target.replyText(reply.textWithEntities || reply.text);
         }
       } catch (e) {
-        console.warn("[debug.echo] 发送消息失败", e);
+        logger.warn("[debug.echo] 发送消息失败", e);
         // Fallback: just try plain text
         try {
           await target.replyText(reply.text || "");
         } catch (e2) {
-          console.warn("[debug.echo] 回退发送也失败", e2);
+          logger.warn("[debug.echo] 回退发送也失败", e2);
         }
       }
       await msg.delete();
@@ -353,7 +354,7 @@ async function parseTelegramLink(
 
     return null;
   } catch (error: any) {
-    console.error("解析链接失败:", error);
+    logger.error("解析链接失败:", error);
     return {
       type: "entity",
       data: null,

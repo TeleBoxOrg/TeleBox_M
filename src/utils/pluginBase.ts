@@ -1,6 +1,7 @@
 import { TelegramClient } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { GenerationContext } from "./generationContext";
+import { logger } from "@utils/logger";
 
 export interface PluginRuntimeContext {
   generation: number;
@@ -43,7 +44,7 @@ type PluginEventHandler = {
 const cmdIgnoreEdited = !!JSON.parse(
   process.env.TB_CMD_IGNORE_EDITED || "true"
 );
-console.log(
+logger.info(
   `[CMD_IGNORE_EDITED] 命令监听忽略编辑的消息: ${cmdIgnoreEdited} (可使用环境变量 TB_CMD_IGNORE_EDITED 覆盖)`
 );
 

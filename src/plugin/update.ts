@@ -6,6 +6,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { npm_install_project_dependencies } from "@utils/npm_install";
 import { getGlobalClient } from "@utils/globalClient";
 import { executeExit } from "./reload";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -61,8 +62,7 @@ async function findMainBranch(): Promise<{ remote: string; branch: string } | nu
 
 async function update(force = false, msg: MessageContext) {
   await msg.edit({ text: "🚀 正在更新项目..." });
-  console.clear();
-  console.log("🚀 开始更新项目...\n");
+  logger.info("🚀 开始更新项目...\n");
 
   try {
     const branchInfo = await findMainBranch();
@@ -77,7 +77,7 @@ async function update(force = false, msg: MessageContext) {
     await msg.edit({ text: "🔄 正在拉取最新代码..." });
 
     if (force) {
-      console.log(`⚠️ 强制回滚到 ${fullBranch}...`);
+      logger.info(`⚠️ 强制回滚到 ${fullBranch}...`);
       await execAsync(`git reset --hard ${fullBranch}`);
       await msg.edit({ text: "🔄 强制更新中..." });
     }
@@ -85,11 +85,11 @@ async function update(force = false, msg: MessageContext) {
     await execAsync(`git pull ${remote} ${branch} --no-rebase`);
     await msg.edit({ text: "🔄 正在合并最新代码..." });
 
-    console.log("\n📦 安装依赖...");
+    logger.info("\n📦 安装依赖...");
     await msg.edit({ text: "📦 正在安装依赖..." });
     npm_install_project_dependencies();
 
-    console.log("\n✅ 更新完成。");
+    logger.info("\n✅ 更新完成。");
 
     // 退出进程，pm2 拉起后由 reload 插件接管 exitFile：
     // 退出前显示 "🔄 正在重启进程..."；重启完成后编辑为 "✅ 更新完成，耗时 Xms"
@@ -98,7 +98,7 @@ async function update(force = false, msg: MessageContext) {
       successText: "✅ 更新完成，耗时 {elapsedMs}ms",
     });
   } catch (error: any) {
-    console.error("❌ 更新失败:", error);
+    logger.error("❌ 更新失败:", error);
 
     // 构建安全的错误信息 —— exec 错误有 .cmd/.stderr，
     // 其他错误只有 .message
@@ -115,7 +115,7 @@ async function update(force = false, msg: MessageContext) {
     try {
       await msg.edit({ text: errorText });
     } catch (editError) {
-      console.error("Failed to send error message after update failure:", editError);
+      logger.error("Failed to send error message after update failure:", editError);
       // 最后尝试通过新 client 发送
       try {
         const client = await getGlobalClient();
@@ -124,7 +124,7 @@ async function update(force = false, msg: MessageContext) {
           await client.sendText(targetChat, errorText);
         }
       } catch (sendError) {
-        console.error("Failed to send error via fallback client:", sendError);
+        logger.error("Failed to send error via fallback client:", sendError);
       }
     }
   }

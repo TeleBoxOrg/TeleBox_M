@@ -7,7 +7,7 @@ import {
 } from "@mtcute/node";
 import { getApiConfig } from "./apiConfig";
 import { readAppName } from "./teleboxInfoHelper";
-import { logger } from "./logger";
+import { logger } from "@utils/logger";
 import path from "path";
 
 /**
@@ -71,7 +71,7 @@ function buildTransport(
       version: proxy.socksType === 4 ? 4 : 5,
     });
   } catch (e) {
-    console.warn("[CLIENT] 代理配置解析失败，回退到直连:", e);
+    logger.warn("[CLIENT] 代理配置解析失败，回退到直连:", e);
     return undefined;
   }
 }
@@ -90,7 +90,7 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
 
   const proxy = api.proxy;
   if (proxy) {
-    console.log("[CLIENT] 使用代理连接 Telegram:", proxy.ip ?? proxy.host);
+    logger.info("[CLIENT] 使用代理连接 Telegram:", proxy.ip ?? proxy.host);
   }
 
   const transport = buildTransport(proxy);

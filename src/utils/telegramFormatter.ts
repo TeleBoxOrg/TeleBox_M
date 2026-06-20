@@ -1,5 +1,7 @@
 // src/utils/telegramFormatter.ts
 
+import { logger } from "./logger";
+
 /** Telegram消息格式化器（面向 Bot API parse_mode=HTML） */
 export class TelegramFormatter {
   /**
@@ -574,9 +576,9 @@ export class TelegramFormatter {
       const u = new URL(url);
       if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
       // 拒绝非 http/https 协议
-      console.warn(`[TelegramFormatter] 拒绝不安全的 URL 协议: ${u.protocol}`);
+      logger.warn(`[TelegramFormatter] 拒绝不安全的 URL 协议: ${u.protocol}`);
     } catch (e) {
-      console.warn(`[TelegramFormatter] URL 解析失败: ${url}`, e);
+      logger.warn(`[TelegramFormatter] URL 解析失败: ${url}`, e);
     }
     return "";
   }

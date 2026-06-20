@@ -84,7 +84,7 @@ class LogLevelPlugin extends Plugin {
             (client as unknown as { log: { level: number } }).log.level = lvl;
         }
     } catch (e) {
-      console.error("[loglevel] 忽略客户端尚未初始化的错误:", e);
+      logger.error("[loglevel] 忽略客户端尚未初始化的错误:", e);
         // 忽略客户端尚未初始化的错误
     }
 

@@ -3,6 +3,7 @@ import "dotenv/config";
 import { startRuntime } from "@utils/runtimeManager";
 
 import "./hook/patches/telegram.patch";
+import { logger } from "@utils/logger";
 
 // patchMsgEdit();
 
@@ -11,11 +12,11 @@ import "./hook/patches/telegram.patch";
 // restart if needed, rather than losing all context.
 process.on("unhandledRejection", (reason: unknown) => {
   const message = reason instanceof Error ? reason.stack || reason.message : String(reason);
-  console.error(`[FATAL] Unhandled promise rejection: ${message}`);
+  logger.error(`[FATAL] Unhandled promise rejection: ${message}`);
 });
 
 process.on("uncaughtException", (error: Error) => {
-  console.error(`[FATAL] Uncaught exception: ${error.stack || error.message}`);
+  logger.error(`[FATAL] Uncaught exception: ${error.stack || error.message}`);
   // Exit after logging so PM2 can restart cleanly
   process.exit(1);
 });

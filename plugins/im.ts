@@ -125,7 +125,7 @@ class MessageManager {
       if (deleteAfter > 0) {
         const timer = setTimeout(() => {
           clearTrackedTimer(timer);
-          msg.delete({ revoke: true }).catch(() => {});
+          msg.delete({ revoke: true }).catch((e) => { console.error(e) });
         }, deleteAfter * 1000);
         trackTimer(timer);
       }

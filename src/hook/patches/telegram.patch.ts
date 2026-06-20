@@ -1,4 +1,5 @@
 import { MessageContext } from "@mtcute/dispatcher";
+import { logger } from "@utils/logger";
 
 /**
  * TeleBox 自定义 MessageContext 便捷方法。
@@ -25,7 +26,7 @@ MessageContext.prototype.deleteWithDelay = async function (
   try {
     await this.delete();
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     if (shouldThrowError) {
       throw e;
     }
@@ -39,6 +40,6 @@ MessageContext.prototype.safeDelete = async function (
   try {
     await this.delete({ revoke });
   } catch (error) {
-    console.log("safeDelete catch error:", error);
+    logger.info("safeDelete catch error:", error);
   }
 };

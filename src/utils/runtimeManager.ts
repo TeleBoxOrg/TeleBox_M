@@ -15,6 +15,7 @@ import {
   type GenerationResourceStats,
   type ResourceResidual,
 } from "./generationContext";
+import { logger } from "@utils/logger";
 
 export type RuntimeState =
   | "starting"
@@ -63,14 +64,14 @@ function formatResidualResources(residuals: ResourceResidual[], limit = 12): str
 }
 
 function logGenerationSnapshot(prefix: string, snapshot: GenerationContextSnapshot): void {
-  console.log(
+  logger.info(
     `${prefix} generation=${snapshot.generation} state=${snapshot.state} tasks=${snapshot.trackedTasks} disposables=${snapshot.trackedDisposables} stats=[${formatResourceStats(snapshot.stats)}] residual=[${formatResidualResources(snapshot.residualResources)}]`
   );
 }
 
 function logDrainResult(runtime: TeleBoxRuntime, reason: string, result: DrainResult): void {
   const residual = formatResidualResources(result.residualResources);
-  console.log(
+  logger.info(
     `[RUNTIME] Generation ${runtime.generation} ${reason} diagnostics: canceled=${result.canceledResources}, drained=${result.drainedResources}, timedOut=${result.timedOutResources}, residual=${result.residualResources.length}, stats=[${formatResourceStats(result.stats)}], residualDetail=[${residual}]`
   );
 }
@@ -148,10 +149,10 @@ async function startFreshRuntime(): Promise<TeleBoxRuntime> {
     currentRuntime = null;
     runtime.context.abort("Runtime startup failed");
     await runtime.context.dispose(RUNTIME_DRAIN_TIMEOUT_MS).catch((disposeError) => {
-      console.error("[RUNTIME] Failed to dispose runtime after startup error:", disposeError);
+      logger.error("[RUNTIME] Failed to dispose runtime after startup error:", disposeError);
     });
     await destroyClient(runtime.client).catch((destroyError) => {
-      console.error("[RUNTIME] Failed to destroy runtime after startup error:", destroyError);
+      logger.error("[RUNTIME] Failed to destroy runtime after startup error:", destroyError);
     });
     throw error;
   }
@@ -163,21 +164,21 @@ async function drainRuntime(
   timeoutMs = RUNTIME_DRAIN_TIMEOUT_MS
 ): Promise<DrainResult> {
   runtime.state = "draining";
-  console.log(`[RUNTIME] Generation ${runtime.generation} aborting: ${reason}`);
+  logger.info(`[RUNTIME] Generation ${runtime.generation} aborting: ${reason}`);
   logGenerationSnapshot("[RUNTIME] Pre-drain snapshot", runtime.context.snapshot());
   runtime.context.abort(reason);
   const result = await runtime.context.dispose(timeoutMs);
   logDrainResult(runtime, reason, result);
   if (result.timedOut) {
-    console.warn(
+    logger.warn(
       `[RUNTIME] Generation ${runtime.generation} drain timed out with ${result.pendingTasks} pending tasks and ${result.pendingDisposables} pending disposables.`
     );
   } else if (result.errors.length > 0) {
-    console.warn(
+    logger.warn(
       `[RUNTIME] Generation ${runtime.generation} drained with ${result.errors.length} disposable error(s).`
     );
   } else {
-    console.log(`[RUNTIME] Generation ${runtime.generation} drained and disposed.`);
+    logger.info(`[RUNTIME] Generation ${runtime.generation} drained and disposed.`);
   }
   return result;
 }
@@ -187,7 +188,7 @@ async function disposeRuntime(
   reason: string
 ): Promise<DrainResult> {
   if (runtime.context.state === "disposed") {
-    console.log(`[RUNTIME] Generation ${runtime.generation} already disposed before ${reason}.`);
+    logger.info(`[RUNTIME] Generation ${runtime.generation} already disposed before ${reason}.`);
     await destroyClient(runtime.client);
     return {
       completed: true,
@@ -207,7 +208,7 @@ async function disposeRuntime(
   try {
     await destroyClient(runtime.client);
   } catch (error) {
-    console.error(`[RUNTIME] Failed to destroy generation ${runtime.generation} client:`, error);
+    logger.error(`[RUNTIME] Failed to destroy generation ${runtime.generation} client:`, error);
     throw error;
   }
   return drainResult;
@@ -304,7 +305,7 @@ export async function reloadRuntime(): Promise<TeleBoxRuntime> {
       newRuntime.state = "running";
       return newRuntime;
     } catch (error) {
-      console.error("[RUNTIME] Failed to load plugins after reload, keeping runtime alive:", error);
+      logger.error("[RUNTIME] Failed to load plugins after reload, keeping runtime alive:", error);
       // Keep the new runtime alive: it has a working client, only plugins failed.
       // Setting currentRuntime = null previously made the bot completely dead
       // (getGlobalClient() throws, all commands fail, no message delivery).

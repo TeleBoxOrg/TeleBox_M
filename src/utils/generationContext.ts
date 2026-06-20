@@ -1,5 +1,6 @@
 import type { ChildProcess } from "child_process";
 import { AsyncLocalStorage } from "async_hooks";
+import { logger } from "@utils/logger";
 
 export type GenerationLifecycleState =
   | "active"
@@ -210,7 +211,7 @@ export class GenerationContext {
 
     if (this.lifecycleState === "disposed") {
       void Promise.resolve(dispose()).catch((error) => {
-        console.error(`[GENERATION ${this.generation}] Late disposable cleanup failed:`, error);
+        logger.error(`[GENERATION ${this.generation}] Late disposable cleanup failed:`, error);
       });
       this.completeResource(resource, "completed");
       return dispose;
@@ -286,7 +287,7 @@ export class GenerationContext {
         settled = true;
         this.signal.removeEventListener("abort", onAbort);
         void Promise.resolve(dispose()).catch((error) => {
-          console.error(`[GENERATION ${this.generation}] Delay cleanup failed:`, error);
+          logger.error(`[GENERATION ${this.generation}] Delay cleanup failed:`, error);
         });
         callback();
       };
@@ -366,7 +367,7 @@ export class GenerationContext {
         })
         .catch(() => undefined);
       wrapped.catch((error) => {
-        console.error(`[GENERATION ${this.generation}] Listener task failed:`, error);
+        logger.error(`[GENERATION ${this.generation}] Listener task failed:`, error);
       });
 
       return syncResult;
@@ -432,7 +433,7 @@ export class GenerationContext {
         } catch (error) {
           this.completeResource(entry.resource, "completed");
           errors.push(error);
-          console.error(`[GENERATION ${this.generation}] Disposable "${entry.resource.label}" failed:`, error);
+          logger.error(`[GENERATION ${this.generation}] Disposable "${entry.resource.label}" failed:`, error);
         }
       })
     );

@@ -9,6 +9,7 @@ import { createConnection } from "net";
 import * as dns from "dns";
 
 import { safeGetMe } from "../utils/authGuards";
+import { logger } from "@utils/logger";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -162,7 +163,7 @@ async function systemPing(
     const pingCmd = `ping -c ${count} -W 5 ${target}`;
     const { stdout, stderr } = await execAsync(pingCmd, { timeout: 10000 });
 
-    console.log(stdout);
+    logger.info(stdout);
 
     // 解析Linux ping结果
     let avgTime = -1;

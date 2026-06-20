@@ -1369,13 +1369,13 @@ class CommandHandlers {
         const lc1 = getCurrentGenerationContext();
         if (lc1) {
           lc1.setTimeout(() => {
-            MessageManager.smartEdit(status, result, 30).catch(() => {});
+            MessageManager.smartEdit(status, result, 30).catch((e) => { console.error(e) });
           }, 100, { label: 'aban:sb-result-update' });
         }
       };
 
       // 后台执行，不等待
-      backgroundProcess().catch(() => {});
+      backgroundProcess().catch((e) => { console.error(e) });
 
     } catch (error: any) {
       await MessageManager.smartEdit(message, `❌ ${error.message}`);
@@ -1482,12 +1482,12 @@ class CommandHandlers {
         const lc2 = getCurrentGenerationContext();
         if (lc2) {
           lc2.setTimeout(() => {
-            MessageManager.smartEdit(status, result, 30).catch(() => {});
+            MessageManager.smartEdit(status, result, 30).catch((e) => { console.error(e) });
           }, 100, { label: 'aban:unsb-result-update' });
         }
       };
 
-      backgroundProcess().catch(() => {});
+      backgroundProcess().catch((e) => { console.error(e) });
     } catch (error: any) {
       await MessageManager.smartEdit(message, `❌ ${error.message}`);
     }

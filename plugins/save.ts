@@ -110,7 +110,7 @@ class PrometheusPlugin extends Plugin {
     this.db = null;
     for (const filePath of this.activeTempFiles) {
       // Fire-and-forget cleanup: temp file deletion failures are non-critical
-      void fs.unlink(filePath).catch(() => {});
+      void fs.unlink(filePath).catch((e) => { console.error(e) });
     }
     this.activeTempFiles.clear();
     void this.cleanupTempDirectory();

@@ -1244,7 +1244,7 @@ class ShiftPlugin extends Plugin {
     }
     if (lowdb?.write) {
       // Fire-and-forget: final write during shutdown, failures are non-critical
-      void lowdb.write().catch(() => {});
+      void lowdb.write().catch((e: any) => { console.error(e) });
     }
     lowdb = null;
   }

@@ -5,6 +5,7 @@
 
 import { TelegramClient } from "@mtcute/node";
 import type { InputPeerLike } from "@mtcute/node";
+import { logger } from "@utils/logger";
 
 /**
  * 解封用户 - 移除所有限制
@@ -25,7 +26,7 @@ export async function unbanUser(
     });
     return true;
   } catch (error) {
-    console.error(`解封用户失败:`, error);
+    logger.error(`解封用户失败:`, error);
     return false;
   }
 }
@@ -52,7 +53,7 @@ export async function banUser(
     });
     return true;
   } catch (error) {
-    console.error(`封禁用户失败:`, error);
+    logger.error(`封禁用户失败:`, error);
     return false;
   }
 }
@@ -80,7 +81,7 @@ export async function kickUser(
     // 立即解封
     return await unbanUser(client, channel, user);
   } catch (error) {
-    console.error(`踢出用户失败:`, error);
+    logger.error(`踢出用户失败:`, error);
     return false;
   }
 }
@@ -169,7 +170,7 @@ export async function getBannedUsers(
       }
     }
   } catch (error) {
-    console.error("获取被封禁用户失败:", error);
+    logger.error("获取被封禁用户失败:", error);
   }
 
   return bannedUsers;

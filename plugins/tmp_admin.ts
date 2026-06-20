@@ -734,7 +734,7 @@ class TmpAdminPlugin extends Plugin {
       mutator(db.data);
       await db.write();
     });
-    this.dbQueue = run.catch(() => {});
+    this.dbQueue = run.catch((e) => { console.error(e) });
     await run;
   }
 
