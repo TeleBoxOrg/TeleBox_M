@@ -89,7 +89,7 @@ class LogLevelPlugin extends Plugin {
     }
 
     await msg.edit({
-      text: html(`✅ <b>日志等级已设置为：</b> <code>${logger.getLevelName(newLevel)}</code>\n` +
+      text: html(`✅ <b>日志等级已设置为：</b> <code>${logger.getLevelName(newLevel)}</code><br>` +
             `🔄 客户端日志等级已同步更新`),
     });
   }
