@@ -651,11 +651,13 @@ class AcronPlugin extends Plugin {
           if (enabledTasks.length > 0) {
             lines.push("🔛 已启用:");
             lines.push("");
-            for (const t of enabledTasks) {
+            const enabledEntityInfos = await Promise.all(
+              enabledTasks.map((t) => formatEntity((t as any).chatId ?? t.chat))
+            );
+            for (let ti = 0; ti < enabledTasks.length; ti++) {
+              const t = enabledTasks[ti];
+              const entityInfo = enabledEntityInfos[ti];
               const nextDt = cron.sendAt(t.cron);
-              const entityInfo = await formatEntity(
-                (t as any).chatId ?? t.chat,
-              );
               const title = `<code>${t.id}</code> • <code>${typeLabel(
                 t.type,
               )}</code>${t.remark ? ` • ${t.remark}` : ""}`;
@@ -721,10 +723,12 @@ class AcronPlugin extends Plugin {
           if (disabledTasks.length > 0) {
             lines.push("⏹ 已禁用:");
             lines.push("");
-            for (const t of disabledTasks) {
-              const entityInfo = await formatEntity(
-                (t as any).chatId ?? t.chat,
-              );
+            const disabledEntityInfos = await Promise.all(
+              disabledTasks.map((t) => formatEntity((t as any).chatId ?? t.chat))
+            );
+            for (let ti = 0; ti < disabledTasks.length; ti++) {
+              const t = disabledTasks[ti];
+              const entityInfo = disabledEntityInfos[ti];
               const title = `<code>${t.id}</code> • <code>${typeLabel(
                 t.type,
               )}</code>${t.remark ? ` • ${t.remark}` : ""}`;
