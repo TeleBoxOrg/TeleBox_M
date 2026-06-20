@@ -477,14 +477,10 @@ class CommandHandlers {
                     title: entity.title || `群组 ${chatId}`
                   };
                 }
-              } catch (e) {
-                // 继续尝试其他方式
-              }
+              } catch (e) { console.warn(`[autorepeat] 继续尝试其他方式:`, e) }
             }
           }
-        } catch (e) {
-          // 继续尝试其他方式
-        }
+        } catch (e) { console.warn(`[autorepeat] 继续尝试其他方式:`, e) }
       }
 
       // 2. 如果没有提供标识符，检查是否在群组中

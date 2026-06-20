@@ -736,9 +736,7 @@ async function resolveTarget(
     if (!isNaN(numericId)) {
       return await (client as any).getChat(numericId);
     }
-  } catch (error) {
-    // Fall through to username
-  }
+  } catch (error) { console.warn(`[shift] Fall through to username:`, error) }
 
   return await (client as any).getChat(targetInput);
 }

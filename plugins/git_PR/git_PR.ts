@@ -346,9 +346,7 @@ class GitManagerPlugin extends Plugin {
             if (pr.data?.mergeable) {
                 mergeablePRs.push(item);
             }
-        } catch (e) {
-            // 忽略获取详情失败的PR
-        }
+        } catch (e) { console.warn(`[git_PR] 忽略获取详情失败的PR:`, e) }
     }
 
     if (mergeablePRs.length === 0) {

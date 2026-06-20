@@ -155,9 +155,7 @@ class GifConverter {
         try {
           fs.unlinkSync(filePath);
           deletedCount++;
-        } catch (e) {
-          // 忽略删除失败的文件
-        }
+        } catch (e) { console.warn(`[gif] 忽略删除失败的文件:`, e) }
       }
 
       await msg.edit({

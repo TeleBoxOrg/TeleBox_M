@@ -264,9 +264,7 @@ class PortballPlugin extends Plugin {
     scheduleTimer(async () => {
       try {
         await msg.delete({ revoke: true } as any);
-      } catch (error) {
-        // 忽略删除错误
-      }
+      } catch (error) { console.warn(`[portball] 忽略删除错误:`, error) }
     }, seconds * 1000);
   }
   cleanup(): void {
