@@ -152,7 +152,7 @@ function formatModuleCommands(
 
   aliasDB.close();
   return {
-    text: `🔧 <b>功能模块:</b>\n<blockquote expandable>${lines.join("\n")}\n</blockquote>`,
+    text: `🔧 <b>功能模块:</b><br><blockquote expandable>${lines.join("<br>")}<br></blockquote>`,
   };
 }
 
@@ -209,7 +209,7 @@ class HelpPlugin extends Plugin {
 
       if (!pluginEntry?.plugin) {
         await msg.edit({
-          text: html(`❌ 未找到命令 <code>${htmlEscape(command)}</code>\n\n💡 使用 <code>${mainPrefix}help</code> 查看所有命令`),
+          text: html(`❌ 未找到命令 <code>${htmlEscape(command)}</code><br><br>💡 使用 <code>${mainPrefix}help</code> 查看所有命令`),
         });
         return;
       }
@@ -243,8 +243,8 @@ class HelpPlugin extends Plugin {
       if (plugin.cronTasks && Object.keys(plugin.cronTasks).length) {
         const cronTasks = Object.entries(plugin.cronTasks)
           .map(([k, v]) => `• <code><b>${htmlEscape(k)}:</b></code> ${v.description} <code>(${htmlEscape(v.cron)})</code>`)
-          .join("\n");
-        cronInfo = `\n📅 <b>定时任务:</b>\n${cronTasks}\n`;
+          .join("<br>");
+        cronInfo = `<br>📅 <b>定时任务:</b><br>${cronTasks}<br>`;
       }
 
       await msg.edit({
@@ -261,7 +261,7 @@ class HelpPlugin extends Plugin {
           `<code>${mainPrefix}${command} [参数]</code>`,
           cronInfo,
           `💡 <i>提示: 使用</i> <code>${mainPrefix}help</code> <i>查看所有命令</i>`,
-        ].join("\n")),
+        ].join("<br>")),
         disableWebPreview: true,
       });
     } catch (e: any) {
@@ -281,7 +281,7 @@ class HelpPlugin extends Plugin {
           "• 查看控制台获取详细日志",
           "",
           "🆘 <a href='https://github.com/TeleBoxDev/TeleBox/issues'>反馈问题</a>",
-        ].join("\n")),
+        ].join("<br>")),
       });
     }
   }

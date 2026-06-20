@@ -17,100 +17,10 @@ const mainPrefix = prefixes[0];
 
 
 // ==================== 常量 ====================
-const DEFAULT_TEMPLATE = `<b>📊 TeleBox 运行状态</b>
-<b>🏠 主机信息</b>
-• <b>主机名:</b> <code>{hostname}</code>
-• <b>平台:</b> <code>{platform} {arch}</code>
-• <b>内核:</b> <code>{kernel}</code>
-• <b>语言环境:</b> <code>{locale}</code>
-
-<b>📦 版本信息</b>
-• <b>Node.js版本:</b> <code>{nodejs}</code>
-• <b>mtcute版本:</b> <code>{mtcute}</code>
-• <b>TeleBox版本:</b> <code>{telebox}</code>
-
-<b>📈 资源使用</b>
-• <b>CPU:</b> <code>{cpu}%</code> (系统) / <code>{processcpu}%</code> (进程)
-• <b>内存:</b> <code>{mem}%</code> (系统) / <code>{processmem}%</code> (进程)
-• <b>SWAP:</b> <code>{swap}</code>
-• <b>磁盘:</b> <code>{disk}</code>
-• <b>网络接口:</b> <code>{network}</code>
-
-<b>⚙️ 系统详情</b>
-• <b>OS:</b> <code>{os}</code>
-• <b>负载平均:</b> <code>{loadaverage}</code>
-• <b>包数量:</b> <code>{packages}</code>
-• <b>Init:</b> <code>{init}</code>
-• <b>进程数:</b> <code>{process}</code>
-
-<b>⏱️ 运行状态</b>
-• <b>运行时间:</b> <code>{uptime}</code>
-• <b>扫描耗时:</b> <code>{scantime}ms</code>`;
+const DEFAULT_TEMPLATE = `<b>📊 TeleBox 运行状态</b><br><b>🏠 主机信息</b><br>• <b>主机名:</b> <code>{hostname}</code><br>• <b>平台:</b> <code>{platform} {arch}</code><br>• <b>内核:</b> <code>{kernel}</code><br>• <b>语言环境:</b> <code>{locale}</code><br><br><b>📦 版本信息</b><br>• <b>Node.js版本:</b> <code>{nodejs}</code><br>• <b>mtcute版本:</b> <code>{mtcute}</code><br>• <b>TeleBox版本:</b> <code>{telebox}</code><br><br><b>📈 资源使用</b><br>• <b>CPU:</b> <code>{cpu}%</code> (系统) / <code>{processcpu}%</code> (进程)<br>• <b>内存:</b> <code>{mem}%</code> (系统) / <code>{processmem}%</code> (进程)<br>• <b>SWAP:</b> <code>{swap}</code><br>• <b>磁盘:</b> <code>{disk}</code><br>• <b>网络接口:</b> <code>{network}</code><br><br><b>⚙️ 系统详情</b><br>• <b>OS:</b> <code>{os}</code><br>• <b>负载平均:</b> <code>{loadaverage}</code><br>• <b>包数量:</b> <code>{packages}</code><br>• <b>Init:</b> <code>{init}</code><br>• <b>进程数:</b> <code>{process}</code><br><br><b>⏱️ 运行状态</b><br>• <b>运行时间:</b> <code>{uptime}</code><br>• <b>扫描耗时:</b> <code>{scantime}ms</code>`;
 
 // 帮助文本
-const HELP_TEXT = `<b>⚙️ Status 系统状态插件</b>
-
-<b>🔧 使用方法:</b>
-• <code>${mainPrefix}sysinfo</code> - 显示当前系统状态
-• <code>${mainPrefix}status</code> - 显示当前状态
-• <code>${mainPrefix}status lifecycle</code> - 显示当前 generation 生命周期资源计数
-• <code>${mainPrefix}status stress</code> - 输出 reload 压测观察项与当前计数
-• <code>${mainPrefix}status show</code> - 显示当前模板内容
-• <code>${mainPrefix}status set</code> - 回复模板消息，设置自定义格式
-• <code>${mainPrefix}status reset</code> - 重置默认模板
-
-<b>💡 模板标签说明:</b>
-可用标签：
-<blockquote expandable><b>🏠 主机信息</b>
-• <code>{hostname}</code> - <b>主机名</b>
-• <code>{platform}</code> - <b>系统平台</b> (linux/win32/darwin)
-• <code>{arch}</code> - <b>系统架构</b> (x64/arm64等)
-• <code>{kernel}</code> - <b>内核版本</b>
-• <code>{locale}</code> - <b>语言环境</b>
-
-<b>📦 版本信息</b>
-• <code>{nodejs}</code> - <b>Node.js版本</b>
-• <code>{teleproto}</code> - <b>Teleproto库版本</b>
-• <code>{mtcute}</code> - <b>mtcute库版本</b>
-• <code>{telebox}</code> - <b>TeleBox版本</b>
-
-<b>📈 资源使用</b>
-• <code>{cpu}</code> - <b>系统CPU使用率</b> (%)
-• <code>{processcpu}</code> - <b>进程CPU使用率</b> (%)
-• <code>{mem}</code> - <b>系统内存使用率</b> (%)
-• <code>{processmem}</code> - <b>进程内存使用率</b> (%)
-• <code>{swap}</code> - <b>SWAP使用情况</b>
-• <code>{disk}</code> - <b>磁盘使用情况</b>
-• <code>{network}</code> - <b>主网络接口名称</b>
-• <b>进度条标签:</b>
-  <code>{cpubar}</code> - 系统CPU进度条
-  <code>{processcpubar}</code> - 进程CPU进度条
-  <code>{membar}</code> - 系统内存进度条
-  <code>{processmembar}</code> - 进程内存进度条
-  <code>{diskbar}</code> - 磁盘进度条
-
-<b>⚙️ 系统详情</b>
-• <code>{os}</code> - <b>操作系统信息</b>
-• <code>{loadaverage}</code> - <b>负载平均值</b>
-• <code>{packages}</code> - <b>已安装包数量</b>
-• <code>{init}</code> - <b>初始化系统</b> (systemd/pm2等)
-• <code>{process}</code> - <b>进程数量</b>
-
-<b>⏱️ 运行状态</b>
-• <code>{uptime}</code> - <b>运行时间</b> (Xd Yh Zm)
-• <code>{scantime}</code> - <b>扫描耗时</b> (毫秒)</blockquote>
-
-<b>📝 模板设置示例:</b>
-发送一条消息，内容为自定义模板：
-<code>&lt;b&gt;📊 系统状态&lt;/b&gt;
-CPU: {cpu}% {cpubar}
-内存: {mem}% {membar}
-磁盘: {disk} {diskbar}
-运行时间: {uptime}</code>
-回复该消息，发送 <code>${mainPrefix}status set</code>
-<b>⚠️ 注意事项:</b>
-• 模板必须包含有效的HTML标签（如 <code>&lt;b&gt;</code>, <code>&lt;code&gt;</code>）
-• 标签名称必须完全匹配`;
+const HELP_TEXT = `<b>⚙️ Status 系统状态插件</b><br><br><b>🔧 使用方法:</b><br>• <code>${mainPrefix}sysinfo</code> - 显示当前系统状态<br>• <code>${mainPrefix}status</code> - 显示当前状态<br>• <code>${mainPrefix}status lifecycle</code> - 显示当前 generation 生命周期资源计数<br>• <code>${mainPrefix}status stress</code> - 输出 reload 压测观察项与当前计数<br>• <code>${mainPrefix}status show</code> - 显示当前模板内容<br>• <code>${mainPrefix}status set</code> - 回复模板消息，设置自定义格式<br>• <code>${mainPrefix}status reset</code> - 重置默认模板<br><br><b>💡 模板标签说明:</b><br>可用标签：<br><blockquote expandable><b>🏠 主机信息</b><br>• <code>{hostname}</code> - <b>主机名</b><br>• <code>{platform}</code> - <b>系统平台</b> (linux/win32/darwin)<br>• <code>{arch}</code> - <b>系统架构</b> (x64/arm64等)<br>• <code>{kernel}</code> - <b>内核版本</b><br>• <code>{locale}</code> - <b>语言环境</b><br><br><b>📦 版本信息</b><br>• <code>{nodejs}</code> - <b>Node.js版本</b><br>• <code>{teleproto}</code> - <b>Teleproto库版本</b><br>• <code>{mtcute}</code> - <b>mtcute库版本</b><br>• <code>{telebox}</code> - <b>TeleBox版本</b><br><br><b>📈 资源使用</b><br>• <code>{cpu}</code> - <b>系统CPU使用率</b> (%)<br>• <code>{processcpu}</code> - <b>进程CPU使用率</b> (%)<br>• <code>{mem}</code> - <b>系统内存使用率</b> (%)<br>• <code>{processmem}</code> - <b>进程内存使用率</b> (%)<br>• <code>{swap}</code> - <b>SWAP使用情况</b><br>• <code>{disk}</code> - <b>磁盘使用情况</b><br>• <code>{network}</code> - <b>主网络接口名称</b><br>• <b>进度条标签:</b><br>  <code>{cpubar}</code> - 系统CPU进度条<br>  <code>{processcpubar}</code> - 进程CPU进度条<br>  <code>{membar}</code> - 系统内存进度条<br>  <code>{processmembar}</code> - 进程内存进度条<br>  <code>{diskbar}</code> - 磁盘进度条<br><br><b>⚙️ 系统详情</b><br>• <code>{os}</code> - <b>操作系统信息</b><br>• <code>{loadaverage}</code> - <b>负载平均值</b><br>• <code>{packages}</code> - <b>已安装包数量</b><br>• <code>{init}</code> - <b>初始化系统</b> (systemd/pm2等)<br>• <code>{process}</code> - <b>进程数量</b><br><br><b>⏱️ 运行状态</b><br>• <code>{uptime}</code> - <b>运行时间</b> (Xd Yh Zm)<br>• <code>{scantime}</code> - <b>扫描耗时</b> (毫秒)</blockquote><br><br><b>📝 模板设置示例:</b><br>发送一条消息，内容为自定义模板：<br><code>&lt;b&gt;📊 系统状态&lt;/b&gt;<br>CPU: {cpu}% {cpubar}<br>内存: {mem}% {membar}<br>磁盘: {disk} {diskbar}<br>运行时间: {uptime}</code><br>回复该消息，发送 <code>${mainPrefix}status set</code><br><b>⚠️ 注意事项:</b><br>• 模板必须包含有效的HTML标签（如 <code>&lt;b&gt;</code>, <code>&lt;code&gt;</code>）<br>• 标签名称必须完全匹配`;
 
 // 系统命令执行超时 (ms)
 const EXEC_TIMEOUT = 5000;
@@ -305,24 +215,24 @@ class TeleBoxSystemMonitor extends Plugin {
       .map(([kind, stat]) => {
         return `• <code>${kind}</code>: active=<code>${stat.active}</code>, created=<code>${stat.created}</code>, drained=<code>${stat.completed}</code>, canceled=<code>${stat.canceled}</code>, timedOut=<code>${stat.timedOut}</code>`;
       })
-      .join("\n") || "• <code>none</code>";
+      .join("<br>") || "• <code>none</code>";
     const residuals = snapshot.residualResources
       .slice(0, 12)
       .map((resource) => {
         return `• <code>${resource.kind}#${resource.id}</code> ${resource.label} ${resource.state} age=<code>${resource.ageMs}ms</code>`;
       })
-      .join("\n") || "• <code>none</code>";
+      .join("<br>") || "• <code>none</code>";
     const more = snapshot.residualResources.length > 12
-      ? `\n• ...and <code>${snapshot.residualResources.length - 12}</code> more`
+      ? `<br>• ...and <code>${snapshot.residualResources.length - 12}</code> more`
       : "";
 
-    return `<b>🧪 Lifecycle diagnostics</b>\n\n` +
-      `Generation: <code>${snapshot.generation}</code>\n` +
-      `State: <code>${snapshot.state}</code>\n` +
-      `Tracked tasks: <code>${snapshot.trackedTasks}</code>\n` +
-      `Tracked disposables: <code>${snapshot.trackedDisposables}</code>\n\n` +
-      `<b>Resource counters</b>\n${stats}\n\n` +
-      `<b>Residual resources</b>\n${residuals}${more}`;
+    return `<b>🧪 Lifecycle diagnostics</b><br><br>` +
+      `Generation: <code>${snapshot.generation}</code><br>` +
+      `State: <code>${snapshot.state}</code><br>` +
+      `Tracked tasks: <code>${snapshot.trackedTasks}</code><br>` +
+      `Tracked disposables: <code>${snapshot.trackedDisposables}</code><br><br>` +
+      `<b>Resource counters</b><br>${stats}<br><br>` +
+      `<b>Residual resources</b><br>${residuals}${more}`;
   }
 
   private async handleLifecycleStatus(msg: MessageContext): Promise<void> {
@@ -333,13 +243,13 @@ class TeleBoxSystemMonitor extends Plugin {
 
   private async handleLifecycleStress(msg: MessageContext): Promise<void> {
     const text = this.formatLifecycleDiagnostics() +
-      `\n\n<b>Repeatable stress scenarios</b>\n` +
-      `• idle repeated reload: compare active counters before/after reload; old generation residual should become none.\n` +
-      `• active conversation wait + reload: conversation/handler/timeout should cancel, then drain or appear as residual.\n` +
-      `• PMCaptcha timeout + reload: timeout and promise counters should cancel and not remain active.\n` +
-      `• Shift backup + FLOOD_WAIT + reload: child-process/promise/timeout counters show bounded retention versus leak.\n` +
-      `• AI long request + reload: promise/task residuals identify requests still holding old generation.\n` +
-      `• subprocess running + reload: child-process should be canceled, drained, or listed residual.\n` +
+      `<br><br><b>Repeatable stress scenarios</b><br>` +
+      `• idle repeated reload: compare active counters before/after reload; old generation residual should become none.<br>` +
+      `• active conversation wait + reload: conversation/handler/timeout should cancel, then drain or appear as residual.<br>` +
+      `• PMCaptcha timeout + reload: timeout and promise counters should cancel and not remain active.<br>` +
+      `• Shift backup + FLOOD_WAIT + reload: child-process/promise/timeout counters show bounded retention versus leak.<br>` +
+      `• AI long request + reload: promise/task residuals identify requests still holding old generation.<br>` +
+      `• subprocess running + reload: child-process should be canceled, drained, or listed residual.<br>` +
       `• cron callback mid-flight + reload: cron-job cancels; cron-execution drains or reports residual.`;
     await msg.edit({
       text: html(text),
