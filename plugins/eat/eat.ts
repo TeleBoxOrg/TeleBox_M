@@ -266,8 +266,8 @@ async function sendRawSticker(params: {
   const uploaded = await client.uploadFile({
     file: buffer,
     fileName: "output.webp",
-    mimeType: "image/webp",
-  } as any);
+    fileMime: "image/webp",
+  });
 
   const callParams: any = {
     _: "messages.sendMedia",

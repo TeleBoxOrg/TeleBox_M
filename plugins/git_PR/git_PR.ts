@@ -9,6 +9,18 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import axios from "axios";
 import { logger } from "@utils/logger";
 
+// GitHub API types
+interface GitHubRepoPermissions {
+  push?: boolean;
+  admin?: boolean;
+  maintain?: boolean;
+}
+
+interface GitHubRepo {
+  full_name: string;
+  permissions?: GitHubRepoPermissions;
+}
+
 // HTML转义函数
 const htmlEscape = (text: string): string =>
   text.replace(/[&<>"']/g, (m) => ({
@@ -210,9 +222,9 @@ class GitManagerPlugin extends Plugin {
     const api = await getApi();
     const response = await api.get(`/user/repos`, { params: { per_page: 100 } });
 
-    const repos = (response.data as any[])
-      .filter((r: any) => r?.permissions?.push || r?.permissions?.admin || r?.permissions?.maintain)
-      .map((r: any) => r.full_name);
+    const repos = (response.data as GitHubRepo[])
+      .filter((r) => r?.permissions?.push || r?.permissions?.admin || r?.permissions?.maintain)
+      .map((r) => r.full_name);
     if (!repos.length) {
       await msg.edit({ text: "ℹ️ 未找到有编辑权限的仓库。" });
       return;
