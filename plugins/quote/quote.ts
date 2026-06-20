@@ -279,7 +279,7 @@ function peerIdNumber(peer: any): number {
 }
 
 function senderIdNumber(msg: MessageContext): number {
-  return idNumber(msg.sender?.id ?? (msg as any).fromId ?? (msg as any).peerId);
+  return idNumber(msg.sender?.id ?? (msg.raw as { fromId?: { userId?: number } })?.fromId?.userId ?? 0);
 }
 
 function isApiMessage(value: any): boolean {
@@ -316,18 +316,29 @@ function displayName(entity: any): string {
   return [first, last].filter(Boolean).join(" ") || title || username || "User";
 }
 
-function fwdHeaderName(fwd: any): string | undefined {
+interface FwdInfo {
+  fromId?: unknown;
+  from_id?: unknown;
+  savedFromPeer?: unknown;
+  saved_from_peer?: unknown;
+  fromName?: string;
+  from_name?: string;
+  postAuthor?: string;
+  post_author?: string;
+}
+
+function fwdHeaderName(fwd: FwdInfo): string | undefined {
   return fwd?.fromName || fwd?.from_name || fwd?.postAuthor || fwd?.post_author || undefined;
 }
 
-function fwdPeer(fwd: any): any | undefined {
+function fwdPeer(fwd: FwdInfo): unknown {
   return fwd?.fromId ?? fwd?.from_id ?? fwd?.savedFromPeer ?? fwd?.saved_from_peer;
 }
 
 async function forwardedSource(msg: MessageContext): Promise<{ peer?: any; entity?: any; name?: string; anonymous: boolean } | undefined> {
-  const fwd: any = (msg as any).fwdFrom || (msg as any).fwd_from;
-  if (!fwd) return undefined;
-
+  const rawFwd = (msg.raw as { fwdFrom?: unknown })?.fwdFrom;
+  if (!rawFwd) return undefined;
+  const fwd = rawFwd as { fromId?: unknown; from_id?: unknown; savedFromPeer?: unknown; saved_from_peer?: unknown; fromName?: string; from_name?: string };
   const client = await getGlobalClient().catch(() => null as any);
   const peer = fwdPeer(fwd);
   const headerName = fwdHeaderName(fwd);
@@ -393,15 +404,15 @@ function emojiStatusIdFromEntity(entity: any): string | undefined {
 }
 
 function messageDate(msg: MessageContext): number | undefined {
-  const date = (msg as any).date;
+  const date = msg.date;
   if (date instanceof Date) return Math.floor(date.getTime() / 1000);
   if (typeof date === "number") return date;
   return undefined;
 }
 
 function getDocumentAttributes(msg: MessageContext): any[] {
-  const doc = (msg as any).document ?? (msg as any).media?.document;
-  return doc?.attributes || [];
+  const doc = (msg.media as { document?: { attributes?: unknown[] } })?.document ?? (msg.raw as { document?: { attributes?: unknown[] } })?.document;
+  return (doc?.attributes as any[]) || [];
 }
 
 function audioAttribute(msg: MessageContext): any | undefined {
@@ -421,7 +432,7 @@ function voiceWaveform(msg: MessageContext): number[] | undefined {
 }
 
 function getMediaKind(msg: MessageContext): string | undefined {
-  const media: any = (msg as any).media;
+  const media = msg.media as { className?: string; constructor?: { name?: string } } | undefined;
   if (!media) return undefined;
   const cls = media.className || media.constructor?.name || "";
   const attrs = getDocumentAttributes(msg);
@@ -465,7 +476,7 @@ function messageText(msg: MessageContext): string {
 }
 
 function convertEntities(msg: MessageContext): any[] {
-  const entities = ((msg as any).entities || []) as any[];
+  const entities = msg.entities as unknown as Array<{ className?: string; constructor?: { name?: string }; offset?: number; length?: number; language?: string; url?: string; userId?: number; documentId?: string | number; document_id?: string | number }>;
   return entities.map((e) => {
     const name = e.className || e.constructor?.name || "";
     const offset = e.offset ?? 0;
@@ -592,7 +603,7 @@ async function downloadMediaToBuffer(client: any, target: any): Promise<Buffer |
 }
 
 async function downloadMessageMedia(msg: MessageContext, enabled: boolean): Promise<Buffer | undefined> {
-  if (!enabled || !(msg as any).media) return undefined;
+  if (!enabled || !msg.media) return undefined;
   const client = await getGlobalClient().catch(() => null as any);
   return downloadMediaToBuffer(client, msg);
 }
@@ -1141,21 +1152,24 @@ async function replyPreview(msg: MessageContext, includeReply: boolean, args: Qu
   if (!includeReply) return undefined;
   const reply = await safeGetReplyMessage(msg).catch(() => undefined);
   if (!reply) return undefined;
-  const entity = await senderEntity(reply as any);
+  // safeGetReplyMessage returns Message, but downstream fns expect MessageContext
+  const replyCtx = reply as any as MessageContext;
+  const entity = await senderEntity(replyCtx);
   const name = displayName(entity);
   return {
-    chatId: senderIdNumber(reply as any),
-    from: { id: senderIdNumber(reply as any), name, first_name: name, photo: {}, emoji_status: emojiStatusPayload(entity) },
+    chatId: senderIdNumber(replyCtx),
+    from: { id: senderIdNumber(replyCtx), name, first_name: name, photo: {}, emoji_status: emojiStatusPayload(entity) },
     name,
-    text: messageText(reply as any),
-    entities: convertEntities(reply as any),
-    ...await prepareQuoteMedia(reply as any, args),
+    text: messageText(replyCtx),
+    entities: convertEntities(replyCtx),
+    ...await prepareQuoteMedia(replyCtx, args),
   };
 }
 
 async function forwardPreview(msg: MessageContext): Promise<any | undefined> {
-  const fwd: any = (msg as any).fwdFrom || (msg as any).fwd_from;
-  if (!fwd) return undefined;
+  const rawFwd = (msg.raw as { fwdFrom?: unknown })?.fwdFrom;
+  if (!rawFwd) return undefined;
+  const fwd: any = rawFwd;
   const src = await forwardedSource(msg);
   const name = src?.name || "Forwarded";
   const client = await getGlobalClient().catch(() => null as any);
@@ -1222,7 +1236,7 @@ async function toQuoteMessage(msg: MessageContext, args: QuoteArgs): Promise<any
     mediaCrop: media.mediaCrop,
     emoji_status: args.hidden || fwd?.anonymous ? undefined : emojiStatusPayload(effectiveEntity, emojiBuffer),
     date: messageDate(msg),
-    via_bot: (msg as any).viaBotId ?? (msg as any).via_bot_id,
+    via_bot: msg.viaBot?.id,
     senderTag: undefined,
   };
 }
@@ -1277,7 +1291,7 @@ async function quoteStickerReplyTargetId(commandMsg: MessageContext, quoteMessag
 
 async function editProgress(msg: MessageContext, text: string): Promise<void> {
   try {
-    if (typeof (msg as any).edit === "function") await (msg as any).edit({ text });
+    if (typeof msg.edit === "function") await msg.edit({ text });
     else {
       const client = await getGlobalClient().catch(() => null as any);
       if (client) await (client as any).editMessage({
@@ -1304,7 +1318,7 @@ export class QuotePlugin {
       const argsText = getCommandArgsText(msg, command);
       const args = parseArgs(argsText);
       const quoteStartedAt = Date.now();
-      logger.warn("quote command triggered", { command, text: rawText, argsText, out: (msg as any).isOutgoing, replyTo: !!(msg as any).replyTo, backgroundColor: args.backgroundColor });
+      logger.warn("quote command triggered", { command, text: rawText, argsText, out: msg.isOutgoing, replyTo: !!msg.replyToMessage, backgroundColor: args.backgroundColor });
       await editProgress(msg, quoteResourcesReady() ? "⏳ 正在生成 quote…" : "⏳ 首次使用，正在初始化 quote 资源…");
 
       try {
