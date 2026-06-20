@@ -155,10 +155,8 @@ function buildCopyCommand(task: any): string {
   return cmd?.includes("\n") ? `<pre>${htmlEscape(cmd)}</pre>` : codeTag(cmd);
 }
 async function run(text: string, msg: MessageContext, trigger?: MessageContext) {
-  const [cmd, client] = await Promise.all([
-    getCommandFromMessage(text),
-    getGlobalClient(),
-  ]);
+  const cmd = await getCommandFromMessage(text);
+  const client = await getGlobalClient();
   if (!client) return;
   const sudoMsg = await client.sendText(msg.chat.id, text, {
     replyTo: (msg.replyToMessage?.id ?? undefined) as number | undefined,
@@ -250,17 +248,13 @@ const help_text = [
   "",
   `<pre>${commandName} add 一键强制更新并退出重启`,
   `return !msg.forwardInfo && ['a', 'b'].includes(msg.sender?.username) && msg.text === '${mainPrefix}${mainPrefix}'`,
-  `await run('${mainPrefix}update -f', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e) {
-      console.error('[kitt] operation failed:', e)
-  }; await run('${mainPrefix}exit', msg)</pre>`,
+  `await run('${mainPrefix}update -f', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e) {}; await run('${mainPrefix}exit', msg)</pre>`,
   "",
   `- <code>username</code> 为 <code>a</code> 或 <code>b</code> 的用户可使用 <code>,,</code> 一键更新已安装的远程插件`,
   "",
   `<pre>${commandName} add 一键更新已安装的远程插件`,
   `return !msg.forwardInfo && ['a', 'b'].includes(msg.sender?.username) && msg.text === ',,'`,
-  `await run('${mainPrefix}tpm update', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e) {
-      console.error('[kitt] operation failed:', e)
-  };</pre>`,
+  `await run('${mainPrefix}tpm update', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e) {};</pre>`,
   "",
   "▎管理",
   `<code>${commandName} ls</code>, <code>${commandName} list</code>: 列出所有任务`,
@@ -272,7 +266,7 @@ const help_text = [
 
 class KittPlugin extends Plugin {
 
-  description: string = `\nK.I.T.T <blockquote>As you wish, Michael.</blockquote>\n\n使用 JavaScript 的高级触发器: 匹配 -> 执行, 高度自定义, 逻辑自由\n\n${help_text}`;
+  description: string = `<br>K.I.T.T <blockquote>As you wish, Michael.</blockquote><br><br>使用 JavaScript 的高级触发器: 匹配 -> 执行, 高度自定义, 逻辑自由<br><br>${help_text}`;
   cmdHandlers: Record<
     string,
     (msg: MessageContext, trigger?: MessageContext) => Promise<void>

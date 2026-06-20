@@ -142,7 +142,7 @@ const help = `🧩 <b>Sub-Store 管理</b>
 
 class SubStorePlugin extends Plugin {
 
-  description = `Sub-Store 管理\n\n${help}`;
+  description = `Sub-Store 管理<br><br>${help}`;
 
   cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     sub: async (msg) => {
@@ -282,10 +282,8 @@ class SubStorePlugin extends Plugin {
                 : "";
 
               await msg.edit({ text: "🔍 获取版本信息..." });
-              const [localVersion, remoteVersion] = await Promise.all([
-                getSubStoreVersion(),
-                getRemoteVersion(),
-              ]);
+              const localVersion = await getSubStoreVersion();
+              const remoteVersion = await getRemoteVersion();
 
               await msg.edit({
                 text: `✅ 更新完成\n\n📦 本地版本: ${localVersion}\n🌍 远程版本: ${remoteVersion}\n🌐 面板: http://${ip.trim()}:3001\n🔗 后端: http://${ip.trim()}:3001/${secret}`,
@@ -341,10 +339,8 @@ class SubStorePlugin extends Plugin {
                 const ip = await sh("curl -s --max-time 3 ifconfig.me").catch(
                   () => "未知"
                 );
-                const [localVersion, remoteVersion] = await Promise.all([
-                  getSubStoreVersion(),
-                  getRemoteVersion(),
-                ]);
+                const localVersion = await getSubStoreVersion();
+                const remoteVersion = await getRemoteVersion();
                 const versionCompare = compareVersions(localVersion, remoteVersion);
 
                 infoResult += `\n🏠 <b>Sub-Store 状态</b>\n`;

@@ -297,7 +297,7 @@ class SSHPlugin extends Plugin {
     await ConfigManager.get(CONFIG_KEYS.TARGET_CHAT);
   }
 
-  description: string = `SSH管理和服务器配置\n\n${help_text}`;
+  description: string = `SSH管理和服务器配置<br><br>${help_text}`;
 
   cmdHandlers = {
     ssh: async (msg: MessageContext) => {
@@ -537,7 +537,7 @@ class SSHPlugin extends Plugin {
         const backupTimestamp = dayjs().format("YYYYMMDD_HHmmss");
         try {
           await execAsync(`cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.backup.${backupTimestamp} 2>/dev/null || true`);
-        } catch (e) { console.error('[ssh] backup authorized_keys failed:', e); }
+        } catch {}
         
         await msg.edit({ text: "🔄 正在替换密钥..." });
         // 直接写入公钥，确保格式正确
@@ -548,7 +548,7 @@ class SSHPlugin extends Plugin {
         let existingKeys = "";
         try {
           existingKeys = fs.readFileSync("/root/.ssh/authorized_keys", "utf-8");
-        } catch (e) { console.error('[ssh] read authorized_keys failed:', e); }
+        } catch {}
         
         // 检查密钥是否已存在（通过比较公钥数据部分）
         const newKeyData = keyParts[1];
@@ -605,7 +605,7 @@ class SSHPlugin extends Plugin {
       try {
         const keysContent = fs.readFileSync("/root/.ssh/authorized_keys", "utf-8");
         keyCount = keysContent.trim().split('\n').filter(line => line.trim() && !line.startsWith('#')).length;
-      } catch (e) { console.error('[ssh] count authorized_keys failed:', e); }
+      } catch {}
 
       // 生成状态消息
       let setupMessage = "";
@@ -743,8 +743,8 @@ class SSHPlugin extends Plugin {
       const timestamp = dayjs().format("YYYYMMDD_HHmmss");
       try {
         await execAsync(`cp ${authorizedKeysPath} ${authorizedKeysPath}.backup.${timestamp}`);
-      } catch (e) {
-        console.error("[ssh] operation failed:", e);
+      } catch {
+        // 文件不存在时忽略备份错误
       }
       
       // 清空密钥文件
@@ -1369,12 +1369,10 @@ ${keysContent}`;
 
     try {
       // 获取插件配置
-      const [targetChat, sshPort, passwordAuth, pubkeyAuth] = await Promise.all([
-        ConfigManager.get(CONFIG_KEYS.TARGET_CHAT),
-        ConfigManager.get(CONFIG_KEYS.SSH_PORT),
-        ConfigManager.get(CONFIG_KEYS.PASSWORD_AUTH),
-        ConfigManager.get(CONFIG_KEYS.PUBKEY_AUTH),
-      ]);
+      const targetChat = await ConfigManager.get(CONFIG_KEYS.TARGET_CHAT);
+      const sshPort = await ConfigManager.get(CONFIG_KEYS.SSH_PORT);
+      const passwordAuth = await ConfigManager.get(CONFIG_KEYS.PASSWORD_AUTH);
+      const pubkeyAuth = await ConfigManager.get(CONFIG_KEYS.PUBKEY_AUTH);
 
       // 获取当前SSH服务状态
       let sshStatus = "未知";

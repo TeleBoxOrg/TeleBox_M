@@ -120,10 +120,8 @@ class ConfigManager {
 
 // 统一创建 GitHub API 客户端
 async function getApi() {
-  const [baseURL, token] = await Promise.all([
-    ConfigManager.get(CONFIG_KEYS.API_BASE_URL),
-    ConfigManager.get(CONFIG_KEYS.TOKEN),
-  ]);
+  const baseURL = await ConfigManager.get(CONFIG_KEYS.API_BASE_URL);
+  const token = await ConfigManager.get(CONFIG_KEYS.TOKEN);
   if (!token) throw new Error("请先使用 `login` 命令登录");
 
   return axios.create({
@@ -138,7 +136,7 @@ async function getApi() {
 }
 
 class GitManagerPlugin extends Plugin {
-  description: string = `通过Git API管理PR\n\n${help_text}`;
+  description: string = `通过Git API管理PR<br><br>${help_text}`;
 
   cmdHandlers = {
     [pluginName]: async (msg: MessageContext) => {
@@ -335,7 +333,7 @@ class GitManagerPlugin extends Plugin {
                 mergeablePRs.push(item);
             }
         } catch (e) {
-            console.error('[git_PR] operation failed:', e)
+            // 忽略获取详情失败的PR
         }
     }
 

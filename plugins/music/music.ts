@@ -381,7 +381,7 @@ class ConfigManager {
       if (key === CONFIG.KEYS.API && legacy.settings?.apikey) {
         return legacy.settings.apikey ?? defaultValue ?? "";
       }
-    } catch (e) { console.error('[music] read legacy settings failed:', e); }
+    } catch {}
 
     return defaultValue || DEFAULT_CONFIG[key] || "";
   }
@@ -922,7 +922,7 @@ class Downloader {
         }
         console.log(`[Music] Found yt-dlp via: ${cmd.split(" ")[0]}`);
         break;
-      } catch (e) { console.error('[music] yt-dlp check failed:', e); }
+      } catch {}
     }
 
     // Check FFmpeg
@@ -939,11 +939,9 @@ class Downloader {
 
   async search(query: string, minDurationSec?: number): Promise<string | null> {
     try {
-      const [cookie, proxy, cookieBrowser] = await Promise.all([
-        ConfigManager.get(CONFIG.KEYS.COOKIE),
-        ConfigManager.get(CONFIG.KEYS.PROXY),
-        ConfigManager.get(CONFIG.KEYS.COOKIE_BROWSER),
-      ]);
+      const cookie = await ConfigManager.get(CONFIG.KEYS.COOKIE);
+      const proxy = await ConfigManager.get(CONFIG.KEYS.PROXY);
+      const cookieBrowser = await ConfigManager.get(CONFIG.KEYS.COOKIE_BROWSER);
 
       // 使用AI识别歌手和歌曲名，构建最终搜索词
       let finalQuery = query;
@@ -1264,10 +1262,10 @@ class Downloader {
         this.tempDir,
         `${filename}_${timestamp}_thumb.jpg`
       );
-      const [cookie, proxy] = await Promise.all([
-        ConfigManager.get(CONFIG.KEYS.COOKIE),
-        ConfigManager.get(CONFIG.KEYS.PROXY),
-      ]);
+      const cookie = await ConfigManager.get(CONFIG.KEYS.COOKIE);
+      const proxy = await ConfigManager.get(CONFIG.KEYS.PROXY);
+
+      // Prepare authentication
       let authParams = "";
       if (cookie && cookie.trim()) {
         const cookieFile = path.join(this.tempDir, "cookies.txt");
@@ -1283,7 +1281,7 @@ class Downloader {
       try {
         const ok = await this.fetchAlbumCoverUsingAPI(metadata, thumbnailPath);
         if (ok) hasThumbnail = true;
-      } catch (e) { console.error('[music] fetch album cover failed:', e); }
+      } catch {}
 
       // 获取视频元数据
       try {
@@ -1883,7 +1881,7 @@ ${commandName} set proxy socks5://127.0.0.1:40000</pre>
 💡 <i>直接输入歌名即可快速搜索下载</i>`;
 
     this.downloader = new Downloader();
-    this.downloader.cleanCache().catch((e) => { console.error(e) });
+    this.downloader.cleanCache().catch(() => {});
 
     // 注册命令处理器
     this.cmdHandlers = {
@@ -1921,14 +1919,12 @@ ${commandName} set proxy socks5://127.0.0.1:40000</pre>
   }
 
   private async handleConfig(msg: MessageContext): Promise<void> {
-    const [cookie, proxy, apiKey, baseUrl, model, quality] = await Promise.all([
-      ConfigManager.get(CONFIG.KEYS.COOKIE),
-      ConfigManager.get(CONFIG.KEYS.PROXY),
-      ConfigManager.get(CONFIG.KEYS.API),
-      ConfigManager.get(CONFIG.KEYS.BASE_URL),
-      ConfigManager.get(CONFIG.KEYS.MODEL),
-      ConfigManager.get(CONFIG.KEYS.AUDIO_QUALITY),
-    ]);
+    const cookie = await ConfigManager.get(CONFIG.KEYS.COOKIE);
+    const proxy = await ConfigManager.get(CONFIG.KEYS.PROXY);
+    const apiKey = await ConfigManager.get(CONFIG.KEYS.API);
+    const baseUrl = await ConfigManager.get(CONFIG.KEYS.BASE_URL);
+    const model = await ConfigManager.get(CONFIG.KEYS.MODEL);
+    const quality = await ConfigManager.get(CONFIG.KEYS.AUDIO_QUALITY);
 
     const status = `⚙️ <b>当前配置</b>
 

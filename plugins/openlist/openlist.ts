@@ -66,7 +66,7 @@ const helpText = `⚙️ <b>OpenList 管理插件</b>
 
 class OpenListPlugin extends Plugin {
 
-  description: string = `\nOpenList 管理\n\n${helpText}`;
+  description: string = `<br>OpenList 管理<br><br>${helpText}`;
   cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     openlist: async (msg: MessageContext) => {
       await this.handleCommand(msg);
@@ -167,11 +167,9 @@ class OpenListPlugin extends Plugin {
         return;
       }
 
-      const [hasSystemd, hasCurl, hasTar] = await Promise.all([
-        this.hasCmd("systemctl"),
-        this.hasCmd("curl"),
-        this.hasCmd("tar"),
-      ]);
+      const hasSystemd = await this.hasCmd("systemctl");
+      const hasCurl = await this.hasCmd("curl");
+      const hasTar = await this.hasCmd("tar");
       if (!hasSystemd || !hasCurl || !hasTar) {
         const missing = [
           !hasSystemd ? "systemctl" : "",
@@ -257,7 +255,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'hostname -I 2>/dev/null | awk "{print $1}"'`
         );
         ip = (stdout || "").trim();
-      } catch (e) { console.error('[openlist] getIP failed:', e); }
+      } catch {}
 
       const lines: string[] = [];
       lines.push("安装完成");
@@ -281,11 +279,9 @@ class OpenListPlugin extends Plugin {
         return;
       }
 
-      const [hasSystemd, hasCurl, hasTar] = await Promise.all([
-        this.hasCmd("systemctl"),
-        this.hasCmd("curl"),
-        this.hasCmd("tar"),
-      ]);
+      const hasSystemd = await this.hasCmd("systemctl");
+      const hasCurl = await this.hasCmd("curl");
+      const hasTar = await this.hasCmd("tar");
       if (!hasSystemd || !hasCurl || !hasTar) {
         const missing = [
           !hasSystemd ? "systemctl" : "",
@@ -673,9 +669,7 @@ class OpenListPlugin extends Plugin {
       const db = await this.getDb();
       dbUser = db.data.username;
       dbPass = db.data.password;
-    } catch (e) {
-      console.warn('[openlist] DB credential read failed:', e);
-    }
+    } catch (e) {}
 
     // 2. Get Config credentials
     let configUser = "";
@@ -763,7 +757,7 @@ class OpenListPlugin extends Plugin {
           );
           const m = verOut.match(/Version:\s*([^\s]+)/);
           version = m ? m[1] : "";
-        } catch (e) { console.error('[openlist] getVersion failed:', e); }
+        } catch {}
       }
 
       let publicIp = "";
@@ -772,7 +766,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'curl -s4 --connect-timeout 5 ip.sb || curl -s4 --connect-timeout 5 ifconfig.me'`
         );
         publicIp = (ipOut || "").trim();
-      } catch (e) { console.error('[openlist] getPublicIP failed:', e); }
+      } catch {}
 
       const lines: string[] = [];
       lines.push(`<b>状态:</b> ${installed ? `已安装` : "未安装"}`);
@@ -830,7 +824,7 @@ class OpenListPlugin extends Plugin {
       );
       const p = (stdout || "").trim();
       if (p) return p;
-    } catch (e) { console.error('[openlist] getServiceDir failed:', e); }
+    } catch {}
     return "/opt/openlist";
   }
 

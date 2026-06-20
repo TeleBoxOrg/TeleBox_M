@@ -854,7 +854,7 @@ const deleteMessageOrGroup = async (msg: MessageContext): Promise<void> => {
       return;
     }
     await msg.delete();
-  } catch (e) { console.error('[ai] delete msg failed:', e); }
+  } catch {}
 };
 
 const getHeaderContentType = (headers: unknown): string | undefined => {
@@ -2186,7 +2186,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
 
     try {
       payloads.push(JSON.parse(body));
-    } catch (e) { console.error('[ai] parse payload JSON failed:', e); }
+    } catch {}
   }
 
   if (payloads.length > 0 || sawDataLine) return payloads;
@@ -4737,10 +4737,8 @@ class ImageFeature extends BaseFeatureHandler {
 
     const promptInput = args.slice(1).join(" ").trim();
     const replyText = getMessageText(replyMsg).trim();
-    const [replyImageParts, messageImageParts] = await Promise.all([
-      getMessageImageParts(replyMsg),
-      getMessageImageParts(msg),
-    ]);
+    const replyImageParts = await getMessageImageParts(replyMsg);
+    const messageImageParts = await getMessageImageParts(msg);
     const imageParts = [...replyImageParts, ...messageImageParts];
 
     const hasPrompt = !!promptInput || !!replyText;
@@ -4783,7 +4781,7 @@ class ImageFeature extends BaseFeatureHandler {
           try {
             const pngBuffer = await sharp(inputImage.data).png().toBuffer();
             inputImage = { data: pngBuffer, mimeType: "image/png" };
-          } catch (e) { console.error('[ai] convert input image to png failed:', e); }
+          } catch {}
         }
         images = await this.aiService.editImage(prompt, inputImage, token);
       } else {
@@ -4898,10 +4896,8 @@ class VideoFeature extends BaseFeatureHandler {
     const promptInput = args.slice(promptStartIndex).join(" ").trim();
     const replyText = getMessageText(replyMsg).trim();
 
-    const [replyImageParts, messageImageParts] = await Promise.all([
-      getMessageImageParts(replyMsg),
-      getMessageImageParts(msg),
-    ]);
+    const replyImageParts = await getMessageImageParts(replyMsg);
+    const messageImageParts = await getMessageImageParts(msg);
 
     let finalPrompt = "";
     if (promptInput && replyText && replyImageParts.length === 0) {
