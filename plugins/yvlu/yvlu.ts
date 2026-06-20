@@ -757,7 +757,9 @@ class YvluPlugin extends Plugin {
                         replyName = composed || rUser || "unknown";
                       }
                     }
-                  } catch {}
+                  } catch (e) {
+                    console.warn('[yvlu] 解析回复发送者信息失败:', e);
+                  }
 
                   // 实体
                   const revived = reviveEntities(replyHeader.quoteEntities);
@@ -807,7 +809,9 @@ class YvluPlugin extends Plugin {
                         };
                       }
                     }
-                  } catch {}
+                  } catch (e) {
+                    console.warn('[yvlu] 解析回复引用信息失败:', e);
+                  }
                 }
               } catch (e) {
                 console.warn("处理回复引用失败: ", e);
