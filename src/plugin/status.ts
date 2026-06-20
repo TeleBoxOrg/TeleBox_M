@@ -110,7 +110,7 @@ class TeleBoxSystemMonitor extends Plugin {
     this.db = null;
   }
 
-  description = `显示系统信息与TeleBox运行状态\n\n${HELP_TEXT}`;
+  description = `显示系统信息与TeleBox运行状态<br><br>${HELP_TEXT}`;
   private db: any;
   private readonly PLUGIN_NAME = "status";
   private readonly DB_PATH: string;

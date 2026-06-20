@@ -230,11 +230,11 @@ class HelpPlugin extends Plugin {
 
       let description: string;
       if (!plugin.description) description = "暂无描述信息";
-      else if (typeof plugin.description === "string") description = plugin.description;
+      else if (typeof plugin.description === "string") description = plugin.description.replace(/\\n/g, "<br>").replace(/\n/g, "<br>");
       else {
         try {
           const d = await plugin.description({ plugin: pluginEntry });
-          description = typeof d === "string" ? d : "生成描述信息出错";
+          description = typeof d === "string" ? d.replace(/\\n/g, "<br>").replace(/\n/g, "<br>") : "生成描述信息出错";
         } catch {
           description = "生成描述信息出错";
         }
