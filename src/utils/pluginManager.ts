@@ -119,7 +119,7 @@ function purgeModuleCache(modulePaths: Iterable<string>): void {
         }
       }
     } catch (e) {
-      console.error("[pluginManager] operation failed:", e);
+      logger.error("[pluginManager] operation failed:", e);
     }
   }
 

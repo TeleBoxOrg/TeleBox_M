@@ -121,7 +121,7 @@ export async function initializeClientSession(
       return { meId: me.id ? String(me.id) : undefined };
     }
   } catch (e) {
-    console.error("[loginManager] operation failed:", e);
+    logger.error("[loginManager] operation failed:", e);
   }
 
   throwIfAborted(lifecycle);

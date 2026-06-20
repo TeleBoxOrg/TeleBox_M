@@ -112,7 +112,7 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
       (client as unknown as { log: { level: number } }).log.level = lvl;
     }
   } catch (e) {
-    console.error("[mtcuteClient] operation failed:", e);
+    logger.error("[mtcuteClient] operation failed:", e);
   }
 
   return client;

@@ -190,7 +190,7 @@ function circuitBreakChannel(channelId: string): void {
     // Reset failure counter after breaking
     record.timestamps = [];
   } catch (e) {
-    console.error("[channelGapBreaker] operation failed:", e);
+    logger.error("[channelGapBreaker] operation failed:", e);
   }
 }
 
@@ -205,7 +205,7 @@ function silentlyClearChannelPts(channelId: string): void {
     if (!client) return;
     clearChannelStateOnClient(client, channelId);
   } catch (e) {
-    console.error("[channelGapBreaker] operation failed:", e);
+    logger.error("[channelGapBreaker] operation failed:", e);
   }
 }
 
@@ -232,7 +232,7 @@ function clearChannelStateOnClient(
           oldPts = tracker.pts.current();
         }
       } catch (e) {
-        console.error("[channelGapBreaker] operation failed:", e);
+        logger.error("[channelGapBreaker] operation failed:", e);
       }
       try {
         if (tracker.timer) {
@@ -246,7 +246,7 @@ function clearChannelStateOnClient(
           tracker.pts.setRequesting(false);
         }
       } catch (e) {
-        console.error("[channelGapBreaker] operation failed:", e);
+        logger.error("[channelGapBreaker] operation failed:", e);
       }
       um.channels.delete(channelId);
       cleared = true;
@@ -255,7 +255,7 @@ function clearChannelStateOnClient(
       const t = um.channelFailRetryTimers.get(channelId);
       if (t) {
           /* ignored */
-        try { clearTimeout(t); } catch (e) { console.error('[channelGapBreaker] clearTimeout failed:', e); }
+        try { clearTimeout(t); } catch (e) { logger.error('[channelGapBreaker] clearTimeout failed:', e); }
         um.channelFailRetryTimers.delete(channelId);
         cleared = true;
       }
@@ -310,7 +310,7 @@ function tryGetClient(): any | null {
       return runtime.client;
     }
   } catch (e) {
-    console.error("[channelGapBreaker] operation failed:", e);
+    logger.error("[channelGapBreaker] operation failed:", e);
   }
   return null;
 }

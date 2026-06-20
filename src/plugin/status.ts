@@ -601,7 +601,7 @@ Scan Time: ${scanTime}ms
         }
       }
     } catch (e) {
-      console.error("[status] operation failed:", e);
+      logger.error("[status] operation failed:", e);
     }
     return "Unknown";
   }
@@ -654,7 +654,7 @@ Scan Time: ${scanTime}ms
         }
       }
     } catch (e) {
-      console.error("[status] operation failed:", e);
+      logger.error("[status] operation failed:", e);
     }
     return "Unknown";
   }

@@ -3,6 +3,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { logger } from "@utils/logger";
 import { SureDB, type MsgRecord } from "@utils/sureDB";
 import {
   dealCommandPluginWithMessage,
@@ -114,7 +115,7 @@ async function handleAddDel(
     try {
       entity = await msg.client?.getChat(uid);
     } catch (e) {
-      console.error("[sure] operation failed:", e);
+      logger.error("[sure] operation failed:", e);
     }
     display = buildDisplay(uid, entity, reply.sender?.type === "user");
   }
@@ -173,7 +174,7 @@ async function handleChatAddDel(
     try {
       entity = await msg.client?.getChat(cid);
     } catch (e) {
-      console.error("[sure] operation failed:", e);
+      logger.error("[sure] operation failed:", e);
     }
     display = buildDisplay(cid, entity, msg.chat?.type === "user");
   }
