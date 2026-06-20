@@ -113,8 +113,8 @@ async function handleAddDel(
     }
     try {
       entity = await msg.client?.getChat(uid);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      console.error("[sure] operation failed:", e);
     }
     display = buildDisplay(uid, entity, reply.sender?.type === "user");
   }
@@ -172,8 +172,8 @@ async function handleChatAddDel(
     }
     try {
       entity = await msg.client?.getChat(cid);
-    } catch {
-      /* ignore */
+    } catch (e) {
+      console.error("[sure] operation failed:", e);
     }
     display = buildDisplay(cid, entity, msg.chat?.type === "user");
   }

@@ -120,8 +120,8 @@ export async function initializeClientSession(
       closeReadlineInterface();
       return { meId: me.id ? String(me.id) : undefined };
     }
-  } catch {
-    // No valid session yet — fall through to interactive login.
+  } catch (e) {
+    console.error("[loginManager] operation failed:", e);
   }
 
   throwIfAborted(lifecycle);

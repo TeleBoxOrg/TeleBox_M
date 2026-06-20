@@ -600,8 +600,8 @@ Scan Time: ${scanTime}ms
           return this.formatByteUsage(usedBytes, totalBytes);
         }
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("[status] operation failed:", e);
     }
     return "Unknown";
   }
@@ -653,8 +653,8 @@ Scan Time: ${scanTime}ms
           return this.formatByteUsage(usedBytes, totalBytes);
         }
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("[status] operation failed:", e);
     }
     return "Unknown";
   }

@@ -1213,8 +1213,8 @@ async function findUserInChannelParticipants(
         );
       });
       if (matched) return matched;
-    } catch {
-      // Ignore and continue to other fallbacks.
+    } catch (e) {
+      console.error("[admin_board] operation failed:", e);
     }
   }
 
@@ -1269,8 +1269,8 @@ async function resolveUserForSeatAction(
       if (getRawType(entity) === "user") {
         return entity;
       }
-    } catch {
-      // Ignore and continue to target-specific fallback.
+    } catch (e) {
+      console.error("[admin_board] operation failed:", e);
     }
   }
 

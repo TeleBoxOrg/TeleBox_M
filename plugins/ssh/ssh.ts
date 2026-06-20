@@ -743,8 +743,8 @@ class SSHPlugin extends Plugin {
       const timestamp = dayjs().format("YYYYMMDD_HHmmss");
       try {
         await execAsync(`cp ${authorizedKeysPath} ${authorizedKeysPath}.backup.${timestamp}`);
-      } catch {
-        // 文件不存在时忽略备份错误
+      } catch (e) {
+        console.error("[ssh] operation failed:", e);
       }
       
       // 清空密钥文件

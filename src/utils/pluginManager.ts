@@ -118,8 +118,8 @@ function purgeModuleCache(modulePaths: Iterable<string>): void {
           idsToDelete.add(id);
         }
       }
-    } catch {
-      // ignore unresolved files during cleanup
+    } catch (e) {
+      console.error("[pluginManager] operation failed:", e);
     }
   }
 

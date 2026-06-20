@@ -60,8 +60,8 @@ async function findLogFiles(): Promise<{
       ) {
         errLog = logPath;
       }
-    } catch {
-      // 文件不存在，继续检查下一个
+    } catch (e) {
+      console.error("[sendLog] operation failed:", e);
     }
   }
 

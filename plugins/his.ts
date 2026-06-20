@@ -228,8 +228,8 @@ class HisPlugin extends Plugin {
             const chatIdStr = String(chatId).replace("-100", "");
             baseLinkUrl = `https://t.me/c/${chatIdStr}/`;
           }
-        } catch {
-          // Not a channel, try regular chat
+        } catch (e) {
+          console.error("[his] operation failed:", e);
         }
       }
     } catch (error) {
