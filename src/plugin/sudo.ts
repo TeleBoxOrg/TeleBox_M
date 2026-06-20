@@ -3,6 +3,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { SudoDB } from "@utils/sudoDB";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { html } from "@mtcute/html-parser";
+import { logger } from "@utils/logger";
 import type { MessageContext } from "@mtcute/dispatcher";
 import {
   dealCommandPluginWithMessage,
@@ -108,7 +109,7 @@ async function handleAddDel(
     try {
       entity = await msg.client?.getChat(uid);
     } catch (e) {
-      console.error("[sudo] operation failed:", e);
+      logger.error("[sudo] operation failed:", e);
     }
     display = buildDisplay(uid, entity, reply.sender?.type === "user");
   }
@@ -168,7 +169,7 @@ async function handleChatAddDel(
     try {
       entity = await msg.client?.getChat(cid);
     } catch (e) {
-      console.error("[sudo] operation failed:", e);
+      logger.error("[sudo] operation failed:", e);
     }
     display = buildDisplay(cid, entity, msg.chat?.type === "user");
   }

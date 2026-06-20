@@ -1172,7 +1172,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
           const stat = fs.statSync(filePath);
           mtime = stat.mtime.toLocaleString("zh-CN");
           /* ignored */
-        } catch (e) { console.error("[quality] ignored error:", e); }
+        } catch (e) { logger.error("[quality] ignored error:", e); }
         localLinesVerbose.push(`${nameTag} 🗄 ${mtime}`);
       } else {
         localLinesSimple.push(nameTag);

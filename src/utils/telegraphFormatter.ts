@@ -1,4 +1,5 @@
 // src/utils/telegraphFormatter.ts
+import { logger } from "./logger";
 /**
  * Telegraph supports a restricted DOM-like node format.
  * Tags (official whitelist):
@@ -119,7 +120,7 @@ const sanitizeUrl = (url: string): string => {
     const u = new URL(url);
     if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
     /* ignored */
-  } catch (e) { console.error("[quality] ignored error:", e); }
+  } catch (e) { logger.error("[quality] ignored error:", e); }
   return "";
 };
 

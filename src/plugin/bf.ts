@@ -229,7 +229,7 @@ async function createBackup(
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
       /* ignored */
-    } catch (e) { console.error("[quality] ignored error:", e); }
+    } catch (e) { logger.error("[quality] ignored error:", e); }
   }
 }
 
@@ -613,7 +613,7 @@ class BfPlugin extends Plugin {
             fs.unlinkSync(path.join(os.tmpdir(), f));
           }
           /* ignored */
-        } catch (e) { console.error("[quality] ignored error:", e); }
+        } catch (e) { logger.error("[quality] ignored error:", e); }
       }
     },
 
@@ -687,7 +687,7 @@ class BfPlugin extends Plugin {
           fs.unlinkSync(tempPath);
           fs.rmSync(extractPath, { recursive: true, force: true });
           /* ignored */
-        } catch (e) { console.error("[quality] ignored error:", e); }
+        } catch (e) { logger.error("[quality] ignored error:", e); }
 
         // 尝试重载插件
         try {
