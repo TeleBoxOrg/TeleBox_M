@@ -806,16 +806,16 @@ class SearchService {
           spoiler: spoiler,
           attributes: [
               {
-                  _: 'documentAttributeVideo',
+                  _: 'documentAttributeVideo' as const,
                   duration: videoAttr?.duration ?? 0,
                   w: videoAttr?.w ?? 0,
                   h: videoAttr?.h ?? 0,
                   supportsStreaming: true,
-              } as any,
+              } satisfies tl.RawDocumentAttributeVideo,
               {
-                  _: 'documentAttributeFilename',
+                  _: 'documentAttributeFilename' as const,
                   fileName: path.basename(tempFilePath),
-              } as any,
+              } satisfies tl.RawDocumentAttributeFilename,
           ],
           replyTo: originalMsg.id
       });
