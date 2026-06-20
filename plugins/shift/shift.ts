@@ -21,6 +21,24 @@ import { JSONFilePreset } from "lowdb/node";
 import * as fs from "fs";
 import { logger } from "@utils/logger";
 
+// SQLite row types for better-sqlite3 (returns unknown by default)
+interface ShiftRuleRow {
+  source_id: number;
+  target_id: number;
+  options: string;
+  target_type: string;
+  paused: number;
+  created_at: number | string;
+  filters: string;
+  source_display?: string;
+  target_display?: string;
+}
+
+interface ShiftStatsRow {
+  stats_key: string;
+  stats_data: string;
+}
+
 async function formatEntity(
   target: any,
   mention?: boolean,
@@ -57,7 +75,7 @@ async function formatEntity(
 
   if (id) {
     displayParts.push(
-      (entity as any)?._ === "user"
+      (entity as { _?: string })?._ === "user"
         ? `<a href="tg://user?id=${id}">${id}</a>`
         : `<a href="https://t.me/c/${id}">${id}</a>`
     );
@@ -84,7 +102,7 @@ const htmlEscape = (text: string): string =>
           ">": "&gt;",
           '"': "&quot;",
           "'": "&#x27;",
-        } as any
+        } as Record<string, string>
       )[m] || m)
   );
 
@@ -210,8 +228,8 @@ async function migrateToLowdb(): Promise<boolean> {
     logger.info("[SHIFT] 开始迁移数据到 lowdb...");
 
     // 读取 SQLite 数据
-    const rules = sqliteDb.prepare("SELECT * FROM shift_rules").all() as any[];
-    const stats = sqliteDb.prepare("SELECT * FROM shift_stats").all() as any[];
+    const rules = sqliteDb.prepare("SELECT * FROM shift_rules").all() as ShiftRuleRow[];
+    const stats = sqliteDb.prepare("SELECT * FROM shift_stats").all() as ShiftStatsRow[];
 
     // 转换规则
     const newRules: { [key: string]: ShiftRule } = {};
@@ -221,7 +239,7 @@ async function migrateToLowdb(): Promise<boolean> {
         options: JSON.parse(rule.options || "[]"),
         target_type: rule.target_type,
         paused: rule.paused === 1,
-        created_at: rule.created_at,
+        created_at: String(rule.created_at),
         filters: JSON.parse(rule.filters || "[]"),
       };
     }
@@ -315,7 +333,7 @@ async function getShiftRule(sourceId: number): Promise<ShiftRule | null> {
       const stmt = sqliteDb.prepare(
         "SELECT * FROM shift_rules WHERE source_id = ?"
       );
-      const row = stmt.get(sourceId) as any;
+      const row = stmt.get(sourceId) as ShiftRuleRow | undefined;
 
       if (!row) {
         ruleCache.set(sourceId, { rule: null, timestamp: now });
@@ -327,7 +345,7 @@ async function getShiftRule(sourceId: number): Promise<ShiftRule | null> {
         options: JSON.parse(row.options || "[]"),
         target_type: row.target_type,
         paused: row.paused === 1,
-        created_at: row.created_at,
+        created_at: String(row.created_at),
         filters: JSON.parse(row.filters || "[]"),
       };
     }
@@ -416,7 +434,7 @@ function getAllShiftRules(): Array<{ sourceId: number; rule: ShiftRule }> {
     } else if (sqliteDb) {
       // 从 SQLite 读取
       const stmt = sqliteDb.prepare("SELECT * FROM shift_rules");
-      const rows = stmt.all() as any[];
+      const rows = stmt.all() as ShiftRuleRow[];
 
       return rows.map((row) => ({
         sourceId: row.source_id,
@@ -425,7 +443,7 @@ function getAllShiftRules(): Array<{ sourceId: number; rule: ShiftRule }> {
           options: JSON.parse(row.options || "[]"),
           target_type: row.target_type,
           paused: row.paused === 1,
-          created_at: row.created_at,
+          created_at: String(row.created_at),
           filters: JSON.parse(row.filters || "[]"),
         },
       }));
@@ -598,7 +616,7 @@ function cleanupGroupBuffers(): void {
 }
 
 function getGroupKey(message: any): string | null {
-  const gid = (message as any).groupedId;
+  const gid = (message as { groupedId?: string | number }).groupedId;
   const sid = getChatIdFromMessage(message);
   if (!gid || !sid) return null;
   const gidStr =
@@ -941,7 +959,7 @@ class BackupManager {
       throwIfAborted(signal);
       // 获取消息总数
       const messages = await (client as any).getMessages(task.sourceId, { limit: 1, ids: undefined }) as any[];
-      const totalCount = (messages as any).total || 0;
+      const totalCount = (messages as { total?: number }).total || 0;
       task.totalMessages = totalCount;
 
       if (task.reverse) {
@@ -1321,7 +1339,7 @@ class ShiftPlugin extends Plugin {
                 if (
                   rule &&
                   typeof rule === "object" &&
-                  (rule as any).target_id
+                  (rule as { target_id?: number | string }).target_id
                 ) {
                   validRules[sourceId] = rule as ShiftRule;
                 } else {
@@ -1522,7 +1540,7 @@ class ShiftPlugin extends Plugin {
             const status = rule.paused ? "⏸️ 已暂停" : "▶️ 运行中";
             let handle_edited;
             try {
-              if (!(msg as any).client) continue;
+              if (!(msg as { client?: unknown }).client) continue;
               let replyTo = undefined;
               const options = [];
               if (rule.options && rule.options.length > 0) {
@@ -1549,10 +1567,10 @@ class ShiftPlugin extends Plugin {
                 targetDisplayHtml = rule.target_display;
               } else {
                 const sourceEntity = await (msg.client as any).getChat(
-                  Number(sourceId) as any
+                  Number(sourceId)
                 );
                 const targetEntity = await (msg.client as any).getChat(
-                  Number(rule.target_id) as any
+                  Number(rule.target_id)
                 );
                 sourceDisplayHtml = htmlEscape(getDisplayName(sourceEntity));
                 targetDisplayHtml = htmlEscape(getDisplayName(targetEntity));
@@ -1645,7 +1663,7 @@ class ShiftPlugin extends Plugin {
               // 从 lowdb 读取统计
               const stats = lowdb.data.stats;
               for (const [date, sources] of Object.entries(stats)) {
-                for (const [sourceId, data] of Object.entries(sources as any)) {
+                for (const [sourceId, data] of Object.entries(sources as Record<string, unknown>)) {
                   rows.push({
                     stats_key: `shift.stats.${sourceId}.${date}`,
                     stats_data: JSON.stringify(data),
@@ -1655,7 +1673,7 @@ class ShiftPlugin extends Plugin {
             } else if (sqliteDb) {
               // 从 SQLite 读取
               const stmt = sqliteDb.prepare("SELECT * FROM shift_stats");
-              rows = stmt.all() as any[];
+              rows = stmt.all() as ShiftStatsRow[];
             }
 
             if (rows.length === 0) {
@@ -1694,9 +1712,9 @@ class ShiftPlugin extends Plugin {
             let output = "📊 转发统计报告\n\n";
             for (const [sourceId, stats] of Object.entries(channelStats)) {
               try {
-                if (!(msg as any).client) continue;
+                if (!(msg as { client?: unknown }).client) continue;
                 const sourceEntity = await (msg.client as any).getChat(
-                  parseInt(sourceId) as any
+                  parseInt(sourceId)
                 );
                 output += `📤 源: ${htmlEscape(
                   getDisplayName(sourceEntity)
@@ -2078,7 +2096,7 @@ function updateStats(
       const stmt = sqliteDb.prepare(
         "SELECT stats_data FROM shift_stats WHERE stats_key = ?"
       );
-      const row = stmt.get(statsKey) as any;
+      const row = stmt.get(statsKey) as ShiftStatsRow | undefined;
 
       let stats: any = { total: 0 };
       if (row) {
@@ -2267,7 +2285,7 @@ async function handleIncomingMessage(
     }
 
     // Grouped album handling: buffer and forward whole group
-    const hasGroup = !!(message as any).groupedId;
+    const hasGroup = !!(message as { groupedId?: string | number }).groupedId;
     let replyTo = undefined as number | undefined;
     if (options && options.length > 0) {
       for (const option of options) {
