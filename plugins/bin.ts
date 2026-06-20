@@ -152,7 +152,7 @@ class BinPlugin extends Plugin {
       }
       const bin = (rest[0] || "").replace(/\D/g, "");
       if (bin.length < 6 || bin.length > 8) {
-        await msg.edit({ text: html(`❌ 无效BIN：<code>${htmlEscape(rest[0] || "")}</code>\n需6-8位数字`) });
+        await msg.edit({ text: html(`❌ 无效BIN：<code>${htmlEscape(rest[0] || "")}</code><br>需6-8位数字`) });
         return;
       }
       await msg.edit({ text: `🔍 正在查询 BIN ${bin}...` });

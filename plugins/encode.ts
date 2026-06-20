@@ -152,14 +152,14 @@ class EncodePlugin extends Plugin {
           text = reply.text.trim();
         } else {
           await msg.edit({
-            text: html(`❌ <b>缺少文本内容</b>\n\n💡 请提供要${operation === "encode" ? "编码" : "解码"}的文本或回复一条消息`),
+            text: html(`❌ <b>缺少文本内容</b><br><br>💡 请提供要${operation === "encode" ? "编码" : "解码"}的文本或回复一条消息`),
           });
           return null;
         }
       } catch (replyError: any) {
         console.error("获取回复消息失败:", replyError);
         await msg.edit({
-          text: html(`❌ <b>缺少文本内容</b>\n\n💡 请提供要${operation === "encode" ? "编码" : "解码"}的文本`),
+          text: html(`❌ <b>缺少文本内容</b><br><br>💡 请提供要${operation === "encode" ? "编码" : "解码"}的文本`),
         });
         return null;
       }
@@ -182,7 +182,7 @@ class EncodePlugin extends Plugin {
     const resultPreview = result.length > 3000 ? result.substring(0, 3000) + "..." : result;
 
     await msg.edit({
-      text: html(`${icon} <b>${typeName} ${operationText}完成</b>\n\n<b>原文:</b>\n<code>${htmlEscape(originalPreview)}</code>\n\n<b>结果:</b>\n<code>${htmlEscape(resultPreview)}</code>\n\n${result.length > 3000 ? `⚠️ 结果过长，已截取前3000字符显示` : ""}`),
+      text: html(`${icon} <b>${typeName} ${operationText}完成</b><br><br><b>原文:</b><br><code>${htmlEscape(originalPreview)}</code><br><br><b>结果:</b><br><code>${htmlEscape(resultPreview)}</code><br><br>${result.length > 3000 ? `⚠️ 结果过长，已截取前3000字符显示` : ""}`),
     });
   }
 }

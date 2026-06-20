@@ -38,9 +38,9 @@ async function sendLongHtml(msg: MessageContext, rawHtml: string) {
   if (parts.length === 1) {
     await msg.edit({ text: html(parts[0]) });
   } else {
-    await msg.edit({ text: html(parts[0] + "\n\n📄 (1/" + parts.length + ")") });
+    await msg.edit({ text: html(parts[0] + "<br><br>📄 (1/" + parts.length + ")") });
     for (let i = 1; i < parts.length; i++) {
-      await msg.replyText(html(parts[i] + "\n\n📄 (" + (i + 1) + "/" + parts.length + ")"));
+      await msg.replyText(html(parts[i] + "<br><br>📄 (" + (i + 1) + "/" + parts.length + ")"));
     }
   }
 }

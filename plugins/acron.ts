@@ -839,7 +839,7 @@ class AcronPlugin extends Plugin {
             await scheduleTask(t as AcronTask);
             const nextAt = cron.sendAt(t.cron);
             await msg.edit({
-              text: html(`▶️ 已启用任务 <code>${id}</code>\n下次执行: ${formatDate(
+              text: html(`▶️ 已启用任务 <code>${id}</code><br>下次执行: ${formatDate(
                 nextAt.toJSDate(),
               )}`),
             });

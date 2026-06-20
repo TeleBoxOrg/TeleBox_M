@@ -70,7 +70,7 @@ class PremiumPlugin extends Plugin {
       // 检查人数限制
       if (participantCount >= 10000 && !forceMode) {
         await msg.edit({
-          text: html(`😵 <b>人数过多</b>\n\n太...太多人了... 我会...会...会坏掉的...\n\n如果您执意要运行的的话，您可以使用指令 <code>${mainPrefix}premium force</code>`),
+          text: html(`😵 <b>人数过多</b><br><br>太...太多人了... 我会...会...会坏掉的...<br><br>如果您执意要运行的的话，您可以使用指令 <code>${mainPrefix}premium force</code>`),
         });
         return;
       }

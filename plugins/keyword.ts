@@ -688,7 +688,7 @@ reply delete ban3600</code>
         const chatId = getChatId(msg);
         const taskList = keywordTasks.printAllTasks(false, chatId);
         await msg.edit({
-          text: html(`<b>当前聊天的关键词任务：</b>\n\n${taskList}`),
+          text: html(`<b>当前聊天的关键词任务：</b><br><br>${taskList}`),
         });
         return;
       } else if (args[0] === "alias") {
@@ -725,7 +725,7 @@ reply delete ban3600</code>
       } else if (args[0] === "list" && args[1] === "all") {
         const taskList = keywordTasks.printAllTasks(true);
         await msg.edit({
-          text: html(`<b>所有关键词任务：</b>\n\n${taskList}`),
+          text: html(`<b>所有关键词任务：</b><br><br>${taskList}`),
         });
         return;
       } else if (args[0] === "alias") {

@@ -968,7 +968,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
       const { question: q, answer: ans } = mathQuestion();
       answer   = ans;
       question = q;
-      const m = await client.sendText(userId, html(`🔒 <b>人机验证</b>（降级）\n\n请回复以下算式的答案：\n\n${codeTag(`${q} = ?`)}`));
+      const m = await client.sendText(userId, html(`🔒 <b>人机验证</b>（降级）<br><br>请回复以下算式的答案：<br><br>${codeTag(`${q} = ?`)}`));
       msgIds.push(m.id);
     }
 

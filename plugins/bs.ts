@@ -723,7 +723,7 @@ class BsPlugin extends Plugin {
         const count = command ? Number(command) : 1;
         if (!count || count <= 0) {
           await msg.edit({
-            text: html(`❌ <b>消息数必须是正整数</b>\n示例：<code>${commandName} 3</code>`)
+            text: html(`❌ <b>消息数必须是正整数</b><br>示例：<code>${commandName} 3</code>`)
           });
           return;
         }
@@ -757,7 +757,7 @@ class BsPlugin extends Plugin {
 
         if (messageIds.length === 0) {
           await msg.edit({
-            text: html("❌ <b>未找到可转发的消息</b>\n请确认消息未被删除")
+            text: html("❌ <b>未找到可转发的消息</b><br>请确认消息未被删除")
           });
           return;
         }
@@ -1043,7 +1043,7 @@ class BsPlugin extends Plugin {
       }
 
       await msg.edit({
-        text: html(`❓ <b>未知命令</b>\n\n${escapeHtml(helpText)}`)
+        text: html(`❓ <b>未知命令</b><br><br>${escapeHtml(helpText)}`)
       });
     }
   };
