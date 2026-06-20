@@ -11,6 +11,7 @@ import { promisify } from "util";
 import { JSONFilePreset } from "lowdb/node";
 import { getCurrentGenerationContext } from "@utils/globalClient";
 import { reloadRuntime } from "@utils/runtimeManager";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -46,11 +47,11 @@ async function updateReloadStatus(params: {
       text: isHtml ? html(text) : text,
     });
   } catch (error) {
-    console.error("Failed to edit reload status message, falling back to sendText:", error);
+    logger.error("Failed to edit reload status message, falling back to sendText:", error);
     try {
       await client?.sendText(targetChat, isHtml ? html(text) : text);
     } catch (sendError) {
-      console.error("Fallback sendText also failed (client may be destroyed):", sendError);
+      logger.error("Fallback sendText also failed (client may be destroyed):", sendError);
     }
   }
 }
@@ -174,7 +175,7 @@ function scheduleTrackedTimeout(
     const task = Promise.resolve(callback());
     context.trackTask(task, { label: "reload:scheduled-timeout" });
     task.catch((error) => {
-      console.error("[RELOAD] Scheduled timeout failed:", error);
+      logger.error("[RELOAD] Scheduled timeout failed:", error);
     });
   }, delay, { label: "reload:scheduled-timeout" });
   pendingExitTimers.add(timer);
@@ -199,7 +200,7 @@ const editExitMsg = async () => {
       fs.unlinkSync(exitFile);
     }
   } catch (e) {
-    console.error("Failed to edit exit message:", e);
+    logger.error("Failed to edit exit message:", e);
   }
 };
 
@@ -289,7 +290,7 @@ async function memoryMonitorTask() {
     }
 
     if (reasons.length > 0) {
-      console.log(`[Memory Monitor] 触发保护动作: ${reasons.join("; ")}`);
+      logger.info(`[Memory Monitor] 触发保护动作: ${reasons.join("; ")}`);
       const client = await getGlobalClient();
       if (client && !config.silentEnabled) {
         await client.sendText("me", buildMemoryAlertText({ memory, config, reasons, growth }));
@@ -314,7 +315,7 @@ async function memoryMonitorTask() {
         }
 
         if (stillExceeded) {
-          console.log("[Memory Monitor] Runtime 重建后内存仍超限，准备退出进程");
+          logger.info("[Memory Monitor] Runtime 重建后内存仍超限，准备退出进程");
           if (!config.silentEnabled) {
             await runtime.client.sendText("me", html(
               `⚠️ <b>Memory优化</b><br><br>` +
@@ -334,7 +335,7 @@ async function memoryMonitorTask() {
           ));
         }
       } catch (reloadError) {
-        console.error("[Memory Monitor] 自动重建 Runtime 失败:", reloadError);
+        logger.error("[Memory Monitor] 自动重建 Runtime 失败:", reloadError);
       }
 
       if (!reloaded) {
@@ -347,12 +348,12 @@ async function memoryMonitorTask() {
         scheduleTrackedTimeout(() => process.exit(0), 1000);
       }
     } else {
-      console.log(
+      logger.info(
         `[Memory Monitor] 正常: Heap ${memory.heapUsed.toFixed(2)}MB / ${config.memoryThreshold}MB, RSS ${memory.rss.toFixed(2)}MB / ${config.rssThreshold}MB, Heap增长 ${formatMb(growth.heapGrowth)}, RSS增长 ${formatMb(growth.rssGrowth)}`
       );
     }
   } catch (error) {
-    console.error("[Memory Monitor] 定时任务执行失败:", error);
+    logger.error("[Memory Monitor] 定时任务执行失败:", error);
   }
 }
 
@@ -435,7 +436,7 @@ class ReloadPlugin extends Plugin {
           ? null
           : afterMemory.heapUsed - lastReloadMemoryMb;
         if (memoryDelta != null) {
-          console.log(`[RELOAD] Heap delta after reload: ${memoryDelta.toFixed(2)} MB.`);
+          logger.info(`[RELOAD] Heap delta after reload: ${memoryDelta.toFixed(2)} MB.`);
         }
 
         await updateReloadStatus({
@@ -446,7 +447,7 @@ class ReloadPlugin extends Plugin {
           isHtml: false,
         });
       } catch (error) {
-        console.error("Plugin reload failed:", error);
+        logger.error("Plugin reload failed:", error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         try {
           const client = await getGlobalClient();
@@ -458,7 +459,7 @@ class ReloadPlugin extends Plugin {
             isHtml: false,
           });
         } catch (editError) {
-          console.error("Failed to update reload status message:", editError);
+          logger.error("Failed to update reload status message:", editError);
         }
       }
     },
@@ -473,7 +474,7 @@ class ReloadPlugin extends Plugin {
         try {
           await execAsync("pm2 restart telebox");
         } catch (error) {
-          console.error("PM2 restart failed:", error);
+          logger.error("PM2 restart failed:", error);
         }
       }, 500);
     },
@@ -498,7 +499,7 @@ class ReloadPlugin extends Plugin {
           text: html(`${infoText}<br><br><b>状态：</b> ${statusEmoji} ${statusText}`),
         });
       } catch (error) {
-        console.error("[Health] 命令执行失败:", error);
+        logger.error("[Health] 命令执行失败:", error);
         await msg.edit({
           text: html(`❌ 获取内存信息失败：${htmlEscape(error instanceof Error ? error.message : String(error))}`),
         });

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import readline from "readline";
+import { logger } from "@utils/logger";
 
 interface TelegramAPI {
   api_id?: number;
@@ -24,7 +25,7 @@ function loadConfig(): TelegramAPI {
     const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
     return JSON.parse(raw);
   } catch (e) {
-    console.error("❌ 无法读取 config.json:", e);
+    logger.error("❌ 无法读取 config.json:", e);
     return {};
   }
 }
@@ -65,7 +66,7 @@ async function initConfig(): Promise<TelegramAPI> {
       while (true) {
         input = await promptInput("请输入 API_ID: ");
         if (input) break; // 输入有效，跳出循环
-        console.error("❌ API_ID 不能为空，请重新输入。");
+        logger.error("❌ API_ID 不能为空，请重新输入。");
       }
       api_id = parseInt(input);
     }
@@ -75,7 +76,7 @@ async function initConfig(): Promise<TelegramAPI> {
       while (true) {
         input = await promptInput("请输入 API_HASH: ");
         if (input) break; // 输入有效，跳出循环
-        console.error("❌ API_HASH 不能为空，请重新输入。");
+        logger.error("❌ API_HASH 不能为空，请重新输入。");
       }
       api_hash = input;
     }

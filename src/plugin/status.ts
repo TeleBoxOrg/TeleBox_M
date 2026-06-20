@@ -11,6 +11,7 @@ import { JSONFilePreset } from "lowdb/node";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -130,7 +131,7 @@ class TeleBoxSystemMonitor extends Plugin {
         template: DEFAULT_TEMPLATE,
       });
     } catch (error) {
-      console.error(`[${this.PLUGIN_NAME}] 数据库初始化失败:`, error);
+      logger.error(`[${this.PLUGIN_NAME}] 数据库初始化失败:`, error);
       throw new Error(`数据库初始化失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
@@ -516,7 +517,7 @@ Scan Time: ${scanTime}ms
         swapInfo = await this.getMacSwapInfo();
       }
     } catch (error) {
-      console.warn(`[${this.PLUGIN_NAME}] 系统信息获取部分失败:`, error);
+      logger.warn(`[${this.PLUGIN_NAME}] 系统信息获取部分失败:`, error);
     }
 
     return {
@@ -870,7 +871,7 @@ Scan Time: ${scanTime}ms
     context: string
   ): Promise<void> {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`[${this.PLUGIN_NAME}] ${context} 错误:`, error);
+    logger.error(`[${this.PLUGIN_NAME}] ${context} 错误:`, error);
     await msg.edit({
       text: `❌ 操作失败: ${errorMessage}`,
     });

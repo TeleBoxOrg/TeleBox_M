@@ -1182,7 +1182,7 @@ async function messageListener(message: MessageContext) {
 async function resolveUser(client: TelegramClient, arg: string): Promise<number | null> {
   if (/^\d+$/.test(arg)) {
     const id = parseInt(arg);
-    fetchUserInfo(client, id).catch(() => {});
+    fetchUserInfo(client, id).catch((e) => { console.error(e) });
     return id > 0 ? id : null;
   }
   try {

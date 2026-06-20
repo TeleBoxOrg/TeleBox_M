@@ -1,6 +1,7 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { logger } from "@utils/logger";
 
 function readVersion(): string {
   try {
@@ -9,7 +10,7 @@ function readVersion(): string {
     const packageData = JSON.parse(packageJson);
     return packageData.version || "未知版本";
   } catch (error) {
-    console.error("Failed to read version:", error);
+    logger.error("Failed to read version:", error);
     return "未知版本";
   }
 }
@@ -41,7 +42,7 @@ function readAppName(): string {
     const name = JSON.parse(rawJson);
     return name.app_name || `TeleBox ${readVersion()}`;
   } catch (error) {
-    console.error("无法读取config.json,", error);
+    logger.error("无法读取config.json,", error);
     return `TeleBox ${readVersion()}`;
   }
 }

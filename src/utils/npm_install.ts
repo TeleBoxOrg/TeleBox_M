@@ -1,5 +1,6 @@
 import { execFileSync } from "child_process";
 import path from "path";
+import { logger } from "@utils/logger";
 
 function buildCleanNpmEnv(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
@@ -39,28 +40,28 @@ export function npm_install(pkg: string, version?: string) {
 
   try {
     require.resolve(pkg);
-    console.log(`Package "${pkg}" is already installed.`);
+    logger.info(`Package "${pkg}" is already installed.`);
   } catch {
-    console.log(`Installing ${fullName}...`);
+    logger.info(`Installing ${fullName}...`);
     try {
       runNpm(["install", fullName]);
-      console.log(`Package "${fullName}" installed successfully.`);
+      logger.info(`Package "${fullName}" installed successfully.`);
     } catch (error: any) {
       const stderr = error?.stderr?.toString?.() || error?.message || String(error);
-      console.error(`Failed to install ${fullName}: ${stderr}`);
+      logger.error(`Failed to install ${fullName}: ${stderr}`);
       throw error;
     }
   }
 }
 
 export function npm_install_project_dependencies() {
-  console.log("Installing project dependencies...");
+  logger.info("Installing project dependencies...");
   try {
     runNpm(["install"]);
-    console.log("Project dependencies installed successfully.");
+    logger.info("Project dependencies installed successfully.");
   } catch (error: any) {
     const stderr = error?.stderr?.toString?.() || error?.message || String(error);
-    console.error(`Failed to install project dependencies: ${stderr}`);
+    logger.error(`Failed to install project dependencies: ${stderr}`);
     throw error;
   }
 }

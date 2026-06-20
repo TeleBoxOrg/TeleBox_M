@@ -8,6 +8,7 @@ import { readDisplayVersion } from "@utils/teleboxInfoHelper";
 import { html } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { AliasDB } from "@utils/aliasDB";
+import { logger } from "@utils/logger";
 
 /* ============================================================
  * Entity Planner: 管理 Telegram 100 个 Entity 的限制
@@ -265,7 +266,7 @@ class HelpPlugin extends Plugin {
         disableWebPreview: true,
       });
     } catch (e: any) {
-      console.error("Help plugin error:", e);
+      logger.error("Help plugin error:", e);
       const errorMsg = e.message?.length > 100 ? e.message.substring(0, 100) + "..." : e.message;
       await msg.edit({
         text: html([

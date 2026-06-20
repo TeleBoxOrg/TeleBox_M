@@ -15,6 +15,7 @@ import { JSONFile } from "lowdb/node";
 import { getPrefixes } from "@utils/pluginManager";
 import type { GenerationContext } from "@utils/generationContext";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -45,7 +46,7 @@ async function formatEntity(
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
   } catch (e: any) {
-    console.error(e);
+    logger.error(e);
     if (throwErrorIfFailed)
       throw new Error(
         `无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`
@@ -315,7 +316,7 @@ async function restoreBackup(extractPath: string): Promise<void> {
     }
   }
 
-  console.log(`恢复完成，原文件备份在: ${currentBackupDir}`);
+  logger.info(`恢复完成，原文件备份在: ${currentBackupDir}`);
 }
 
 const help_text = `<code>${mainPrefix}bf</code> 备份 plugins + assets 目录
@@ -573,7 +574,7 @@ class BfPlugin extends Plugin {
               fileName: backupName,
             });
           } catch (err) {
-            console.error(`发送到 ${dest} 失败:`, err);
+            logger.error(`发送到 ${dest} 失败:`, err);
             if (dest !== "me") {
               await client.sendMedia("me", {
                 type: "document",

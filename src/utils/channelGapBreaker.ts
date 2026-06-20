@@ -16,6 +16,8 @@
  * itself is not modified.
  */
 
+import { logger } from "./logger";
+
 // Note: this module intentionally does NOT import getGlobalClient — it needs
 // SYNC access to the active runtime's client (see tryGetClient() below), and
 // getGlobalClient() is async. We grab the client via a lazy require() of
@@ -177,7 +179,7 @@ function circuitBreakChannel(channelId: string): void {
 
     const summary = clearChannelStateOnClient(client, channelId);
     if (summary.cleared) {
-      console.log(
+      logger.info(
         `[CircuitBreaker] Cleared pts=${summary.oldPts ?? "?"} for channel ${channelId} — ` +
         `${record.timestamps.length} PTS failures within ${Math.round(FAILURE_WINDOW_MS / 60000)}min window. ` +
         `Cooldown: ${formatCooldown(effectiveCooldown)} (repeat #${record.breakCount}) ` +

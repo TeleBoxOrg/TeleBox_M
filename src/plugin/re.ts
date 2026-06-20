@@ -4,6 +4,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { TelegramClient, Message } from "@mtcute/node";
 import { getGlobalClient } from "@utils/globalClient";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { logger } from "@utils/logger";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -109,7 +110,7 @@ class RePlugin extends Plugin {
         ...(topMsgId ? { replyTo: topMsgId } : {}),
       });
     } catch (error) {
-      console.error("复制消息失败:", error);
+      logger.error("复制消息失败:", error);
       throw error;
     }
   }

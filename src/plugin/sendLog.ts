@@ -6,6 +6,7 @@ import fs from "fs/promises";
 import { SendLogDB } from "@utils/sendLogDB";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -77,7 +78,7 @@ function htmlEscape(text: string): string {
 }
 
 const fn = async (msg: MessageContext) => {
-  console.log("SendLog plugin triggered");
+  logger.info("SendLog plugin triggered");
 
   const parts = msg.text.trim().split(/\s+/);
   if (parts.length >= 2 && parts[0].startsWith(".") && parts[1] === "set") {
@@ -98,7 +99,7 @@ const fn = async (msg: MessageContext) => {
     await msg.edit({ text: `🔍 正在搜索日志文件...` });
 
     const { outLog, errLog } = await findLogFiles();
-    console.log("Found logs for cleaning:", { outLog, errLog });
+    logger.info("Found logs for cleaning:", { outLog, errLog });
 
     if (!outLog && !errLog) {
       await msg.edit({
@@ -156,7 +157,7 @@ const fn = async (msg: MessageContext) => {
     await msg.edit({ text: `🔍 正在搜索日志文件...` });
 
     const { outLog, errLog } = await findLogFiles();
-    console.log("Found logs:", { outLog, errLog });
+    logger.info("Found logs:", { outLog, errLog });
 
     if (!outLog && !errLog) {
       await msg.edit({
@@ -173,7 +174,7 @@ const fn = async (msg: MessageContext) => {
       try {
         const stats = await fs.stat(outLog);
         const sizeKB = Math.round(stats.size / 1024);
-        console.log(`Sending output log: ${outLog} (${sizeKB}KB) to ${target}`);
+        logger.info(`Sending output log: ${outLog} (${sizeKB}KB) to ${target}`);
 
         if (stats.size > 50 * 1024 * 1024) {
           results.push(`⚠️ 输出日志过大 (${sizeKB}KB)，已跳过`);
@@ -188,7 +189,7 @@ const fn = async (msg: MessageContext) => {
           sentCount++;
         }
       } catch (error: any) {
-        console.error("Error sending output log:", error);
+        logger.error("Error sending output log:", error);
         results.push(
           `❌ 输出日志发送失败: ${
             error.message?.substring(0, 50) || "未知错误"
@@ -202,7 +203,7 @@ const fn = async (msg: MessageContext) => {
       try {
         const stats = await fs.stat(errLog);
         const sizeKB = Math.round(stats.size / 1024);
-        console.log(`Sending error log: ${errLog} (${sizeKB}KB) to ${target}`);
+        logger.info(`Sending error log: ${errLog} (${sizeKB}KB) to ${target}`);
 
         if (stats.size > 50 * 1024 * 1024) {
           results.push(`⚠️ 错误日志过大 (${sizeKB}KB)，已跳过`);
@@ -217,7 +218,7 @@ const fn = async (msg: MessageContext) => {
           sentCount++;
         }
       } catch (error: any) {
-        console.error("Error sending error log:", error);
+        logger.error("Error sending error log:", error);
         results.push(
           `❌ 错误日志发送失败: ${
             error.message?.substring(0, 50) || "未知错误"
@@ -236,7 +237,7 @@ const fn = async (msg: MessageContext) => {
 
     await msg.edit({ text: summaryText });
   } catch (error: any) {
-    console.error("SendLog plugin error:", error);
+    logger.error("SendLog plugin error:", error);
     const errorMsg =
       error.message?.length > 100
         ? error.message.substring(0, 100) + "..."

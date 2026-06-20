@@ -3,6 +3,7 @@ import { createInterface, Interface } from "readline/promises";
 import { stdin as input, stdout as output } from "process";
 import qr from "qrcode-terminal";
 import type { GenerationContext } from "./generationContext";
+import { logger } from "@utils/logger";
 
 /**
  * Native mtcute login manager.
@@ -65,7 +66,7 @@ async function getUserInput(prompt: string, lifecycle?: GenerationContext): Prom
         settled = true;
         signal.removeEventListener("abort", onAbort);
         void Promise.resolve(dispose()).catch((error) => {
-          console.error("[LOGIN] Readline cleanup failed:", error);
+          logger.error("[LOGIN] Readline cleanup failed:", error);
         });
         callback();
       };
@@ -98,7 +99,7 @@ export async function initializeClientSession(
   client: TelegramClient,
   lifecycle?: GenerationContext
 ): Promise<{ meId?: string }> {
-  console.log("Connecting to Telegram...");
+  logger.info("Connecting to Telegram...");
   throwIfAborted(lifecycle);
 
   // Fast path: if storage already has a valid session, getMe() succeeds without
@@ -106,7 +107,7 @@ export async function initializeClientSession(
   try {
     const me = await client.getMe();
     if (me) {
-      console.log(`✅ Existing session detected. Logged in as ${me.displayName}.`);
+      logger.info(`✅ Existing session detected. Logged in as ${me.displayName}.`);
       // CRITICAL: client.start() bundles startUpdatesLoop() for fresh logins,
       // but the fast-path here only calls getMe() which connects but does NOT
       // start the updates loop. Without it, Dispatcher.for(client) silently
@@ -114,7 +115,7 @@ export async function initializeClientSession(
       try {
         await (client as unknown as { startUpdatesLoop?: () => Promise<void> }).startUpdatesLoop?.();
       } catch (e) {
-        console.warn("[LOGIN] startUpdatesLoop failed (updates may be inactive):", e);
+        logger.warn("[LOGIN] startUpdatesLoop failed (updates may be inactive):", e);
       }
       closeReadlineInterface();
       return { meId: me.id ? String(me.id) : undefined };
@@ -134,28 +135,28 @@ export async function initializeClientSession(
     // is omitted. It still accepts a password callback for 2FA after scan.
     me = await client.start({
       qrCodeHandler: (url: string, expires: Date) => {
-        console.log("\nScan this QR code using Telegram:");
-        console.log("Settings → Devices → Link Desktop Device\n");
+        logger.info("\nScan this QR code using Telegram:");
+        logger.info("Settings → Devices → Link Desktop Device\n");
         qr.generate(url, { small: true });
         const remaining = Math.max(0, Math.ceil((expires.getTime() - Date.now()) / 1000));
-        console.log(`(QR expires in ~${remaining}s, will refresh automatically)`);
+        logger.info(`(QR expires in ~${remaining}s, will refresh automatically)`);
       },
       password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
     });
   } else {
-    console.log("Phone login...");
+    logger.info("Phone login...");
     me = await client.start({
       phone: async () => await getUserInput("Enter phone number (+86...): ", lifecycle),
       code: async () => await getUserInput("Enter the verification code: ", lifecycle),
       password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
       invalidCodeCallback: (type) => {
-        console.warn(`❌ Invalid ${type}, please try again.`);
+        logger.warn(`❌ Invalid ${type}, please try again.`);
       },
     });
   }
 
   throwIfAborted(lifecycle);
-  console.log(`✅ Login completed as ${me.displayName}. Session saved to storage.`);
+  logger.info(`✅ Login completed as ${me.displayName}. Session saved to storage.`);
   closeReadlineInterface();
   return { meId: me.id ? String(me.id) : undefined };
 }

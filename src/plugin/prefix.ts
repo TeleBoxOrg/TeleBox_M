@@ -4,6 +4,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { getPrefixes, loadPlugins } from "@utils/pluginManager";
 import fs from "fs";
 import path from "path";
+import { logger } from "@utils/logger";
 
 const htmlEscape = (t: string) =>
   t.replace(/[&<>"']/g, (m) =>
@@ -84,7 +85,7 @@ class PrefixPlugin extends Plugin {
         pluginManager.setPrefixes(uniq);
       } else {
         // 备用方案：修改环境变量后重载
-        console.log('[prefix] setPrefixes 不可用，使用备用方案');
+        logger.info('[prefix] setPrefixes 不可用，使用备用方案');
       }
       const value = uniq.join(" ");
       process.env.TB_PREFIX = value;

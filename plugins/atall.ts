@@ -132,7 +132,7 @@ class AtAllPlugin extends Plugin {
         const messageParts = splitMessagesByMention(mentionList, 4000);
         
         // 删除处理中消息
-        await msg.delete().catch(() => {});
+        await msg.delete().catch((e) => { console.error(e) });
         
         // 发送所有消息部分
         for (let i = 0; i < messageParts.length; i++) {
