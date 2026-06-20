@@ -257,7 +257,7 @@ class GitManagerPlugin extends Plugin {
           mergeable: pr.data?.mergeable,
           state: pr.data?.mergeable_state
         });
-      } catch {
+      } catch (e) {
         details.push({ number: item.number, title: item.title || "", user: item?.user?.login || "" });
       }
     }

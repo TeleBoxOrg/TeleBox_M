@@ -93,7 +93,7 @@ async function handleAddDel(
       }
       uid = Number(uid);
       display = buildDisplay(uid, entity, entity?.type === "user");
-    } catch {
+    } catch (e) {
       await msg.edit({ text: "无法获取用户信息" });
       return;
     }
@@ -161,7 +161,7 @@ async function handleChatAddDel(
       }
       cid = Number(cid);
       display = buildDisplay(cid, entity, entity?.type === "user");
-    } catch {
+    } catch (e) {
       await msg.edit({ text: "无法获取对话信息" });
       return;
     }

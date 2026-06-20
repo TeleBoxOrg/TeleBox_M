@@ -62,7 +62,7 @@ export async function safeGetReplyMessage(
     try {
       const replied = await (msg as MessageContext).getReplyTo();
       return replied ?? undefined;
-    } catch {
+    } catch (e) {
       return undefined;
     }
   }

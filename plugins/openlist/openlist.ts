@@ -255,7 +255,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'hostname -I 2>/dev/null | awk "{print $1}"'`
         );
         ip = (stdout || "").trim();
-      } catch {}
+      } catch (e) { /* noop */ }
 
       const lines: string[] = [];
       lines.push("安装完成");
@@ -682,7 +682,7 @@ class OpenListPlugin extends Plugin {
         let configContent = "";
         try {
           configContent = await fs.readFile(configPath, "utf-8");
-        } catch {
+        } catch (e) {
           const { stdout } = await execAsync(`cat "${configPath}" 2>/dev/null`);
           configContent = stdout;
         }
@@ -757,7 +757,7 @@ class OpenListPlugin extends Plugin {
           );
           const m = verOut.match(/Version:\s*([^\s]+)/);
           version = m ? m[1] : "";
-        } catch {}
+        } catch (e) { /* noop */ }
       }
 
       let publicIp = "";
@@ -766,7 +766,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'curl -s4 --connect-timeout 5 ip.sb || curl -s4 --connect-timeout 5 ifconfig.me'`
         );
         publicIp = (ipOut || "").trim();
-      } catch {}
+      } catch (e) { /* noop */ }
 
       const lines: string[] = [];
       lines.push(`<b>状态:</b> ${installed ? `已安装` : "未安装"}`);
@@ -824,7 +824,7 @@ class OpenListPlugin extends Plugin {
       );
       const p = (stdout || "").trim();
       if (p) return p;
-    } catch {}
+    } catch (e) { /* noop */ }
     return "/opt/openlist";
   }
 
@@ -832,7 +832,7 @@ class OpenListPlugin extends Plugin {
     try {
       await execAsync(`bash -lc 'command -v ${cmd} >/dev/null 2>&1'`);
       return true;
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -843,7 +843,7 @@ class OpenListPlugin extends Plugin {
         `bash -lc '[ -d "${path}" ] && echo 1 || echo 0'`
       );
       return stdout.trim() === "1";
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -862,7 +862,7 @@ class OpenListPlugin extends Plugin {
         `bash -lc '[ -f "${path}" ] && echo 1 || echo 0'`
       );
       return stdout.trim() === "1";
-    } catch {
+    } catch (e) {
       return false;
     }
   }

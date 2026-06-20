@@ -30,7 +30,7 @@ function readDisplayVersion(): string {
     }
 
     return `${version}(${commit})`;
-  } catch {
+  } catch (e) {
     return version;
   }
 }

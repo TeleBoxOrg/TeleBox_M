@@ -100,7 +100,7 @@ async function sendOrEditMessage(
   try {
     const newMsg = await client.sendText(msg.chat.id, text, sendOpts);
     return newMsg as MessageContext;
-  } catch {
+  } catch (e) {
     return msg;
   }
 }
@@ -267,7 +267,7 @@ function normalizeGithubUrl(input: string): string {
       return parsed.toString();
     }
     return input;
-  } catch {
+  } catch (e) {
     return input;
   }
 }

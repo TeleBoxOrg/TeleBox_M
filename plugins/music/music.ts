@@ -190,7 +190,7 @@ class DependencyManager {
       const packagePath = path.join(process.cwd(), "node_modules", packageName);
       await fs.promises.access(packagePath, fs.constants.F_OK);
       return true;
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -206,7 +206,7 @@ class DependencyManager {
         await execAsync(cmd);
         console.log(`[music] yt-dlp found: ${cmd}`);
         return true;
-      } catch {
+      } catch (e) {
         continue;
       }
     }
@@ -218,7 +218,7 @@ class DependencyManager {
       await execAsync("ffmpeg -version");
       console.log("[Music] FFmpeg 已就绪");
       return true;
-    } catch {
+    } catch (e) {
       console.log("[Music] FFmpeg 未找到");
       return false;
     }
@@ -252,7 +252,7 @@ class Utils {
     try {
       await fs.promises.access(path);
       return true;
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -381,7 +381,7 @@ class ConfigManager {
       if (key === CONFIG.KEYS.API && legacy.settings?.apikey) {
         return legacy.settings.apikey ?? defaultValue ?? "";
       }
-    } catch {}
+    } catch (e) { /* noop */ }
 
     return defaultValue || DEFAULT_CONFIG[key] || "";
   }
@@ -709,7 +709,7 @@ class CookieConverter {
         parsed[0].hasOwnProperty("name") &&
         parsed[0].hasOwnProperty("value")
       );
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -795,7 +795,7 @@ class CookieConverter {
         (parsed[0].hasOwnProperty("storeId") ||
           parsed[0].hasOwnProperty("sameSite"))
       );
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -922,7 +922,7 @@ class Downloader {
         }
         console.log(`[Music] Found yt-dlp via: ${cmd.split(" ")[0]}`);
         break;
-      } catch {}
+      } catch (e) { /* noop */ }
     }
 
     // Check FFmpeg
@@ -930,7 +930,7 @@ class Downloader {
       await execAsync("ffmpeg -version");
       result.ffmpeg = true;
       // 静默检查，不输出日志
-    } catch {
+    } catch (e) {
       console.log("[Music] FFmpeg 未找到，音频处理功能受限");
     }
 
@@ -1202,7 +1202,7 @@ class Downloader {
         }
       }
       return false;
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -1228,14 +1228,14 @@ class Downloader {
               if (!buf || buf.length === 0) return resolve(false);
               await fs.promises.writeFile(destPath, buf);
               resolve(true);
-            } catch {
+            } catch (e) {
               resolve(false);
             }
           });
         });
         req.on("error", () => resolve(false));
         req.end();
-      } catch {
+      } catch (e) {
         resolve(false);
       }
     });
@@ -1281,7 +1281,7 @@ class Downloader {
       try {
         const ok = await this.fetchAlbumCoverUsingAPI(metadata, thumbnailPath);
         if (ok) hasThumbnail = true;
-      } catch {}
+      } catch (e) { /* noop */ }
 
       // 获取视频元数据
       try {

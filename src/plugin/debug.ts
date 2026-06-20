@@ -18,7 +18,7 @@ const mainPrefix = prefixes[0];
 async function resolvePeer(client: TelegramClient, input: any): Promise<Peer | null> {
   try {
     return await client.getPeer(input);
-  } catch {
+  } catch (e) {
     return null;
   }
 }
@@ -163,7 +163,7 @@ class DebugPlugin extends Plugin {
       let entity: any;
       try {
         entity = await msg.client.getPeer(peerInput);
-      } catch {
+      } catch (e) {
         entity = null;
       }
 

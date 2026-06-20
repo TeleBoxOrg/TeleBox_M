@@ -702,7 +702,7 @@ class BfPlugin extends Plugin {
               text: "✅ 恢复完成，请重启程序",
             });
           }
-        } catch {
+        } catch (e) {
           await msg.edit({
             text: "✅ 恢复完成，请重启程序",
           });

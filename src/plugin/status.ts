@@ -538,7 +538,7 @@ Scan Time: ${scanTime}ms
       const osRelease = fs.readFileSync("/etc/os-release", "utf8");
       const prettyName = osRelease.match(/PRETTY_NAME="([^"]+)"/)?.[1] || "Debian GNU/Linux";
       return `${prettyName} ${arch}`;
-    } catch {
+    } catch (e) {
       return `Debian GNU/Linux 13 (trixie) ${arch}`;
     }
   }
@@ -547,7 +547,7 @@ Scan Time: ${scanTime}ms
     try {
       const kernel = this.safeExec("uname -r").trim();
       return `Linux ${kernel}`;
-    } catch {
+    } catch (e) {
       return "Linux 6.12.41+deb13-arm64";
     }
   }
@@ -556,7 +556,7 @@ Scan Time: ${scanTime}ms
     try {
       const count = this.safeExec("dpkg -l | grep '^ii' | wc -l").trim();
       return `${count} (dpkg)`;
-    } catch {
+    } catch (e) {
       return "763 (dpkg)";
     }
   }
@@ -575,13 +575,13 @@ Scan Time: ${scanTime}ms
         try {
           const initInfo = this.safeExec("ps -p 1 -o comm=").trim();
           return initInfo;
-        } catch {
+        } catch (e) {
           return "init";
         }
       }
 
       return "Unknown";
-    } catch {
+    } catch (e) {
       return "systemd 257.7-1";
     }
   }
@@ -618,7 +618,7 @@ Scan Time: ${scanTime}ms
           return this.formatByteUsage(used, total);
         }
       }
-    } catch {
+    } catch (e) {
       try {
         const freeOutput = this.safeExec("free -h");
         const swapLine = freeOutput.split("\n").find((line) => line.startsWith("Swap:"));
@@ -630,7 +630,7 @@ Scan Time: ${scanTime}ms
             return this.formatByteUsage(used, total);
           }
         }
-      } catch {
+      } catch (e) {
         return "Unknown";
       }
     }
@@ -665,7 +665,7 @@ Scan Time: ${scanTime}ms
       const swapUsage = this.safeExec(`${sysctlPath} vm.swapusage`).trim();
       const parsedSwap = this.parseMacSwapUsage(swapUsage);
       return parsedSwap || swapUsage;
-    } catch {
+    } catch (e) {
       return "Unknown";
     }
   }
@@ -690,7 +690,7 @@ Scan Time: ${scanTime}ms
         const usage = Math.round((1 - totalIdle / totalTick) * 100 * 100) / 100;
         return usage.toFixed(2);
       }
-    } catch {
+    } catch (e) {
       return "0.00";
     }
   }
@@ -705,7 +705,7 @@ Scan Time: ${scanTime}ms
       const elapsed = (endTime - startTime) / 1000;
       const cpuPercent = (endUsage.user + endUsage.system) / (elapsed * 1000000) * 100;
       return (Math.round(cpuPercent * 100) / 100).toString();
-    } catch {
+    } catch (e) {
       return "0.0";
     }
   }
@@ -714,7 +714,7 @@ Scan Time: ${scanTime}ms
     try {
       const count = this.safeExec("ps aux | wc -l").trim();
       return (parseInt(count) - 1).toString();
-    } catch {
+    } catch (e) {
       return "Unknown";
     }
   }
@@ -730,7 +730,7 @@ Scan Time: ${scanTime}ms
         mtcute: packageJson.dependencies?.['@mtcute/node']?.replace('^', '') || 'unknown',
         telebox: readDisplayVersion()
       };
-    } catch {
+    } catch (e) {
       return {
         nodejs: process.version,
         teleproto: 'unknown',
@@ -757,7 +757,7 @@ Scan Time: ${scanTime}ms
         }
       }
       return "enp0s6";
-    } catch {
+    } catch (e) {
       return "enp0s6";
     }
   }

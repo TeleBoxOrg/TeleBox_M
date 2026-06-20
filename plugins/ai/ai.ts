@@ -351,7 +351,7 @@ const DEFAULT_PROVIDER_PROFILE: ProviderProfile =
 const getProviderHost = (url: string): string | null => {
   try {
     return new URL(url).hostname;
-  } catch {
+  } catch (e) {
     return null;
   }
 };
@@ -360,7 +360,7 @@ const isHttpUrl = (url: string): boolean => {
   try {
     const u = new URL(url);
     return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
+  } catch (e) {
     return false;
   }
 };
@@ -419,7 +419,7 @@ const matchModelRule = (model: string, rule: ModelMatchRule): boolean => {
   if (rule.type === "regex") {
     try {
       return new RegExp(rule.value).test(model);
-    } catch {
+    } catch (e) {
       return false;
     }
   }
@@ -635,7 +635,7 @@ const normalizeDownloadedMedia = async (
       const stat = await fs.promises.stat(downloaded);
       if (!stat.isFile()) return null;
       return await fs.promises.readFile(downloaded);
-    } catch {
+    } catch (e) {
       return null;
     }
   }
@@ -652,7 +652,7 @@ const getImageExtensionForMime = (mimeType: string): string => {
 const extractFirstFrame = async (buffer: Buffer): Promise<Buffer | null> => {
   try {
     return await sharp(buffer, { animated: true }).png().toBuffer();
-  } catch {
+  } catch (e) {
     return null;
   }
 };
@@ -756,7 +756,7 @@ const collectImagePartsFromSingleMessage = async (
       if (buffer) {
         try {
           frameBuffer = await sharp(buffer).png().toBuffer();
-        } catch {
+        } catch (e) {
           frameBuffer = buffer;
         }
       }
@@ -768,7 +768,7 @@ const collectImagePartsFromSingleMessage = async (
       if (buffer) {
         try {
           frameBuffer = await extractFirstFrame(buffer);
-        } catch {
+        } catch (e) {
           frameBuffer = null;
         }
       }
@@ -854,7 +854,7 @@ const deleteMessageOrGroup = async (msg: MessageContext): Promise<void> => {
       return;
     }
     await msg.delete();
-  } catch {}
+  } catch (e) { /* noop */ }
 };
 
 const getHeaderContentType = (headers: unknown): string | undefined => {
@@ -938,7 +938,7 @@ const videoHasAudioTrack = async (filePath: string): Promise<boolean> => {
     const info = JSON.parse(stdout);
     const streams = info.streams || [];
     return streams.length > 0;
-  } catch {
+  } catch (e) {
     return false;
   }
 };
@@ -972,7 +972,7 @@ const ensureVideoHasAudio = async (
     ]);
 
     return outputPath;
-  } catch {
+  } catch (e) {
     return inputPath;
   }
 };
@@ -1724,7 +1724,7 @@ const applyAuthConfig = (
       const u = new URL(url);
       if (!u.searchParams.has("key")) u.searchParams.set("key", config.key);
       return { url: u.toString(), headers };
-    } catch {
+    } catch (e) {
       return { url, headers };
     }
   }
@@ -1781,7 +1781,7 @@ const normalizeOpenAIBaseUrl = (url: string): string => {
     u.pathname = "/v1";
     u.search = "";
     return u.toString();
-  } catch {
+  } catch (e) {
     return url;
   }
 };
@@ -1799,7 +1799,7 @@ const normalizeGeminiBaseUrl = (url: string): string => {
     u.search = "";
     u.hash = "";
     return u.toString();
-  } catch {
+  } catch (e) {
     return url;
   }
 };
@@ -2186,7 +2186,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
 
     try {
       payloads.push(JSON.parse(body));
-    } catch {}
+    } catch (e) { /* noop */ }
   }
 
   if (payloads.length > 0 || sawDataLine) return payloads;
@@ -2194,7 +2194,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
   try {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
+  } catch (e) {
     return [];
   }
 };
@@ -4781,7 +4781,7 @@ class ImageFeature extends BaseFeatureHandler {
           try {
             const pngBuffer = await sharp(inputImage.data).png().toBuffer();
             inputImage = { data: pngBuffer, mimeType: "image/png" };
-          } catch {}
+          } catch (e) { /* noop */ }
         }
         images = await this.aiService.editImage(prompt, inputImage, token);
       } else {

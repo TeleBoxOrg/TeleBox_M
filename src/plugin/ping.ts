@@ -212,7 +212,7 @@ async function pingDataCenters(): Promise<string[]> {
       let pingTime = "0";
       try {
         pingTime = String(Math.round(parseFloat(stdout.trim())));
-      } catch {
+      } catch (e) {
         pingTime = "0";
       }
 
