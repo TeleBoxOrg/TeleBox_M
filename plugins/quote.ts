@@ -7,6 +7,7 @@ import { createDirectoryInTemp } from "@utils/pathHelpers";
 import { npm_install } from "@utils/npm_install";
 const { execFile } = require("child_process");
 import { safeGetReplyMessage, safeGetMessages } from "@utils/safeGetMessages";
+import { getRawType, getMessageMedia, getMessageDocument, getMessageEntities, getMessageFwdFrom } from "@utils/entityTypeGuards";
 import { getPrefixes } from "@utils/pluginManager";
 
 const DEFAULT_BACKGROUND = "#231d2b/#372e44";
@@ -281,7 +282,7 @@ function peerIdNumber(peer: any): number {
 }
 
 function senderIdNumber(msg: MessageContext): number {
-  return idNumber(msg.sender?.id ?? (msg as any).fromId ?? (msg as any).peerId);
+  return idNumber(msg.sender?.id ?? (msg as { fromId?: number }).fromId ?? (msg as { peerId?: number }).peerId);
 }
 
 function isApiMessage(value: any): boolean {
@@ -327,7 +328,8 @@ function fwdPeer(fwd: any): any | undefined {
 }
 
 async function forwardedSource(msg: MessageContext): Promise<{ peer?: any; entity?: any; name?: string; anonymous: boolean } | undefined> {
-  const fwd: any = (msg as any).fwdFrom || (msg as any).fwd_from;
+  const fwdFrom = getMessageFwdFrom(msg);
+  const fwd: any = fwdFrom ?? (msg as { fwd_from?: unknown }).fwd_from;
   if (!fwd) return undefined;
 
   const client = await getGlobalClient().catch(() => null as any);
@@ -395,14 +397,14 @@ function emojiStatusIdFromEntity(entity: any): string | undefined {
 }
 
 function messageDate(msg: MessageContext): number | undefined {
-  const date = (msg as any).date;
+  const date = (msg as { date?: number | Date }).date;
   if (date instanceof Date) return Math.floor(date.getTime() / 1000);
   if (typeof date === "number") return date;
   return undefined;
 }
 
 function getDocumentAttributes(msg: MessageContext): any[] {
-  const doc = (msg as any).document ?? (msg as any).media?.document;
+  const doc = getMessageDocument(msg);
   return doc?.attributes || [];
 }
 
@@ -423,7 +425,7 @@ function voiceWaveform(msg: MessageContext): number[] | undefined {
 }
 
 function getMediaKind(msg: MessageContext): string | undefined {
-  const media: any = (msg as any).media;
+  const media: any = getMessageMedia(msg);
   if (!media) return undefined;
   const cls = media.className || media.constructor?.name || "";
   const attrs = getDocumentAttributes(msg);
@@ -467,7 +469,7 @@ function messageText(msg: MessageContext): string {
 }
 
 function convertEntities(msg: MessageContext): any[] {
-  const entities = ((msg as any).entities || []) as any[];
+  const entities = getMessageEntities(msg) as any[];
   return entities.map((e) => {
     const name = e.className || e.constructor?.name || "";
     const offset = e.offset ?? 0;
@@ -596,7 +598,7 @@ async function downloadMediaToBuffer(client: any, target: any): Promise<Buffer |
 }
 
 async function downloadMessageMedia(msg: MessageContext, enabled: boolean): Promise<Buffer | undefined> {
-  if (!enabled || !(msg as any).media) return undefined;
+  if (!enabled || !getMessageMedia(msg)) return undefined;
   const client = await getGlobalClient().catch(() => null as any);
   return downloadMediaToBuffer(client, msg);
 }
@@ -1167,7 +1169,8 @@ async function replyPreview(msg: MessageContext, includeReply: boolean, args: Qu
 }
 
 async function forwardPreview(msg: MessageContext): Promise<any | undefined> {
-  const fwd: any = (msg as any).fwdFrom || (msg as any).fwd_from;
+  const fwdFrom = getMessageFwdFrom(msg);
+  const fwd: any = fwdFrom ?? (msg as { fwd_from?: unknown }).fwd_from;
   if (!fwd) return undefined;
   const src = await forwardedSource(msg);
   const name = src?.name || "Forwarded";

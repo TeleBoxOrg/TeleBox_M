@@ -1,3 +1,4 @@
+import { getRawType } from "@utils/entityTypeGuards";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { Plugin } from "@utils/pluginBase";
@@ -282,10 +283,11 @@ function hasNonOtherAdminRights(rights?: any): boolean {
 }
 
 function isTemporaryAdminParticipant(participant?: any): boolean {
+  const pAny = participant as { rank?: string; adminRights?: unknown };
   return (
-    participant?._ === "channelParticipantAdmin" &&
-    (participant as any).rank === tempTitle &&
-    !hasNonOtherAdminRights((participant as any).adminRights)
+    getRawType(participant) === "channelParticipantAdmin" &&
+    pAny?.rank === tempTitle &&
+    !hasNonOtherAdminRights(pAny?.adminRights)
   );
 }
 
@@ -382,7 +384,7 @@ class TmpAdminPlugin extends Plugin {
       }
       const channel = client.resolvePeer(msg.chat.id) as any;
       const chatEntity = await msg.getCompleteChat();
-      if (!channel || (chatEntity as any)?._ !== "channel") {
+      if (!channel || getRawType(chatEntity) !== "channel") {
         await respondToCommand(msg, trigger, { text: "无法获取当前超级群/频道实体" });
         return;
       }
