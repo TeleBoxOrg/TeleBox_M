@@ -11,7 +11,7 @@
 
 _基于 Node.js 和 TypeScript 构建，提供强大的插件系统与丰富的功能模块_
 
-[📖 快速开始](#-快速开始) • [🔌 插件生态](#-插件生态) • [🛠️ 开发指南](https://github.com/TeleBoxOrg/TeleBox/blob/main/TELEBOX_DEVELOPMENT.md) • [📚 文档](#-相关链接)
+[📖 快速开始](#-快速开始) • [🔌 插件生态](#-插件生态) • [🛠️ 开发指南](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/TELEBOX_DEVELOPMENT.md) • [📚 文档](#-相关链接)
 
 </div>
 
@@ -305,7 +305,7 @@ abstract class Plugin {
 
 <div align="center">
 
-[![Plugin Repository](https://img.shields.io/badge/🔌_插件仓库-TeleBox__Plugins-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_Plugins)
+[![Plugin Repository](https://img.shields.io/badge/🔌_插件仓库-TeleBox__M__Plugins-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M_Plugins)
 
 </div>
 
@@ -317,7 +317,7 @@ abstract class Plugin {
 | :----------------: | :------------------: | :---------: |
 |   🚀 **运行时**    |       Node.js        |    `24.x`    |
 |  💎 **开发语言**   |      TypeScript      |   `^5.9.2`   |
-| 📡 **Telegram 库** |       Teleproto       |  `^1.225.4` |
+| 📡 **Telegram 库** |       mtcute        |  `^0.29.7` |
 |   💾 **数据库**    |    better-sqlite3    |  `^12.2.0`   |
 |   💾 **数据库**    |        lowdb         |   `^7.0.1`   |
 |  ⚡ **构建工具**   | tsx + tsconfig-paths |  `^4.20.4`   |
@@ -334,7 +334,7 @@ abstract class Plugin {
 
 ### 📥 **安装部署**
 
-[![安装指南](https://img.shields.io/badge/📋_完整安装指南-点击查看-green?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox/blob/main/INSTALL.md)
+[![安装指南](https://img.shields.io/badge/📋_完整安装指南-点击查看-green?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/INSTALL.md)
 
 </div>
 
@@ -388,16 +388,16 @@ npm run dev
 <tr>
 <td align="center" width="20%">
 
-[![主仓库](https://img.shields.io/badge/📦_主仓库-TeleBox-blue?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox)
+[![主仓库](https://img.shields.io/badge/📦_主仓库-TeleBox_M-blue?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_M)
 
-[![插件仓库](https://img.shields.io/badge/🔌_插件仓库-TeleBox__Plugins-green?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_Plugins)
+[![插件仓库](https://img.shields.io/badge/🔌_插件仓库-TeleBox__M__Plugins-green?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_M_Plugins)
 
 </td>
 <td align="center" width="20%">
 
-[![安装指南](https://img.shields.io/badge/📋_安装指南-INSTALL.md-orange?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox/blob/main/INSTALL.md)
+[![安装指南](https://img.shields.io/badge/📋_安装指南-INSTALL.md-orange?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/INSTALL.md)
 
-[![问题反馈](https://img.shields.io/badge/🆘_问题反馈-Issues-red?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox/issues)
+[![问题反馈](https://img.shields.io/badge/🆘_问题反馈-Issues-red?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_M/issues)
 
 </td>
 </tr>

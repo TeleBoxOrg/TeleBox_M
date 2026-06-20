@@ -12,7 +12,7 @@
 
 ## 🎯 项目简介
 
-[**TeleBox**](https://github.com/TeleBoxOrg/TeleBox) 是基于 **Node.js** 与 **TypeScript** 构建的现代化 Telegram UserBot 开发框架，提供强大的插件系统和丰富的功能模块。
+[**TeleBox**](https://github.com/TeleBoxOrg/TeleBox_M) 是基于 **Node.js** 与 **TypeScript** 构建的现代化 Telegram UserBot 开发框架，提供强大的插件系统和丰富的功能模块。
 
 ## 🚀 部署指南
 
@@ -89,7 +89,7 @@ mkdir -p ~/telebox
 cd ~/telebox
 
 # 🔄 克隆 TeleBox 项目
-git clone https://github.com/TeleBoxOrg/TeleBox.git .
+git clone https://github.com/TeleBoxOrg/TeleBox_M.git .
 ```
 
 **📋 目录结构：**
@@ -330,10 +330,10 @@ pm2 list
 
 **TeleBox 现在已成功部署并运行！**
 
-[![返回主页](https://img.shields.io/badge/🏠_返回主页-README.md-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox/blob/main/README.md)
+[![返回主页](https://img.shields.io/badge/🏠_返回主页-README.md-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/README.md)
 
 
 
-如有问题，请[**🆘 问题反馈**](https://github.com/TeleBoxOrg/TeleBox/issues)
+如有问题，请[**🆘 问题反馈**](https://github.com/TeleBoxOrg/TeleBox_M/issues)
 
 </div>
