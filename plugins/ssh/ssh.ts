@@ -859,7 +859,7 @@ ${keysContent}`;
         file: Buffer.from(fs.readFileSync(archivePath)),
         fileName: `${hostname}_ssh_keys.zip`,
         caption: `📦 <b>SSH密钥导出包</b>\n\n🖥️ 服务器: ${hostname}\n📊 密钥数量: ${lines.length}\n📅 导出时间: ${dayjs().format("YYYY-MM-DD HH:mm:ss")}\n\n📁 <b>包含文件:</b>\n• authorized_keys_export.txt (带注释说明)\n• authorized_keys (纯密钥文件)\n\n⚠️ <b>安全提示:</b> 请妥善保管密钥文件`,
-      } as any);
+      });
 
       await msg.edit({
         text: `✅ <b>密钥导出成功</b>\n\n📊 导出密钥数量: ${lines.length}\n📁 文件已发送到: ${targetChat === "me" ? "收藏夹" : htmlEscape(targetChat)}\n\n💡 <b>文件说明:</b>\n• 带注释的完整导出文件\n• 纯净的authorized_keys文件\n• 可直接用于其他服务器配置`,
