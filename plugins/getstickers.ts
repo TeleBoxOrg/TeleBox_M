@@ -196,7 +196,7 @@ class GetStickersPlugin extends Plugin {
                 const s = v.toString?.();
                 if (s && !s.includes('[object')) return s;
                 /* ignored */
-              } catch { /* ignored */ }
+              } catch (e) { console.error("[quality] ignored error:", e); }
               return String(v);
             };
             const idVal = toPlainString(stickerSet.id) || toPlainString(stickerSet._id);

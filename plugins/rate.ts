@@ -309,7 +309,7 @@ class RatePlugin extends Plugin {
           return normalized;
         }
         /* ignored */
-      } catch { /* ignored */ }
+      } catch (e) { console.error("[quality] ignored error:", e); }
     }
     throw new Error('法币汇率服务不可用');
   }
@@ -389,13 +389,13 @@ class RatePlugin extends Plugin {
       const price = await this.fetchBinancePrice(`${crypto1}${crypto2}`);
       return { price, lastUpdated: new Date() };
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
 
     try {
       const price = await this.fetchBinancePrice(`${crypto2}${crypto1}`);
       return { price: 1 / price, lastUpdated: new Date() };
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
 
     // 2. 通过稳定币桥接
     const bridges = ['USDT', 'BUSD', 'USDC'];
@@ -407,7 +407,7 @@ class RatePlugin extends Plugin {
         ]);
         return { price: price1 / price2, lastUpdated: new Date() };
         /* ignored */
-      } catch { /* ignored */ }
+      } catch (e) { console.error("[quality] ignored error:", e); }
     }
 
     throw new Error(`无法找到 ${crypto1} 和 ${crypto2} 之间的交易对`);
@@ -468,7 +468,7 @@ class RatePlugin extends Plugin {
         this.vsFiats = new Set((data || []).map((x: string) => x.toLowerCase()));
         this.vsFiatsTs = now;
         /* ignored */
-      } catch { /* ignored */ }
+      } catch (e) { console.error("[quality] ignored error:", e); }
       // 2) exchangerate.host /symbols
       if (!this.vsFiats || this.vsFiats.size === 0) {
         try {
@@ -477,7 +477,7 @@ class RatePlugin extends Plugin {
           this.vsFiats = new Set(Object.keys(symbols).map(k => k.toLowerCase()));
           this.vsFiatsTs = now;
           /* ignored */
-        } catch { /* ignored */ }
+        } catch (e) { console.error("[quality] ignored error:", e); }
       }
       // 3) frankfurter.app /currencies
       if (!this.vsFiats || this.vsFiats.size === 0) {
@@ -486,7 +486,7 @@ class RatePlugin extends Plugin {
           this.vsFiats = new Set(Object.keys(data || {}).map(k => k.toLowerCase()));
           this.vsFiatsTs = now;
           /* ignored */
-        } catch { /* ignored */ }
+        } catch (e) { console.error("[quality] ignored error:", e); }
       }
       // 最后兜底：使用常见法币列表（仅法币）
       if (!this.vsFiats || this.vsFiats.size === 0) {
@@ -730,7 +730,7 @@ class RatePlugin extends Plugin {
           price1USD = (await this.getUniversalPrice(symbol1, 'USD', 'crypto', 'fiat')).price;
           price2USD = (await this.getUniversalPrice(symbol2, 'USD', 'crypto', 'fiat')).price;
           /* ignored */
-        } catch { /* ignored */ }
+        } catch (e) { console.error("[quality] ignored error:", e); }
         responseText = this.buildCryptoToCryptoResponse(amount, convertedAmount, price, price1USD, price2USD, symbol1, symbol2, lastUpdated);
       } else if (currency1.type === 'fiat' && currency2.type === 'crypto') {
         // 法币 -> 加密货币

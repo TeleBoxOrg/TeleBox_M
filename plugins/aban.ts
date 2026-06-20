@@ -26,7 +26,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
       try {
         npm_install("p-limit");
         /* ignored */
-      } catch { /* ignored */ }
+      } catch (e) { console.error("[quality] ignored error:", e); }
       pLimit = (await import("p-limit")).default;
     })();
   }

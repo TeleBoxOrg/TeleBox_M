@@ -28,7 +28,7 @@ async function deleteCommandMessage(msg: MessageContext) {
             await msg.delete(); // 普通删除
         }
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
 }
 
 /** 清理文本（emoji/不在白名单的符号；合并连续标点） */

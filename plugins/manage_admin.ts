@@ -127,7 +127,7 @@ class ManageAdminPlugin extends Plugin {
           try {
             sender = await (r as any).getCompleteSender?.();
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
           if (getRawType(sender) !== 'user' && (sender as any)?.className !== 'User') {
             // Fallback to senderId
             const uid = Number((r as any).sender?.id);
@@ -136,7 +136,7 @@ class ManageAdminPlugin extends Plugin {
                 const input = client.resolvePeer(uid);
                 return { id: uid, entity: input };
                 /* ignored */
-              } catch { /* ignored */ }
+              } catch (e) { console.error("[quality] ignored error:", e); }
             }
             return { id: undefined as any, entity: undefined as any };
           }
@@ -185,7 +185,7 @@ class ManageAdminPlugin extends Plugin {
                   offset += participants.length;
                 }
                 /* ignored */
-              } catch { /* ignored */ }
+              } catch (e) { console.error("[quality] ignored error:", e); }
             }
             return { id: undefined as any, entity: undefined as any };
           }
@@ -287,7 +287,7 @@ class ManageAdminPlugin extends Plugin {
               appliedRank = (refreshed as any).rank || "";
             }
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
 
           const u = await formatEntity(userId || userEntity, true);
           const rankOk = appliedRank === rankToUse;

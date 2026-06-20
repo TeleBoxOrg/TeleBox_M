@@ -257,7 +257,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'hostname -I 2>/dev/null | awk "{print $1}"'`
         );
         ip = (stdout || "").trim();
-      } catch { /* getIP: ignore */ }
+      } catch (e) { console.error('[openlist] getIP failed:', e); }
 
       const lines: string[] = [];
       lines.push("安装完成");
@@ -763,7 +763,7 @@ class OpenListPlugin extends Plugin {
           );
           const m = verOut.match(/Version:\s*([^\s]+)/);
           version = m ? m[1] : "";
-        } catch { /* getVersion: ignore */ }
+        } catch (e) { console.error('[openlist] getVersion failed:', e); }
       }
 
       let publicIp = "";
@@ -772,7 +772,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'curl -s4 --connect-timeout 5 ip.sb || curl -s4 --connect-timeout 5 ifconfig.me'`
         );
         publicIp = (ipOut || "").trim();
-      } catch { /* getPublicIP: ignore */ }
+      } catch (e) { console.error('[openlist] getPublicIP failed:', e); }
 
       const lines: string[] = [];
       lines.push(`<b>状态:</b> ${installed ? `已安装` : "未安装"}`);
@@ -830,7 +830,7 @@ class OpenListPlugin extends Plugin {
       );
       const p = (stdout || "").trim();
       if (p) return p;
-    } catch { /* getServiceDir: ignore */ }
+    } catch (e) { console.error('[openlist] getServiceDir failed:', e); }
     return "/opt/openlist";
   }
 

@@ -81,7 +81,7 @@ class GeminiConfigManager {
       try {
         this.db.close();
         /* ignored */
-      } catch { /* ignored */ }
+      } catch (e) { console.error("[quality] ignored error:", e); }
     }
     this.db = null;
     this.initialized = false;

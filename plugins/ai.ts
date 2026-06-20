@@ -856,7 +856,7 @@ const deleteMessageOrGroup = async (msg: MessageContext): Promise<void> => {
     }
     await msg.delete();
     /* ignored */
-  } catch { /* ignored */ }
+  } catch (e) { console.error("[quality] ignored error:", e); }
 };
 
 const getHeaderContentType = (headers: unknown): string | undefined => {
@@ -2189,7 +2189,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
     try {
       payloads.push(JSON.parse(body));
       /* ignored */
-    } catch { /* ignored */ }
+    } catch (e) { console.error("[quality] ignored error:", e); }
   }
 
   if (payloads.length > 0 || sawDataLine) return payloads;
@@ -4787,7 +4787,7 @@ class ImageFeature extends BaseFeatureHandler {
             const pngBuffer = await sharp(inputImage.data).png().toBuffer();
             inputImage = { data: pngBuffer, mimeType: "image/png" };
             /* ignored */
-          } catch { /* ignored */ }
+          } catch (e) { console.error("[quality] ignored error:", e); }
         }
         images = await this.aiService.editImage(prompt, inputImage, token);
       } else {

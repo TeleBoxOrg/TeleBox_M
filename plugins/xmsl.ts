@@ -91,9 +91,9 @@ async function extractWebmFirstFrame(webmBuffer: Buffer): Promise<Buffer | null>
 		return null;
 	} finally {
     /* ignored */
-		try { fs.unlinkSync(webmPath); } catch { /* ignored */ }
+		try { fs.unlinkSync(webmPath); } catch (e) { console.error("[quality] ignored error:", e); }
     /* ignored */
-		try { fs.unlinkSync(pngPath); } catch { /* ignored */ }
+		try { fs.unlinkSync(pngPath); } catch (e) { console.error("[quality] ignored error:", e); }
 	}
 }
 
@@ -137,11 +137,11 @@ anim.save_animation(sys.argv[2])
 		return null;
 	} finally {
     /* ignored */
-		try { fs.unlinkSync(tgsPath); } catch { /* ignored */ }
+		try { fs.unlinkSync(tgsPath); } catch (e) { console.error("[quality] ignored error:", e); }
     /* ignored */
-		try { fs.unlinkSync(gifPath); } catch { /* ignored */ }
+		try { fs.unlinkSync(gifPath); } catch (e) { console.error("[quality] ignored error:", e); }
     /* ignored */
-		try { fs.unlinkSync(pngPath); } catch { /* ignored */ }
+		try { fs.unlinkSync(pngPath); } catch (e) { console.error("[quality] ignored error:", e); }
 	}
 }
 
