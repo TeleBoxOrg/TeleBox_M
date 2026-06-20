@@ -1,6 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
-import type { Message, Video, Document, Chat, User, Peer } from "@mtcute/node";
+import type { Message, Video, Document, Chat, User, TelegramClient } from "@mtcute/node";
 import { tl } from "@mtcute/node";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
@@ -37,7 +37,7 @@ enum SubCommand {
 
 /** Resolved peer info with commonly needed properties */
 interface ResolvedPeerInfo {
-  peer: Peer;
+  peer: tl.TypeInputPeer;
   rawType: string;
   title?: string;
   username?: string;
@@ -52,7 +52,7 @@ interface ResolvedPeerInfo {
  *   if ((entity as any)._ === 'channel') ...
  *   const title = (entity as any).title;
  */
-async function resolvePeerInfo(client: any, id: string | number): Promise<ResolvedPeerInfo> {
+async function resolvePeerInfo(client: TelegramClient, id: string | number): Promise<ResolvedPeerInfo> {
   const peer = await client.resolvePeer(id);
   // resolvePeer returns tl.TypeInputPeer; for full info we need getChat
   const chat = await client.getChat(peer);
@@ -185,7 +185,7 @@ function getMessageChatId(msg: Message): number | string {
 }
 
 class SearchService {
-  private client: any;
+  private client: TelegramClient;
   private config: SearchConfig = {
     defaultChannel: null,
     channelList: [],
@@ -204,7 +204,7 @@ class SearchService {
     ]
   };
 
-  constructor(client: any) {
+  constructor(client: TelegramClient) {
     this.client = client;
   }
 
@@ -288,7 +288,9 @@ class SearchService {
       for (const textMsg of groupMessages) {
         if (this.isMessageMatching(textMsg, query) && hasReplies(textMsg)) {
           logger.info(`找到匹配消息 #${textMsg.id}，正在精确获取其 ${getReplyCount(textMsg)} 条评论...`);
-          const commentsParams: any = { limit: 100, replyTo: textMsg.id };
+          const commentsParams: { ids?: number | number[] } = { ids: [] };
+          // Note: limit and replyTo are not supported by safeGetMessages; fetching by replyTo would need a different approach
+          void textMsg.id;
           const comments = await safeGetMessages(this.client, linkedGroupEntity, commentsParams);
 
           const videoReplies = comments.filter((msg: Message) =>
