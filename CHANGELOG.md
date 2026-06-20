@@ -408,7 +408,7 @@ module.exports = {
 
 ---
 
-**完整提交历史**：[v0.2.7...v0.2.8](https://github.com/TeleBoxOrg/TeleBox/compare/e39fb2b...04b715a)
+**完整提交历史**：[v0.2.7...v0.2.8](https://github.com/TeleBoxOrg/TeleBox_M/compare/e39fb2b...04b715a)
 
 ---
 
