@@ -221,7 +221,7 @@ class SearchService {
           await this.handleSearch(msg, fullArgs, useSpoiler, useRandom);
       }
     } catch (error: any) {
-      await (adminMsg as any).edit({ text: `❌ 错误：\\n${error.message}` });
+      await (adminMsg as any).edit({ text: `❌ 错误：<br>${error.message}` });
     }
   }
 
