@@ -670,7 +670,7 @@ class OpenListPlugin extends Plugin {
       const db = await this.getDb();
       dbUser = db.data.username;
       dbPass = db.data.password;
-    } catch (e) {}
+    } catch (e) { logger.debug("openlist: DB credentials read failed, will try config file", e); }
 
     // 2. Get Config credentials
     let configUser = "";

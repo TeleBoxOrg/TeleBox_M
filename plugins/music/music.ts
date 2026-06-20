@@ -1882,7 +1882,7 @@ ${commandName} set proxy socks5://127.0.0.1:40000</pre>
 💡 <i>直接输入歌名即可快速搜索下载</i>`;
 
     this.downloader = new Downloader();
-    this.downloader.cleanCache().catch(() => {});
+    this.downloader.cleanCache().catch(() => { /* cache cleanup failed, non-critical */ });
 
     // 注册命令处理器
     this.cmdHandlers = {
