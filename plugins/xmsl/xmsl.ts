@@ -471,7 +471,7 @@ class XMSLPlugin extends Plugin {
 	private async handleSet(msg: MessageContext, args: string[]) {
 		if (args.length < 2) {
 			await msg.edit({
-				text: html('❌ 参数错误\n使用: <code>${mainPrefix}xm set [key] [value]</code>'),
+				text: html('❌ 参数错误<br>使用: <code>${mainPrefix}xm set [key] [value]</code>'),
 			});
 			return;
 		}
@@ -552,14 +552,14 @@ model: <code>${this.config.model}</code><br>
 	private async askAI(msg: MessageContext, question: string, imageInfo?: MediaInfo) {
 		if (!this.config.apiKey) {
 			await msg.edit({
-				text: html('❌ 未设置 API 密钥\n使用: <code>${mainPrefix}xm set key [你的密钥]</code>'),
+				text: html('❌ 未设置 API 密钥<br>使用: <code>${mainPrefix}xm set key [你的密钥]</code>'),
 			});
 			return;
 		}
 
 		if (!this.config.model) {
 			await msg.edit({
-				text: html('❌ 未设置模型\n使用: <code>${mainPrefix}xm set model [模型名]</code>'),
+				text: html('❌ 未设置模型<br>使用: <code>${mainPrefix}xm set model [模型名]</code>'),
 			});
 			return;
 		}

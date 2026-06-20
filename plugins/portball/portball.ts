@@ -151,7 +151,7 @@ class PortballPlugin extends Plugin {
         }
       } else {
         await msg.edit({
-          text: html("❌ <b>错误：</b>参数不足\n\n" + this.helpText)
+          text: html("❌ <b>错误：</b>参数不足<br><br>" + this.helpText)
         });
         await this.autoDelete(msg, 5);
         return;

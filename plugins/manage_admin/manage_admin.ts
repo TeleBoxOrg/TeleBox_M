@@ -433,7 +433,7 @@ class ManageAdminPlugin extends Plugin {
           }
 
           await msg.edit({
-            text: html(`当前管理员列表：\n${lines.join("\n")}`),
+            text: html(`当前管理员列表：<br>${lines.join("<br>")}`),
           });
         } catch (e: unknown) {
           const errMsg = e instanceof Error ? e.message : String(e);

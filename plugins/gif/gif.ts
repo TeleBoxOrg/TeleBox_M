@@ -91,7 +91,7 @@ class GifConverter {
     const repliedMsg = await safeGetReplyMessage(msg);
     if (!repliedMsg) {
       await msg.edit({
-        text: html("❌ 请回复一个包含 GIF 或视频的消息后使用此命令。\n\n💡 请回复 GIF 或视频后再试。")
+        text: html("❌ 请回复一个包含 GIF 或视频的消息后使用此命令。<br><br>💡 请回复 GIF 或视频后再试。")
       });
       return;
     }
@@ -99,7 +99,7 @@ class GifConverter {
     // 检查消息类型
     if (!this.isValidMedia(repliedMsg)) {
       await msg.edit({
-        text: html("❌ 回复的消息不包含 GIF 或视频文件。\n\n支持的格式：GIF、MP4、AVI、MOV、WEBM 等视频格式。")
+        text: html("❌ 回复的消息不包含 GIF 或视频文件。<br><br>支持的格式：GIF、MP4、AVI、MOV、WEBM 等视频格式。")
       });
       return;
     }
@@ -110,7 +110,7 @@ class GifConverter {
       const err = error as Error;
       logger.error("GIF转贴纸失败:", err);
       await msg.edit({
-        text: html(`❌ 转换失败：${err.message}\n\n💡 请检查支持的格式和限制。`)
+        text: html(`❌ 转换失败：${err.message}<br><br>💡 请检查支持的格式和限制。`)
       });
     }
   }
@@ -384,7 +384,7 @@ class GifConverter {
       const err = error as Error;
       logger.error("自动添加贴纸包失败:", err);
       await statusMsg.edit({ 
-        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...\n\n错误: ${err.message}`) 
+        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...<br><br>错误: ${err.message}`) 
       });
       
       // 失败后直接发送贴纸

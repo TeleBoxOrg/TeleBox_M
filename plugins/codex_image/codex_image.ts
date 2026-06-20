@@ -331,7 +331,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
     if (!tokenValue) {
       const storedToken = await getStoredToken();
       await msg.edit({
-        text: html(`🔐 当前本地 Token：${maskToken(storedToken)}\n• 设置方式：<code>${mainPrefix}cximg token 你的codex access token（通常在 .codex/auth.json）</code>`),
+        text: html(`🔐 当前本地 Token：${maskToken(storedToken)}<br>• 设置方式：<code>${mainPrefix}cximg token 你的codex access token（通常在 .codex/auth.json）</code>`),
       });
       return;
     }
@@ -344,7 +344,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
   const prompt = argsText;
   if (!prompt) {
     await msg.edit({
-      text: html(`❌ 请输入提示词，例如：<code>${mainPrefix}cximg 一只戴墨镜的柴犬坐在跑车里</code>\n• 设置 Token：<code>${mainPrefix}cximg token 你的codex access token（通常在 .codex/auth.json）</code>`),
+      text: html(`❌ 请输入提示词，例如：<code>${mainPrefix}cximg 一只戴墨镜的柴犬坐在跑车里</code><br>• 设置 Token：<code>${mainPrefix}cximg token 你的codex access token（通常在 .codex/auth.json）</code>`),
     });
     return;
   }
@@ -410,11 +410,11 @@ async function handleCximg(msg: MessageContext): Promise<void> {
           ? error.response.data.slice(0, 500)
           : error.message;
       await msg.edit({
-        text: html(`❌ Codex 请求失败 (${error.response?.status || "网络错误"}）：${htmlEscape(detail)}\n⏱️ 耗时：${elapsed}`),
+        text: html(`❌ Codex 请求失败 (${error.response?.status || "网络错误"}）：${htmlEscape(detail)}<br>⏱️ 耗时：${elapsed}`),
       });
     } else {
       await msg.edit({
-        text: html(`❌ 生成失败：${htmlEscape(error.message || String(error))}\n⏱️ 耗时：${elapsed}`),
+        text: html(`❌ 生成失败：${htmlEscape(error.message || String(error))}<br>⏱️ 耗时：${elapsed}`),
       });
     }
     return;
@@ -426,7 +426,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
 
   if (!result.imageBase64) {
     await msg.edit({
-      text: html(`❌ 未收到生成图片${result.status ? `（status: ${htmlEscape(result.status)}）` : ""}\n⏱️ 耗时：${elapsed}`),
+      text: html(`❌ 未收到生成图片${result.status ? `（status: ${htmlEscape(result.status)}）` : ""}<br>⏱️ 耗时：${elapsed}`),
     });
     return;
   }

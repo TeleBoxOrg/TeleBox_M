@@ -572,8 +572,8 @@ class ZprPlugin extends Plugin {
                     if (args.length === 1) {
                         // 查看当前反代设置
                         const currentProxy = await ZprConfigManager.getProxyHost();
-                        await editHtmlMessage(msg, `🔗 <b>当前反代设置</b>\n\n<b>当前地址:</b> <code>${htmlEscape(currentProxy)}</code>\n\n<b>可用地址:</b>\n${Object.entries(PROXY_HOSTS).map(([key, value]) => 
-`• <code>${htmlEscape(value)}</code> - ${htmlEscape(key)}`).join('\n')}\n\n<b>使用方法:</b>\n<code>${mainPrefix}zpr proxy [地址]</code> - 设置反代地址`);
+                        await editHtmlMessage(msg, `🔗 <b>当前反代设置</b><br><br><b>当前地址:</b> <code>${htmlEscape(currentProxy)}</code><br><br><b>可用地址:</b><br>${Object.entries(PROXY_HOSTS).map(([key, value]) => 
+`• <code>${htmlEscape(value)}</code> - ${htmlEscape(key)}`).join('<br>')}<br><br><b>使用方法:</b><br><code>${mainPrefix}zpr proxy [地址]</code> - 设置反代地址`);
                         return;
                     }
                     
@@ -582,16 +582,16 @@ class ZprPlugin extends Plugin {
                     const validHosts = Object.values(PROXY_HOSTS);
                     
                     if (!validHosts.includes(newProxy)) {
-                        await editHtmlMessage(msg, `❌ <b>无效的反代地址</b>\n\n<b>可用地址:</b>\n${Object.entries(PROXY_HOSTS).map(([key, value]) => 
-`• <code>${value}</code> - ${key}`).join('\n')}`);
+                        await editHtmlMessage(msg, `❌ <b>无效的反代地址</b><br><br><b>可用地址:</b><br>${Object.entries(PROXY_HOSTS).map(([key, value]) => 
+`• <code>${value}</code> - ${key}`).join('<br>')}`);
                         return;
                     }
                     
                     const success = await ZprConfigManager.setProxyHost(newProxy);
                     if (success) {
-                        await editHtmlMessage(msg, `✅ <b>反代地址已更新</b>\n\n<b>新地址:</b> <code>${htmlEscape(newProxy)}</code>\n\n设置已保存，下次获取图片时将使用新的反代地址。`);
+                        await editHtmlMessage(msg, `✅ <b>反代地址已更新</b><br><br><b>新地址:</b> <code>${htmlEscape(newProxy)}</code><br><br>设置已保存，下次获取图片时将使用新的反代地址。`);
                     } else {
-                        await editHtmlMessage(msg, "❌ <b>设置失败</b>\n\n无法保存配置，请稍后重试。");
+                        await editHtmlMessage(msg, "❌ <b>设置失败</b><br><br>无法保存配置，请稍后重试。");
                     }
                     return;
                 }

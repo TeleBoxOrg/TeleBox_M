@@ -54,10 +54,10 @@ async function sendLongMessage(msg: MessageContext, text: string) {
     await msg.edit({ text: html(parts[0]) });
     return;
   }
-  await msg.edit({ text: html(parts[0] + `\n\n📄 (1/${parts.length})`) });
+  await msg.edit({ text: html(parts[0] + `<br><br>📄 (1/${parts.length})`) });
   // 注意：消息必须按顺序逐条发送，不能并行（每条消息依赖前一条发送完成以保持顺序）
   for (let i = 1; i < parts.length; i++) {
-    await msg.replyText(html(parts[i] + `\n\n📄 (${i + 1}/${parts.length})`));
+    await msg.replyText(html(parts[i] + `<br><br>📄 (${i + 1}/${parts.length})`));
   }
 }
 

@@ -158,7 +158,7 @@ class GreetingPlugin extends Plugin {
             
             const sign = timezoneInput >= 0 ? "+" : "";
             await msg.edit({ 
-                text: html(`✅ 已将本群时区设置为 <b>UTC${sign}${timezoneInput}</b>\n当前时间: ${dayjs(targetDate).format("HH:mm:ss")}`)
+                text: html(`✅ 已将本群时区设置为 <b>UTC${sign}${timezoneInput}</b><br>当前时间: ${dayjs(targetDate).format("HH:mm:ss")}`)
             });
         } else {
             // 显示状态和帮助
