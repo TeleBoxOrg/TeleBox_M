@@ -1,4 +1,4 @@
-import type { TelegramClient, Message } from "@mtcute/node";
+import type { TelegramClient, Message, InputPeerLike } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 
 function isUndefinedDateCrash(error: any): boolean {
@@ -20,7 +20,7 @@ function isUndefinedDateCrash(error: any): boolean {
  */
 export async function safeGetMessages(
   client: TelegramClient,
-  entity: any,
+  entity: InputPeerLike,
   idsOrParams: number | number[] | { ids?: number | number[] },
 ): Promise<Message[]> {
   let ids: number | number[];
