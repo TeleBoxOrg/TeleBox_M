@@ -7,6 +7,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { isChat, hasRawType } from "@utils/entityTypeGuards";
 // HTML转义工具
 const htmlEscape = (text: string): string => 
   text.replace(/[&<>"']/g, m => ({ 
@@ -84,10 +85,11 @@ class IdsPlugin extends Plugin {
           try {
             const reply = await safeGetReplyMessage(msg);
             if (reply) {
-              const replySenderId = (reply as any).senderId;
+              const replySender = (reply as { sender?: { id?: number } }).sender;
+              const replySenderId = replySender?.id;
               if (replySenderId) {
                 targetId = Number(replySenderId);
-                targetUser = (reply as any).sender;
+                targetUser = replySender;
               }
             }
           } catch (e) { logger.warn('[ids] get reply sender failed:', e) }
@@ -150,7 +152,7 @@ class IdsPlugin extends Plugin {
     } catch (e) { logger.warn('[ids] get full user info failed:', e) }
 
     const chat = await msg.getCompleteChat();
-    if (chat && (chat as any)._ === 'channel' || (chat as any)._ === 'chat') {
+    if (chat && (hasRawType(chat, 'channel') || hasRawType(chat, 'chat'))) {
       try {
         const p: any = await client.call({
           _: "channels.getParticipant",
