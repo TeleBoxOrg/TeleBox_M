@@ -14,6 +14,7 @@ import { Plugin } from "@utils/pluginBase";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { Long } from "@mtcute/core";
 
 // 常量配置
@@ -109,9 +110,9 @@ async function deleteMessagesWithRetry(
     }
     
     return messageIds.length;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (retryCount < CONFIG.RETRY_ATTEMPTS) {
-      logger.info(`[DME] 删除失败，第 ${retryCount + 1} 次重试:`, error.message);
+      logger.info(`[DME] 删除失败，第 ${retryCount + 1} 次重试:`, getErrorMessage(error));
       await sleep(CONFIG.DELAYS.RETRY * (retryCount + 1));
       return deleteMessagesWithRetry(client, chatPeer, messageIds, retryCount + 1);
     }
@@ -288,8 +289,8 @@ async function getSendAsIdentitySet(
     logger.info(
       `[DME] 获取发送身份成功: typed=${typedKeys.size}, raw=${rawIds.size}`
     );
-  } catch (error: any) {
-    logger.info(`[DME] 获取发送身份失败，回退基础匹配: ${error?.message || error}`);
+  } catch (error: unknown) {
+    logger.info(`[DME] 获取发送身份失败，回退基础匹配: ${getErrorMessage(error)}`);
   }
   return { typedKeys, rawIds };
 }
@@ -427,9 +428,9 @@ async function getEntityWithRetry(
 ): Promise<any> {
   try {
     return await client.resolvePeer(entityId);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (retryCount < 2) {
-      logger.info(`[DME] 获取实体失败，第 ${retryCount + 1} 次重试:`, error.message);
+      logger.info(`[DME] 获取实体失败，第 ${retryCount + 1} 次重试:`, getErrorMessage(error));
       await sleep(1000 * (retryCount + 1));
       return getEntityWithRetry(client, entityId, retryCount + 1);
     }
@@ -588,8 +589,8 @@ async function adaptiveBatchDelete(
       logger.info(`[DME] 成功删除批次 ${batch.length} 条，当前批次大小: ${currentBatchSize}`);
       await sleep(CONFIG.DELAYS.BATCH);
       
-    } catch (error: any) {
-      logger.info(`[DME] 批次删除失败，减少批次大小:`, error.message);
+    } catch (error: unknown) {
+      logger.info(`[DME] 批次删除失败，减少批次大小:`, getErrorMessage(error));
       
       // 失败则减少批次大小
       currentBatchSize = Math.max(Math.floor(currentBatchSize / 2), CONFIG.MIN_BATCH_SIZE);
@@ -832,8 +833,8 @@ async function traditionalStreamProcessing(
             await sleep(CONFIG.DELAYS.BATCH);
           }
           logger.info(`[DME] 传统模式删除 ${deleteIds.length} 条，总计 ${totalDeleted} 条`);
-        } catch (error: any) {
-          logger.error(`[DME] 传统模式删除失败:`, error.message);
+        } catch (error: unknown) {
+          logger.error(`[DME] 传统模式删除失败:`, getErrorMessage(error));
         }
       }
 
@@ -848,8 +849,8 @@ async function traditionalStreamProcessing(
       offsetId = validMessages[validMessages.length - 1].id;
       await sleep(CONFIG.DELAYS.SEARCH);
       
-    } catch (error: any) {
-      logger.error(`[DME] 传统模式批次处理失败:`, error.message);
+    } catch (error: unknown) {
+      logger.error(`[DME] 传统模式批次处理失败:`, getErrorMessage(error));
       consecutiveEmptyBatches++;
       await sleep(CONFIG.DELAYS.RETRY);
       
@@ -975,8 +976,8 @@ async function quickDeleteMyMessages(
       totalMatched += messagesToDelete.length;
 
       await sleep(CONFIG.DELAYS.SEARCH);
-    } catch (error: any) {
-      logger.error(`[DME] 搜索失败:`, error.message);
+    } catch (error: unknown) {
+      logger.error(`[DME] 搜索失败:`, getErrorMessage(error));
       searchFailCount++;
       
       // 如果连续搜索失败，切换到传统模式
@@ -1189,15 +1190,15 @@ async function searchEditAndDeleteMyMessages(
         await deleteMessagesWithRetry(client, chatPeer, deleteIds);
         totalDeleted += deleteIds.length;
         logger.info(`[DME] 流式删除 ${deleteIds.length} 条，总计 ${totalDeleted} 条`);
-      } catch (error: any) {
-        logger.error(`[DME] 批次删除失败:`, error.message);
+      } catch (error: unknown) {
+        logger.error(`[DME] 批次删除失败:`, getErrorMessage(error));
       }
 
       totalProcessed += batchMessages.length;
       
       await sleep(CONFIG.DELAYS.BATCH);
-    } catch (error: any) {
-      logger.error(`[DME] 流式处理批次失败:`, error.message);
+    } catch (error: unknown) {
+      logger.error(`[DME] 流式处理批次失败:`, getErrorMessage(error));
       searchFailCount++;
       
       // 如果连续搜索失败，切换到传统模式
@@ -1419,10 +1420,10 @@ const dme = async (msg: MessageContext) => {
     logger.info(`[DME] =============================`);
 
     // 完全静默模式 - 不发送任何前台消息
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("[DME] 操作失败:", error);
     await msg.edit({
-      text: html(`❌ <b>操作失败:</b> ${htmlEscape(error.message || "未知错误")}`),
+      text: html(`❌ <b>操作失败:</b> ${htmlEscape(getErrorMessage(error))}`),
     });
   }
 };

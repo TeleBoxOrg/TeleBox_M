@@ -13,6 +13,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -268,8 +269,8 @@ class OpenListPlugin extends Plugin {
         lines.push(`密码: ${password}`);
       }
       await msg.edit({ text: lines.join("\n") });
-    } catch (error: any) {
-      await msg.edit({ text: `安装失败: ${htmlEscape(error?.message || error)}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `安装失败: ${htmlEscape(getErrorMessage(error))}` });
     }
   }
 
@@ -326,8 +327,8 @@ class OpenListPlugin extends Plugin {
       const verMatch = verOut.match(/Version:\s*([^\s]+)/);
       const version = verMatch ? verMatch[1] : "";
       await msg.edit({ text: `更新完成${version ? `，版本: ${version}` : ""}` });
-    } catch (error: any) {
-      await msg.edit({ text: `更新失败: ${error?.message || error}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `更新失败: ${getErrorMessage(error)}` });
     }
   }
 
@@ -348,8 +349,8 @@ class OpenListPlugin extends Plugin {
         await execAsync(`rm -rf "${installPath}"`);
       }
       await msg.edit({ text: "已卸载" });
-    } catch (error: any) {
-      await msg.edit({ text: `卸载失败: ${error?.message || error}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `卸载失败: ${getErrorMessage(error)}` });
     }
   }
 
@@ -370,8 +371,8 @@ class OpenListPlugin extends Plugin {
       await execAsync(`cp -r "${installPath}/data" "${backupDir}/"`);
 
       await msg.edit({ text: `备份成功\n目录: ${codeTag(backupDir)}` });
-    } catch (error: any) {
-      await msg.edit({ text: `备份失败: ${htmlEscape(error?.message || error)}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `备份失败: ${htmlEscape(getErrorMessage(error))}` });
     }
   }
 
@@ -406,8 +407,8 @@ class OpenListPlugin extends Plugin {
       await execAsync(`systemctl start openlist`);
 
       await msg.edit({ text: "恢复成功" });
-    } catch (error: any) {
-      await msg.edit({ text: `恢复失败: ${htmlEscape(error?.message || error)}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `恢复失败: ${htmlEscape(getErrorMessage(error))}` });
     }
   }
 
@@ -472,8 +473,8 @@ class OpenListPlugin extends Plugin {
       } else {
         await msg.edit({ text: `执行结果:\n\n${preTag((stdout || "").trim())}` });
       }
-    } catch (error: any) {
-      await msg.edit({ text: `管理命令失败: ${htmlEscape(error?.message || error)}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `管理命令失败: ${htmlEscape(getErrorMessage(error))}` });
     }
   }
 
@@ -539,8 +540,8 @@ class OpenListPlugin extends Plugin {
       await execAsync(`systemctl start openlist`);
 
       await msg.edit({ text: `端口已修改为 ${port}，服务已重启。` });
-    } catch (error: any) {
-      await msg.edit({ text: `端口修改失败: ${error?.message || error}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `端口修改失败: ${getErrorMessage(error)}` });
     }
   }
 
@@ -611,8 +612,8 @@ class OpenListPlugin extends Plugin {
         await fs.writeFile(savePath, buffer);
         await msg.edit({ text: `文件已保存到: ${codeTag(savePath)}` });
       }
-    } catch (error: any) {
-      await msg.edit({ text: `文件保存失败: ${htmlEscape(error?.message || error)}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `文件保存失败: ${htmlEscape(getErrorMessage(error))}` });
     }
   }
 
@@ -654,9 +655,9 @@ class OpenListPlugin extends Plugin {
 
       await msg.edit({ text: `✅ 文件已上传到 OpenList: ${codeTag(fullPath)}` });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("OpenList Upload Error:", error);
-      const errMsg = error?.response?.data?.message || error.message || "未知错误";
+      const errMsg = getErrorMessage(error);
       throw new Error(`上传失败: ${errMsg}`);
     }
   }
@@ -796,8 +797,8 @@ class OpenListPlugin extends Plugin {
       }
 
       await msg.edit({ text: lines.join("\n") });
-    } catch (error: any) {
-      await msg.edit({ text: `状态获取失败: ${htmlEscape(error?.message || error)}` });
+    } catch (error: unknown) {
+      await msg.edit({ text: `状态获取失败: ${htmlEscape(getErrorMessage(error))}` });
     }
   }
 
