@@ -715,8 +715,8 @@ const collectImagePartsFromSingleMessage = async (
 ): Promise<void> => {
   if (!msg.media || !msg.client) return;
 
-  if ((msg.media as any)?.type === 'photo') {
-    const downloaded = await (msg.client as any).downloadMedia(msg.media);
+  if ((msg.media as unknown as { type?: string })?.type === 'photo') {
+    const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown) => Promise<unknown> }).downloadMedia(msg.media);
     const buffer = await normalizeDownloadedMedia(downloaded);
     if (!buffer) return;
     const dataUrl = `data:image/jpeg;base64,${buffer.toString("base64")}`;
@@ -725,9 +725,9 @@ const collectImagePartsFromSingleMessage = async (
   }
 
   if (
-    ['document', 'video', 'sticker', 'audio', 'voice'].includes((msg.media as any)?.type)
+    ['document', 'video', 'sticker', 'audio', 'voice'].includes((msg.media as unknown as { type?: string })?.type ?? '')
   ) {
-    const doc = msg.media as any;
+    const doc = msg.media as unknown as { mimeType?: string; attributes?: unknown[] };
     const docMime = doc.mimeType || "";
     const isAnimated =
       docMime === "image/gif" ||
@@ -741,7 +741,7 @@ const collectImagePartsFromSingleMessage = async (
     const thumb = getDocumentThumb(doc);
 
     if (!isAnimated && docMime.startsWith("image/")) {
-      const downloaded = await (msg.client as any).downloadMedia(msg.media);
+      const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown, opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia(msg.media);
       const buffer = await normalizeDownloadedMedia(downloaded);
       if (!buffer) return;
       const dataUrl = `data:${docMime};base64,${buffer.toString("base64")}`;
@@ -752,7 +752,7 @@ const collectImagePartsFromSingleMessage = async (
     let frameBuffer: Buffer | null = null;
 
     if (thumb) {
-      const downloaded = await (msg.client as any).downloadMedia(msg.media, { thumb });
+      const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown, opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia(msg.media, { thumb });
       const buffer = await normalizeDownloadedMedia(downloaded);
       if (buffer) {
         try {
@@ -764,7 +764,7 @@ const collectImagePartsFromSingleMessage = async (
     }
 
     if (!frameBuffer) {
-      const downloaded = await (msg.client as any).downloadMedia(msg.media);
+      const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown, opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia(msg.media);
       const buffer = await normalizeDownloadedMedia(downloaded);
       if (buffer) {
         try {
@@ -800,11 +800,11 @@ const getMessageImageParts = async (
   const peer = msg.chat.id;
   const sameGroupMessages: MessageContext[] = [];
 
-  const messages = await (msg.client as any).getMessages(peer, { limit: 50 });
+  const messages = await (msg.client as unknown as { getMessages: (peer: unknown, opts: { limit: number }) => Promise<MessageContext[]> }).getMessages(peer, { limit: 50 });
   for (const m of messages) {
-    if (!(m as any)?.client) continue;
+    if (!(m as unknown as { client?: unknown })?.client) continue;
 
-    const g = (m as any).groupedId;
+    const g = (m as unknown as { groupedId?: string | number }).groupedId;
     if (!g) continue;
 
     if (g.toString() !== groupedId) continue;
@@ -830,10 +830,10 @@ const getGroupedMessageIds = async (msg: MessageContext): Promise<number[]> => {
   const peer = msg.chat.id;
   const ids: number[] = [];
 
-  const messages = await (msg.client as any).getMessages(peer, { limit: 50 });
+  const messages = await (msg.client as unknown as { getMessages: (peer: unknown, opts: { limit: number }) => Promise<MessageContext[]> }).getMessages(peer, { limit: 50 });
   for (const m of messages) {
-    if (!(m as any)?.client) continue;
-    const g = (m as any).groupedId;
+    if (!(m as unknown as { client?: unknown })?.client) continue;
+    const g = (m as unknown as { groupedId?: string | number }).groupedId;
     if (!g) continue;
     if (g.toString() !== groupedId) continue;
     ids.push(Number(m.id));
@@ -1169,13 +1169,13 @@ class MessageSender {
         return msg;
       }
       if (shouldFallbackToReplyOnEditError(error)) {
-        const replied = await msg.replyText(text, options as any);
+        const replied = await msg.replyText(text, options as Record<string, unknown>);
         if (replied) return replied;
       }
       throw error;
     }
 
-    const replied = await msg.replyText(text, options as any);
+    const replied = await msg.replyText(text, options as Record<string, unknown>);
     if (replied) return replied;
     throw new Error("消息发送失败");
   }
@@ -1446,7 +1446,7 @@ class MessageUtils {
 
         const topicRootId = getTopicRootId(msg);
         const replyTo = replyToId ?? topicRootId;
-        await (msg.client as any).sendFile(peerId, {
+        await (msg.client as unknown as { sendFile: (peer: unknown, opts: Record<string, unknown>) => Promise<void> }).sendFile(peerId, {
           file: pathToSend,
           forceDocument: !options.previewEnabled,
           caption,
@@ -3887,7 +3887,7 @@ class ConfigFeature extends BaseFeatureHandler {
     configManager: ConfigManager,
   ): Promise<void> {
     requireUser(
-      !!(msg as any).savedPeerId,
+      !!(msg as unknown as { savedPeerId?: unknown }).savedPeerId,
       "出于安全考虑，禁止在公开场景添加/修改 API 密钥",
     );
     const { tag, url, key, type } = this.parseAddConfigArgs(args);
