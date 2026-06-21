@@ -9,6 +9,8 @@ import {
 // TelegramClient type removed - using any for client references
 import { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
+import { TelegramClient } from "@mtcute/node";
+import type { Chat, Peer } from "@mtcute/core";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import {
   safeForwardMessage,
@@ -47,12 +49,12 @@ async function formatEntity(
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
   if (!target) throw new Error("无效的目标");
-  let id: any;
-  let entity: any;
+  let id: number | undefined;
+  let entity: Peer | null = null;
   try {
     entity = target?.className
-      ? target
-      : ((await (client as any)?.getChat(target)) as any);
+      ? (target as Peer)
+      : await client?.getChat(target);
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
@@ -63,11 +65,12 @@ async function formatEntity(
         `无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`
       );
   }
+  if (!entity) return { id: undefined, entity: null, display: String(target) };
   const displayParts: string[] = [];
 
-  if (entity?.title) displayParts.push(entity.title);
-  if (entity?.firstName) displayParts.push(entity.firstName);
-  if (entity?.lastName) displayParts.push(entity.lastName);
+  if ('title' in entity && entity.title) displayParts.push(entity.title);
+  if ('firstName' in entity && entity.firstName) displayParts.push(entity.firstName);
+  if ('lastName' in entity && entity.lastName) displayParts.push(entity.lastName);
   if (entity.username)
     displayParts.push(
       mention ? `@${htmlEscape(entity.username)}` : `<code>@${htmlEscape(entity.username)}</code>`
@@ -634,7 +637,7 @@ async function forwardGroupMessages(
   try {
     const fromEntity = await getEntityWithHash(client, fromChatId);
     const toEntity = await getEntityWithHash(client, toChatId);
-    await (client as any).call({
+    await client.call({
       _: "messages.forwardMessages",
       fromPeer: fromEntity,
       id: messageIds,
@@ -746,17 +749,17 @@ async function resolveTarget(
     targetInput.toLowerCase() === "me" ||
     targetInput.toLowerCase() === "here"
   ) {
-    return await (client as any).getChat(currentChatId);
+    return await client.getChat(currentChatId);
   }
 
   try {
     const numericId = parseInt(targetInput);
     if (!isNaN(numericId)) {
-      return await (client as any).getChat(numericId);
+      return await client.getChat(numericId);
     }
   } catch (error) { logger.warn(`[shift] Fall through to username:`, error) }
 
-  return await (client as any).getChat(targetInput);
+  return await client.getChat(targetInput);
 }
 
 async function isCircularForward(
@@ -958,8 +961,8 @@ class BackupManager {
     try {
       throwIfAborted(signal);
       // 获取消息总数
-      const messages = await (client as any).getMessages(task.sourceId, { limit: 1, ids: undefined }) as any[];
-      const totalCount = (messages as { total?: number }).total || 0;
+      const messages = await (client as any).getMessages(task.sourceId, { limit: 1, ids: undefined }) as { total?: number };
+      const totalCount = messages.total || 0;
       task.totalMessages = totalCount;
 
       if (task.reverse) {
@@ -1438,7 +1441,7 @@ class ShiftPlugin extends Plugin {
               sourceInput.toLowerCase() === "me"
             ) {
               const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
-              source = await (client as any).getChat(chatId);
+              source = await client.getChat(chatId);
             } else {
               const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
               source = await resolveTarget(client, sourceInput, chatId);
@@ -1566,10 +1569,10 @@ class ShiftPlugin extends Plugin {
                 sourceDisplayHtml = rule.source_display;
                 targetDisplayHtml = rule.target_display;
               } else {
-                const sourceEntity = await (msg.client as any).getChat(
+                const sourceEntity = await msg.client.getChat(
                   Number(sourceId)
                 );
-                const targetEntity = await (msg.client as any).getChat(
+                const targetEntity = await msg.client.getChat(
                   Number(rule.target_id)
                 );
                 sourceDisplayHtml = htmlEscape(getDisplayName(sourceEntity));
@@ -1713,7 +1716,7 @@ class ShiftPlugin extends Plugin {
             for (const [sourceId, stats] of Object.entries(channelStats)) {
               try {
                 if (!(msg as { client?: unknown }).client) continue;
-                const sourceEntity = await (msg.client as any).getChat(
+                const sourceEntity = await msg.client.getChat(
                   parseInt(sourceId)
                 );
                 output += `📤 源: ${htmlEscape(
