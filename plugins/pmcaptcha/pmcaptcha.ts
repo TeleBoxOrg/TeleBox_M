@@ -311,8 +311,8 @@ let _selfId: number | null = null;
 
 async function getSelfId(client: TelegramClient): Promise<number> {
   if (_selfId !== null) return _selfId;
-  const me = await safeGetMe(client as any);
-  _selfId = me ? Number((me as { id?: unknown }).id) : 0;
+  const me = await safeGetMe(client);
+  _selfId = me ? Number(me.id) : 0;
   return _selfId!;
 }
 
@@ -327,7 +327,7 @@ function cacheUserFromSender(sender: any): void {
 
 async function fetchUserInfo(client: TelegramClient, userId: number): Promise<any | null> {
   try {
-    const e = await (client as any).getChat(userId);
+    const e = await client.getChat(userId);
     cacheUserFromSender(e);
     return e;
   } catch (e) { log(LogLevel.WARN, `fetchUserInfo: getChat failed for ${userId}`, e); }
@@ -776,16 +776,16 @@ async function refreshActiveCaptchas(client: TelegramClient): Promise<void> {
       const isImg = state.mode === CaptchaMode.IMG_DIGIT || state.mode === CaptchaMode.IMG_MIXED;
       if (isImg) {
         const newCaption = rebuildImgCaption(state);
-        await (client as any).editMessage({
-          peer: userId,
+        await client.editMessage({
+          chatId: userId,
           message: promptMsgId,
           text: newCaption,
         });
       } else {
         const newText = rebuildCaptchaText(state);
         if (newText) {
-          await (client as any).editMessage({
-            peer: userId,
+          await client.editMessage({
+            chatId: userId,
             message: promptMsgId,
             text: newText,
           });
