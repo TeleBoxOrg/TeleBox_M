@@ -971,7 +971,7 @@ class MusicHubPlugin extends Plugin {
             duration: 0,
             title: song.name,
             performer: formatArtists(song.artist),
-          } as any, // mtcute InputMediaAudio type lacks attributes field; needed for TL layer
+          } as never, // mtcute InputMediaAudio type lacks attributes field; needed for TL layer
         ],
         forceDocument: false,
         progressCallback: (progress: number) => {

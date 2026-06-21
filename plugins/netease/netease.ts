@@ -120,8 +120,20 @@ async function fetchAndSendAudio(
   // 若有按钮则点击第一个按钮
   if (!mediaMsg && replyWithButtons) {
     try {
-      // gramjs→mtcute: Message.click() not in mtcute types, cast needed for callback answer
-      await (replyWithButtons as any).click({});
+      // mtcute: use getCallbackAnswer instead of gramjs Message.click()
+      const rawMsg = replyWithButtons.raw as { replyMarkup?: { _?: string; rows: { buttons: { _?: string; data?: Uint8Array }[] }[] } };
+      const markup = rawMsg.replyMarkup;
+      if (markup?._ === 'replyInlineMarkup') {
+        const firstBtn = markup.rows[0]?.buttons[0];
+        if (firstBtn?._ === 'keyboardButtonCallback' && firstBtn.data) {
+          await client.getCallbackAnswer({
+            chatId: replyWithButtons.chat.id,
+            message: replyWithButtons.id,
+            data: firstBtn.data,
+            fireAndForget: true,
+          });
+        }
+      }
     } catch (e) {
       await msg.edit({ text: html(`❌ 点击按钮失败：${htmlEscape((e as { message?: string })?.message || String(e))}`) });
       return;
@@ -159,7 +171,7 @@ async function fetchAndSendAudio(
       type: "audio",
       file: Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer),
       fileName: "music.mp3",
-    } as any, {
+    } as never, {
       caption,
       ...(replyToId ? { replyTo: replyToId } : {}),
     });

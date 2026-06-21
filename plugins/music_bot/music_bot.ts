@@ -136,10 +136,22 @@ async function searchAndSendMusic(
   }
 
   let clicked = false;
-  // gramjs→mtcute: Message.click() not in mtcute types, cast needed for callback answer
+  // mtcute: use getCallbackAnswer instead of gramjs Message.click()
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      await (replyWithButtons as any).click(0);
+      const rawMsg = replyWithButtons.raw as { replyMarkup?: { _?: string; rows: { buttons: { _?: string; data?: Uint8Array }[] }[] } };
+      const markup = rawMsg.replyMarkup;
+      if (markup?._ === 'replyInlineMarkup') {
+        const firstBtn = markup.rows[0]?.buttons[0];
+        if (firstBtn?._ === 'keyboardButtonCallback' && firstBtn.data) {
+          await client.getCallbackAnswer({
+            chatId: replyWithButtons.chat.id,
+            message: replyWithButtons.id,
+            data: firstBtn.data,
+            fireAndForget: true,
+          });
+        }
+      }
       clicked = true;
       break;
     } catch (e) { logger.warn(`[music_bot] click button attempt ${attempt} failed:`, e) }

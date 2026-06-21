@@ -431,7 +431,7 @@ class PicToStickerPlugin extends Plugin {
       attributes: [
         { _: 'documentAttributeSticker', alt: emoji, stickerset: { _: 'inputStickerSetEmpty' } }
       ]
-    } as any, {
+    } as never, {
       replyTo: replyToId
     });
   }
