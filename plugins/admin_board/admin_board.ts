@@ -10,6 +10,8 @@ import path from "path";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
+import { Long } from "@mtcute/core";
+import type { tl } from "@mtcute/core";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -342,7 +344,7 @@ async function resolveTargetChat(
   if (!client) throw new Error("Telegram 客户端未初始化");
 
   if (!rawTarget) {
-    const entity = await (client as any).getChat(msg.chat.id);
+    const entity = await client.getChat(msg.chat.id);
     const entityType = getRawType(entity);
     if (entityType !== "chat" && entityType !== "channel") {
       throw new Error("当前对话不是群组、超级群或频道");
@@ -354,7 +356,7 @@ async function resolveTargetChat(
   if (!target) throw new Error("目标对话不能为空");
 
   if (/^-?\d+$/.test(target)) {
-    const entity = await (client as any).getChat(Number(target));
+    const entity = await client.getChat(Number(target));
     const entityType = getRawType(entity);
     if (entityType !== "chat" && entityType !== "channel") {
       throw new Error("目标必须是群组、超级群或频道");
@@ -363,7 +365,7 @@ async function resolveTargetChat(
   }
 
   if (target.startsWith("@")) {
-    const entity = await (client as any).getChat(target);
+    const entity = await client.getChat(target);
     const entityType = getRawType(entity);
     if (entityType !== "chat" && entityType !== "channel") {
       throw new Error("目标必须是群组、超级群或频道");
@@ -389,7 +391,7 @@ async function getAdminCollection(
       filter: { _: 'channelParticipantsAdmins' },
       offset: 0,
       limit: 200,
-      hash: 0 as any,
+      hash: Long.fromNumber(0),
     });
 
     const users: any[] = res?.users || [];
@@ -403,7 +405,7 @@ async function getAdminCollection(
       filter: { _: 'channelParticipantsRecent' },
       offset: 0,
       limit: 200,
-      hash: 0 as any,
+      hash: Long.fromNumber(0),
     });
 
     const participants: any[] = res?.participants || [];
@@ -578,7 +580,7 @@ async function collectAdminStat(
   const lockedSeat = lockedSeatSet.has(userId);
   const name = getUserDisplayName(user);
   const onlineDays = getLastOnlineDays(user);
-  const participant = (user as { participant?: unknown }).participant as any;
+  const participant = (user as { participant?: { rank?: string } })?.participant;
 
   await setCachedUserInfo(target, user);
 
@@ -595,20 +597,20 @@ async function collectAdminStat(
       sortAvgPerDay = cachedEntry.avgPerDay;
       avgPerDayText = formatAvgPerDay(cachedEntry.avgPerDay);
     } else {
-      const fromEntity = await (client as any).resolvePeer(user.id);
+      const fromEntity = await client.resolvePeer(user.id);
       const searchResult: any = await client.call({
         _: 'messages.search',
         peer: target.entity,
         q: "",
         filter: { _: 'inputMessagesFilterEmpty' },
         minDate: Math.floor(Date.now() / 1000) - WEEK_SECONDS,
-        maxDate: undefined as any,
+        maxDate: 0,
         offsetId: 0,
         addOffset: 0,
         limit: 1,
         maxId: 0,
         minId: 0,
-        hash: 0 as any,
+        hash: Long.fromNumber(0),
         fromId: fromEntity,
       });
 
@@ -637,20 +639,20 @@ async function collectAdminStat(
     });
 
     // Since safeGetMessages doesn't support fromUser, fall back to messages.search
-    const fromEntity = await (client as any).resolvePeer(user.id);
+    const fromEntity = await client.resolvePeer(user.id);
     const historyResult: any = await client.call({
       _: 'messages.search',
       peer: target.entity,
       q: "",
       filter: { _: 'inputMessagesFilterEmpty' },
       minDate: 0,
-      maxDate: undefined as any,
+      maxDate: 0,
       offsetId: 0,
       addOffset: 0,
       limit: 1,
       maxId: 0,
       minId: 0,
-      hash: 0 as any,
+      hash: Long.fromNumber(0),
       fromId: fromEntity,
     });
 
@@ -1086,10 +1088,10 @@ async function demoteAdminInTarget(
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
-  const inputUser = await (client as any).resolvePeer(user.id);
+  const inputUser = await client.resolvePeer(user.id) as unknown as tl.TypeInputUser;
 
   if (target.isChannel) {
-    const inputChannel = await (client as any).resolvePeer(target.entity.id);
+    const inputChannel = await client.resolvePeer(target.entity.id) as unknown as tl.TypeInputChannel;
     await client.call({
       _: 'channels.editAdmin',
       channel: inputChannel,
@@ -1177,7 +1179,7 @@ async function findUserInChatParticipants(
     filter: { _: 'channelParticipantsRecent' },
     offset: 0,
     limit: 200,
-    hash: 0 as any,
+    hash: Long.fromNumber(0),
   });
 
   const users: any[] = res?.users || [];
@@ -1206,7 +1208,7 @@ async function findUserInChannelParticipants(
         filter: { _: 'channelParticipantsSearch', q: username },
         offset: 0,
         limit: 200,
-        hash: 0 as any,
+        hash: Long.fromNumber(0),
       });
 
       const users: any[] = res?.users || [];
@@ -1222,7 +1224,7 @@ async function findUserInChannelParticipants(
 
   if (!isNumeric) return undefined;
 
-  const inputChannel = await (client as any).resolvePeer(target.entity.id);
+  const inputChannel = await client.resolvePeer(target.entity.id) as unknown as tl.TypeInputChannel;
   let offset = 0;
   const limit = 200;
 
@@ -1233,7 +1235,7 @@ async function findUserInChannelParticipants(
       filter: { _: 'channelParticipantsRecent' },
       offset,
       limit,
-      hash: 0 as any,
+      hash: Long.fromNumber(0),
     });
 
     const users: any[] = (result?.users || []).filter(
@@ -1267,7 +1269,7 @@ async function resolveUserForSeatAction(
 
   for (const candidate of candidates) {
     try {
-      const entity = await (client as any).getChat(candidate);
+      const entity = await client.getChat(candidate);
       if (hasRawType(entity, "user")) {
         return entity;
       }
