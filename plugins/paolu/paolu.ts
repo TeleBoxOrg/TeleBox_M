@@ -5,6 +5,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { getGlobalClient } from "@utils/globalClient";
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { getRawType } from "@utils/entityTypeGuards";
 import { Long } from "@mtcute/core";
 
@@ -246,15 +247,16 @@ class PaoluPlugin extends Plugin {
         logger.error("[PAOLU] 发送完成提示失败:", sendError);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[PAOLU] 插件执行失败:", error);
       
       let errorMsg = "❌ 操作失败";
-      if (error.message?.includes("FLOOD_WAIT")) {
-        const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+      const errMsg = getErrorMessage(error);
+      if (errMsg.includes("FLOOD_WAIT")) {
+        const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
         errorMsg = `⏳ 操作过于频繁，请等待 ${waitTime} 秒后重试`;
-      } else if (error.message) {
-        errorMsg += `: ${htmlEscape(error.message)}`;
+      } else if (errMsg) {
+        errorMsg += `: ${htmlEscape(errMsg)}`;
       }
       
       await msg.edit({ text: errorMsg });

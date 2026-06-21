@@ -7,6 +7,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { getRawType } from "@utils/entityTypeGuards";
 // HTML转义函数
 const prefixes = getPrefixes();
@@ -254,10 +255,10 @@ class PortballPlugin extends Plugin {
         await this.autoDelete(msg, 5);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[Portball] 处理错误:", error);
       await msg.edit({
-        text: html`❌ <b>处理失败：</b>${error.message || "未知错误"}`
+        text: html`❌ <b>处理失败：</b>${getErrorMessage(error) || "未知错误"}`
       });
       await this.autoDelete(msg, 5);
     }

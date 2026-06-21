@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { JSONFilePreset } from "lowdb/node";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { getMessageMedia, getMessageGroupedId } from "@utils/entityTypeGuards";
 
 // 本地 sleep
@@ -160,10 +161,10 @@ class PicToStickerPlugin extends Plugin {
 
       // 处理单张图片转换
       await this.convertSingleImage(msg, customEmoji);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[pic_to_sticker] 插件执行失败:", error);
       await msg.edit({
-        text: html`❌ <b>转换失败:</b> ${htmlEscape(error.message || '未知错误')}`
+        text: html`❌ <b>转换失败:</b> ${htmlEscape(getErrorMessage(error) || '未知错误')}`
       });
     }
   }
@@ -255,9 +256,9 @@ class PicToStickerPlugin extends Plugin {
       }
 
       await msg.edit({ text: html`${message}` });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await msg.edit({
-        text: html`❌ <b>配置失败:</b> ${htmlEscape(error.message)}`
+        text: html`❌ <b>配置失败:</b> ${htmlEscape(getErrorMessage(error))}`
       });
     }
   }
@@ -339,10 +340,10 @@ class PicToStickerPlugin extends Plugin {
         await sleep(3000);
         await msg.delete();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[pic_to_sticker] 批量转换失败:", error);
       await msg.edit({
-        text: html`❌ <b>批量转换失败:</b> ${htmlEscape(error.message)}`
+        text: html`❌ <b>批量转换失败:</b> ${htmlEscape(getErrorMessage(error))}`
       });
     }
   }
@@ -397,19 +398,20 @@ class PicToStickerPlugin extends Plugin {
         await msg.edit({ text: `✅ 贴纸已发送 ${emoji}` });
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[pic_to_sticker] 转换失败:", error);
       
       let errorMsg = "❌ <b>转换失败</b>";
+      const errMsg = getErrorMessage(error);
       
-      if (error.message?.includes('MEDIA_INVALID')) {
+      if (errMsg.includes('MEDIA_INVALID')) {
         errorMsg = "❌ <b>无效的媒体文件</b>";
-      } else if (error.message?.includes('FILE_PARTS_INVALID')) {
+      } else if (errMsg.includes('FILE_PARTS_INVALID')) {
         errorMsg = "❌ <b>文件损坏或格式不支持</b>";
-      } else if (error.message?.includes('PHOTO_INVALID')) {
+      } else if (errMsg.includes('PHOTO_INVALID')) {
         errorMsg = "❌ <b>无效的图片文件</b>";
-      } else if (error.message?.includes('FLOOD_WAIT')) {
-        const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+      } else if (errMsg.includes('FLOOD_WAIT')) {
+        const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
         errorMsg = `❌ <b>请求过于频繁</b>\n\n请等待 ${waitTime} 秒后重试`;
       }
       

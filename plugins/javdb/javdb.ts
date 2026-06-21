@@ -19,6 +19,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // ==================== 工具函数与常量 ====================
 /** 获取命令前缀 */
@@ -363,10 +364,10 @@ class JavDBPlugin extends Plugin {
         }, 60_000);
         pendingTimers.add(t);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 错误处理
       logger.error("[javdb] 查询失败:", error);
-      const m = String(error?.message || error);
+      const m = getErrorMessage(error);
       
       // 处理 Telegram API 频率限制
       if (m.includes("FLOOD_WAIT")) {

@@ -12,6 +12,7 @@ import { JSONFile } from "lowdb/node";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { Long } from "@mtcute/core";
 // 获取命令前缀
 const prefixes = getPrefixes();
@@ -161,7 +162,7 @@ async function searchMyMessagesOptimized(
       // 避免API限制
       await sleep(200);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("[DA] 优化搜索失败:", error);
     return [];
   }
@@ -260,10 +261,11 @@ const fastDeleteBatch = async (
     await saveTask(task);
     return true;
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     // FLOOD_WAIT处理
-    if (error.message?.includes("FLOOD_WAIT")) {
-      const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "30") * 1000;
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("FLOOD_WAIT")) {
+      const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "30") * 1000;
       await sleep(waitTime);
       return fastDeleteBatch(client, chatId, messages, task); // 重试
     }
@@ -560,28 +562,29 @@ const da = async (msg: MessageContext) => {
     // 清理任务
     await removeTask(taskId);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("[DA] 插件执行失败:", error);
-    
+
     // 如果任务已创建，更新状态
     const existingTask = await getTask(taskId);
     if (existingTask) {
       existingTask.isRunning = false;
-      existingTask.errors.push(String(error));
+      existingTask.errors.push(getErrorMessage(error));
       await saveTask(existingTask);
       await sendProgressToSaved(client, existingTask, "执行失败");
     }
-    
+
     // 处理特定错误类型
-    if (error.message?.includes("FLOOD_WAIT")) {
-      const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+    const errMsg = getErrorMessage(error);
+    if (errMsg.includes("FLOOD_WAIT")) {
+      const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
       // 静默处理，不在群聊显示错误
       logger.info(`[DA] FLOOD_WAIT: 需等待 ${waitTime} 秒`);
       return;
     }
-    
+
     // 其他错误也静默处理
-    logger.info(`[DA] 错误: ${error.message || "未知错误"}`);
+    logger.info(`[DA] 错误: ${errMsg || "未知错误"}`);
   }
 };
 

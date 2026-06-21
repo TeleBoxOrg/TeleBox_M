@@ -2,6 +2,7 @@ import {
   getPrefixes
 } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
@@ -1287,8 +1288,8 @@ class AcronPlugin extends Plugin {
         }
 
         await msg.edit({ text: `未知子命令: ${sub}` });
-      } catch (error: any) {
-        await msg.edit({ text: `处理出错: ${error?.message || error}` });
+      } catch (error: unknown) {
+        await msg.edit({ text: `处理出错: ${getErrorMessage(error)}` });
       }
     },
   };

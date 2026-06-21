@@ -11,6 +11,7 @@ import { JSONFile } from "lowdb/node";
 import path from "path";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { isMegagroup, getMessageFwdFrom, hasRawType, getRawType } from "@utils/entityTypeGuards";
 
 const prefixes = getPrefixes();
@@ -179,8 +180,8 @@ class MessageManager {
       }
 
       return message;
-    } catch (error: any) {
-      logger.error(`编辑消息失败: ${error.message || error}`);
+    } catch (error: unknown) {
+      logger.error(`编辑消息失败: ${getErrorMessage(error)}`);
       return message;
     }
   }

@@ -10,6 +10,7 @@ import * as path from "path";
 import * as fs from "fs";
 import axios from "axios";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const htmlEscape = (text: string): string => 
   text.replace(/[&<>"']/g, m => ({ 
@@ -257,10 +258,10 @@ ${hitokotoText}
 
       await msg.edit({ text: html(reportText) });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 生成报告失败:", error);
       await msg.edit({ 
-        text: html`❌ <b>生成报告失败:</b> ${htmlEscape(error.message || "未知错误")}`
+        text: html`❌ <b>生成报告失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`
       });
     }
   }

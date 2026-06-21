@@ -10,6 +10,7 @@ import bigInt, { BigInteger } from "big-integer";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { hasRawType } from "@utils/entityTypeGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -218,11 +219,11 @@ class TracePlugin extends Plugin {
       
       await msg.edit({ text: html(help_text) });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[trace] Error handling command:", error);
       const errorMsg = `❌ <b>操作失败</b>\n` +
-                      `├ 💔 错误类型: ${error.name || 'Unknown'}\n` +
-                      `├ 📝 错误信息: ${htmlEscape(error.message)}\n` +
+                      `├ 💔 错误类型: ${error instanceof Error ? error.name : 'Unknown'}\n` +
+                      `├ 📝 错误信息: ${htmlEscape(getErrorMessage(error))}\n` +
                       `└ 💡 请检查命令格式或稍后重试`;
       await msg.edit({ text: html(errorMsg) });
     }
