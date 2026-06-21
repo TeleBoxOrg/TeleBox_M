@@ -8,6 +8,7 @@ import { JSONFilePreset } from "lowdb/node";
 import * as path from "path";
 import bigInt, { BigInteger } from "big-integer";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { hasRawType } from "@utils/entityTypeGuards";
 import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
@@ -512,7 +513,7 @@ class TracePlugin extends Plugin {
     }
     if (id) {
       displayParts.push(
-        (entity as any)?._ === 'user'
+        hasRawType(entity, 'user')
           ? `<a href="tg://user?id=${id}">${id}</a>`
           : `<a href="https://t.me/c/${id}">${id}</a>`
       );
