@@ -160,7 +160,7 @@ class ConfigManager {
   }
 
   private static normalize() {
-    const data = this.db?.data as any;
+    const data = this.db?.data as { monitoredChats?: unknown; bannedStickerIds?: Record<string, string>; defaultAction?: string } | undefined;
     if (!data) return;
     // 兼容旧版 monitoredChats: (string|number)[] -> MonitoredChat[]
     if (Array.isArray(data.monitoredChats)) {
@@ -226,7 +226,7 @@ class ImageMonitorPlugin extends Plugin {
         if (!config.bannedStickerIds) config.bannedStickerIds = {};
         const action = (subCommand === 'ban' || subCommand === 'delete') ? subCommand as Action : config.defaultAction;
 
-        const media = (repliedMsg as any).media?.raw ?? (repliedMsg as any).media;
+        const media = (repliedMsg as { media?: { raw?: unknown } }).media?.raw ?? (repliedMsg as { media?: unknown }).media;
         if (!media) {
             await MessageManager.edit(msg, "❌ 该回复不是图片、媒体或贴纸。请回复包含图片/媒体/贴纸的消息后再使用 <code>.im</code>。");
             return;
@@ -251,7 +251,7 @@ class ImageMonitorPlugin extends Plugin {
                     }
                 }
                 await MessageManager.edit(msg, "⏳ 正在计算文件MD5...", { deleteAfter: 0 });
-                const buffer = Buffer.from(await client.downloadAsBuffer(media as any));
+                const buffer = Buffer.from(await client.downloadAsBuffer(media as never));
                 if (!buffer) {
                     await MessageManager.edit(msg, "❌ 下载媒体失败。");
                     return;
@@ -265,7 +265,7 @@ class ImageMonitorPlugin extends Plugin {
 
             if (hasRawType(media, "messageMediaPhoto")) {
                 await MessageManager.edit(msg, "⏳ 正在计算图片MD5...", { deleteAfter: 0 });
-                const buffer = Buffer.from(await client.downloadAsBuffer(media as any));
+                const buffer = Buffer.from(await client.downloadAsBuffer(media as never));
                 if (!buffer) {
                     await MessageManager.edit(msg, "❌ 下载图片失败。");
                     return;
@@ -495,7 +495,7 @@ class ImageMonitorPlugin extends Plugin {
     let media: any;
     let fileSize: number | undefined;
 
-    const rawMedia: any = (msg as any).media?.raw ?? (msg as any).media;
+    const rawMedia: unknown = (msg as { media?: { raw?: unknown } }).media?.raw ?? (msg as { media?: unknown }).media;
     if (!rawMedia) return;
 
     if (hasRawType(rawMedia, "messageMediaDocument")) {
@@ -559,7 +559,7 @@ class ImageMonitorPlugin extends Plugin {
     }
 
     try {
-        const buffer = Buffer.from(await client.downloadAsBuffer(media as any));
+        const buffer = Buffer.from(await client.downloadAsBuffer(media as never));
         if (!buffer) {
             return;
         }

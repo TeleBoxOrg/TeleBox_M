@@ -199,9 +199,9 @@ class PermissionManager {
         participant: await client.resolvePeer(me.id),
       });
 
-      const p = (participant as any).participant;
-      if ((p as any)._ === 'channelParticipantCreator') return true;
-      if ((p as any)._ === 'channelParticipantAdmin') {
+      const p = (participant as { participant?: unknown }).participant;
+      if (hasRawType(p, 'channelParticipantCreator')) return true;
+      if (hasRawType(p, 'channelParticipantAdmin')) {
         // 只要是管理员就行，或者检查具体权限
         return true;
       }
@@ -486,7 +486,8 @@ class CommandHandlers {
 
       // 2. 如果没有提供标识符，检查是否在群组中
       if (!identifier) {
-        if ((message as any).isGroup || ((message as any).isChannel && !(message as any).isPrivate)) {
+        const msgFlags = message as { isGroup?: boolean; isChannel?: boolean; isPrivate?: boolean };
+        if (msgFlags.isGroup || (msgFlags.isChannel && !msgFlags.isPrivate)) {
           const chatId = Number(message.chat.id);
           try {
             const entity: any = await client.getPeer(chatId);
@@ -538,7 +539,8 @@ class CommandHandlers {
         try {
           const entity: any = await client.getPeer(username);
           
-          if ((entity as any)._ === 'chat' || ((entity as any)._ === 'channel' && entity.megagroup)) {
+          const entityRaw = getRawType(entity);
+          if (entityRaw === 'chat' || (entityRaw === 'channel' && isMegagroup(entity))) {
             const chatId = Number(entity.id);
             
             return {
@@ -755,9 +757,9 @@ class AutoRepeatPlugin extends Plugin {
     if (msg.isOutgoing) return;
 
     // 忽略其他机器人发送的消息
-    const sender = await (msg as any).getSender?.();
+    const sender = await (msg as { getSender?: () => Promise<unknown> }).getSender?.();
     if (!sender) return;
-    if ((sender as any).isBot) {
+    if ((sender as { isBot?: boolean }).isBot) {
       return;
     }
 
