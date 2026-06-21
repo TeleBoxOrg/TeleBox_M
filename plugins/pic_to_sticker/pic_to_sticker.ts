@@ -418,12 +418,18 @@ class PicToStickerPlugin extends Plugin {
   }
 
   /**
-   * 通过 raw API 发送贴纸（需要 DocumentAttributeSticker）
-   * 注意: `as any` 是因为 mtcute 的 InputMediaDocument 类型不包含 attributes 字段，
-   * 但底层 TL 层需要 documentAttributeSticker 来标识贴纸。
+   * 发送贴纸（需要 DocumentAttributeSticker）
+   * mtcute 的 InputMediaDocument 类型不包含 attributes 字段，
+   * 但底层 TL 层需要 documentAttributeSticker 来标识贴纸，
+   * 因此使用 unknown 断言绕过类型检查。
    */
-  private async sendSticker(client: any, peer: any, filePath: string, emoji: string, replyToId?: number): Promise<void> {
-    // 使用 sendMedia 发送 document 并带贴纸属性
+  private async sendSticker(
+    client: import("@mtcute/node").TelegramClient,
+    peer: number,
+    filePath: string,
+    emoji: string,
+    replyToId?: number
+  ): Promise<void> {
     await client.sendMedia(peer, {
       type: "document",
       file: filePath,
@@ -431,7 +437,7 @@ class PicToStickerPlugin extends Plugin {
       attributes: [
         { _: 'documentAttributeSticker', alt: emoji, stickerset: { _: 'inputStickerSetEmpty' } }
       ]
-    } as never, {
+    } as unknown as Parameters<typeof client.sendMedia>[1], {
       replyTo: replyToId
     });
   }
