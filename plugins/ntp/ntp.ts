@@ -6,6 +6,7 @@ import * as dgram from "dgram";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const execFileAsync = promisify(execFile);
 
@@ -220,8 +221,8 @@ async function setSystemTimeBestEffort(serverTimeMs: number): Promise<{
       };
     }
     return { ok: false, hint: `暂不支持的平台：${platform}` };
-  } catch (error: any) {
-    const msg = String(error?.message || error);
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error);
     const needRoot = /not permitted|Operation not permitted|must be root|permission/i.test(
       msg
     );
@@ -267,8 +268,8 @@ class NtpPlugin extends Plugin {
               : undefined,
           ].filter(Boolean);
           await msg.edit({ text: html(lines.join("<br>")) });
-        } catch (e: any) {
-          await msg.edit({ text: html(`❌ 查询失败：${htmlEscape(String(e?.message || e))}`) });
+        } catch (e: unknown) {
+          await msg.edit({ text: html(`❌ 查询失败：${htmlEscape(getErrorMessage(e))}`) });
         }
         return;
       }
@@ -313,8 +314,8 @@ class NtpPlugin extends Plugin {
               ),
             });
           }
-        } catch (e: any) {
-          await msg.edit({ text: html(`❌ 对时失败：${htmlEscape(String(e?.message || e))}`) });
+        } catch (e: unknown) {
+          await msg.edit({ text: html(`❌ 对时失败：${htmlEscape(getErrorMessage(e))}`) });
         }
         return;
       }

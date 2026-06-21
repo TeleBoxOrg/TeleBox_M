@@ -1,6 +1,7 @@
 import { execFileSync } from "child_process";
 import path from "path";
 import { logger } from "@utils/logger";
+import { getExecErrorOutput } from "@utils/errorHelpers";
 
 function buildCleanNpmEnv(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
@@ -46,9 +47,10 @@ export function npm_install(pkg: string, version?: string) {
     try {
       runNpm(["install", fullName]);
       logger.info(`Package "${fullName}" installed successfully.`);
-    } catch (error: any) {
-      const stderr = error?.stderr?.toString?.() || error?.message || String(error);
-      logger.error(`Failed to install ${fullName}: ${stderr}`);
+    } catch (error: unknown) {
+      const { stderr, message } = getExecErrorOutput(error);
+      const errMsg = stderr || message || String(error);
+      logger.error(`Failed to install ${fullName}: ${errMsg}`);
       throw error;
     }
   }
@@ -59,9 +61,10 @@ export function npm_install_project_dependencies() {
   try {
     runNpm(["install"]);
     logger.info("Project dependencies installed successfully.");
-  } catch (error: any) {
-    const stderr = error?.stderr?.toString?.() || error?.message || String(error);
-    logger.error(`Failed to install project dependencies: ${stderr}`);
+  } catch (error: unknown) {
+    const { stderr, message } = getExecErrorOutput(error);
+    const errMsg = stderr || message || String(error);
+    logger.error(`Failed to install project dependencies: ${errMsg}`);
     throw error;
   }
 }

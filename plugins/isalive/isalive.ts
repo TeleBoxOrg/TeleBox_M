@@ -6,6 +6,7 @@ import type { User, Chat } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import {
   getUserStatus,
   hasUserStatus,
@@ -67,11 +68,11 @@ async function formatEntity(
     if (!entity) throw new Error("无法获取 entity");
     id = getUserId(entity);
     if (!id) throw new Error("无法获取 entity id");
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error(e);
     if (throwErrorIfFailed)
       throw new Error(
-        `无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`
+        `无法获取 ${target} 的 entity: ${getErrorMessage(e)}`
       );
   }
   const displayParts: string[] = [];
@@ -398,9 +399,9 @@ class IsAlivePlugin extends Plugin {
             const username = input.startsWith("@") ? input : `@${input}`;
             entity = await client.getChat(username) as User | Chat;
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           await msg.edit({
-            text: html`❌ 无法解析用户: ${error?.message || String(error)}<br><i>提示: 使用 UID 查询需要你与该用户有过交互（私聊、同群等）</i>`,
+            text: html`❌ 无法解析用户: ${getErrorMessage(error)}<br><i>提示: 使用 UID 查询需要你与该用户有过交互（私聊、同群等）</i>`,
           });
           return;
         }
