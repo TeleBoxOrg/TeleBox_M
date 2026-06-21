@@ -24,6 +24,7 @@ import {
 import { sleep } from "teleproto/Helpers";
 import { safeGetReplyMessage, safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { EntityLike, MessageLike } from "@utils/tlTypes";
 import dayjs from "dayjs";
 import { CustomFile } from "teleproto/client/uploads.js";
 import * as zlib from "zlib";
@@ -312,7 +313,7 @@ const resolveForwardSenderFromHeader = async (
 
   for (const peer of peerCandidates) {
     try {
-      const entity = await client?.getEntity(peer as any);
+      const entity = await client?.getEntity(peer as Api.InputPeer);
       if (entity) {
         return entity;
       }
@@ -386,7 +387,7 @@ function convertEntities(entities: Api.TypeMessageEntity[]): any[] {
     } else if (entity instanceof Api.MessageEntityPre) {
       return { ...baseEntity, type: "pre" };
     } else if (entity instanceof Api.MessageEntityCustomEmoji) {
-      const documentId = (entity as any).documentId;
+      const documentId = (entity as unknown as { documentId: { value?: number | bigint } | string }).documentId;
       const custom_emoji_id =
         documentId?.value?.toString() || documentId?.toString() || "";
       return {
@@ -400,7 +401,7 @@ function convertEntities(entities: Api.TypeMessageEntity[]): any[] {
       return {
         ...baseEntity,
         type: "text_link",
-        url: (entity as any).url || "",
+        url: (entity as unknown as { url?: string }).url || "",
       };
     } else if (entity instanceof Api.MessageEntityMention) {
       return { ...baseEntity, type: "mention" };
@@ -408,7 +409,7 @@ function convertEntities(entities: Api.TypeMessageEntity[]): any[] {
       return {
         ...baseEntity,
         type: "text_mention",
-        user: { id: (entity as any).userId },
+        user: { id: (entity as unknown as { userId?: number | string }).userId },
       };
     } else if (entity instanceof Api.MessageEntityHashtag) {
       return { ...baseEntity, type: "hashtag" };
@@ -618,7 +619,7 @@ class YvluPlugin extends Plugin {
             return;
           }
 
-          const items = [] as any[];
+          const items: Record<string, unknown>[] = [];
           let previousUserIdentifier: string | null = null;
 
           for (const [i, message] of messages.entries()) {
@@ -629,7 +630,7 @@ class YvluPlugin extends Plugin {
             if (!sender) {
               try {
                 const peerId =
-                  (message as any).peerId || (message as any).fromId;
+                  (message as MessageLike).peerId || (message as MessageLike).fromId;
                 if (peerId) {
                   sender = await client.resolvePeer(peerId);
                 }
@@ -676,14 +677,15 @@ class YvluPlugin extends Plugin {
             }
 
             // 准备用户数据
-            const userId = (sender as any).id?.toString();
-            const name = (sender as any).name || "";
+            const senderLike = sender as EntityLike;
+            const userId = senderLike.id?.toString();
+            const name = (sender as unknown as { name?: string }).name || "";
             const firstName =
-              (sender as any).firstName || (sender as any).title || "";
-            const lastName = (sender as any).lastName || "";
-            const username = (sender as any).username || "";
+              senderLike.firstName || senderLike.title || "";
+            const lastName = senderLike.lastName || "";
+            const username = senderLike.username || "";
             const emojiStatus =
-              (sender as any).emojiStatus?.documentId?.toString() || null;
+              (sender as unknown as { emojiStatus?: { documentId?: { toString(): string } } }).emojiStatus?.documentId?.toString() || null;
 
             // 生成用户唯一标识符：优先使用 userId，如果没有则使用名称的 hashCode
             const currentUserIdentifier =
@@ -701,7 +703,7 @@ class YvluPlugin extends Plugin {
             if (shouldShowAvatar) {
               try {
                 const buffer = await client.downloadProfilePhoto(
-                  sender as any,
+                  sender as EntityLike,
                   {
                     isBig: false,
                   },
@@ -734,7 +736,7 @@ class YvluPlugin extends Plugin {
             let replyBlock: any | undefined;
             if (r) {
               try {
-                const replyHeader: any = (message as any).replyTo;
+                const replyHeader = (message as MessageLike).replyTo as Record<string, unknown> | undefined;
 
                 // 1) 优先使用 quote header（包含被引用文本与实体偏移）
                 if (replyHeader?.quote && replyHeader.quoteText) {
@@ -748,12 +750,13 @@ class YvluPlugin extends Plugin {
                       const repliedSender = await repliedMsg.getSender();
                       if (repliedSender) {
                         replyChatId = Number(repliedSender.id);
+                        const repliedSenderLike = repliedSender as EntityLike;
                         const rFirst =
-                          (repliedSender as any).firstName ||
-                          (repliedSender as any).title ||
+                          repliedSenderLike.firstName ||
+                          repliedSenderLike.title ||
                           "";
-                        const rLast = (repliedSender as any).lastName || "";
-                        const rUser = (repliedSender as any).username || "";
+                        const rLast = repliedSenderLike.lastName || "";
+                        const rUser = repliedSenderLike.username || "";
                         const composed = `${rFirst} ${rLast}`.trim();
                         replyName = composed || rUser || "unknown";
                       }
@@ -774,7 +777,7 @@ class YvluPlugin extends Plugin {
                   };
                 } else if (
                   // 2) 次选：直接获取被回复消息
-                  (message as any).isReply ||
+                  (message as MessageLike).isReply ||
                   replyHeader?.replyToMsgId
                 ) {
                   try {
@@ -785,12 +788,13 @@ class YvluPlugin extends Plugin {
                       let replyChatId: number | undefined;
                       if (repliedSender) {
                         replyChatId = Number(repliedSender.id);
+                        const repliedSenderLike = repliedSender as EntityLike;
                         const rFirst =
-                          (repliedSender as any).firstName ||
-                          (repliedSender as any).title ||
+                          repliedSenderLike.firstName ||
+                          repliedSenderLike.title ||
                           "";
-                        const rLast = (repliedSender as any).lastName || "";
-                        const rUser = (repliedSender as any).username || "";
+                        const rLast = repliedSenderLike.lastName || "";
+                        const rUser = repliedSenderLike.username || "";
                         const composed = `${rFirst} ${rLast}`.trim();
                         replyName = composed || rUser || "unknown";
                       }
@@ -829,7 +833,7 @@ class YvluPlugin extends Plugin {
                   message.media instanceof Api.MessageMediaDocument &&
                   (message.media as Api.MessageMediaDocument).document &&
                   (
-                    (message.media as Api.MessageMediaDocument).document as any
+                    (message.media as Api.MessageMediaDocument).document as unknown as { attributes?: unknown[] }
                   ).attributes?.some(
                     (a: any) => a instanceof Api.DocumentAttributeSticker,
                   );
@@ -840,7 +844,7 @@ class YvluPlugin extends Plugin {
                   mediaTypeForQuote = "photo";
                 }
 
-                const mimeType = (message.media as any).document?.mimeType;
+                const mimeType = (message.media as unknown as { document?: { mimeType?: string } }).document?.mimeType;
 
                 // 检测是否为 TGS 动态贴纸
                 const isTgsSticker =
@@ -858,7 +862,7 @@ class YvluPlugin extends Plugin {
                       isTgsSticker)) || // TGS 动态贴纸
                   isGifOrMp4; // GIF/MP4
 
-                const buffer = await (message as any).downloadMedia({
+                const buffer = await (message as unknown as { downloadMedia: (opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia({
                   // 动态内容不使用缩略图，下载原始文件
                   ...(isAnimatedContent ? {} : { thumb: 1 }),
                 });
@@ -1234,7 +1238,7 @@ ${codeTag(this.configPath)}
       let documentToAdd: Api.InputDocument | null = null;
 
       if (replied.media instanceof Api.MessageMediaDocument) {
-        const doc = replied.media.document as any;
+        const doc = replied.media.document as unknown as { attributes?: unknown[]; id?: number | string; accessHash?: number | string; fileReference?: Uint8Array } | null;
         if (doc && doc.attributes) {
           isSticker = doc.attributes.some(
             (a: any) => a instanceof Api.DocumentAttributeSticker,
@@ -1345,7 +1349,7 @@ ${codeTag(this.configPath)}
                 shortName: this.config.stickerSetShortName,
               }),
               sticker: new Api.InputStickerSetItem({
-                document: file as any,
+                document: file as Api.InputDocument,
                 emoji: "📝",
               }),
             }),
@@ -1382,10 +1386,10 @@ ${codeTag(this.configPath)}
   ) {
     try {
       // 准备第一个贴纸
-      let firstSticker: any = null;
+      let firstSticker: Api.InputDocument | null = null;
 
       if (isSticker && replied.media instanceof Api.MessageMediaDocument) {
-        const doc = replied.media.document as any;
+        const doc = replied.media.document as unknown as { id?: number | string; accessHash?: number | string; fileReference?: Uint8Array } | null;
         if (doc && doc.id && doc.accessHash) {
           firstSticker = new Api.InputDocument({
             id: doc.id,
