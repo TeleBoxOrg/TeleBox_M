@@ -7,6 +7,7 @@ import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
+import { tl, Long } from "@mtcute/node";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -126,8 +127,15 @@ async function ensureBotReady(msg: MessageContext) {
   const client = await getGlobalClient();
   if (!client) return;
 
+  let botPeer: tl.TypeInputPeer;
+  let botUser: tl.TypeInputUser;
   try {
-    await client.call({ _: "contacts.unblock", id: BOT_USERNAME } as any);
+    botPeer = await client.resolvePeer(BOT_USERNAME);
+    botUser = await client.resolveUser(BOT_USERNAME);
+  } catch (e) { /* resolve failed */ return; }
+
+  try {
+    await client.call({ _: "contacts.unblock", id: botPeer });
   } catch (e) { /* unblock failed */ }
 
   try {
@@ -148,7 +156,7 @@ async function ensureBotReady(msg: MessageContext) {
   }
 
   try {
-    const history = await safeGetMessages(client, BOT_USERNAME, { limit: 1 } as any);
+    const history = await client.getHistory(BOT_USERNAME, { limit: 1 });
     if (history.length > 0) {
       hasStartedBot = true;
       return;
@@ -160,10 +168,11 @@ async function ensureBotReady(msg: MessageContext) {
       firstRunPreStartLastId = await getLatestBotMessageId(client);
       shouldIgnoreNextBotMessage = true;
     }
-    await (client.call as any)({
+    await client.call({
       _: "messages.startBot",
-      bot: BOT_USERNAME,
-      peer: BOT_USERNAME,
+      bot: botUser,
+      peer: botPeer,
+      randomId: Long.fromNumber(Date.now()),
       startParam: "",
     });
     hasStartedBot = true;
@@ -201,7 +210,7 @@ async function ensureBotReady(msg: MessageContext) {
 async function getLatestBotMessageId(client: any): Promise<number> {
   if (!client) return 0;
   try {
-    const history = await safeGetMessages(client, BOT_USERNAME, { limit: 1 } as any);
+    const history = await client.getHistory(BOT_USERNAME, { limit: 1 });
     if (history.length > 0) {
       return history[0].id;
     }
@@ -275,7 +284,7 @@ async function relayParseResult(
 
     let messages: any[] = [];
     try {
-      messages = await safeGetMessages(client, BOT_USERNAME, { limit: FETCH_LIMIT } as any);
+      messages = await client.getHistory(BOT_USERNAME, { limit: FETCH_LIMIT });
     } catch (error: any) {
       return {
         lastId,
@@ -387,8 +396,8 @@ class ParseHubPlugin extends Plugin {
       // 若命令未包含链接且为回复消息，从被回复消息中提取链接
       if (!links.length && msg.replyToMessage?.id) {
         try {
-          const replied = await safeGetReplyMessage(msg as any);
-          const replyText = (replied as any)?.text || "";
+          const replied = await safeGetReplyMessage(msg);
+          const replyText = replied?.text || "";
           const replyLinks = extractLinks(replyText);
           if (replyLinks.length) {
             links = replyLinks;
@@ -399,8 +408,8 @@ class ParseHubPlugin extends Plugin {
       // 若命令和被回复消息都包含链接，合并去重，命令里的在前
       if (msg.replyToMessage?.id) {
         try {
-          const replied = await safeGetReplyMessage(msg as any);
-          const replyText = (replied as any)?.text || "";
+          const replied = await safeGetReplyMessage(msg);
+          const replyText = replied?.text || "";
           const replyLinks = extractLinks(replyText);
           if (replyLinks.length) {
             const set = new Set<string>(links);

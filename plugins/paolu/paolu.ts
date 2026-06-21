@@ -6,6 +6,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { getRawType } from "@utils/entityTypeGuards";
+import { Long } from "@mtcute/core";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -77,8 +78,8 @@ class PaoluPlugin extends Plugin {
           try {
             const result: any = await client.call({
               _: 'channels.getParticipant',
-              channel: await client.resolvePeer(chatId) as any,
-              participant: me.id as any,
+              channel: await client.resolveChannel(chatId),
+              participant: await client.resolvePeer(me.id),
             });
             const pType = result?.participant?._;
             isAdmin =
@@ -89,14 +90,14 @@ class PaoluPlugin extends Plugin {
             try {
               const adminResult: any = await client.call({
                 _: 'channels.getParticipants',
-                channel: await client.resolvePeer(chatId) as any,
+                channel: await client.resolveChannel(chatId),
                 filter: { _: 'channelParticipantsAdmins' },
                 offset: 0,
                 limit: 100,
-                hash: 0 as any,
+                hash: Long.fromNumber(0),
               });
               if ("users" in adminResult) {
-                const admins = adminResult.users as any[];
+                const admins = adminResult.users as Array<{ id: number }>;
                 isAdmin = admins.some(
                   (admin) => String(admin.id) === String(me.id)
                 );
@@ -128,7 +129,7 @@ class PaoluPlugin extends Plugin {
       try {
         await client.call({
           _: 'channels.editBanned',
-          channel: await client.resolvePeer(chatId) as any,
+          channel: await client.resolveChannel(chatId),
           participant: "all" as any,
           bannedRights: {
             _: 'chatBannedRights',
@@ -144,7 +145,7 @@ class PaoluPlugin extends Plugin {
             changeInfo: true,
             inviteUsers: true,
             pinMessages: true,
-          } as any,
+          },
         });
         logger.info(`[PAOLU] 已禁言群组 ${chatId}`);
       } catch (banError) {
@@ -160,7 +161,7 @@ class PaoluPlugin extends Plugin {
         try {
           const chat = await client.getChat(chatId);
           if ("title" in chat) {
-            chatName = (chat as any).title || "未知群组";
+            chatName = chat.title || "未知群组";
           }
         } catch (error) {
           logger.error("获取群聊信息失败:", error);
