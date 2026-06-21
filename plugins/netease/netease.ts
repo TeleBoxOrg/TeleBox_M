@@ -120,6 +120,7 @@ async function fetchAndSendAudio(
   // 若有按钮则点击第一个按钮
   if (!mediaMsg && replyWithButtons) {
     try {
+      // gramjs→mtcute: Message.click() not in mtcute types, cast needed for callback answer
       await (replyWithButtons as any).click({});
     } catch (e) {
       await msg.edit({ text: html(`❌ 点击按钮失败：${htmlEscape((e as { message?: string })?.message || String(e))}`) });
@@ -151,9 +152,8 @@ async function fetchAndSendAudio(
 
   // 以纯上传形式回传 - 下载后重新发送
   try {
-    // Note: downloadAsBuffer expects FileDownloadLocation, but MessageMedia doesn't match.
-    // The cast is needed because mtcute doesn't provide a direct conversion path.
-    const buffer = await client.downloadAsBuffer(mediaMsg.media as any);
+    // mtcute type limitation: downloadAsBuffer expects FileDownloadLocation but MessageMedia doesn't match
+    const buffer = await client.downloadAsBuffer(mediaMsg.media as Parameters<typeof client.downloadAsBuffer>[0]);
     const replyToId = msg.replyToMessage?.id;
     await client.sendMedia(msg.chat.id, {
       type: "audio",

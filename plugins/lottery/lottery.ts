@@ -1675,7 +1675,7 @@ class LotteryPlugin extends Plugin {
       try {
         db.close();
       } catch (e) { /* noop */ }
-      db = null as any;
+      db = null as unknown as typeof db;
     }
   }
 
