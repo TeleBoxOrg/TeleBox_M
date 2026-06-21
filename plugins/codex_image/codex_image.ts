@@ -9,6 +9,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { logger } from "@utils/logger";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -382,7 +383,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
       await msg.edit({
         text: `${phaseText}\n⏱️ 已耗时：${elapsed}`,
       });
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('[codex_image] edit progress msg failed:', e) }
   };
 
   const heartbeat = (async () => {
