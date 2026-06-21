@@ -12,6 +12,7 @@ import axios from "axios";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getUsername, getTitle } from "@utils/entityTypeGuards";
+import { User } from "@mtcute/node";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -259,7 +260,7 @@ async function formatEntity(target: any) {
 
       try {
         // 先检查邀请链接信息
-        const inviteInfo: any = await client.call({ _: "messages.checkChatInvite", hash } as any);
+        const inviteInfo = await client.call({ _: "messages.checkChatInvite" as const, hash });
 
         if (inviteInfo?._ === "chatInviteAlready") {
           // 已经在群组中，直接使用返回的 chat 对象
@@ -267,7 +268,7 @@ async function formatEntity(target: any) {
           id = entity?.id;
         } else if (inviteInfo?._ === "chatInvite") {
           // 还未加入群组，需要先加入
-          const importResult: any = await client.call({ _: "messages.importChatInvite", hash } as any);
+          const importResult = await client.call({ _: "messages.importChatInvite" as const, hash });
 
           // 从导入结果中获取 chat 对象
           if (importResult && 'chats' in importResult && importResult.chats.length > 0) {
@@ -519,11 +520,12 @@ async function getGroupMessages(chatId: string, count: number): Promise<MessageD
 
   const messageData: MessageData[] = [];
   for (const msg of messages) {
-    const message = msg as any;
+    const message = msg;
     // 跳过完全没有内容的消息
     if (!message.text && !message.media) continue;
 
-    const sender = message.sender?.firstName || message.sender?.username || "未知用户";
+    const senderPeer = message.sender;
+    const sender = senderPeer instanceof User ? senderPeer.firstName || senderPeer.username : senderPeer?.username || "未知用户";
     const time = formatDate(message.date instanceof Date ? message.date : new Date(message.date * 1000));
     const link = buildMessageLink(chatId, message.id, chatUsername);
     const urls = extractUrlsFromEntities(message);
@@ -568,12 +570,13 @@ async function getGroupMessagesByTime(chatId: string, hours: number): Promise<Me
 
   const messageData: MessageData[] = [];
   for (const msg of messages) {
-    const message = msg as any;
+    const message = msg;
     const msgEpoch = message.date instanceof Date ? Math.floor(message.date.getTime() / 1000) : message.date;
     if (msgEpoch < startTime) continue;
     if (!message.text && !message.media) continue;
 
-    const sender = message.sender?.firstName || message.sender?.username || "未知用户";
+    const senderPeer = message.sender;
+    const sender = senderPeer instanceof User ? senderPeer.firstName || senderPeer.username : senderPeer?.username || "未知用户";
     const time = formatDate(message.date instanceof Date ? message.date : new Date(message.date * 1000));
     const link = buildMessageLink(chatId, message.id, chatUsername);
     const urls = extractUrlsFromEntities(message);
