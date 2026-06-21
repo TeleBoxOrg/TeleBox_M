@@ -136,21 +136,13 @@ async function searchAndSendMusic(
   }
 
   let clicked = false;
-  try {
-    await (replyWithButtons as any).click(0);
-    clicked = true;
-  } catch (e) { logger.warn('[music_bot] click button failed:', e) }
-  if (!clicked) {
+  // gramjs→mtcute: Message.click() not in mtcute types, cast needed for callback answer
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       await (replyWithButtons as any).click(0);
       clicked = true;
-    } catch (e) { logger.warn('[music_bot] click button retry 1 failed:', e) }
-  }
-  if (!clicked) {
-    try {
-      await (replyWithButtons as any).click(0);
-      clicked = true;
-    } catch (e) { logger.warn('[music_bot] click button retry 2 failed:', e) }
+      break;
+    } catch (e) { logger.warn(`[music_bot] click button attempt ${attempt} failed:`, e) }
   }
   if (!clicked) {
     try {
@@ -184,13 +176,12 @@ async function searchAndSendMusic(
     return;
   }
 
-  // Send the media back to the user
-  // Note: mediaMsg.media is MessageMedia (high-level), but sendMedia expects InputMediaLike.
-  // The cast is needed because mtcute doesn't provide a direct conversion path.
+  // mtcute type limitation: sendMedia expects InputMediaLike but MessageMedia doesn't match
+  const audioMedia = mediaMsg.media as unknown as { _?: string; fileId?: string };
   if (action === "ym") {
-    await client.sendMedia(msg.chat.id, { type: "audio", file: mediaMsg.media as any }, { replyTo: msg.replyToMessage?.id ?? undefined });
+    await client.sendMedia(msg.chat.id, { type: "audio", file: audioMedia as never }, { replyTo: msg.replyToMessage?.id ?? undefined });
   } else {
-    await client.sendMedia(msg.chat.id, { type: "audio", file: mediaMsg.media as any, caption: `🎵 ${htmlEscape(displayKeyword ?? keyword)}` }, { replyTo: msg.replyToMessage?.id ?? undefined });
+    await client.sendMedia(msg.chat.id, { type: "audio", file: audioMedia as never, caption: `🎵 ${htmlEscape(displayKeyword ?? keyword)}` }, { replyTo: msg.replyToMessage?.id ?? undefined });
   }
 
   try {

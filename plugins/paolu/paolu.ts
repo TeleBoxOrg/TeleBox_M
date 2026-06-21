@@ -130,7 +130,8 @@ class PaoluPlugin extends Plugin {
         await client.call({
           _: 'channels.editBanned',
           channel: await client.resolveChannel(chatId),
-          participant: "all" as any,
+          // TL-layer: channels.editBanned expects TypeInputPeer, cast from string
+          participant: "all" as unknown as never,
           bannedRights: {
             _: 'chatBannedRights',
             untilDate: 0,
