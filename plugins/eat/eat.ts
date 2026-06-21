@@ -194,8 +194,8 @@ async function downloadProfilePhotoForId(client: TelegramClient, userId: number)
     const peer = await client.resolvePeer(userId);
     const fullUser = await client.call({
       _: 'users.getFullUser',
-      id: peer as any, // TypeInputPeer is compatible at runtime; TL union types are too complex for TS
-    }) as any;
+      id: peer as unknown as never,
+    }) as unknown as { full_user?: { photo?: { _?: string; photo_id?: bigint } } };
     const photo = fullUser?.full_user?.photo;
     if (!photo || photo._ !== 'userProfilePhoto') return null;
     const location = {
@@ -203,8 +203,8 @@ async function downloadProfilePhotoForId(client: TelegramClient, userId: number)
       big: false,
       peer: peer,
       photoId: photo.photo_id,
-    } as any;
-    const buffer = await client.downloadAsBuffer(location);
+    } as unknown as never;
+    const buffer = await client.downloadAsBuffer(location as unknown as never);
     return Buffer.from(buffer);
   } catch (err) {
     logger.error("[eat] downloadProfilePhoto failed:", err);
@@ -281,13 +281,13 @@ async function sendRawSticker(params: {
         { _: "documentAttributeImageSize", w: width, h: height },
         { _: "documentAttributeFilename", file_name: "output.webp" },
       ],
-    } as any,
+    } as unknown as object,
     random_id: Math.floor(Math.random() * 2 ** 53),
   };
   if (replyMsgId) {
     callParams.reply_to = { _: "inputReplyToMessage", reply_to_msg_id: replyMsgId };
   }
-  await client.call(callParams as any);
+  await client.call(callParams as unknown as never);
 }
 
 async function compositeWithEntryConfig(parmas: {
