@@ -403,8 +403,9 @@ class PrometheusPlugin extends Plugin {
     try {
       await msg.edit({ text: html(safeText) });
       this.lastEditText.set(msgId, safeText);
-    } catch (err: any) {
-      if (err.message?.includes('MESSAGE_NOT_MODIFIED')) {
+    } catch (err: unknown) {
+      const errMsg = getErrorMessage(err);
+      if (errMsg.includes('MESSAGE_NOT_MODIFIED')) {
         this.lastEditText.set(msgId, safeText);
         return;
       }
@@ -825,10 +826,10 @@ class PrometheusPlugin extends Plugin {
           forwardedMsg: forwardedMessage,
           source: { chatId: sourceChatId, messageId: sourceMessageId }
         };
-      } catch (forwardError: any) {
-        const errorMsg = forwardError.message || '';
-        const isRestricted = errorMsg.includes('SAVE') || 
-                           errorMsg.includes('FORWARD') || 
+      } catch (forwardError: unknown) {
+        const errorMsg = getErrorMessage(forwardError);
+        const isRestricted = errorMsg.includes('SAVE') ||
+                           errorMsg.includes('FORWARD') ||
                            errorMsg.includes('CHAT_FORWARDS_RESTRICTED');
         
         if (!isRestricted) throw forwardError;

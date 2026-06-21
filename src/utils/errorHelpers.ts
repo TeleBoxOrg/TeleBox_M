@@ -49,3 +49,24 @@ export function toError(error: unknown): Error {
   if (error instanceof Error) return error;
   return new Error(getErrorMessage(error));
 }
+
+/**
+ * Extract stdout/stderr from a child_process.exec error (or any object
+ * that carries those fields).  Returns { stdout, stderr } with empty
+ * strings for missing fields.
+ */
+export function getExecErrorOutput(error: unknown): {
+  stdout: string;
+  stderr: string;
+  message: string;
+} {
+  if (error !== null && error !== undefined && typeof error === "object") {
+    const obj = error as Record<string, unknown>;
+    return {
+      stdout: typeof obj.stdout === "string" ? obj.stdout : String(obj.stdout ?? "").trim(),
+      stderr: typeof obj.stderr === "string" ? obj.stderr : String(obj.stderr ?? "").trim(),
+      message: getErrorMessage(error),
+    };
+  }
+  return { stdout: "", stderr: "", message: getErrorMessage(error) };
+}

@@ -10,6 +10,7 @@ import * as dns from "dns";
 
 import { safeGetMe } from "../utils/authGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage, getErrorCode } from "@utils/errorHelpers";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -184,13 +185,14 @@ async function systemPing(
       loss: packetLoss,
       output: stdout,
     };
-  } catch (error: any) {
-    if (error.code === "ETIMEDOUT") {
+  } catch (error: unknown) {
+    const errCode = getErrorCode(error);
+    if (errCode === "ETIMEDOUT") {
       throw new Error("执行超时");
-    } else if (error.killed) {
+    } else if (error !== null && error !== undefined && typeof error === "object" && "killed" in error && (error as { killed: unknown }).killed) {
       throw new Error("命令被终止");
     } else {
-      throw new Error(`Ping失败: ${error.message}`);
+      throw new Error(`Ping失败: ${getErrorMessage(error)}`);
     }
   }
 }
@@ -373,7 +375,7 @@ class PingPlugin extends Plugin {
               results.push(`🏓 <b>ICMP Ping:</b> <code>不可用</code>`);
             }
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           // ICMP失败，尝试HTTP ping
           const httpResult = await httpPing(testTarget, false);
           if (httpResult > 0) {
@@ -448,9 +450,9 @@ class PingPlugin extends Plugin {
             "<br>"
           )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         await msg.edit({
-          text: html(`❌ 测试失败: ${htmlEscape(error.message)}`),
+          text: html(`❌ 测试失败: ${htmlEscape(getErrorMessage(error))}`),
         });
       }
     },

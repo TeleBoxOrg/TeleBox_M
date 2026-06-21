@@ -21,6 +21,7 @@ import { JSONFilePreset } from "lowdb/node";
 import * as path from "path";
 import * as crypto from "crypto";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 // ==================== 类型定义 ====================
 type Action = "delete" | "ban";
 
@@ -278,9 +279,9 @@ class ImageMonitorPlugin extends Plugin {
             }
 
             await MessageManager.edit(msg, "❌ 不支持的媒体类型。请回复图片、媒体或贴纸。");
-        } catch (error: any) {
+        } catch (error: unknown) {
             logger.error(`[${PLUGIN_NAME}] Failed to process replied media:`, error);
-            await MessageManager.edit(msg, `❌ 处理媒体时出错: ${htmlEscape(error.message)}`);
+            await MessageManager.edit(msg, `❌ 处理媒体时出错: ${htmlEscape(getErrorMessage(error))}`);
         }
         return;
     }
@@ -453,9 +454,9 @@ class ImageMonitorPlugin extends Plugin {
           await MessageManager.edit(msg, HELP_TEXT, { deleteAfter: 30 });
           break;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error(`[${PLUGIN_NAME}] Command failed:`, error);
-        await MessageManager.edit(msg, `❌ 命令执行失败: ${htmlEscape(error.message)}`);
+        await MessageManager.edit(msg, `❌ 命令执行失败: ${htmlEscape(getErrorMessage(error))}`);
     }
   }
 

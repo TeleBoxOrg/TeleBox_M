@@ -9,6 +9,7 @@ import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { tl, Long } from "@mtcute/node";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -263,12 +264,12 @@ async function relayParseResult(
 
   try {
     await client.sendText(BOT_USERNAME, link);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       lastId: baselineId,
       forwarded: false,
       reason: "send_failed",
-      error: error?.message || String(error),
+      error: getErrorMessage(error),
     };
   }
 
@@ -286,12 +287,12 @@ async function relayParseResult(
     let messages: any[] = [];
     try {
       messages = await client.getHistory(BOT_USERNAME, { limit: FETCH_LIMIT });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         lastId,
         forwarded: false,
         reason: "fetch_failed",
-        error: error?.message || String(error),
+        error: getErrorMessage(error),
       };
     }
 
