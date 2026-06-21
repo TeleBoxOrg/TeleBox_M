@@ -560,18 +560,17 @@ class OpenListPlugin extends Plugin {
         finalPath = db.data.defaultPath || "";
       }
 
-      const media = replyToMsg.media;
+      const media = replyToMsg.media as { type?: string; fileName?: string; mimeType?: string } | null;
       let fileName = "";
 
-      if ((media as any)?.type === 'photo') {
+      if (media?.type === 'photo') {
         fileName = `photo_${Date.now()}.jpg`;
-      } else if ((media as any)?.type === 'document') {
-        const doc = media as any;
-        if (doc.fileName) {
-          fileName = doc.fileName;
+      } else if (media?.type === 'document') {
+        if (media.fileName) {
+          fileName = media.fileName;
         } else {
           let ext = "";
-          switch (doc.mimeType as string) {
+          switch (media.mimeType as string) {
             case "video/mp4": ext = ".mp4"; break;
             case "video/x-matroska": ext = ".mkv"; break;
             case "video/quicktime": ext = ".mov"; break;
@@ -596,7 +595,7 @@ class OpenListPlugin extends Plugin {
       await msg.edit({ text: `正在下载: ${htmlEscape(fileName)}` });
 
       const client = await getGlobalClient();
-      const buffer = await client.downloadAsBuffer(replyToMsg.media as any);
+      const buffer = await client.downloadAsBuffer(replyToMsg.media as unknown as import("@mtcute/core").FileDownloadLocation);
 
       if (!buffer || !(buffer instanceof Buffer)) {
         await msg.edit({ text: "文件下载失败或格式不支持。" });

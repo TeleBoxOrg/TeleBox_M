@@ -527,7 +527,7 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
             }
             await msg.edit({ text: "♻️ 恢复中..." });
             const _restoreClient = await getGlobalClient();
-            const buf = await _restoreClient.downloadAsBuffer(reply.media as any);
+            const buf = await _restoreClient.downloadAsBuffer(reply.media as unknown as import("@mtcute/core").FileDownloadLocation);
             const restoreFile = `/tmp/restore_${Date.now()}.tgz`;
             fs.writeFileSync(restoreFile, Buffer.from(buf));
 

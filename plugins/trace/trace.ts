@@ -145,8 +145,8 @@ class TracePlugin extends Plugin {
       this.pendingDeleteTimers.delete(timer);
       msg.delete().catch(() => { /* msg may already be deleted */ });
     }, seconds * 1000);
-    if (typeof (timer as any).unref === "function") {
-      (timer as any).unref();
+    if (typeof (timer as { unref?: () => void }).unref === "function") {
+      (timer as { unref: () => void }).unref();
     }
     this.pendingDeleteTimers.add(timer);
   }
@@ -168,9 +168,9 @@ class TracePlugin extends Plugin {
     if (this.meId === null) {
         const client = await getGlobalClient();
         if (client) {
-            const me = await client.getMe() as any;
+            const me = await client.getMe() as { premium?: boolean; id?: number | bigint } | undefined;
             this.isPremium = me?.premium || false;
-            this.meId = me?.id || null;
+            this.meId = me?.id != null ? (typeof me.id === 'bigint' ? bigInt(me.id) : bigInt(Number(me.id))) : null;
         } else {
             this.isPremium = false;
         }
@@ -491,16 +491,17 @@ class TracePlugin extends Plugin {
     await this.editAndDelete(msg, configMsg, 10);
   }
 
-  private async formatEntity(target: string | any, mention?: boolean, throwErrorIfFailed?: boolean) {
+  private async formatEntity(target: string | { _?: unknown; id?: number | bigint; title?: string; firstName?: string; lastName?: string; username?: string }, mention?: boolean, throwErrorIfFailed?: boolean) {
     const client = await getGlobalClient();
     if (!client) throw new Error("客户端未初始化");
-    let id: any, entity: any;
+    let id: number | bigint | undefined;
+    let entity: { _?: unknown; id?: number | bigint; title?: string; firstName?: string; lastName?: string; username?: string | null } | undefined;
     try {
-      entity = (typeof target !== 'string' && (target as any)?._) ? target : await client?.getChat(target);
+      entity = (typeof target !== 'string' && target?._) ? target : await client?.getChat(target as unknown as import("@mtcute/core").InputPeerLike);
       if (!entity) throw new Error("无法获取entity");
       id = entity.id;
-    } catch (e: any) {
-      if (throwErrorIfFailed) throw new Error(`无法获取 ${target}: ${e?.message}`);
+    } catch (e: unknown) {
+      if (throwErrorIfFailed) throw new Error(`无法获取 ${target}: ${e instanceof Error ? e.message : String(e)}`);
     }
     const displayParts: string[] = [];
     if (entity?.title) displayParts.push(htmlEscape(entity.title));
@@ -525,11 +526,11 @@ class TracePlugin extends Plugin {
     const customEmojiMap = new Map<number, BigInteger>();
     const customEmojiIndices = new Set<number>();
     if (this.isPremium) {
-        const customEmojiEntities = ((msg as any).entities || []).filter(
-            (e: any) => e?._ === 'messageEntityCustomEmoji'
+        const customEmojiEntities = ((msg as unknown as { entities?: ReadonlyArray<{ _?: string; offset: number; length: number; documentId: bigint }> }).entities || []).filter(
+            (e: { _?: string; offset: number; length: number; documentId: bigint }) => e?._ === 'messageEntityCustomEmoji'
         );
         for (const entity of customEmojiEntities) {
-            customEmojiMap.set(entity.offset, entity.documentId);
+            customEmojiMap.set(entity.offset, bigInt(entity.documentId));
             for (let i = 0; i < entity.length; i++) {
                 customEmojiIndices.add(entity.offset + i);
             }
@@ -568,7 +569,10 @@ class TracePlugin extends Plugin {
     
     await client.call({
       _: "messages.sendReaction",
-      peer, msgId, reaction: reactionObjects as any, big,
+      peer,
+      msgId,
+      reaction: reactionObjects as unknown as import("@mtcute/core").tl.TypeReaction[],
+      big,
     });
   }
 

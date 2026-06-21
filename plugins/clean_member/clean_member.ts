@@ -199,8 +199,8 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
     try {
       const result: any = await client.call({
         _: 'channels.getParticipant',
-        channel: await client.resolvePeer(msg.chat.id) as any,
-        participant: me.id as any,
+        channel: await client.resolvePeer(msg.chat.id) as unknown as import("@mtcute/core").tl.TypeInputChannel,
+        participant: me.id as unknown as import("@mtcute/core").tl.TypeInputPeer,
       });
       if (result?.participant?._ === 'channelParticipantAdmin' || 
           result?.participant?._ === 'channelParticipantCreator') {
@@ -212,11 +212,11 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
     try {
       const result: any = await client.call({
         _: 'channels.getParticipants',
-        channel: await client.resolvePeer(msg.chat.id) as any,
+        channel: await client.resolvePeer(msg.chat.id) as unknown as import("@mtcute/core").tl.TypeInputChannel,
         filter: { _: 'channelParticipantsAdmins' },
         offset: 0,
         limit: 100,
-        hash: 0 as any,
+        hash: 0 as unknown as import("@mtcute/core").Long,
       });
       if ('users' in result) {
         const admins = result.users as RawUser[];
@@ -759,7 +759,7 @@ const clean_member = async (msg: MessageContext) => {
       } else {
         if (savedMessageId) {
           try {
-            await msg.edit({text: savedMessageId} as any);
+            await msg.edit({ text: String(savedMessageId) });
           } catch (error) {
             const newMsg = await client.sendText("me", progressMessage);
             if (newMsg && typeof newMsg.id === 'number') {
@@ -864,7 +864,7 @@ const clean_member = async (msg: MessageContext) => {
       });
     } else {
       if (savedMessageId) {
-        await msg.edit({text: savedMessageId} as any);
+        await msg.edit({ text: String(savedMessageId) });
       } else {
         await client.sendText("me", html(finalMessage));
       }

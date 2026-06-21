@@ -7,6 +7,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { getRawType } from "@utils/entityTypeGuards";
 // HTML转义函数
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -84,7 +85,8 @@ class PortballPlugin extends Plugin {
 
     try {
       // 检查是否在群组中
-      if (!((msg.chat as any)._ === 'chat' || (msg.chat as any)._ === 'channel')) {
+      const chatType = getRawType(msg.chat);
+      if (!(chatType === 'chat' || chatType === 'channel')) {
         await msg.edit({
           text: html`❌ <b>错误：</b>此命令只能在群组或超级群组中使用`
         });
@@ -172,8 +174,8 @@ class PortballPlugin extends Plugin {
       try {
         await client.call({
           _: 'channels.editBanned',
-          channel: await client.resolvePeer(msg.chat.id) as any,
-          participant: await client.resolvePeer(sender.id) as any,
+          channel: await client.resolvePeer(msg.chat.id) as unknown as import("@mtcute/core").tl.TypeInputChannel,
+          participant: await client.resolvePeer(sender.id) as unknown as import("@mtcute/core").tl.TypeInputPeer,
           bannedRights: {
             _: 'chatBannedRights',
             untilDate: untilDate,
@@ -197,17 +199,18 @@ class PortballPlugin extends Plugin {
         
         // 获取用户名
         let userName = "";
-        const senderAny = sender as any;
-        if (senderAny._ === 'user') {
-          if (senderAny.firstName && senderAny.lastName) {
-            userName = `${senderAny.firstName} ${senderAny.lastName}`;
-          } else if (senderAny.firstName) {
-            userName = senderAny.firstName;
+        const senderRaw = sender as { _?: string; firstName?: string; lastName?: string; id?: number | bigint };
+        const senderType = getRawType(sender);
+        if (senderType === 'user') {
+          if (senderRaw.firstName && senderRaw.lastName) {
+            userName = `${senderRaw.firstName} ${senderRaw.lastName}`;
+          } else if (senderRaw.firstName) {
+            userName = senderRaw.firstName;
           } else {
-            userName = `用户 ${String(senderAny.id)}`;
+            userName = `用户 ${String(senderRaw.id)}`;
           }
         } else {
-          userName = `用户 ${String(senderAny.id)}`;
+          userName = `用户 ${String(senderRaw.id)}`;
         }
 
         resultText += `• <b>用户：</b>${htmlEscape(userName)}\n`;
@@ -223,25 +226,26 @@ class PortballPlugin extends Plugin {
         await client.sendText(msg.chat.id, html(resultText));
 
         // 删除命令消息
-        await msg.delete({ revoke: true } as any);
+        await msg.delete({ revoke: true } as { revoke: boolean });
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("[Portball] 禁言失败:", error);
         
         let errorMsg = "❌ <b>禁言失败：</b>";
+        const errorMessage = error instanceof Error ? error.message : String(error);
         
-        if (error.message?.includes("ADMIN_REQUIRED")) {
+        if (errorMessage.includes("ADMIN_REQUIRED")) {
           errorMsg += "需要管理员权限";
-        } else if (error.message?.includes("USER_ADMIN_INVALID")) {
+        } else if (errorMessage.includes("USER_ADMIN_INVALID")) {
           errorMsg += "无法禁言管理员";
-        } else if (error.message?.includes("CHAT_ADMIN_REQUIRED")) {
+        } else if (errorMessage.includes("CHAT_ADMIN_REQUIRED")) {
           errorMsg += "需要群组管理员权限";
-        } else if (error.message?.includes("CHANNEL_PRIVATE")) {
+        } else if (errorMessage.includes("CHANNEL_PRIVATE")) {
           errorMsg += "无法在私有频道操作";
-        } else if (error.message?.includes("USER_NOT_PARTICIPANT")) {
+        } else if (errorMessage.includes("USER_NOT_PARTICIPANT")) {
           errorMsg += "用户不在群组中";
         } else {
-          errorMsg += htmlEscape(error.message || "未知错误");
+          errorMsg += htmlEscape(errorMessage || "未知错误");
         }
 
         await msg.edit({
@@ -263,7 +267,7 @@ class PortballPlugin extends Plugin {
   private async autoDelete(msg: MessageContext, seconds: number = 5): Promise<void> {
     scheduleTimer(async () => {
       try {
-        await msg.delete({ revoke: true } as any);
+        await msg.delete({ revoke: true } as { revoke: boolean });
       } catch (error) { console.warn(`[portball] 忽略删除错误:`, error) }
     }, seconds * 1000);
   }

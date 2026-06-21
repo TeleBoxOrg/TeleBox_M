@@ -315,7 +315,7 @@ class SSHPlugin extends Plugin {
     }
 
     // 检查执行权限 - 只能在收藏夹或指定会话执行
-    const isPrivate = (msg as any).isPrivate;
+    const isPrivate = (msg as { isPrivate?: boolean }).isPrivate;
     const chatId = (msg.chat?.id)?.toString();
     const userId = (msg.sender?.id)?.toString();
     const targetChat = await ConfigManager.get(CONFIG_KEYS.TARGET_CHAT);

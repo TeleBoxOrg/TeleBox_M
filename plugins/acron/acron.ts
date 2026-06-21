@@ -321,9 +321,9 @@ async function scheduleTask(task: AcronTask) {
           entityLike,
           t.message,
           replyTo ? { replyTo } : undefined,
-        );
+        ) as unknown as import("@mtcute/dispatcher").MessageContext;
         if (cmd && sudoMsg)
-          await dealCommandPluginWithMessage({ cmd, msg: sudoMsg as any });
+          await dealCommandPluginWithMessage({ cmd, msg: sudoMsg });
         if (idx >= 0) {
           db.data.tasks[idx].lastRunAt = String(now);
           db.data.tasks[idx].lastResult = `已执行命令`;

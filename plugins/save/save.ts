@@ -618,7 +618,7 @@ class PrometheusPlugin extends Plugin {
       
       const mediaLocation = message.media as unknown as { raw?: { _?: string } };
       if (!mediaLocation) return null;
-      const buffer = await client.downloadAsBuffer(mediaLocation as any);
+      const buffer = await client.downloadAsBuffer(mediaLocation as unknown as import("@mtcute/core").FileDownloadLocation);
       if (buffer && buffer.length > 0) {
         await fs.writeFile(finalFilePath, buffer);
         this.activeTempFiles.add(finalFilePath);
@@ -785,10 +785,11 @@ class PrometheusPlugin extends Plugin {
       await this.safeEditMessage(replyMsg, `📤 上传 ${type}...`);
     }
     
-    return await client.sendMedia(targetPeer, filePath, {
+    const sentMsg = await client.sendMedia(targetPeer, filePath, {
       caption: sendOptions.caption,
       replyTo: replyMsg?.id,
-    }) as any;
+    });
+    return sentMsg as unknown as MessageContext;
   }
   
   private async processMessage(
@@ -813,7 +814,7 @@ class PrometheusPlugin extends Plugin {
           fromChatId: sourceMsg.chat.id,
           messages: [sourceMsg.id]
         });
-        forwardedMessage = result[0] as any;
+        forwardedMessage = result[0] as unknown as MessageContext;
         
         await this.safeEditMessage(replyMsg, `${progress}✅ 转发成功`, true);
         
@@ -835,7 +836,7 @@ class PrometheusPlugin extends Plugin {
           const text = sourceMsg.text || '';
           if (text) {
             // 发送文本消息，获取发送的消息
-            forwardedMessage = await client.sendText(targetPeer, text) as any;
+            forwardedMessage = await client.sendText(targetPeer, text) as unknown as MessageContext;
             
             await this.safeEditMessage(replyMsg, `${progress}✅ 文本内容已发送`, true);
             

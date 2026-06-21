@@ -166,7 +166,7 @@ async function run(text: string, msg: MessageContext, trigger?: MessageContext) 
   if (!client) return;
   const sudoMsg = await client.sendText(msg.chat.id, text, {
     replyTo: (msg.replyToMessage?.id ?? undefined) as number | undefined,
-  }) as any;
+  }) as unknown as import("@mtcute/dispatcher").MessageContext;
   if (cmd && sudoMsg)
     await dealCommandPluginWithMessage({ cmd, msg: sudoMsg, trigger: msg });
 }

@@ -442,7 +442,7 @@ class IsAlivePlugin extends Plugin {
               addOffset: 0,
               maxId: 0,
               minId: 0,
-              hash: 0 as any,
+              hash: 0 as unknown as import("@mtcute/core").Long,
             });
             const msgs = (searchResult?.messages || []).filter((m: any) => Number(m?.fromId?.userId || m?.peerId?.userId) === Number(userRaw.id));
             const messages = msgs.length > 0 ? msgs : [];

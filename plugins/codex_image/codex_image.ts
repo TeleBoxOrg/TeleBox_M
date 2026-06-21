@@ -92,12 +92,13 @@ async function getBearerToken(): Promise<string> {
   return await getStoredToken();
 }
 
-function getImageMimeType(message: any): string {
-  const documentMime = (message.media as any)?.document?.mimeType;
+function getImageMimeType(message: unknown): string {
+  const msg = message as { media?: { document?: { mimeType?: string }; photo?: unknown } | null };
+  const documentMime = msg?.media?.document?.mimeType;
   if (typeof documentMime === "string" && documentMime.startsWith("image/")) {
     return documentMime;
   }
-  if ((message.media as any)?.photo) {
+  if (msg?.media?.photo) {
     return "image/jpeg";
   }
   return "image/png";
@@ -116,7 +117,7 @@ async function downloadReplyImage(
     throw new Error("无法获取客户端实例");
   }
 
-  const buffer = await client.downloadAsBuffer(replyMsg.media as any) as Buffer;
+  const buffer = await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileDownloadLocation) as Buffer;
 
   if (!buffer?.length) {
     throw new Error("未能获取参考图数据");
