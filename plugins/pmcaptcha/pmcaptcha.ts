@@ -453,27 +453,35 @@ async function runFailActions(client: TelegramClient, userId: number) {
   await archiveChat(client, userId);
   await muteChat(client, userId);
 
-  for (const a of cfg.failActions()) {
-    if (a === FailAction.BLOCK)  await blockUser(client, userId);
+  const actions = cfg.failActions();
+  const tasks: Promise<void>[] = [];
+  for (const a of actions) {
+    if (a === FailAction.BLOCK)  tasks.push(blockUser(client, userId));
     if (a === FailAction.DELETE) {
-      try {
-        const peer = await client.resolvePeer(userId);
-        await client.call({ _: 'messages.deleteHistory', peer, revoke: true, maxId: 0 });
-        log(LogLevel.INFO, `Deleted history (revoke both sides) ${userId}`);
-      } catch (e) { log(LogLevel.ERROR, `delete failed ${userId}`, e); }
+      tasks.push((async () => {
+        try {
+          const peer = await client.resolvePeer(userId);
+          await client.call({ _: 'messages.deleteHistory' as const, peer, revoke: true, maxId: 0 });
+          log(LogLevel.INFO, `Deleted history (revoke both sides) ${userId}`);
+        } catch (e) { log(LogLevel.ERROR, `delete failed ${userId}`, e); }
+      })());
     }
-    if (a === FailAction.REPORT)  await reportSpam(client, userId);
-    if (a === FailAction.MUTE)    await muteChat(client, userId);
-    if (a === FailAction.ARCHIVE) await archiveChat(client, userId);
+    if (a === FailAction.REPORT)  tasks.push(reportSpam(client, userId));
+    if (a === FailAction.MUTE)    tasks.push(muteChat(client, userId));
+    if (a === FailAction.ARCHIVE) tasks.push(archiveChat(client, userId));
   }
+  await Promise.all(tasks);
 }
 
 async function runPassActions(client: TelegramClient, userId: number) {
-  for (const a of cfg.passActions()) {
-    if (a === PassAction.UNMUTE)    await unmuteChat(client, userId);
-    if (a === PassAction.UNARCHIVE) await unarchiveChat(client, userId);
+  const actions = cfg.passActions();
+  const tasks: Promise<void>[] = [];
+  for (const a of actions) {
+    if (a === PassAction.UNMUTE)    tasks.push(unmuteChat(client, userId));
+    if (a === PassAction.UNARCHIVE) tasks.push(unarchiveChat(client, userId));
     if (a === PassAction.WL)        wl.add(userId);
   }
+  await Promise.all(tasks);
 }
 
 // ─── 图片验证码生成 ───────────────────────────────────────────────────────────
@@ -688,10 +696,10 @@ function drainCaptchaStates(): void {
 
 async function cleanupCaptchaMessages(client: TelegramClient, userId: number, state: CaptchaState) {
   if (!isStateCurrent(state)) return;
-  for (const id of state.msgIds) {
-    if (!isStateCurrent(state)) return;
-    try { await client.deleteMessagesById(userId, [id]); } catch (e) { /* msg already deleted */ }
-  }
+  await Promise.all(state.msgIds.map(id => {
+    if (!isStateCurrent(state)) return Promise.resolve();
+    return client.deleteMessagesById(userId, [id]).catch(() => { /* msg already deleted */ });
+  }));
 }
 
 // ─── 消息重建（用于实时刷新）─────────────────────────────────────────────────

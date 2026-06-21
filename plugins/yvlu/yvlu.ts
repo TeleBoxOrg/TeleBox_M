@@ -621,7 +621,7 @@ class YvluPlugin extends Plugin {
           const items = [] as any[];
           let previousUserIdentifier: string | null = null;
 
-          for await (const [i, message] of messages.entries()) {
+          for (const [i, message] of messages.entries()) {
             // 获取发送者信息
             let sender: any = await message.getSender();
 
