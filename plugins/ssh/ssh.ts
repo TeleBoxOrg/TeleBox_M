@@ -17,6 +17,7 @@ import crypto from "crypto";
 // @ts-ignore
 import { Client as SSH2Client } from 'ssh2';
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const execAsync = promisify(exec);
 const prefixes = getPrefixes();
@@ -430,10 +431,10 @@ class SSHPlugin extends Plugin {
           await msg.edit({
           });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[ssh] 执行失败:", error);
       await msg.edit({
-        text: `❌ <b>执行失败:</b> ${htmlEscape(error.message || "未知错误")}`,
+        text: `❌ <b>执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`,
       });
     }
   }
@@ -490,8 +491,8 @@ class SSHPlugin extends Plugin {
         await execAsync(`puttygen ${escapedPath} -o ${escapedPath}.ppk`);
         ppkKey = fs.readFileSync(`${keyPath}.ppk`, "utf-8");
         logger.info("[ssh] PPK格式密钥生成成功");
-      } catch (error: any) {
-        logger.info(`[ssh] PPK转换失败: ${error.message}，跳过PPK格式`);
+      } catch (error: unknown) {
+        logger.info(`[ssh] PPK转换失败: ${getErrorMessage(error)}，跳过PPK格式`);
       }
 
       // 获取服务器信息
@@ -621,7 +622,7 @@ class SSHPlugin extends Plugin {
       // 清理临时文件
       fs.rmSync(workDir, { recursive: true, force: true });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 清理临时文件
       if (fs.existsSync(workDir)) {
         fs.rmSync(workDir, { recursive: true, force: true });
@@ -728,8 +729,8 @@ class SSHPlugin extends Plugin {
         text: keyList,
       });
       
-    } catch (error: any) {
-      throw new Error(`查看授权密钥失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`查看授权密钥失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -755,8 +756,8 @@ class SSHPlugin extends Plugin {
         text: `✅ <b>授权密钥已清空</b>\n\n🗂️ 备份文件: <code>${authorizedKeysPath}.backup.${timestamp}</code>\n\n⚠️ <b>警告:</b> 所有SSH密钥登录已失效，请确保有其他方式访问服务器`,
       });
       
-    } catch (error: any) {
-      throw new Error(`清空授权密钥失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`清空授权密钥失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -866,8 +867,8 @@ ${keysContent}`;
       // 清理临时文件
       fs.rmSync(workDir, { recursive: true, force: true });
 
-    } catch (error: any) {
-      throw new Error(`导出授权密钥失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`导出授权密钥失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -901,8 +902,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>root密码修改成功</b>\n\n⚠️ 请妥善保管新密码`,
       });
-    } catch (error: any) {
-      throw new Error(`修改密码失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`修改密码失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -956,8 +957,8 @@ ${keysContent}`;
             logger.info("[ssh] 无法持久化iptables规则");
           }
         }
-      } catch (firewallError: any) {
-        logger.warn("[ssh] 防火墙端口开放失败:", firewallError.message);
+      } catch (firewallError: unknown) {
+        logger.warn("[ssh] 防火墙端口开放失败:", getErrorMessage(firewallError));
       }
       
       await msg.edit({ text: `🔄 防火墙已配置，正在重启SSH服务...` });
@@ -980,8 +981,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>SSH端口修改成功</b>\n\n🔧 新端口: <code>${port}</code>\n🛡️ 防火墙: 已自动开放 TCP/UDP ${port}\n📄 备份文件: /etc/ssh/sshd_config.backup.${htmlEscape(timestamp)}${oldPortWarning}\n\n⚠️ <b>重要:</b> 请用新端口测试连接后再断开当前会话`,
       });
-    } catch (error: any) {
-      throw new Error(`修改SSH端口失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`修改SSH端口失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1022,8 +1023,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>密码登录已${action}</b>\n\n当前状态: ${enable ? "✅ 已开启" : "❌ 已关闭"}\n备份文件: /etc/ssh/sshd_config.backup.${timestamp}`,
       });
-    } catch (error: any) {
-      throw new Error(`${action}密码登录失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`${action}密码登录失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1071,8 +1072,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>密钥登录已${action}</b>\n\n当前状态: ${enable ? "✅ 已开启" : "❌ 已关闭"}\n备份文件: /etc/ssh/sshd_config.backup.${timestamp}${warningText}`,
       });
-    } catch (error: any) {
-      throw new Error(`${action}密钥登录失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`${action}密钥登录失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1154,8 +1155,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>Root登录配置已更新</b>\n\n状态: ${statusText}\n配置值: <code>PermitRootLogin ${authValue}</code>\n备份文件: /etc/ssh/sshd_config.backup.${timestamp}\n\n${securityTip}`,
       });
-    } catch (error: any) {
-      throw new Error(`配置Root登录失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`配置Root登录失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1203,8 +1204,8 @@ ${keysContent}`;
         text: `✅ <b>Root账户已启用</b>\n\n🔑 Root密码: <code>${htmlEscape(password)}</code>\n🔓 账户状态: 已解锁\n🚪 SSH登录: 已允许\n📄 备份文件: /etc/ssh/sshd_config.backup.${currentConfig}\n\n✨ <b>现在可以直接用root登录SSH了！</b>\n\n⚠️ <b>安全提示:</b>\n• 建议设置复杂密码\n• 考虑配置SSH密钥登录\n• 可用 <code>${mainPrefix}ssh rootlogin keyonly</code> 提升安全性`,
       });
       
-    } catch (error: any) {
-      throw new Error(`启用root账户失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`启用root账户失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1239,8 +1240,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>SSH服务重启成功</b>\n\n重启命令: <code>${htmlEscape(restartResult.command || "未知")}</code>\n服务状态: ${sshStatus}\n\n💡 建议重启后验证SSH连接`,
       });
-    } catch (error: any) {
-      throw new Error(`重启SSH服务失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`重启SSH服务失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1277,8 +1278,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>端口 ${port} 已开放</b>\n\n协议: TCP/UDP\n\n💡 提示: 规则已添加到iptables，重启后可能需要重新设置`,
       });
-    } catch (error: any) {
-      throw new Error(`开放端口失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`开放端口失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1318,8 +1319,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>端口 ${port} 已关闭</b>\n\n协议: TCP/UDP\n\n💡 提示: 规则已添加到iptables，重启后可能需要重新设置`,
       });
-    } catch (error: any) {
-      throw new Error(`关闭端口失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`关闭端口失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1357,8 +1358,8 @@ ${keysContent}`;
       await msg.edit({
         text: `✅ <b>接收目标已设置</b>\n\n目标: <code>${htmlEscape(target)}</code>\n\n${target === "me" ? "密钥将发送到收藏夹" : "密钥将发送到指定会话"}`,
       });
-    } catch (error: any) {
-      throw new Error(`设置目标失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`设置目标失败: ${getErrorMessage(error)}`);
     }
   }
 
@@ -1469,8 +1470,8 @@ ${keysContent}`;
       await msg.edit({
         text: `📊 <b>SSH状态信息</b>\n\n<b>SSH服务状态：</b>\n服务状态: ${sshStatus}\n端口: <code>${htmlEscape(actualPort)}</code>\n\n<b>认证配置：</b>\n密码登录: ${actualPasswordAuth}\nRoot登录: ${rootLogin}\n密钥登录: ${actualPubkeyAuth}\n已授权密钥: ${keyCount} 个${iptablesInfo}\n\n<b>插件配置：</b>\n接收目标: <code>${htmlEscape(targetChat)}</code>\n${targetChat === "me" ? "(发送到收藏夹)" : "(发送到指定会话)"}\n\n<b>相关文件：</b>\n• SSH配置: /etc/ssh/sshd_config\n• 授权密钥: /root/.ssh/authorized_keys${systemInfo}`,
       });
-    } catch (error: any) {
-      throw new Error(`获取SSH状态信息失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`获取SSH状态信息失败: ${getErrorMessage(error)}`);
     }
   }
 
