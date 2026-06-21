@@ -219,8 +219,8 @@ ${recentErrors ? `<b>⚠️ 最近错误:</b>\n${recentErrors}` : ""}`;
     // 如果已有收藏夹消息，则编辑；否则创建新消息
     if (task.savedMessageId) {
       try {
-        await (client as any).editMessage({
-          peer: 'me',
+        await client.editMessage({
+          chatId: 'me',
           message: task.savedMessageId,
           text: message,
         });
@@ -250,7 +250,7 @@ const fastDeleteBatch = async (
   try {
     // 直接批量删除，不等待
     await client.deleteMessagesById(
-      chatId as any,
+      chatId,
       messages.map((m) => m.id),
       { revoke: true }
     );
@@ -295,7 +295,7 @@ const da = async (msg: MessageContext) => {
     return;
   }
 
-  if (!msg.chat.id || (msg.chat as any).chatType === "private") {
+  if (!msg.chat.id || !('chatType' in msg.chat)) {
     await msg.edit({ text: html("❌ 仅群组可用") });
     return;
   }
@@ -413,11 +413,11 @@ const da = async (msg: MessageContext) => {
     let isAdmin = false;
     try {
       const chat = await client.getChat(chatId);
-      if ((chat as any)?.chatType === "channel" || (chat as any)?.chatType === "supergroup") {
+      if (chat.chatType === "channel" || chat.chatType === "supergroup") {
         try {
           const result: any = await client.call({
             _: "channels.getParticipant",
-            channel: await client.resolvePeer(chatId) as any,
+            channel: await client.resolveChannel(chatId),
             participant: { _: "inputPeerSelf" },
           });
           isAdmin =
@@ -428,7 +428,7 @@ const da = async (msg: MessageContext) => {
           try {
             const adminResult: any = await client.call({
               _: "channels.getParticipants",
-              channel: await client.resolvePeer(chatId) as any,
+              channel: await client.resolveChannel(chatId),
               filter: { _: "channelParticipantsAdmins" },
               offset: 0,
               limit: 100,

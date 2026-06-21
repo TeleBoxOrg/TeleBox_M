@@ -1,3 +1,4 @@
+import { TelegramClient } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
 import * as fs from "fs";
@@ -339,7 +340,7 @@ async function forwardedSource(msg: MessageContext): Promise<{ peer?: any; entit
   const rawFwd = (msg.raw as { fwdFrom?: unknown })?.fwdFrom;
   if (!rawFwd) return undefined;
   const fwd = rawFwd as { fromId?: unknown; from_id?: unknown; savedFromPeer?: unknown; saved_from_peer?: unknown; fromName?: string; from_name?: string };
-  const client = await getGlobalClient().catch(() => null as any);
+  const client = await getGlobalClient().catch(() => null);
   const peer = fwdPeer(fwd);
   const headerName = fwdHeaderName(fwd);
 
@@ -385,7 +386,7 @@ async function senderEntity(msg: MessageContext): Promise<any | undefined> {
   } catch (err) {
     logger.debug("quote: sender entity from message failed", err);
   }
-  const client = await getGlobalClient().catch(() => null as any);
+  const client = await getGlobalClient().catch(() => null);
   const entity = await getPeerEntity(client, peer);
   if (key) entityCache.set(key, entity);
   return entity;
@@ -412,7 +413,7 @@ function messageDate(msg: MessageContext): number | undefined {
 
 function getDocumentAttributes(msg: MessageContext): any[] {
   const doc = (msg.media as { document?: { attributes?: unknown[] } })?.document ?? (msg.raw as { document?: { attributes?: unknown[] } })?.document;
-  return (doc?.attributes as any[]) || [];
+  return doc?.attributes ?? [];
 }
 
 function audioAttribute(msg: MessageContext): any | undefined {
@@ -532,7 +533,7 @@ async function downloadEntityAvatar(client: any, entity: any): Promise<Buffer | 
     try {
       const peer = typeof entity === "object" && entity._ ? entity : await client.resolvePeer(entity).catch(() => null);
       if (!peer) return undefined;
-      const fullUser = await client.call({ _: 'users.getFullUser', id: peer }).catch(() => null as any);
+      const fullUser = await client.call({ _: 'users.getFullUser', id: peer }).catch(() => null);
       const photo = fullUser?.full_user?.photo;
       if (!photo || photo._ !== 'userProfilePhoto') return undefined;
       const location = {
@@ -541,7 +542,7 @@ async function downloadEntityAvatar(client: any, entity: any): Promise<Buffer | 
         peer: peer,
         photo_id: photo.photo_id,
       };
-      const buffer = await client.downloadAsBuffer(location).catch(() => null as any);
+      const buffer = await client.downloadAsBuffer(location).catch(() => null);
       return Buffer.isBuffer(buffer) && buffer.length > 0 ? buffer : undefined;
     } catch (err: any) {
       logger.warn(`quote avatar ${isBig ? "big" : "small"} download failed`, err?.message || err);
@@ -556,7 +557,7 @@ async function downloadEntityAvatar(client: any, entity: any): Promise<Buffer | 
 }
 
 async function downloadSenderAvatar(msg: MessageContext, entity?: any): Promise<Buffer | undefined> {
-  const client = await getGlobalClient().catch(() => null as any);
+  const client = await getGlobalClient().catch(() => null);
   return downloadEntityAvatar(client, entity ?? await senderEntity(msg));
 }
 
@@ -604,7 +605,7 @@ async function downloadMediaToBuffer(client: any, target: any): Promise<Buffer |
 
 async function downloadMessageMedia(msg: MessageContext, enabled: boolean): Promise<Buffer | undefined> {
   if (!enabled || !msg.media) return undefined;
-  const client = await getGlobalClient().catch(() => null as any);
+  const client = await getGlobalClient().catch(() => null);
   return downloadMediaToBuffer(client, msg);
 }
 
@@ -1153,7 +1154,7 @@ async function replyPreview(msg: MessageContext, includeReply: boolean, args: Qu
   const reply = await safeGetReplyMessage(msg).catch(() => undefined);
   if (!reply) return undefined;
   // safeGetReplyMessage returns Message, but downstream fns expect MessageContext
-  const replyCtx = reply as any as MessageContext;
+  const replyCtx = reply as unknown as MessageContext;
   const entity = await senderEntity(replyCtx);
   const name = displayName(entity);
   return {
@@ -1172,7 +1173,7 @@ async function forwardPreview(msg: MessageContext): Promise<any | undefined> {
   const fwd: any = rawFwd;
   const src = await forwardedSource(msg);
   const name = src?.name || "Forwarded";
-  const client = await getGlobalClient().catch(() => null as any);
+  const client = await getGlobalClient().catch(() => null);
   const avatarBuffer = src?.entity && !src.anonymous ? await downloadEntityAvatar(client, src.entity) : undefined;
   return {
     chatId: peerIdNumber(src?.peer || src?.entity),
@@ -1196,7 +1197,7 @@ async function toQuoteMessage(msg: MessageContext, args: QuoteArgs): Promise<any
   const effectiveName = fwd?.name || displayName(effectiveEntity);
   const [avatarBuffer, media, replyMessage, forward] = await Promise.all([
     fwd && !fwd.anonymous && fwd.entity
-      ? downloadEntityAvatar(await getGlobalClient().catch(() => null as any), fwd.entity)
+      ? downloadEntityAvatar(await getGlobalClient().catch(() => null), fwd.entity)
       : downloadSenderAvatar(msg, entity),
     prepareQuoteMedia(msg, args),
     replyPreview(msg, args.reply, args),
@@ -1246,7 +1247,7 @@ async function collectMessages(msg: MessageContext, args: QuoteArgs): Promise<an
   const count = args.count || 1;
 
   const peer = msg.chat;
-  const client = await getGlobalClient().catch(() => null as any);
+  const client = await getGlobalClient().catch(() => null);
   if (!peer || !client) return [reply || msg];
 
   if (reply) {
@@ -1293,9 +1294,9 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
   try {
     if (typeof msg.edit === "function") await msg.edit({ text });
     else {
-      const client = await getGlobalClient().catch(() => null as any);
-      if (client) await (client as any).editMessage({
-        peer: msg.chat.id,
+      const client = await getGlobalClient().catch(() => null);
+      if (client) await client.editMessage({
+        chatId: msg.chat.id,
         message: msg.id,
         text,
       });
