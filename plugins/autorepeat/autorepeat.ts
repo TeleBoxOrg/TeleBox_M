@@ -10,6 +10,7 @@ import { JSONFile } from "lowdb/node";
 import path from "path";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { isMegagroup, getMessageFwdFrom, hasRawType, getRawType } from "@utils/entityTypeGuards";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -59,7 +60,7 @@ async function getAllManageableGroupIds(client: TelegramClient): Promise<number[
       dialogs.push(dialog);
     }
     for (const dialog of dialogs || []) {
-      if (dialog.isGroup || (dialog.isChannel && (dialog.entity as any)?.megagroup)) {
+      if (dialog.isGroup || (dialog.isChannel && isMegagroup(dialog.entity))) {
         dialogsById.set(Number(dialog.id), dialog);
       }
     }
@@ -463,13 +464,13 @@ class CommandHandlers {
       if (message.replyToMessage) {
         try {
           const repliedMsg = await safeGetReplyMessage(message);
-          if (repliedMsg && (repliedMsg as any).fwdFrom) {
-            const fwdFrom = (repliedMsg as any).fwdFrom;
+          if (repliedMsg && getMessageFwdFrom(repliedMsg)) {
+            const fwdFrom = getMessageFwdFrom(repliedMsg) as { fromId?: unknown } | undefined;
             const fwdFromId = fwdFrom?.fromId;
             if (fwdFromId) {
               try {
-                const entity: any = await client.getPeer(fwdFromId);
-                if ((entity as any)._ === 'chat' || ((entity as any)._ === 'channel' && entity.megagroup)) {
+                const entity = await client.getPeer(fwdFromId as Parameters<typeof client.getPeer>[0]) as unknown as { id: number; title?: string; megagroup?: boolean; _?: string };
+                if (hasRawType(entity, 'chat') || (hasRawType(entity, 'channel') && isMegagroup(entity))) {
                   const chatId = Number(entity.id);
                   return {
                     success: true,
