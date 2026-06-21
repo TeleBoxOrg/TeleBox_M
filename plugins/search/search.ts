@@ -2,6 +2,7 @@ import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { Message, Video, Document, Chat, User, TelegramClient } from "@mtcute/node";
 import { tl } from "@mtcute/node";
+import { Long } from "@mtcute/core";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import fs from "fs/promises";
@@ -642,7 +643,8 @@ class SearchService {
                   addOffset: 0,
                   maxId: 0,
                   minId: 0,
-                } as any);
+                  hash: Long.fromNumber(0),
+                });
                 const surroundingMessages: Message[] = (historyResult?.messages || []).filter((m: any) => m != null);
 
                 const groupedId = foundMsg.groupedId;
