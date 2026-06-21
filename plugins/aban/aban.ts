@@ -13,6 +13,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { safeGetMe } from "@utils/authGuards";
 import { npm_install } from "@utils/npm_install";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -35,7 +36,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
 
 // 解析 FLOOD_WAIT 错误中的等待秒数；非 flood 错返回 null
 function getFloodWaitSeconds(error: unknown): number | null {
-  const msg = error instanceof Error ? error.message : String(error || "");
+  const msg = error instanceof Error ? getErrorMessage(error) : String(error || "");
   // teleproto 抛出的 RPCError 里通常带 "FLOOD_WAIT_X" 或 "wait of N seconds"
   let m = msg.match(/FLOOD_WAIT_(\d+)/);
   if (m) return parseInt(m[1], 10);
@@ -404,8 +405,8 @@ class MessageManager {
       }
 
       return message;
-    } catch (error: any) {
-      const errMsg = error.message || String(error);
+    } catch (error: unknown) {
+      const errMsg = getErrorMessage(error) || String(error);
       if (errMsg.includes('MESSAGE_ID_INVALID')) {
         // Expected when the target message was already deleted - not actionable
       } else {
@@ -706,7 +707,7 @@ class BanManager {
   }
 
   private static getErrorReason(error: unknown): string {
-    const message = error instanceof Error ? error.message : String(error || "UNKNOWN_ERROR");
+    const message = error instanceof Error ? getErrorMessage(error) : String(error || "UNKNOWN_ERROR");
     const match = message.match(/[A-Z_]{3,}/);
     return match?.[0] || message;
   }
@@ -881,10 +882,10 @@ class BanManager {
       
       logger.info(`[BanManager] 成功删除用户 ${userId} 在当前会话的所有消息`);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 静默处理常见错误
-      if (!/CHANNEL_INVALID|CHAT_ADMIN_REQUIRED|USER_NOT_PARTICIPANT/.test(error?.message || "")) {
-        logger.error(`[BanManager] 删除消息失败: ${error?.message}`);
+      if (!/CHANNEL_INVALID|CHAT_ADMIN_REQUIRED|USER_NOT_PARTICIPANT/.test(getErrorMessage(error))) {
+        logger.error(`[BanManager] 删除消息失败: ${getErrorMessage(error)}`);
       }
       return false;
     }
@@ -1211,8 +1212,8 @@ class CommandHandlers {
       } else {
         await MessageManager.smartEdit(status, `❌ ${this.getActionName(action)}失败`);
       }
-    } catch (error: any) {
-      await MessageManager.smartEdit(message, `❌ 操作失败：${htmlEscape(error.message)}`);
+    } catch (error: unknown) {
+      await MessageManager.smartEdit(message, `❌ 操作失败：${htmlEscape(getErrorMessage(error))}`);
     }
   }
 
@@ -1375,8 +1376,8 @@ class CommandHandlers {
       // 后台执行，不等待
       backgroundProcess().catch(() => { /* background process error logged internally */ });
 
-    } catch (error: any) {
-      await MessageManager.smartEdit(message, `❌ ${error.message}`);
+    } catch (error: unknown) {
+      await MessageManager.smartEdit(message, `❌ ${getErrorMessage(error)}`);
     }
   }
 
@@ -1486,8 +1487,8 @@ class CommandHandlers {
       };
 
       backgroundProcess().catch(() => { /* background process error logged internally */ });
-    } catch (error: any) {
-      await MessageManager.smartEdit(message, `❌ ${error.message}`);
+    } catch (error: unknown) {
+      await MessageManager.smartEdit(message, `❌ ${getErrorMessage(error)}`);
     }
   }
 }
@@ -1586,7 +1587,7 @@ class AbanPlugin extends Plugin {
         GroupManager.clearCache();
         const groups = await GroupManager.getManagedGroups(client);
         await MessageManager.smartEdit(status, `✅ 已刷新 ${groups.length}个群组`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         await MessageManager.smartEdit(status, `❌ 刷新失败`);
       }
     }

@@ -11,6 +11,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { promisify } from 'util';
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { tl } from "@mtcute/core/tl";
 
 const prefixes = getPrefixes();
@@ -94,9 +95,9 @@ class REVPlugin extends Plugin {
 				await msg.edit({
 					text: html`❌ 请提供文本内容或回复一条支持的消息<br><br><b>支持的格式：</b><br>• 文本消息（逐行反转）<br>• 图片（JPG/PNG/BMP/WebP）<br>• 动图（GIF/.gif.mp4）<br>• 贴纸（WebM）<br><br><b>使用方法：</b><br><code>${mainPrefix}rev [文本]</code> 或回复消息使用 <code>${mainPrefix}rev [参数]</code>`,
 				});
-			} catch (error: any) {
+			} catch (error: unknown) {
 				await msg.edit({
-					text: html`❌ 处理失败: ${this.htmlEscape(error.message)}`,
+					text: html`❌ 处理失败: ${this.htmlEscape(getErrorMessage(error))}`,
 				});
 			}
 		},
@@ -409,16 +410,17 @@ class REVPlugin extends Plugin {
 
 		try {
 			await execFileAsync('ffmpeg', args);
-		} catch (error: any) {
-			if (error?.code === 'ENOENT') {
+		} catch (error: unknown) {
+			const err = error as { code?: string; stderr?: string; message?: string };
+			if (err.code === 'ENOENT') {
 				throw new Error('未找到 ffmpeg，请先安装后再试');
 			}
 			const stderr =
-				typeof error?.stderr === 'string' ? error.stderr.trim() : '';
+				typeof err.stderr === 'string' ? err.stderr.trim() : '';
 			if (stderr) {
 				throw new Error(`ffmpeg 处理失败: ${stderr.split('\n')[0]}`);
 			}
-			throw new Error(`ffmpeg 处理失败: ${error?.message || String(error)}`);
+			throw new Error(`ffmpeg 处理失败: ${err.message || String(error)}`);
 		}
 	}
 

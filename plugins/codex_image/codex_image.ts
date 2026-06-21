@@ -10,6 +10,7 @@ import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -354,9 +355,9 @@ async function handleCximg(msg: MessageContext): Promise<void> {
   let referenceImage: { buffer: Buffer; mimeType: string } | null = null;
   try {
     referenceImage = await downloadReplyImage(msg);
-  } catch (error: any) {
+  } catch (error: unknown) {
     await msg.edit({
-      text: html(`❌ 参考图下载失败：${htmlEscape(error.message || String(error))}`),
+      text: html(`❌ 参考图下载失败：${htmlEscape(getErrorMessage(error) || String(error))}`),
     });
     return;
   }
@@ -402,21 +403,22 @@ async function handleCximg(msg: MessageContext): Promise<void> {
       updateProgressStatus,
       deadlineAt,
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     heartbeatStopped = true;
     await heartbeat.catch(() => { /* heartbeat cancel, non-critical */ });
     const elapsed = formatDuration(Date.now() - startedAt);
     if (axios.isAxiosError(error)) {
+      const axiosErr = error as { response?: { status?: number; data?: unknown } };
       const detail =
-        typeof error.response?.data === "string"
-          ? error.response.data.slice(0, 500)
-          : error.message;
+        typeof axiosErr.response?.data === "string"
+          ? (axiosErr.response.data as string).slice(0, 500)
+          : getErrorMessage(error);
       await msg.edit({
-        text: html(`❌ Codex 请求失败 (${error.response?.status || "网络错误"}）：${htmlEscape(detail)}<br>⏱️ 耗时：${elapsed}`),
+        text: html(`❌ Codex 请求失败 (${axiosErr.response?.status || "网络错误"}）：${htmlEscape(detail)}<br>⏱️ 耗时：${elapsed}`),
       });
     } else {
       await msg.edit({
-        text: html(`❌ 生成失败：${htmlEscape(error.message || String(error))}<br>⏱️ 耗时：${elapsed}`),
+        text: html(`❌ 生成失败：${htmlEscape(getErrorMessage(error) || String(error))}<br>⏱️ 耗时：${elapsed}`),
       });
     }
     return;

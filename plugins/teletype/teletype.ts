@@ -10,6 +10,7 @@ import * as path from "path";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -97,7 +98,7 @@ class TeletypePlugin extends Plugin {
           }
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       await this.handleError(msg, error);
     }
   }
@@ -200,7 +201,7 @@ class TeletypePlugin extends Plugin {
     
     try {
       await this.executeTeletype(msg, text);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`[${this.PLUGIN_NAME}] Auto teletype error:`, error);
     }
   }
@@ -243,8 +244,8 @@ class TeletypePlugin extends Plugin {
           if (!currentMsg) return;
         }
         
-      } catch (error: any) {
-        if (!error.message?.includes("MESSAGE_NOT_MODIFIED")) {
+      } catch (error: unknown) {
+        if (!getErrorMessage(error).includes("MESSAGE_NOT_MODIFIED")) {
           throw error;
         }
         continue;
@@ -260,8 +261,8 @@ class TeletypePlugin extends Plugin {
           text: html(finalText)
         });
       }
-    } catch (error: any) {
-      if (!error.message?.includes("MESSAGE_NOT_MODIFIED")) {
+    } catch (error: unknown) {
+      if (!getErrorMessage(error).includes("MESSAGE_NOT_MODIFIED")) {
         throw error;
       }
     }
@@ -279,7 +280,7 @@ class TeletypePlugin extends Plugin {
     if (error.message?.includes("MESSAGE_TOO_LONG")) {
       errorMessage += "消息过长";
     } else {
-      errorMessage += htmlEscape(error.message || "未知错误");
+      errorMessage += htmlEscape(getErrorMessage(error) || "未知错误");
     }
     
     await msg.edit({

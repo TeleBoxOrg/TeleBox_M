@@ -10,6 +10,7 @@ import { execSync } from "child_process";
 import * as os from "os";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // 获取命令前缀
 const prefixes = getPrefixes();
@@ -289,10 +290,10 @@ class StickerToPicPlugin extends Plugin {
 
       await this.processStickerConversion(msg, client, outputFormat, keepTransparency, sendAsDocument);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[sticker_to_pic] 插件执行失败:", error);
       await msg.edit({
-        text: html(`❌ <b>插件执行失败:</b> ${htmlEscape(error.message)}`)
+        text: html(`❌ <b>插件执行失败:</b> ${htmlEscape(getErrorMessage(error))}`)
       });
     }
   }
@@ -446,19 +447,19 @@ class StickerToPicPlugin extends Plugin {
           logger.error('[sticker_to_pic] 清理临时文件失败:', cleanupError);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[sticker_to_pic] 处理贴纸转换失败:", error);
       
       let errorMsg = "❌ <b>转换贴纸为图片时出现错误</b>";
       
-      if (error.message.includes('MEDIA_INVALID')) {
+      if (getErrorMessage(error).includes('MEDIA_INVALID')) {
         errorMsg = "❌ <b>无效的媒体文件</b>";
-      } else if (error.message.includes('FILE_PARTS_INVALID')) {
+      } else if (getErrorMessage(error).includes('FILE_PARTS_INVALID')) {
         errorMsg = "❌ <b>文件损坏或格式不支持</b>";
-      } else if (error.message.includes('DOCUMENT_INVALID')) {
+      } else if (getErrorMessage(error).includes('DOCUMENT_INVALID')) {
         errorMsg = "❌ <b>无效的文档文件</b>";
       } else {
-        errorMsg += `\n\n<b>错误详情:</b> ${htmlEscape(error.message)}`;
+        errorMsg += `\n\n<b>错误详情:</b> ${htmlEscape(getErrorMessage(error))}`;
       }
       
       await msg.edit({

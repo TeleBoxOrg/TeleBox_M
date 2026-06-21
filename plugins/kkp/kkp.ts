@@ -6,6 +6,7 @@ import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 
 // HTML转义函数
@@ -78,10 +79,10 @@ class KkpPlugin extends Plugin {
         }
 
         await this.getRandomVideo(msg, client);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("[kkp] 插件执行失败:", error);
         await msg.edit({
-          text: html`❌ <b>插件执行失败:</b> ${htmlEscape(error.message || "未知错误")}`,
+          text: html`❌ <b>插件执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`,
         });
       }
     },

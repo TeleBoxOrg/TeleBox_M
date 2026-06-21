@@ -12,6 +12,7 @@ import { getGlobalClient } from '@utils/globalClient';
 import { execFile } from 'child_process';
 import { safeGetReplyMessage } from '@utils/safeGetMessages';
 import { logger } from '@utils/logger';
+import { getErrorMessage } from "@utils/errorHelpers";
 import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
@@ -461,9 +462,9 @@ class XMSLPlugin extends Plugin {
 					await this.askAI(msg, args.join(' '));
 					break;
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			await msg.edit({
-				text: html`❌ 处理失败: ${error.message}`,
+				text: html`❌ 处理失败: ${getErrorMessage(error)}`,
 			});
 		}
 	}
@@ -515,9 +516,9 @@ class XMSLPlugin extends Plugin {
 			await msg.edit({
 				text: html`✅ ${key} 已设置为: <code>${value}</code>`,
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			await msg.edit({
-				text: html`❌ 设置失败: ${error.message}`,
+				text: html`❌ 设置失败: ${getErrorMessage(error)}`,
 			});
 		}
 	}
@@ -594,25 +595,27 @@ model: <code>${this.config.model}</code><br>
 			await msg.edit({
 				text: html(answer),
 			});
-		} catch (error: any) {
+		} catch (error: unknown) {
 			logger.error('[xmsl] API Error:', error);
 			// 打印 API 返回的详细错误信息
-			if (error.response?.data) {
-				logger.error('[xmsl] API Response:', JSON.stringify(error.response.data, null, 2));
+			const axiosErr = error as { response?: { status?: number; data?: unknown }; code?: string };
+			if (axiosErr.response?.data) {
+				logger.error('[xmsl] API Response:', JSON.stringify(axiosErr.response.data, null, 2));
 			}
 			let errorMsg = '❌ API 调用失败';
 
-			if (error.response?.status === 400) {
-				const apiError = error.response?.data?.error?.message || '请求格式错误';
+			if (axiosErr.response?.status === 400) {
+				const respData = axiosErr.response.data as { error?: { message?: string } } | undefined;
+				const apiError = respData?.error?.message || '请求格式错误';
 				errorMsg = `❌ API 请求错误: ${this.htmlEscape(apiError)}`;
-			} else if (error.response?.status === 401) {
+			} else if (axiosErr.response?.status === 401) {
 				errorMsg = '❌ API 密钥无效';
-			} else if (error.response?.status === 429) {
+			} else if (axiosErr.response?.status === 429) {
 				errorMsg = '❌ 请求过于频繁，请稍后重试';
-			} else if (error.code === 'ECONNREFUSED') {
+			} else if (axiosErr.code === 'ECONNREFUSED') {
 				errorMsg = '❌ 无法连接到 API 服务器';
-			} else if (error.message) {
-				errorMsg = `❌ ${this.htmlEscape(error.message)}`;
+			} else if (getErrorMessage(error)) {
+				errorMsg = `❌ ${this.htmlEscape(getErrorMessage(error))}`;
 			}
 
 			await msg.edit({

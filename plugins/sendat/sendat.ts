@@ -8,6 +8,8 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import * as fs from "fs";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
+import { SudoDB } from "@utils/sudoDB";
 
 // HTML转义函数（必需）
 const htmlEscape = (text: string): string => 
@@ -487,9 +489,9 @@ seconds, minutes, hours, date, times`;
       // 添加新任务
       await this.handleAddTask(msg);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       await msg.edit({
-        text: `❌ <b>错误：</b>${htmlEscape(error.message)}`
+        text: `❌ <b>错误：</b>${htmlEscape(getErrorMessage(error))}`
       });
     }
   }
@@ -500,7 +502,6 @@ seconds, minutes, hours, date, times`;
 
     if (showAll) {
       // 检查管理员权限
-      const { SudoDB } = await import("@utils/sudoDB");
       const sudoDBInstance = new SudoDB();
       const userId = msg.senderId?.toJSNumber();
       
@@ -546,7 +547,6 @@ seconds, minutes, hours, date, times`;
 
     // 权限检查：只能删除自己的任务或者是管理员
     const chatId = msg.chatId?.toJSNumber() || 0;
-    const { SudoDB } = await import("@utils/sudoDB");
     const sudoDBInstance = new SudoDB();
     const userId = msg.senderId?.toJSNumber();
 
@@ -627,8 +627,8 @@ seconds, minutes, hours, date, times`;
       await msg.edit({ 
         text: `✅ <b>已添加任务 #${task.task_id}</b>\n\n${task.getDescription()}` 
       });
-    } catch (error: any) {
-      throw new Error(`添加任务失败: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`添加任务失败: ${getErrorMessage(error)}`);
     }
   }
 }

@@ -7,6 +7,7 @@ import { html } from "@mtcute/html-parser";
 import { getGlobalClient, tryGetCurrentGenerationContext } from "@utils/globalClient";
 import { Buffer } from "buffer";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // HTML转义
 const htmlEscape = (text: string): string =>
@@ -87,8 +88,8 @@ class Ox0Plugin extends Plugin {
       let replied: Awaited<ReturnType<typeof safeGetReplyMessage>>;
       try {
         replied = await safeGetReplyMessage(msg);
-      } catch (e: any) {
-        await sendLongHtml(msg, `❌ <b>错误:</b> ${htmlEscape(e.message)}`);
+      } catch (e: unknown) {
+        await sendLongHtml(msg, `❌ <b>错误:</b> ${htmlEscape(getErrorMessage(e))}`);
         return;
       }
       if (!replied || !replied.media) {
@@ -157,9 +158,10 @@ class Ox0Plugin extends Plugin {
         } catch (err: any) {
           await sendLongHtml(msg, `❌ <b>错误:</b> 上传失败 — ${htmlEscape(err?.message || String(err))}`);
         }
-      } catch (error: any) {
-        if (error.message?.includes("FLOOD_WAIT")) {
-          const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+      } catch (error: unknown) {
+        const errMsg = getErrorMessage(error);
+        if (errMsg.includes("FLOOD_WAIT")) {
+          const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
           const lifecycle = tryGetCurrentGenerationContext();
           if (lifecycle) {
             await lifecycle.delay((waitTime + 1) * 1000, { label: "oxost:flood-wait" });
@@ -167,7 +169,7 @@ class Ox0Plugin extends Plugin {
             await new Promise(res => setTimeout(res, (waitTime + 1) * 1000));
           }
         }
-        await sendLongHtml(msg, `❌ <b>错误:</b> ${htmlEscape(error.message)}`);
+        await sendLongHtml(msg, `❌ <b>错误:</b> ${htmlEscape(getErrorMessage(error))}`);
       }
     },
   };

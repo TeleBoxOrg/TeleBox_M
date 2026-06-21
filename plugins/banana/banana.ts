@@ -7,6 +7,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 
@@ -341,15 +342,16 @@ async function handleImageEdit(
   try {
     const response = await axios.post(url, requestBody, { timeout: 120000 });
     responseData = response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const message = error.response?.data?.error?.message || error.message;
+      const axiosErr = error as { response?: { status?: number; data?: { error?: { message?: string } } } };
+      const status = axiosErr.response?.status;
+      const message = axiosErr.response?.data?.error?.message || getErrorMessage(error);
       await msg.edit({
         text: `❌ Gemini 请求失败 (${status ?? "网络错误"}): ${message}`,
       });
     } else {
-      await msg.edit({ text: `❌ 请求失败: ${(error as Error).message}` });
+      await msg.edit({ text: `❌ 请求失败: ${getErrorMessage(error)}` });
     }
     return;
   }

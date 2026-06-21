@@ -11,6 +11,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { safeGetMe } from "../utils/authGuards";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -77,11 +78,11 @@ class DebugPlugin extends Plugin {
                 data: entity,
                 info: `解析用户名成功 - ${username}`,
               };
-            } catch (error: any) {
+            } catch (error: unknown) {
               parseResult = {
                 type: "entity",
                 data: null,
-                info: `解析用户名失败: ${error.message}`,
+                info: `解析用户名失败: ${getErrorMessage(error)}`,
               };
             }
           }
@@ -148,9 +149,9 @@ class DebugPlugin extends Plugin {
         await msg.edit({
           text: html`${targetInfo}`,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         await msg.edit({
-          text: `获取信息时出错: ${error.message}`,
+          text: `获取信息时出错: ${getErrorMessage(error)}`,
         });
       }
     },
@@ -174,12 +175,12 @@ class DebugPlugin extends Plugin {
         await msg.edit({
           text: html`<blockquote expandable>${txt}</blockquote>`,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         // 如果编辑失败且是因为消息过长，则发送文件
         if (
-          error.message &&
-          (error.message.includes("MESSAGE_TOO_LONG") ||
-            error.message.includes("too long"))
+          getErrorMessage(error) &&
+          (getErrorMessage(error).includes("MESSAGE_TOO_LONG") ||
+            getErrorMessage(error).includes("too long"))
         ) {
           const buffer = Buffer.from(txt, "utf-8");
           const dir = createDirectoryInTemp("exit");
@@ -214,12 +215,12 @@ class DebugPlugin extends Plugin {
         await msg.edit({
           text: html`<blockquote expandable>${txt}</blockquote>`,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         // 如果编辑失败且是因为消息过长，则发送文件
         if (
-          error.message &&
-          (error.message.includes("MESSAGE_TOO_LONG") ||
-            error.message.includes("too long"))
+          getErrorMessage(error) &&
+          (getErrorMessage(error).includes("MESSAGE_TOO_LONG") ||
+            getErrorMessage(error).includes("too long"))
         ) {
           const buffer = Buffer.from(txt, "utf-8");
           const dir = createDirectoryInTemp("exit");
@@ -353,12 +354,12 @@ async function parseTelegramLink(
     }
 
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("解析链接失败:", error);
     return {
       type: "entity",
       data: null,
-      info: `解析失败: ${error.message}`,
+      info: `解析失败: ${getErrorMessage(error)}`,
     };
   }
 }
@@ -401,8 +402,8 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
     }
 
     return info;
-  } catch (error: any) {
-    return `❌ 格式化实体信息失败: ${error.message}`;
+  } catch (error: unknown) {
+    return `❌ 格式化实体信息失败: ${getErrorMessage(error)}`;
   }
 }
 
@@ -472,8 +473,8 @@ async function formatMessageInfo(msg: Message): Promise<string> {
     }
 
     return info;
-  } catch (error: any) {
-    return `<b>MESSAGE</b><br>Error: ${error.message}<br>`;
+  } catch (error: unknown) {
+    return `<b>MESSAGE</b><br>Error: ${getErrorMessage(error)}<br>`;
   }
 }
 
@@ -512,8 +513,8 @@ async function formatUserInfo(
     }
 
     return info;
-  } catch (error: any) {
-    return `<b>${title}</b><br>Error: ${error.message}<br>`;
+  } catch (error: unknown) {
+    return `<b>${title}</b><br>Error: ${getErrorMessage(error)}<br>`;
   }
 }
 
@@ -523,8 +524,8 @@ async function formatSelfInfo(client: TelegramClient): Promise<string> {
     const me = await safeGetMe(client);
     if (!me) return "";
     return await formatUserInfo(client, me.id, "SELF", false);
-  } catch (error: any) {
-    return `<b>SELF</b><br>Error: ${error.message}<br>`;
+  } catch (error: unknown) {
+    return `<b>SELF</b><br>Error: ${getErrorMessage(error)}<br>`;
   }
 }
 
@@ -572,8 +573,8 @@ async function formatChatInfo(
     }
 
     return info;
-  } catch (error: any) {
-    return `<b>CHAT</b><br>Error: ${error.message}<br>`;
+  } catch (error: unknown) {
+    return `<b>CHAT</b><br>Error: ${getErrorMessage(error)}<br>`;
   }
 }
 
@@ -590,9 +591,9 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
     try {
       entity = await client.getPeer(chatId);
       entityFound = true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       info += `· 状态: ❌ 无法访问此群组<br>`;
-      info += `· 错误: ${error.message}<br><br>`;
+      info += `· 错误: ${getErrorMessage(error)}<br><br>`;
     }
 
     if (entityFound && entity) {
@@ -672,8 +673,8 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
 
     return info;
     
-  } catch (error: any) {
-    return `❌ 解析群组ID时发生错误: ${error.message}`;
+  } catch (error: unknown) {
+    return `❌ 解析群组ID时发生错误: ${getErrorMessage(error)}`;
   }
 }
 

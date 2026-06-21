@@ -5,6 +5,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { tl } from "@mtcute/core";
 import Long from "long";
 
@@ -101,7 +102,7 @@ class RestorePinPlugin extends Plugin {
         unpin: false,
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`[restore_pin] 置顶消息失败:`, error);
       return false;
     }
@@ -236,18 +237,19 @@ class RestorePinPlugin extends Plugin {
       // 直接恢复所有置顶消息
       await this.restorePins(msg, fullChat.inputPeer, messageIds);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`[restore_pin] 错误:`, error);
-      
+
+      const errMsg = getErrorMessage(error);
       let errorMessage = "❌ 操作失败";
-      if (error.message?.includes("CHAT_ADMIN_REQUIRED")) {
+      if (errMsg.includes("CHAT_ADMIN_REQUIRED")) {
         errorMessage = "❌ 需要管理员权限";
-      } else if (error.message?.includes("USER_NOT_PARTICIPANT")) {
+      } else if (errMsg.includes("USER_NOT_PARTICIPANT")) {
         errorMessage = "❌ 用户不是群组成员";
-      } else if (error.message?.includes("AUTH_KEY_UNREGISTERED")) {
+      } else if (errMsg.includes("AUTH_KEY_UNREGISTERED")) {
         errorMessage = "❌ 会话已失效，请重新登录";
-      } else if (error.message) {
-        errorMessage += `: ${htmlEscape(error.message)}`;
+      } else if (errMsg) {
+        errorMessage += `: ${htmlEscape(errMsg)}`;
       }
 
       await msg.edit({ text: html(errorMessage) });

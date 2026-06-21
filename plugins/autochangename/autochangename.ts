@@ -10,6 +10,7 @@ import { JSONFilePreset } from "lowdb/node";
 import { cronManager } from "@utils/cronManager";
 import * as path from "path";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -888,14 +889,15 @@ class NameManager {
       settings.last_update = new Date().toISOString();
       await DataManager.saveUserSettings(settings);
       return true;
-    } catch (error: any) {
-      if (error.message?.includes("FLOOD_WAIT")) {
+    } catch (error: unknown) {
+      const errMsg = getErrorMessage(error);
+      if (errMsg.includes("FLOOD_WAIT")) {
         const settings = await DataManager.getUserSettings(userId);
         if (settings && settings.is_enabled) {
           settings.is_enabled = false;
           await DataManager.saveUserSettings(settings);
         }
-      } else if (error.message?.includes("USERNAME_NOT_MODIFIED")) {
+      } else if (errMsg.includes("USERNAME_NOT_MODIFIED")) {
         return true;
       }
       return false;
@@ -1061,12 +1063,13 @@ class AutoChangeNamePlugin extends Plugin {
             });
         }
 
-      } catch (error: any) {
-        if (error.message?.includes("FLOOD_WAIT")) {
-          const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+      } catch (error: unknown) {
+        const errMsg = getErrorMessage(error);
+        if (errMsg.includes("FLOOD_WAIT")) {
+          const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
           await msg.edit({ text: html(`⏳ <b>请求过于频繁</b><br><br>需要等待 ${waitTime} 秒后重试`) });
-        } else if (!error.message?.includes("MESSAGE_ID_INVALID")) {
-          const safeErrorMsg = (error.message || "未知错误").substring(0, 100);
+        } else if (!errMsg.includes("MESSAGE_ID_INVALID")) {
+          const safeErrorMsg = (errMsg || "未知错误").substring(0, 100);
           await msg.edit({ text: html(`❌ <b>操作失败:</b> ${htmlEscape(safeErrorMsg)}`) });
         }
       }

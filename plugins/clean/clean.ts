@@ -8,6 +8,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { banUser, getBannedUsers, unbanUser } from "@utils/banUtils";
 import { logger } from "@utils/logger";
 import { isUser, isUserDeleted, getRawType, hasRawType, isMegagroup, getParticipant } from "@utils/entityTypeGuards";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -120,7 +121,7 @@ class CleanPlugin extends Plugin {
           break;
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       await this.handleError(msg, error);
     }
   }
@@ -184,8 +185,8 @@ class CleanPlugin extends Plugin {
       let dialogsArchived: any[] = [];
       try {
         dialogsArchived = await client.getDialogs({ folderId: 1 });
-      } catch (error: any) {
-        logger.error(`[Clean] 获取归档对话失败:`, error?.message || error);
+      } catch (error: unknown) {
+        logger.error(`[Clean] 获取归档对话失败:`, getErrorMessage(error) || error);
       }
 
       const dialogByUserId = new Map<string, any>();
@@ -218,9 +219,9 @@ class CleanPlugin extends Plugin {
             await client.deleteDialog(dialog.inputEntity);
 
             await sleep(150);
-          } catch (error: any) {
-            logger.error(`[Clean] 无法移除对话 ${userId}:`, error.message);
-            if (error.message?.includes("FLOOD_WAIT")) {
+          } catch (error: unknown) {
+            logger.error(`[Clean] 无法移除对话 ${userId}:`, getErrorMessage(error));
+            if (getErrorMessage(error)?.includes("FLOOD_WAIT")) {
               await this.handleFloodWait(msg, error);
               return;
             }
@@ -253,7 +254,7 @@ class CleanPlugin extends Plugin {
 
       await this.editMessage(msg, result);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       await this.handleError(msg, error);
     }
   }
@@ -292,8 +293,8 @@ class CleanPlugin extends Plugin {
           try {
             await banUser(client, chatId, participant.id);
             await sleep(100);
-          } catch (error: any) {
-            if (error.message?.includes("FLOOD_WAIT")) {
+          } catch (error: unknown) {
+            if (getErrorMessage(error)?.includes("FLOOD_WAIT")) {
               await this.handleFloodWait(msg, error);
               return;
             }
@@ -369,8 +370,8 @@ class CleanPlugin extends Plugin {
             const delay = this.getDynamicDelay(user, includeAll, consecutiveErrors);
             await sleep(delay);
             consecutiveErrors = 0;
-          } catch (error: any) {
-            if (error.message?.includes('FLOOD_WAIT_')) {
+          } catch (error: unknown) {
+            if (getErrorMessage(error)?.includes('FLOOD_WAIT_')) {
               await this.handleFloodWait(msg, error);
               continue;
             } else {
@@ -394,9 +395,9 @@ class CleanPlugin extends Plugin {
         const batchDelay = consecutiveErrors > 0 ? 3000 + (consecutiveErrors * 1000) : 2000;
         await sleep(Math.min(batchDelay, 10000));
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("获取拉黑列表失败:", error);
-        if (error.message?.includes('FLOOD_WAIT')) {
+        if (getErrorMessage(error)?.includes('FLOOD_WAIT')) {
           await this.handleFloodWait(msg, error);
           continue;
         }
@@ -494,14 +495,14 @@ class CleanPlugin extends Plugin {
   private async handleError(msg: MessageContext, error: any): Promise<void> {
     logger.error(`[CleanPlugin] 错误:`, error);
     
-    let errorMsg = `❌ <b>操作失败:</b> ${htmlEscape(error.message || "未知错误")}`;
+    let errorMsg = `❌ <b>操作失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`;
     
-    if (error.message?.includes("FLOOD_WAIT")) {
-      const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+    if (getErrorMessage(error)?.includes("FLOOD_WAIT")) {
+      const waitTime = parseInt(getErrorMessage(error).match(/\d+/)?.[0] || "60");
       errorMsg = `⏳ <b>请求过于频繁</b>\n\n需要等待 ${waitTime} 秒后重试`;
-    } else if (error.message?.includes("CHAT_ADMIN_REQUIRED")) {
+    } else if (getErrorMessage(error)?.includes("CHAT_ADMIN_REQUIRED")) {
       errorMsg = "🔒 <b>权限不足</b>\n\n需要管理员权限";
-    } else if (error.message?.includes("USER_NOT_PARTICIPANT")) {
+    } else if (getErrorMessage(error)?.includes("USER_NOT_PARTICIPANT")) {
       errorMsg = "❌ <b>未加入群组</b>\n\n机器人需要先加入群组";
     }
     
@@ -509,7 +510,7 @@ class CleanPlugin extends Plugin {
   }
 
   private async handleFloodWait(msg: MessageContext, error: any): Promise<void> {
-    const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+    const waitTime = parseInt(getErrorMessage(error).match(/\d+/)?.[0] || "60");
     await this.editMessage(msg, `⏳ 需要等待 ${waitTime} 秒后继续`);
     await sleep((waitTime + 1) * 1000);
   }
@@ -631,10 +632,10 @@ ${skipped > 0 ? `• 跳过原因: ${includeAll ? '系统限制' : '机器人/�
 
       return false;
       
-    } catch (error: any) {
-      if (error.message?.includes("CHAT_ADMIN_REQUIRED") ||
-          error.message?.includes("USER_NOT_PARTICIPANT") ||
-          error.message?.includes("PEER_ID_INVALID")) {
+    } catch (error: unknown) {
+      if (getErrorMessage(error)?.includes("CHAT_ADMIN_REQUIRED") ||
+          getErrorMessage(error)?.includes("USER_NOT_PARTICIPANT") ||
+          getErrorMessage(error)?.includes("PEER_ID_INVALID")) {
         return false;
       }
       return true;

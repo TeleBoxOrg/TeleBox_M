@@ -10,6 +10,7 @@ import { promises as fs } from "fs";
 import { JSONFilePreset } from "lowdb/node";
 import axios from "axios";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // HTML转义（每个插件必须实现）
 const htmlEscape = (text: string): string => 
@@ -314,9 +315,9 @@ const handle404Error = (proxyHost: string, failedProxies: string[]) => {
 // 辅助函数：检查是否为超时错误
 const isTimeoutError = (error: any): boolean => {
     return error.code === 'ECONNABORTED' || 
-           error.message?.includes('timeout') ||
-           error.message?.includes('canceled') ||
-           error.message?.includes('cancelled') ||
+           getErrorMessage(error)?.includes('timeout') ||
+           getErrorMessage(error)?.includes('canceled') ||
+           getErrorMessage(error)?.includes('cancelled') ||
            error.name === 'AbortError' ||
            error.code === 'ETIMEDOUT';
 };
@@ -388,19 +389,20 @@ async function downloadSingleImage(
                 clearImgTimeout();
             }
             
-        } catch (error: any) {
-            if (error.response && error.response.status === 404) {
+        } catch (error: unknown) {
+            const err = error as { response?: { status?: number } };
+            if (err.response && err.response.status === 404) {
                 has404Error = handle404Error(proxyHost, failedProxies);
                 continue; // 尝试下一个代理
             }
             
             // 检查是否为超时错误
             if (isTimeoutError(error)) {
-                lastError = `连接超时: ${error.message}`;
+                lastError = `连接超时: ${getErrorMessage(error)}`;
                 hadNetworkFailures = true;  // 标记遇到了网络错误
                 failedProxies.push(proxyHost);
             } else {
-                lastError = error.message;
+                lastError = getErrorMessage(error);
                 hadNetworkFailures = true;  // 其他网络错误也标记
                 failedProxies.push(proxyHost);
             }
@@ -530,9 +532,9 @@ async function getResult(message: MessageContext, r18 = 0, tag = "", num = 1): P
         logger.info(`[zpr] 成功下载 ${successfulDownloads.length}/${result.length} 张图片`);
         return [successfulDownloads, des];
         
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error("[zpr] API请求失败:", error);
-        return [null, `API请求失败: ${error.message || "未知错误"}`];
+        return [null, `API请求失败: ${getErrorMessage(error) || "未知错误"}`];
     }
 }
 
@@ -651,10 +653,10 @@ class ZprPlugin extends Plugin {
                                 replyTo: msg.replyToMessage?.id ?? undefined
                             });
 
-                        } catch (error: any) {
-                            const errorMsg = error.message?.includes("CHAT_SEND_MEDIA_FORBIDDEN")
+                        } catch (error: unknown) {
+                            const errorMsg = getErrorMessage(error)?.includes("CHAT_SEND_MEDIA_FORBIDDEN")
                                 ? "此群组不允许发送媒体。"
-                                : htmlEscape(`发送失败: ${error.message || "未知错误"}`);
+                                : htmlEscape(`发送失败: ${getErrorMessage(error) || "未知错误"}`);
                             
                             await editHtmlMessage(msg, `❌ <b>发送失败:</b> ${errorMsg}`);
                             throw error; // 继续抛出错误以中断循环
@@ -672,13 +674,13 @@ class ZprPlugin extends Plugin {
                     try {
                         await msg.delete();
                     } catch (e) { logger.error('[zpr] delete message failed:', e); }
-                } catch (error: any) {
+                } catch (error: unknown) {
                     logger.error("[zpr] 插件执行失败:", error);
-                    await editHtmlMessage(msg, `❌ <b>插件执行失败:</b> ${htmlEscape(error.message || "未知错误")}`);
+                    await editHtmlMessage(msg, `❌ <b>插件执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`);
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 logger.error("[zpr] 插件执行失败:", error);
-                await editHtmlMessage(msg, `❌ <b>插件执行失败:</b> ${htmlEscape(error.message || "未知错误")}`);
+                await editHtmlMessage(msg, `❌ <b>插件执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`);
             }
         }
     };

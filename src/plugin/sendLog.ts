@@ -7,6 +7,7 @@ import { SendLogDB } from "@utils/sendLogDB";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -118,8 +119,8 @@ const fn = async (msg: MessageContext) => {
         await fs.unlink(outLog);
         results.push(`✅ 已删除输出日志 (${sizeKB}KB)`);
         cleanedCount++;
-      } catch (error: any) {
-        results.push(`❌ 删除输出日志失败: ${error.message?.substring(0, 50) || "未知错误"}`);
+      } catch (error: unknown) {
+        results.push(`❌ 删除输出日志失败: ${getErrorMessage(error)?.substring(0, 50) || "未知错误"}`);
       }
     }
 
@@ -130,8 +131,8 @@ const fn = async (msg: MessageContext) => {
         await fs.unlink(errLog);
         results.push(`✅ 已删除错误日志 (${sizeKB}KB)`);
         cleanedCount++;
-      } catch (error: any) {
-        results.push(`❌ 删除错误日志失败: ${error.message?.substring(0, 50) || "未知错误"}`);
+      } catch (error: unknown) {
+        results.push(`❌ 删除错误日志失败: ${getErrorMessage(error)?.substring(0, 50) || "未知错误"}`);
       }
     }
 
@@ -188,11 +189,11 @@ const fn = async (msg: MessageContext) => {
           results.push(`✅ 输出日志已发送 (${sizeKB}KB)`);
           sentCount++;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("Error sending output log:", error);
         results.push(
           `❌ 输出日志发送失败: ${
-            error.message?.substring(0, 50) || "未知错误"
+            getErrorMessage(error)?.substring(0, 50) || "未知错误"
           }`
         );
       }
@@ -217,11 +218,11 @@ const fn = async (msg: MessageContext) => {
           results.push(`✅ 错误日志已发送 (${sizeKB}KB)`);
           sentCount++;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("Error sending error log:", error);
         results.push(
           `❌ 错误日志发送失败: ${
-            error.message?.substring(0, 50) || "未知错误"
+            getErrorMessage(error)?.substring(0, 50) || "未知错误"
           }`
         );
       }
@@ -236,12 +237,12 @@ const fn = async (msg: MessageContext) => {
     ].join("\n");
 
     await msg.edit({ text: summaryText });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("SendLog plugin error:", error);
     const errorMsg =
-      error.message?.length > 100
-        ? error.message.substring(0, 100) + "..."
-        : error.message;
+      getErrorMessage(error)?.length > 100
+        ? getErrorMessage(error).substring(0, 100) + "..."
+        : getErrorMessage(error);
     await msg.edit({
       text: `❌ 日志发送失败\n\n错误信息: ${
         errorMsg || "未知错误"

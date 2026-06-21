@@ -14,6 +14,7 @@ interface NeZhaYamlConfig {
   jwtSecretKey?: string;
 }
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 interface NeZhaConfig {
   url: string;
@@ -271,8 +272,8 @@ async function fetchServiceMonitor(
         }
       }
     }
-  } catch (error: any) {
-    logger.error(`[NeZha Debug] Service monitor API error for server ${serverId}:`, error.message || error);
+  } catch (error: unknown) {
+    logger.error(`[NeZha Debug] Service monitor API error for server ${serverId}:`, getErrorMessage(error) || error);
   }
   return result;
 }
@@ -299,8 +300,8 @@ async function fetchServiceMonitorFull(
     if (response.data.success && response.data.data) {
       return response.data.data;
     }
-  } catch (error: any) {
-    logger.error(`[NeZha Debug] Service monitor full API error:`, error.message || error);
+  } catch (error: unknown) {
+    logger.error(`[NeZha Debug] Service monitor full API error:`, getErrorMessage(error) || error);
   }
   return [];
 }
@@ -416,8 +417,8 @@ async function downloadChart(chartConfig: object): Promise<Buffer | null> {
       }
     );
     return Buffer.from(response.data);
-  } catch (error: any) {
-    logger.error("Failed to download chart:", error.message);
+  } catch (error: unknown) {
+    logger.error("Failed to download chart:", getErrorMessage(error));
     return null;
   }
 }
@@ -683,11 +684,11 @@ const nezha = async (msg: MessageContext) => {
 <br>
 使用 <code>nezha</code> 查看服务器状态`,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         await msg.edit({
           text: html`❌ <b>配置验证失败</b><br><br>
 <br><br>
-<b>错误:</b> ${htmlEscape(error.message)}<br>
+<b>错误:</b> ${htmlEscape(getErrorMessage(error))}<br>
 <br>
 请检查面板地址和 Secret 是否正确`,
         });
@@ -766,12 +767,12 @@ const nezha = async (msg: MessageContext) => {
     await msg.edit({
       text: html(resultText),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("NeZha plugin error:", error);
     await msg.edit({
       text: html`❌ <b>获取失败</b><br><br>
 <br><br>
-<b>错误:</b> ${htmlEscape(error.message || "未知错误")}<br>
+<b>错误:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}<br>
 <br>
 请检查网络连接或重新配置`,
     });

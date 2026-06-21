@@ -12,6 +12,7 @@ import * as os from "os";
 import * as path from "path";
 import crypto from "crypto";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -45,11 +46,11 @@ async function checkDockerIntegrity(): Promise<{
     await sh("systemctl is-active docker");
     await sh("docker info");
     return { valid: true };
-  } catch (error: any) {
-    if (error.message.includes("Cannot connect to the Docker daemon")) {
+  } catch (error: unknown) {
+    if (getErrorMessage(error).includes("Cannot connect to the Docker daemon")) {
       return { valid: false, error: "Docker服务未运行" };
     }
-    if (error.message.includes("docker: command not found")) {
+    if (getErrorMessage(error).includes("docker: command not found")) {
       return { valid: false, error: "Docker未安装" };
     }
     return { valid: false, error: "Docker配置异常" };
@@ -81,7 +82,7 @@ async function getSubStoreVersion(): Promise<string> {
     
     const versionMatch = logOutput.match(/Sub-Store -- (v[\d.]+)/);
     return versionMatch ? versionMatch[1] : "未知版本";
-  } catch (error: any) {
+  } catch (error: unknown) {
     return "获取失败";
   }
 }
@@ -94,7 +95,7 @@ async function getRemoteVersion(): Promise<string> {
     );
     const releaseData = JSON.parse(response);
     return releaseData.tag_name || "获取失败";
-  } catch (error: any) {
+  } catch (error: unknown) {
     return "获取失败";
   }
 }
@@ -230,11 +231,11 @@ class SubStorePlugin extends Plugin {
               await msg.edit({
                 text: `✅ 部署完成\n\n面板: http://${ip.trim()}:3001\n后端: http://${ip.trim()}:3001/${secret}`,
               });
-            } catch (error: any) {
-              let errorMsg = `❌ 部署失败: ${error.message}\n\n`;
+            } catch (error: unknown) {
+              let errorMsg = `❌ 部署失败: ${getErrorMessage(error)}\n\n`;
               if (
-                error.message.includes("Cannot connect to the Docker daemon") ||
-                error.message.includes("docker.service not found")
+                getErrorMessage(error).includes("Cannot connect to the Docker daemon") ||
+                getErrorMessage(error).includes("docker.service not found")
               ) {
                 errorMsg += `🔧 Docker未正确安装，请执行: <code>${mainPrefix}sub fix-docker</code>\n\n`;
               }
@@ -291,9 +292,9 @@ class SubStorePlugin extends Plugin {
               await msg.edit({
                 text: `✅ 更新完成\n\n📦 本地版本: ${localVersion}\n🌍 远程版本: ${remoteVersion}\n🌐 面板: http://${ip.trim()}:3001\n🔗 后端: http://${ip.trim()}:3001/${secret}`,
               });
-            } catch (error: any) {
+            } catch (error: unknown) {
               await msg.edit({
-                text: `❌ 更新失败: ${error.message}`,
+                text: `❌ 更新失败: ${getErrorMessage(error)}`,
               });
             }
             break;
@@ -322,7 +323,7 @@ class SubStorePlugin extends Plugin {
                   try {
                     await sh("docker info");
                     infoResult += "✅ Docker可正常连接\n";
-                  } catch (e: any) {
+                  } catch (e: unknown) {
                     infoResult += `❌ Docker连接失败\n`;
                   }
                 } catch (e) {
@@ -371,8 +372,8 @@ class SubStorePlugin extends Plugin {
               } catch (e) {
                 infoResult += `\n❌ 网络连接异常`;
               }
-            } catch (error: any) {
-              infoResult += `❌ 信息获取失败: ${error.message}`;
+            } catch (error: unknown) {
+              infoResult += `❌ 信息获取失败: ${getErrorMessage(error)}`;
             }
 
             await msg.edit({ text: html(infoResult) });
@@ -407,9 +408,9 @@ class SubStorePlugin extends Plugin {
               await msg.edit({
                 text: `✅ Docker重装完成\n\n${version.trim()}\n\n现在可以使用 ${mainPrefix}sub up 部署Sub-Store`,
               });
-            } catch (error: any) {
+            } catch (error: unknown) {
               await msg.edit({
-                text: `❌ Docker重装失败: ${error.message}\n\n请手动执行:\ncurl -fsSL https://get.docker.com | bash\nsystemctl start docker`,
+                text: `❌ Docker重装失败: ${getErrorMessage(error)}\n\n请手动执行:\ncurl -fsSL https://get.docker.com | bash\nsystemctl start docker`,
               });
             }
             break;
@@ -488,8 +489,8 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
               } else {
                 await msg.edit({ text: "❌ 无法发送文件到收藏夹" });
               }
-            } catch (error: any) {
-              await msg.edit({ text: `❌ 日志导出失败: ${error.message}` });
+            } catch (error: unknown) {
+              await msg.edit({ text: `❌ 日志导出失败: ${getErrorMessage(error)}` });
             }
             break;
 
@@ -542,8 +543,8 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
           default:
             await msg.edit({ text: html(help) });
         }
-      } catch (error: any) {
-        await msg.edit({ text: `❌ ${error.message || error}`.slice(0, 3500) });
+      } catch (error: unknown) {
+        await msg.edit({ text: `❌ ${getErrorMessage(error) || error}`.slice(0, 3500) });
       }
     },
   };

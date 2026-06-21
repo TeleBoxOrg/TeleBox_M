@@ -9,6 +9,7 @@ import * as path from "path";
 import * as fs from "fs/promises";
 import { statSync, existsSync } from "fs";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import type { MessageMedia, Photo, Video, Audio, Voice, Sticker, Document, User, Chat, Peer, Message } from "@mtcute/core";
 import type { InputPeerLike } from "@mtcute/core";
 
@@ -642,7 +643,7 @@ class PrometheusPlugin extends Plugin {
         fileName: path.basename(finalFilePath),
       };
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`下载媒体失败:`, error);
       return null;
     }
@@ -869,9 +870,9 @@ class PrometheusPlugin extends Plugin {
           source: { chatId: sourceChatId, messageId: sourceMessageId }
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`处理消息失败:`, error);
-      await this.safeEditMessage(replyMsg, `${progress}❌ 处理失败: ${htmlEscape(error.message || "未知错误")}`, true);
+      await this.safeEditMessage(replyMsg, `${progress}❌ 处理失败: ${htmlEscape(getErrorMessage(error) || "未知错误")}`, true);
       return { success: false };
     } finally {
       if (tempFileInfo?.path) {
@@ -911,9 +912,9 @@ class PrometheusPlugin extends Plugin {
         savedFile,
         source: { chatId: sourceChatId, messageId: sourceMessageId },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`处理本地保存失败:`, error);
-      await this.safeEditMessage(replyMsg, `${progress}❌ 本地保存失败: ${htmlEscape(error.message || "未知错误")}`, true);
+      await this.safeEditMessage(replyMsg, `${progress}❌ 本地保存失败: ${htmlEscape(getErrorMessage(error) || "未知错误")}`, true);
       return { success: false };
     }
   }
@@ -978,8 +979,8 @@ class PrometheusPlugin extends Plugin {
         } else {
           await this.safeEditMessage(replyMsg, `${progress}❌ 消息 ${msgId} 处理失败`, true);
         }
-      } catch (error: any) {
-        await this.safeEditMessage(replyMsg, `${progress}❌ 消息 ${msgId} 处理出错: ${htmlEscape(error.message || "未知错误")}`, true);
+      } catch (error: unknown) {
+        await this.safeEditMessage(replyMsg, `${progress}❌ 消息 ${msgId} 处理出错: ${htmlEscape(getErrorMessage(error) || "未知错误")}`, true);
       }
       
       // 延迟以避免触发限制
@@ -1036,9 +1037,9 @@ class PrometheusPlugin extends Plugin {
         } else {
           failedCount++;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         failedCount++;
-        await this.safeEditMessage(replyMsg, `${progress}❌ 消息 ${msgId} 本地保存出错: ${htmlEscape(error.message || "未知错误")}`, true);
+        await this.safeEditMessage(replyMsg, `${progress}❌ 消息 ${msgId} 本地保存出错: ${htmlEscape(getErrorMessage(error) || "未知错误")}`, true);
       }
 
       if (msgId < actualEnd) {
@@ -1441,9 +1442,9 @@ class PrometheusPlugin extends Plugin {
         await this.safeEditMessage(msg, `✅ 批量处理完成\n成功处理 ${successCount}/${total} 个消息/媒体组`, true);
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`save命令执行失败:`, error);
-      await this.safeEditMessage(msg, `❌ 执行失败: ${htmlEscape(error.message || "未知错误")}`, true);
+      await this.safeEditMessage(msg, `❌ 执行失败: ${htmlEscape(getErrorMessage(error) || "未知错误")}`, true);
     }
   }
   

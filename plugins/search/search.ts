@@ -9,6 +9,7 @@ import fs from "fs/promises";
 import path from "path";
 import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -265,8 +266,8 @@ class SearchService {
         }
       }
       return undefined;
-    } catch (error: any) {
-      logger.info(`获取频道关联讨论组失败: ${error.message}`);
+    } catch (error: unknown) {
+      logger.info(`获取频道关联讨论组失败: ${getErrorMessage(error)}`);
       return undefined;
     }
   }
@@ -381,8 +382,8 @@ class SearchService {
         default:
           await this.handleSearch(msg, fullArgs, useSpoiler, useRandom);
       }
-    } catch (error: any) {
-      await editAdmin({ text: `❌ 错误：\n${error.message}` });
+    } catch (error: unknown) {
+      await editAdmin({ text: `❌ 错误：\n${getErrorMessage(error)}` });
     }
   }
 
@@ -417,8 +418,8 @@ class SearchService {
             });
             if (!this.config.defaultChannel) this.config.defaultChannel = normalizedHandle;
             addedCount++;
-        } catch (error: any) {
-            await editAdmin({ text: `添加频道 ${channelHandle.trim()} 时出错：${error.message}` });
+        } catch (error: unknown) {
+            await editAdmin({ text: `添加频道 ${channelHandle.trim()} 时出错：${getErrorMessage(error)}` });
         }
     }
     await this.saveConfig();
@@ -692,14 +693,14 @@ class SearchService {
           }
         }
 
-      } catch (error: any) {
-        if (error.message.includes("Could not find the input entity")) {
+      } catch (error: unknown) {
+        if (getErrorMessage(error).includes("Could not find the input entity")) {
             logger.error(`无法找到频道 ${channelInfo.title}，已自动移除。`);
             this.config.channelList = this.config.channelList.filter(c => c.handle !== channelHandle);
             if(this.config.defaultChannel === channelHandle) this.config.defaultChannel = null;
             await this.saveConfig();
         } else {
-            logger.error(`在频道 "${channelInfo.title}" 搜索失败: ${error.message}`);
+            logger.error(`在频道 "${channelInfo.title}" 搜索失败: ${getErrorMessage(error)}`);
         }
         continue;
       }
@@ -821,9 +822,9 @@ class SearchService {
       if (isMessageOutgoing(originalMsg)) {
         await this.client.deleteMessagesById(originalMsg.chat.id, [originalMsg.id]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("下载上传视频时出错:", error);
-      await this.client.editMessage({ chatId: originalMsg.chat.id, message: statusMsg.id, text: `❌ 发送视频失败: ${error.message}` });
+      await this.client.editMessage({ chatId: originalMsg.chat.id, message: statusMsg.id, text: `❌ 发送视频失败: ${getErrorMessage(error)}` });
     } finally {
       try {
         await fs.unlink(tempFilePath);

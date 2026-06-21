@@ -9,6 +9,7 @@ import type { TelegramClient } from "@mtcute/node";
 import path from "path";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
 import { Long } from "@mtcute/core";
 import type { tl } from "@mtcute/core";
@@ -1323,11 +1324,11 @@ async function handleSeatAction(
           return { type: "failure" as const, value: `${identifier}（未找到用户）` };
         }
         return { type: "user" as const, value: user };
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (/^-?\\d+$/.test(identifier.trim())) {
           return { type: "rawId" as const, value: String(Number(identifier.trim())) };
         }
-        return { type: "failure" as const, value: `${identifier}（${normalizeErrorMessage(error?.message || "解析失败")}）` };
+        return { type: "failure" as const, value: `${identifier}（${normalizeErrorMessage(getErrorMessage(error) || "解析失败")}）` };
       }
     })
   );
@@ -1462,10 +1463,10 @@ async function handleTrimAction(
           stat.avgPerDayText,
         )}</code>`,
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       failureLines.push(
         `• ${buildUserDisplay(stat.user)}（${htmlEscape(
-          normalizeErrorMessage(error?.message || "执行失败"),
+          normalizeErrorMessage(getErrorMessage(error) || "执行失败"),
         )}）`,
       );
     }
@@ -1576,10 +1577,10 @@ class AdminBoardPlugin extends Plugin {
           text: `❌ 不支持的动作: <code>${htmlEscape(action)}</code>\n\n${helpText}`,
           disableWebPreview: true,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error(`[admin_board] ${action} failed:`, error);
 
-        const detail = normalizeErrorMessage(error?.message || String(error));
+        const detail = normalizeErrorMessage(getErrorMessage(error) || String(error));
 
         await msg.edit({
           text: `❌ <b>执行失败</b>\n\n${htmlEscape(detail)}`,

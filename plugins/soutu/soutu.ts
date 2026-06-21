@@ -6,6 +6,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import axios from "axios";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // HTML转义函数
 const htmlEscape = (text: string): string =>
@@ -64,9 +65,9 @@ class SoutuPlugin extends Plugin {
         // 默认行为：执行搜图
         await this.handleSearch(msg);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('[soutu] 插件执行失败:', error);
-        await msg.edit({ text: html`❌ <b>操作失败:</b> ${htmlEscape(error.message)} (${htmlEscape(pluginName)})` });
+        await msg.edit({ text: html`❌ <b>操作失败:</b> ${htmlEscape(getErrorMessage(error))} (${htmlEscape(pluginName)})` });
       }
     },
   };
@@ -126,9 +127,9 @@ class SoutuPlugin extends Plugin {
 • <a href="${yandexUrl}">Yandex Images</a>` 
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[soutu] 处理图片失败:", error);
-      const errorText = `❌ 搜图失败: ${htmlEscape(error.message)}`;
+      const errorText = `❌ 搜图失败: ${htmlEscape(getErrorMessage(error))}`;
       await msg.edit({ text: html`${errorText}` });
     }
   }

@@ -22,6 +22,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { JSONFilePreset } from "lowdb/node";
 import * as fs from "fs";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // SQLite row types for better-sqlite3 (returns unknown by default)
 interface ShiftRuleRow {
@@ -58,11 +59,11 @@ async function formatEntity(
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error(e);
     if (throwErrorIfFailed)
       throw new Error(
-        `无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`
+        `无法获取 ${target} 的 entity: ${getErrorMessage(e)}`
       );
   }
   if (!entity) return { id: undefined, entity: null, display: String(target) };
@@ -1029,7 +1030,7 @@ class BackupManager {
               return;
             }
             task.failedMessages++;
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage = error instanceof Error ? getErrorMessage(error) : String(error);
             if (errorMessage.includes("FLOOD_WAIT")) {
               const waitTime = parseInt(errorMessage.match(/\d+/)?.[0] || "60");
               this.rateLimiter.onFloodWait(waitTime);
@@ -1088,7 +1089,7 @@ class BackupManager {
 
               task.failedMessages++;
 
-              const errorMessage = error instanceof Error ? error.message : String(error);
+              const errorMessage = error instanceof Error ? getErrorMessage(error) : String(error);
               // 处理限流错误
               if (errorMessage.includes("FLOOD_WAIT")) {
                 const waitTime = parseInt(
@@ -1389,7 +1390,7 @@ class ShiftPlugin extends Plugin {
             await msg.edit({
               text: `✅ <b>成功导入规则配置</b>`,
             });
-          } catch (error: any) {
+          } catch (error: unknown) {
             await msg.edit({
               text: `❌ <b>导入失败</b>\n\n请检查配置数据格式是否正确`,
             });
@@ -1446,7 +1447,7 @@ class ShiftPlugin extends Plugin {
               const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
               source = await resolveTarget(client, sourceInput, chatId);
             }
-          } catch (error: any) {
+          } catch (error: unknown) {
             await msg.edit({
               text: `❌ <b>源对话无效</b>\n\n请检查频道/群组ID或用户名格式`,
             });
@@ -1458,7 +1459,7 @@ class ShiftPlugin extends Plugin {
           try {
             const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
             target = await resolveTarget(client, targetInput, chatId);
-          } catch (error: any) {
+          } catch (error: unknown) {
             await msg.edit({
               text: `❌ <b>目标对话无效</b>\n\n请检查频道/群组ID或用户名格式`,
             });
@@ -1743,7 +1744,7 @@ class ShiftPlugin extends Plugin {
             }
 
             await msg.edit({ text: output });
-          } catch (error: any) {
+          } catch (error: unknown) {
             await msg.edit({
               text: `❌ <b>获取统计数据失败</b>\n\n请稍后重试或联系管理员`,
             });
@@ -2000,7 +2001,7 @@ class ShiftPlugin extends Plugin {
             // so the type matches resolveTarget's ClientAdapter parameter.
             source = await resolveTarget(client, sourceInput, chatId);
             target = await resolveTarget(client, targetInput, chatId);
-          } catch (error: any) {
+          } catch (error: unknown) {
             await msg.edit({
               text: `❌ <b>解析对话失败</b>\n\n请检查频道/群组ID格式是否正确`,
             });
@@ -2053,7 +2054,7 @@ class ShiftPlugin extends Plugin {
           }
           return;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("[SHIFT] 命令执行失败:", error);
         await msg.edit({
           text: `❌ <b>命令执行失败</b>\n\n请检查命令格式或稍后重试`,

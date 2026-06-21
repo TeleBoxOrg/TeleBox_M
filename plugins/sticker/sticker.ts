@@ -11,6 +11,7 @@ import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { TelegramClient, User, Message } from "@mtcute/node";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // Inline sleep
 function sleep(ms: number): Promise<void> {
@@ -259,19 +260,20 @@ class StickerPlugin extends Plugin {
         await client.deleteMessagesById(msg.chat.id, [successMsg.id]);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[nsticker] 插件执行失败:", error);
       
       // 处理特定错误类型
-      if (error.message?.includes("FLOOD_WAIT")) {
-        const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+      const errMsg = getErrorMessage(error);
+      if (errMsg.includes("FLOOD_WAIT")) {
+        const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
         await msg.edit({
           text: `⏳ <b>请求过于频繁</b>\n\n需要等待 ${waitTime} 秒后重试`,
         });
         return;
       }
       
-      if (error.message?.includes("MESSAGE_TOO_LONG")) {
+      if (errMsg.includes("MESSAGE_TOO_LONG")) {
         await msg.edit({
           text: html`❌ <b>消息过长</b><br><br>请减少内容长度或使用文件发送`,
         });
@@ -279,7 +281,7 @@ class StickerPlugin extends Plugin {
       }
       
       // 通用错误处理
-      const errorMessage = error instanceof StickerError ? error.message : `未知错误: ${htmlEscape(error.message || "发生未知错误")}`;
+      const errorMessage = error instanceof StickerError ? error.message : `未知错误: ${htmlEscape(getErrorMessage(error))}`;
       await msg.edit({
         text: `❌ <b>操作失败:</b> ${errorMessage}`,
       });
@@ -355,12 +357,12 @@ class StickerPlugin extends Plugin {
               }
               // Handle StickerSetNotModified case if necessary, though unlikely with hash: 0
               return { packName, shouldCreate: false }; 
-          } catch (error: any) {
+          } catch (error: unknown) {
             if (error instanceof StickerError) throw error;
-            if (error.errorMessage === 'STICKERSET_INVALID') {
+            if ((error as { errorMessage?: string }).errorMessage === 'STICKERSET_INVALID') {
                 return { packName, shouldCreate: true };
             }
-            throw new StickerError(`检查贴纸包 <code>${htmlEscape(packName)}</code> 时出错: ${htmlEscape(error.message)}`);
+            throw new StickerError(`检查贴纸包 <code>${htmlEscape(packName)}</code> 时出错: ${htmlEscape(getErrorMessage(error))}`);
           }
       }
 
@@ -386,13 +388,13 @@ class StickerPlugin extends Plugin {
                   }
               }
               // If full or not modified, loop continues to the next index
-          } catch (error: any) {
-              if (error.errorMessage === 'STICKERSET_INVALID') {
+          } catch (error: unknown) {
+              if ((error as { errorMessage?: string }).errorMessage === 'STICKERSET_INVALID') {
                   // This pack name is available, so we'll create it
                   return { packName: autoPackName, shouldCreate: true };
               }
               // For other errors, we stop
-              throw new StickerError(`检查自动生成的贴纸包时出错: ${htmlEscape(error.message)}`);
+              throw new StickerError(`检查自动生成的贴纸包时出错: ${htmlEscape(getErrorMessage(error))}`);
           }
       }
 
@@ -422,10 +424,11 @@ class StickerPlugin extends Plugin {
           emoji: stickerInfo.emoji,
         }],
       });
-    } catch (error: any) {
-        let friendlyMessage = `创建贴纸包失败: ${error.message}`;
-        if (error.errorMessage) {
-            switch (error.errorMessage) {
+    } catch (error: unknown) {
+        let friendlyMessage = `创建贴纸包失败: ${getErrorMessage(error)}`;
+        const errCode = (error as { errorMessage?: string }).errorMessage;
+        if (errCode) {
+            switch (errCode) {
                 case 'STICKER_VIDEO_LONG':
                     friendlyMessage = '视频贴纸时长不能超过3秒。';
                     break;
@@ -501,13 +504,13 @@ class StickerPlugin extends Plugin {
         // Finish
         await client.sendText(stickersBot, "/done");
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Try to cancel the operation with the bot on failure
       await client.sendText(stickersBot, "/cancel");
       if (error instanceof StickerError) {
           throw error; // Re-throw our custom, user-friendly error
       }
-      throw new StickerError(`与 @Stickers 机器人交互失败: ${htmlEscape(error.message)}`);
+      throw new StickerError(`与 @Stickers 机器人交互失败: ${htmlEscape(getErrorMessage(error))}`);
     }
   }
 }

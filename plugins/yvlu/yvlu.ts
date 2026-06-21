@@ -25,6 +25,7 @@ import { sleep } from "teleproto/Helpers";
 import { safeGetReplyMessage, safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { EntityLike, MessageLike } from "@utils/tlTypes";
+import { getErrorMessage } from "@utils/errorHelpers";
 import dayjs from "dayjs";
 import { CustomFile } from "teleproto/client/uploads.js";
 import * as zlib from "zlib";
@@ -1169,10 +1170,10 @@ ${codeTag(this.configPath)}
             parseMode: "html",
           });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("处理配置命令失败:", error);
       await msg.edit({
-        text: `❌ 配置操作失败: ${htmlEscape(error.message || String(error))}`,
+        text: `❌ 配置操作失败: ${htmlEscape(getErrorMessage(error) || String(error))}`,
         parseMode: "html",
       });
     }
@@ -1272,7 +1273,7 @@ ${codeTag(this.configPath)}
           }),
         );
         stickerSetExists = stickerSet instanceof Api.messages.StickerSet;
-      } catch (error: any) {
+      } catch (error: unknown) {
         // 如果贴纸包不存在,会抛出异常
         if (error.errorMessage === "STICKERSET_INVALID") {
           stickerSetExists = false;
@@ -1306,10 +1307,10 @@ ${codeTag(this.configPath)}
             text: `✅ 已成功添加到贴纸包!\n贴纸包: t.me/addstickers/${htmlEscape(this.config.stickerSetShortName)}`,
             parseMode: "html",
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error("添加贴纸失败:", error);
           await msg.edit({
-            text: `❌ 添加贴纸失败: ${htmlEscape(error.message || String(error))}`,
+            text: `❌ 添加贴纸失败: ${htmlEscape(getErrorMessage(error) || String(error))}`,
             parseMode: "html",
           });
         }
@@ -1359,19 +1360,19 @@ ${codeTag(this.configPath)}
             text: `✅ 已成功添加到贴纸包!\n贴纸包: t.me/addstickers/${htmlEscape(this.config.stickerSetShortName)}`,
             parseMode: "html",
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error("处理图片失败:", error);
           await msg.edit({
-            text: `❌ 处理图片失败: ${htmlEscape(error.message || String(error))}`,
+            text: `❌ 处理图片失败: ${htmlEscape(getErrorMessage(error) || String(error))}`,
             parseMode: "html",
           });
         }
         return;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("保存贴纸到贴纸包失败:", error);
       await msg.edit({
-        text: `❌ 操作失败: ${htmlEscape(error.message || String(error))}`,
+        text: `❌ 操作失败: ${htmlEscape(getErrorMessage(error) || String(error))}`,
         parseMode: "html",
       });
     }
@@ -1442,10 +1443,10 @@ ${codeTag(this.configPath)}
         )}`,
         parseMode: "html",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("创建贴纸包失败:", error);
       await msg.edit({
-        text: `❌ 创建贴纸包失败: ${htmlEscape(error.message || String(error))}`,
+        text: `❌ 创建贴纸包失败: ${htmlEscape(getErrorMessage(error) || String(error))}`,
         parseMode: "html",
       });
     }
