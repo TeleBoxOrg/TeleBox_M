@@ -374,7 +374,7 @@ class DeepWikiMcp {
       const transport = new StreamableHTTPClientTransport(new URL("https://mcp.deepwiki.com/mcp"));
       const client = new Client({ name: "telebox-deepwiki", version: "1.0.0" });
       try {
-        await client.connect(transport as any);
+        await client.connect(transport);
       } catch (error) {
         await client.close().catch(() => undefined);
         throw error;

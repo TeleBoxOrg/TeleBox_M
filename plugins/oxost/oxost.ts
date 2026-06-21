@@ -99,7 +99,7 @@ class Ox0Plugin extends Plugin {
       await msg.edit({ text: "⏳ 正在下载并上传..." });
       try {
         const client = await getGlobalClient();
-        const downloaded = await client.downloadAsBuffer(replied.media as any);
+        const downloaded = await client.downloadAsBuffer(replied.media as unknown as import("@mtcute/core").FileLocation);
         const buffer = Buffer.isBuffer(downloaded) ? downloaded : Buffer.from(downloaded);
         if (buffer.length === 0) {
           await sendLongHtml(msg, `❌ <b>错误:</b> 媒体下载失败或为空`);

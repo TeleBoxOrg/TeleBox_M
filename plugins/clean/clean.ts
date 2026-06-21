@@ -339,17 +339,17 @@ class CleanPlugin extends Plugin {
 
     // 获取总数
     try {
-      const initialBlocked = await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1 } as any);
+      const initialBlocked = await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1 } as unknown as Parameters<typeof client.call>[0]);
       totalUsers = initialBlocked._ === 'contacts.blockedSlice'
         ? (initialBlocked as { count?: number }).count || 0
-        : (await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1000 } as any))?.users?.length || 0;
+        : (await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1000 } as unknown as Parameters<typeof client.call>[0]))?.users?.length || 0;
     } catch (error) {
       logger.error("获取用户总数失败:", error);
     }
 
     while (true) {
       try {
-        const blocked = await client.call({ _: "contacts.getBlocked", offset, limit: 100 } as any);
+        const blocked = await client.call({ _: "contacts.getBlocked", offset, limit: 100 } as unknown as Parameters<typeof client.call>[0]);
         if (!blocked.users?.length) break;
 
         for (const user of blocked.users) {
@@ -362,7 +362,7 @@ class CleanPlugin extends Plugin {
           }
 
           try {
-            await client.call({ _: "contacts.unblock", id: user } as any);
+            await client.call({ _: "contacts.unblock", id: user } as unknown as Parameters<typeof client.call>[0]);
             success++;
             
             // 动态延迟
@@ -605,9 +605,9 @@ ${skipped > 0 ? `• 跳过原因: ${includeAll ? '系统限制' : '机器人/�
       let participant: any;
       const chat = await client.getChat(chatId).catch(() => null);
       if (hasRawType(chat, 'channel') || getRawType(chat) === 'channel' || getRawType(chat) === 'supergroup') {
-        participant = await client.call({ _: "channels.getParticipant", channel: chatId, participant: me.id } as any);
+        participant = await client.call({ _: "channels.getParticipant", channel: chatId, participant: me.id } as unknown as Parameters<typeof client.call>[0]);
       } else {
-        participant = await client.call({ _: "messages.getFullChat", chatId } as any);
+        participant = await client.call({ _: "messages.getFullChat", chatId } as unknown as Parameters<typeof client.call>[0]);
       }
 
       if (hasRawType(participant, 'channels.channelParticipant')) {

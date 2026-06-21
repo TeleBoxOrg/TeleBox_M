@@ -55,9 +55,10 @@ const formatBytes = (bytes: number): string => {
 function estimateMediaSizeBytes(message: MessageContext | import("@mtcute/node").Message): number {
   const media = message.media;
   if (!media) return 0;
-  // mtcute FileLocation-derived types have optional fileSize
-  if (typeof (media as any).fileSize === "number") {
-    return (media as any).fileSize;
+  // mtcute FileLocation-derived types have optional fileSize on .raw
+  const raw = (media as unknown as { raw?: { fileSize?: number } }).raw;
+  if (typeof raw?.fileSize === "number") {
+    return raw.fileSize;
   }
   return 0;
 }
@@ -293,7 +294,7 @@ async function handleImageEdit(
 
   let mediaBuffer: Buffer | null = null;
   try {
-    mediaBuffer = Buffer.from(await client.downloadAsBuffer(replyMsg.media as any));
+    mediaBuffer = Buffer.from(await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileLocation));
   } catch (error) {
     await msg.edit({ text: `❌ 图片下载失败: ${error}` });
     return;
