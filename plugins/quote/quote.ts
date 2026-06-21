@@ -590,12 +590,12 @@ async function waitForStableFile(filePath: string, timeoutMs = 8000): Promise<Bu
   return undefined;
 }
 
-async function downloadMediaToBuffer(client: any, target: any): Promise<Buffer | undefined> {
+async function downloadMediaToBuffer(client: TelegramClient, target: { media?: unknown } | null): Promise<Buffer | undefined> {
   if (!client || !target) return undefined;
   try {
     const media = target.media || target;
     if (!media) return undefined;
-    const buffer = await client.downloadAsBuffer(media as any);
+    const buffer = await client.downloadAsBuffer(media as Parameters<typeof client.downloadAsBuffer>[0]);
     return buffer && buffer.length > 0 ? Buffer.from(buffer) : undefined;
   } catch (err: any) {
     logger.warn("quote media download failed", err?.message || err);
@@ -606,6 +606,7 @@ async function downloadMediaToBuffer(client: any, target: any): Promise<Buffer |
 async function downloadMessageMedia(msg: MessageContext, enabled: boolean): Promise<Buffer | undefined> {
   if (!enabled || !msg.media) return undefined;
   const client = await getGlobalClient().catch(() => null);
+  if (!client) return undefined;
   return downloadMediaToBuffer(client, msg);
 }
 
