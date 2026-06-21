@@ -139,19 +139,19 @@ async function searchMyMessagesOptimized(
       });
 
       // 正确处理搜索结果类型
-      const resultMessages = (searchResult as any).messages;
+      const resultMessages = (searchResult as { messages?: unknown[] }).messages;
       if (!resultMessages || resultMessages.length === 0) {
         logger.info(`[DA] 搜索完成，共找到 ${allMyMessages.length} 条自己的消息`);
         break;
       }
 
-      const messages = resultMessages.filter((m: any) => 
+      const messages = (resultMessages as { _?: string; fromId?: { userId?: { toString(): string } }; id?: number }[]).filter((m) =>
         m._ === "message" && m.fromId?.userId?.toString() === myId.toString()
       );
 
       if (messages.length > 0) {
         allMyMessages.push(...messages);
-        offsetId = messages[messages.length - 1].id;
+        offsetId = messages[messages.length - 1].id ?? 0;
         logger.info(`[DA] 批次搜索到 ${messages.length} 条消息，总计 ${allMyMessages.length} 条`);
       } else {
         break;
@@ -270,7 +270,7 @@ const fastDeleteBatch = async (
     // 批量失败，逐个删除
     for (const message of messages) {
       try {
-        await client.deleteMessagesById(chatId as any, [message.id], { revoke: true });
+        await client.deleteMessagesById(chatId as never, [message.id], { revoke: true });
         task.deletedMessages++;
         await sleep(50);
       } catch (e) { /* noop */ }
@@ -435,7 +435,7 @@ const da = async (msg: MessageContext) => {
               hash: 0 as any,
             });
             if ("users" in adminResult) {
-              const admins = adminResult.users as any[];
+              const admins = (adminResult as { users?: { id: number | string }[] }).users ?? [];
               isAdmin = admins.some(
                 (admin) => Number(admin.id) === Number(myId)
               );

@@ -340,8 +340,8 @@ class CleanPlugin extends Plugin {
     // 获取总数
     try {
       const initialBlocked = await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1 } as any);
-      totalUsers = initialBlocked._ === 'contacts.blockedSlice' 
-        ? (initialBlocked as any).count || 0 
+      totalUsers = initialBlocked._ === 'contacts.blockedSlice'
+        ? (initialBlocked as { count?: number }).count || 0
         : (await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1000 } as any))?.users?.length || 0;
     } catch (error) {
       logger.error("获取用户总数失败:", error);
@@ -387,7 +387,8 @@ class CleanPlugin extends Plugin {
         }
 
         offset += 100;
-        if (blocked._ === 'contacts.blockedSlice' && offset >= (blocked as any).count) break;
+        const blockedCount = (blocked as { count?: number }).count;
+        if (blocked._ === 'contacts.blockedSlice' && blockedCount !== undefined && offset >= blockedCount) break;
         
         // 批次间延迟
         const batchDelay = consecutiveErrors > 0 ? 3000 + (consecutiveErrors * 1000) : 2000;
