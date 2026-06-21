@@ -323,7 +323,7 @@ class Utils {
 
 // ==================== Configuration Manager ====================
 class ConfigManager {
-  private static db: any = null;
+  private static db: Awaited<ReturnType<typeof JSONFilePreset<LegacyConfigData>>> | null = null;
   private static initialized = false;
 
   private static async init(): Promise<void> {

@@ -1,0 +1,295 @@
+import { Plugin } from "@utils/pluginBase";
+import { getGlobalClient } from "@utils/globalClient";
+import { getPrefixes } from "@utils/pluginManager";
+import type { MessageContext } from "@mtcute/dispatcher";
+import { html } from "@mtcute/html-parser";
+import { JSONFilePreset } from "lowdb/node";
+import type { Low } from "lowdb";
+import { createDirectoryInAssets } from "@utils/pathHelpers";
+import * as path from "path";
+
+import { safeGetMe } from "@utils/authGuards";
+import { logger } from "@utils/logger";
+const prefixes = getPrefixes();
+const mainPrefix = prefixes[0];
+
+
+const htmlEscape = (text: string): string => 
+  text.replace(/[&<>"']/g, m => ({ 
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', 
+    '"': '&quot;', "'": '&#x27;' 
+  }[m] || m));
+
+class TeletypePlugin extends Plugin {
+
+  private readonly PLUGIN_NAME = "teletype";
+  private readonly PLUGIN_VERSION = "1.1.0";
+  private db!: Awaited<ReturnType<typeof JSONFilePreset<{ autoMode: boolean; enabledUsers: string[] }>>>;
+  
+  private readonly HELP_TEXT = `⌨️ <b>打字机效果插件</b>
+
+<b>命令格式：</b>
+<code>${mainPrefix}teletype [文本]</code> - 手动打字机效果
+<code>${mainPrefix}teletype on/off</code> - 开启或关闭自动模式
+<code>${mainPrefix}teletype status</code> - 查看状态
+
+<b>使用示例：</b>
+<code>${mainPrefix}teletype Hello World!</code>
+<code>${mainPrefix}teletype on/off</code>
+<code>${mainPrefix}teletype status</code>`;
+  
+  description = this.HELP_TEXT;
+  cmdHandlers = {
+    teletype: this.handleTeletype.bind(this)
+  };
+  
+  listenMessageHandler = this.handleAutoTeletype.bind(this);
+  listenMessageHandlerIgnoreEdited = true;
+  
+  constructor() {
+    super();
+    this.initDatabase();
+  }
+  
+  private async initDatabase(): Promise<void> {
+    try {
+      const dbPath = path.join(createDirectoryInAssets(this.PLUGIN_NAME), "config.json");
+      this.db = await JSONFilePreset(dbPath, {
+        autoMode: false as boolean,
+        enabledUsers: [] as string[]
+      });
+    } catch (error) {
+      logger.error(`[${this.PLUGIN_NAME}] 数据库初始化失败:`, error);
+      this.db = {
+        data: { autoMode: false, enabledUsers: [] },
+        write: async () => {}
+      } as unknown as Awaited<ReturnType<typeof JSONFilePreset<{ autoMode: boolean; enabledUsers: string[] }>>>;
+    }
+  }
+  
+  private async handleTeletype(msg: MessageContext): Promise<void> {
+    const client = await getGlobalClient();
+    if (!client) return;
+    
+    try {
+      const { subCommand, args, text } = this.parseArguments(msg);
+      
+      if (!subCommand && !text) {
+        await this.showUsage(msg);
+        return;
+      }
+      
+      switch (subCommand?.toLowerCase()) {
+        case 'on':
+          await this.enableAutoMode(msg);
+          break;
+        case 'off':
+          await this.disableAutoMode(msg);
+          break;
+        case 'status':
+          await this.showStatus(msg);
+          break;
+        default:
+          if (text) {
+            await this.executeTeletype(msg, text);
+          } else {
+            await this.showUsage(msg);
+          }
+      }
+      
+    } catch (error: any) {
+      await this.handleError(msg, error);
+    }
+  }
+  
+  private parseArguments(msg: MessageContext): { subCommand?: string, args: string[], text?: string } {
+    const text = msg.text || "";
+    const parts = text.trim().split(/\s+/);
+    
+    if (parts.length < 2) return { args: [] };
+    
+    const subCommand = parts[1];
+    const remainingParts = parts.slice(2);
+    
+    if (['on', 'off', 'status'].includes(subCommand.toLowerCase())) {
+      return { subCommand, args: remainingParts };
+    }
+    
+    return { args: remainingParts, text: parts.slice(1).join(' ') };
+  }
+  
+  private async showUsage(msg: MessageContext): Promise<void> {
+    await msg.edit({
+      text: html(`❌ <b>参数错误</b><br><br>${this.HELP_TEXT}`)
+    });
+  }
+  
+  private async enableAutoMode(msg: MessageContext): Promise<void> {
+    if (!this.db) await this.initDatabase();
+    
+    const userId = msg.sender?.id.toString();
+    if (!userId) {
+      await msg.edit({ text: html("❌ <b>无法获取用户ID</b>") });
+      return;
+    }
+    
+    if (!this.db.data.enabledUsers) {
+      this.db.data.enabledUsers = [];
+    }
+    
+    if (!this.db.data.enabledUsers.includes(userId)) {
+      this.db.data.enabledUsers.push(userId);
+    }
+    
+    this.db.data.autoMode = true;
+    await this.db.write();
+    
+    await msg.edit({
+      text: html("✅ <b>自动打字机模式已开启</b>")
+    });
+  }
+  
+  private async disableAutoMode(msg: MessageContext): Promise<void> {
+    if (!this.db) await this.initDatabase();
+    
+    const userId = msg.sender?.id.toString();
+    if (userId && this.db.data.enabledUsers) {
+      this.db.data.enabledUsers = this.db.data.enabledUsers.filter((id: string) => id !== userId);
+    }
+    
+    this.db.data.autoMode = false;
+    await this.db.write();
+    
+    await msg.edit({
+      text: html("❌ <b>自动打字机模式已关闭</b>")
+    });
+  }
+  
+  private async showStatus(msg: MessageContext): Promise<void> {
+    if (!this.db) await this.initDatabase();
+    
+    const userId = msg.sender?.id.toString();
+    const isEnabled = userId && this.db.data.enabledUsers ? 
+      this.db.data.enabledUsers.includes(userId) : false;
+    const status = isEnabled ? "🟢 开启" : "🔴 关闭";
+    
+    await msg.edit({
+      text: html(`📊 <b>状态</b><br><br>自动模式: ${status}`)
+    });
+  }
+  
+  private async handleAutoTeletype(msg: MessageContext): Promise<void> {
+    if (!this.db) await this.initDatabase();
+    if (!this.db?.data?.autoMode) return;
+    
+    const userId = msg.sender?.id.toString();
+    if (!userId || !this.db.data.enabledUsers?.includes(userId)) return;
+    
+    const text = msg.text || "";
+    const prefixes = await this.getPrefixes();
+    const isCommand = prefixes.some(prefix => text.startsWith(prefix));
+    
+    if (isCommand || !text || text.trim().length < 2) return;
+    
+    const client = await getGlobalClient();
+    if (!client) return;
+    
+    const self = await safeGetMe(client);
+  if (!self) return;
+    if (msg.sender?.id !== self.id) return;
+    
+    try {
+      await this.executeTeletype(msg, text);
+    } catch (error: any) {
+      logger.error(`[${this.PLUGIN_NAME}] Auto teletype error:`, error);
+    }
+  }
+  
+  private async getPrefixes(): Promise<string[]> {
+    return [".", "。", "!"];
+  }
+  
+  private async executeTeletype(msg: MessageContext, text: string): Promise<void> {
+    const interval = 50;
+    const cursor = "█";
+    let buffer = "";
+    
+    let currentMsg: any = await msg.edit({
+      text: html(cursor)
+    });
+    
+    if (!currentMsg) return;
+    
+    await this.sleep(interval);
+    
+    for (const character of text) {
+      buffer += character;
+      const bufferWithCursor = `${htmlEscape(buffer)}${cursor}`;
+      
+      try {
+        currentMsg = await currentMsg?.edit({
+          text: html(bufferWithCursor)
+        });
+        
+        if (!currentMsg) return;
+        
+        await this.sleep(interval);
+        
+        if (buffer.length > 0 && currentMsg) {
+          currentMsg = await currentMsg.edit({
+            text: html(htmlEscape(buffer))
+          });
+          
+          if (!currentMsg) return;
+        }
+        
+      } catch (error: any) {
+        if (!error.message?.includes("MESSAGE_NOT_MODIFIED")) {
+          throw error;
+        }
+        continue;
+      }
+      
+      await this.sleep(interval);
+    }
+    
+    const finalText = htmlEscape(text);
+    try {
+      if (currentMsg) {
+        await currentMsg.edit({
+          text: html(finalText)
+        });
+      }
+    } catch (error: any) {
+      if (!error.message?.includes("MESSAGE_NOT_MODIFIED")) {
+        throw error;
+      }
+    }
+  }
+  
+  private async handleError(msg: MessageContext, error: any): Promise<void> {
+    logger.error(`[${this.PLUGIN_NAME}] Error:`, error);
+    
+    if (error.message?.includes("MESSAGE_NOT_MODIFIED")) {
+      return;
+    }
+    
+    let errorMessage = "❌ <b>操作失败:</b> ";
+    
+    if (error.message?.includes("MESSAGE_TOO_LONG")) {
+      errorMessage += "消息过长";
+    } else {
+      errorMessage += htmlEscape(error.message || "未知错误");
+    }
+    
+    await msg.edit({
+      text: html(errorMessage)
+    });
+  }
+  
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+export default new TeletypePlugin();

@@ -33,7 +33,7 @@ const COLORS = {
 const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
 
 class Logger {
-  private db: any = null;
+  private db!: Awaited<ReturnType<typeof JSONFilePreset<LoggerConfig>>>;
   private level: LogLevel = LogLevel.INFO;
   private readonly DB_NAME = "logger";
   private context: Record<string, any> = {};

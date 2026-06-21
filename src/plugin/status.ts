@@ -111,7 +111,7 @@ class TeleBoxSystemMonitor extends Plugin {
   }
 
   description = `显示系统信息与TeleBox运行状态<br><br>${HELP_TEXT}`;
-  private db: any;
+  private db: Awaited<ReturnType<typeof JSONFilePreset<{ template: string }>>> | null = null;
   private readonly PLUGIN_NAME = "status";
   private readonly DB_PATH: string;
 
@@ -260,7 +260,7 @@ class TeleBoxSystemMonitor extends Plugin {
   // 显示当前模板内容
   private async handleShowTemplate(msg: MessageContext): Promise<void> {
     if (!this.db) await this.initDB();
-    const template = this.db.data.template || DEFAULT_TEMPLATE;
+    const template = this.db!.data.template || DEFAULT_TEMPLATE;
 
     // 转义 HTML 特殊字符，使模板原样显示
     const htmlMap: Record<string, string> = {
@@ -404,8 +404,8 @@ class TeleBoxSystemMonitor extends Plugin {
     }
     if (!this.db) await this.initDB();
 
-    this.db.data.template = replyMsg.text;
-    await this.db.write();
+    this.db!.data.template = replyMsg.text;
+    await this.db!.write();
 
     await msg.edit({
       text: html(`✅ 模板已保存！使用 <code>${mainPrefix}status</code> 查看效果`),
@@ -415,8 +415,8 @@ class TeleBoxSystemMonitor extends Plugin {
   // 重置默认模板
   private async handleResetTemplate(msg: MessageContext): Promise<void> {
     if (!this.db) await this.initDB();
-    this.db.data.template = DEFAULT_TEMPLATE;
-    await this.db.write();
+    this.db!.data.template = DEFAULT_TEMPLATE;
+    await this.db!.write();
     await msg.edit({
       text: "✅ 模板已重置为默认！",
     });

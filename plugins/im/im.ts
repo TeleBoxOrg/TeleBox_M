@@ -137,7 +137,7 @@ class MessageManager {
 
 // ==================== 配置管理器 ====================
 class ConfigManager {
-  private static db: any = null;
+  private static db: Awaited<ReturnType<typeof JSONFilePreset<Config>>> | null = null;
 
   static async init() {
     if (this.db) return;
@@ -151,12 +151,12 @@ class ConfigManager {
     await this.init();
     // 再次保证标准化（防止外部意外写入）
     this.normalize();
-    return this.db.data;
+    return this.db!.data;
   }
 
   static async saveConfig() {
     await this.init();
-    await this.db.write();
+    await this.db!.write();
   }
 
   private static normalize() {

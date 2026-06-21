@@ -81,7 +81,7 @@ class TracePlugin extends Plugin {
   public cmdHandlers = { trace: this.handleTrace.bind(this) };
   public listenMessageHandler = this.handleMessage.bind(this);
 
-  private db: any;
+  private db!: Awaited<ReturnType<typeof JSONFilePreset<TraceDB>>>;
   private isPremium: boolean | null = null;
   // [MODIFIED] Added a property to store our own user ID.
   private meId: BigInteger | null = null;

@@ -93,7 +93,7 @@ const DEFAULT_CONFIG: Record<string, string> = {
 
 // 配置管理器
 class ConfigManager {
-  private static db: any = null;
+  private static db: Awaited<ReturnType<typeof JSONFilePreset<Record<string, any>>>> | null = null;
   private static initialized = false;
 
   private static async init(): Promise<void> {
