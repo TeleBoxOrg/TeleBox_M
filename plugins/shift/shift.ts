@@ -1052,6 +1052,7 @@ class BackupManager {
             break;
           }
 
+          // 注意：消息转发必须按顺序执行以遵守速率限制，不能并行
           for (const message of batch) {
             if (task.status !== "running") {
               break;

@@ -353,6 +353,7 @@ class CleanPlugin extends Plugin {
         const blocked = await client.call({ _: "contacts.getBlocked", offset, limit: 100 } as unknown as Parameters<typeof client.call>[0]);
         if (!blocked.users?.length) break;
 
+        // 注意：解封用户必须按顺序执行以避免触发频率限制，不能并行
         for (const user of blocked.users) {
           processedUsers++;
           

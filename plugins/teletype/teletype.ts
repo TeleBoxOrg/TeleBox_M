@@ -223,6 +223,7 @@ class TeletypePlugin extends Plugin {
     
     await this.sleep(interval);
     
+    // 注意：必须按顺序逐字符编辑消息以实现打字机效果，不能并行
     for (const character of text) {
       buffer += character;
       const bufferWithCursor = `${htmlEscape(buffer)}${cursor}`;
