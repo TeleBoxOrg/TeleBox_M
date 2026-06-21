@@ -1217,7 +1217,7 @@ async function findUserInChannelParticipants(
         );
       });
       if (matched) return matched;
-    } catch (e) { console.warn(`[admin_board] Ignore and continue to other fallbacks.:`, e) }
+    } catch (e) { logger.warn(`[admin_board] Ignore and continue to other fallbacks.:`, e) }
   }
 
   if (!isNumeric) return undefined;
@@ -1271,7 +1271,7 @@ async function resolveUserForSeatAction(
       if (hasRawType(entity, "user")) {
         return entity;
       }
-    } catch (e) { console.warn(`[admin_board] Ignore and continue to target-specific fallback.:`, e) }
+    } catch (e) { logger.warn(`[admin_board] Ignore and continue to target-specific fallback.:`, e) }
   }
 
   return target.isChannel

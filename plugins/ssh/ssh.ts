@@ -744,7 +744,7 @@ class SSHPlugin extends Plugin {
       const timestamp = dayjs().format("YYYYMMDD_HHmmss");
       try {
         await execAsync(`cp ${authorizedKeysPath} ${authorizedKeysPath}.backup.${timestamp}`);
-      } catch (e) { console.warn(`[ssh] 文件不存在时忽略备份错误:`, e) }
+      } catch (e) { logger.warn(`[ssh] 文件不存在时忽略备份错误:`, e) }
       
       // 清空密钥文件
       await execAsync(`mkdir -p /root/.ssh && chmod 700 /root/.ssh`);

@@ -751,7 +751,7 @@ async function convertAnimatedEmojiToPng(buffer: Buffer): Promise<Buffer | undef
         return await (await getSharp())(png, { animated: false }).ensureAlpha().png({ force: true }).toBuffer();
       }
     }
-  } catch (_) { console.warn(`[quote] keep fallback quiet; normal static buffers and unsupported tgs land here:`, _) } finally {
+  } catch (_) { logger.warn(`[quote] keep fallback quiet; normal static buffers and unsupported tgs land here:`, _) } finally {
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
     try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
   }
