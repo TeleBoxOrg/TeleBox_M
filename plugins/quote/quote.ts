@@ -1,4 +1,4 @@
-import { TelegramClient } from "@mtcute/node";
+import { TelegramClient, Message } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
 import * as fs from "fs";
@@ -1255,24 +1255,22 @@ async function collectMessages(msg: MessageContext, args: QuoteArgs): Promise<an
     const baseId = reply.id;
     if (!baseId || Math.abs(count) <= 1) return [reply];
     const limit = Math.min(Math.abs(count), MAX_QUOTE_MESSAGES);
-    const params = count > 0
-      ? { offsetId: baseId - 1, limit, reverse: true }
-      : { offsetId: baseId + 1, limit };
-    const messages = await safeGetMessages(client, peer, params as any).catch(() => []);
+    const messages = count > 0
+      ? await client.getHistory(peer, { minId: baseId, limit, reverse: true }).catch(() => [] as Message[])
+      : await client.getHistory(peer, { maxId: baseId, limit }).catch(() => [] as Message[]);
     const result = (Array.isArray(messages) ? messages : []).filter(isApiMessage).sort((a: any, b: any) => a.id - b.id);
-    logger.warn("quote collect messages", { reply: true, count, baseId, params, got: result.map((m: any) => m.id) });
+    logger.warn("quote collect messages", { reply: true, count, baseId, got: result.map((m: any) => m.id) });
     return result.length ? result : [reply];
   }
 
   const commandId = msg.id;
   if (!commandId || Math.abs(count) <= 1) return [msg];
   const limit = Math.min(Math.abs(count), MAX_QUOTE_MESSAGES);
-  const params = count > 0
-    ? { offsetId: commandId, limit }
-    : { offsetId: commandId + 1, limit };
-  const messages = await safeGetMessages(client, peer, params as any).catch(() => []);
+  const messages = count > 0
+    ? await client.getHistory(peer, { minId: commandId, limit }).catch(() => [] as Message[])
+    : await client.getHistory(peer, { maxId: commandId, limit }).catch(() => [] as Message[]);
   const result = (Array.isArray(messages) ? messages : []).filter(isApiMessage).sort((a: any, b: any) => a.id - b.id);
-  logger.warn("quote collect messages", { reply: false, count, commandId, params, got: result.map((m: any) => m.id) });
+  logger.warn("quote collect messages", { reply: false, count, commandId, got: result.map((m: any) => m.id) });
   return result.length ? result : [msg];
 }
 

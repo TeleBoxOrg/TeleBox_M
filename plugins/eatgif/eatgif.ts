@@ -383,12 +383,12 @@ class EatGifPlugin extends Plugin {
     const client = await getGlobalClient();
     if (!client) return undefined;
     try {
-      // TL-layer: resolvePeer returns high-level type but getFullUser needs raw InputPeer
-      const peer = await client.resolvePeer(userId) as any;
+      // TL-layer: resolvePeer returns high-level type but getFullUser needs raw InputUser
+      const peer = await client.resolvePeer(userId);
       const fullUser = await client.call({
         _: 'users.getFullUser',
         id: peer,
-      });
+      } as never);
       // TL-layer: access raw userFull.photo (TypeUserProfilePhoto) which has photoId
       const fullUserAny = fullUser as unknown as { fullUser?: { photo?: { _?: string; photoId?: bigint } } };
       const photo = fullUserAny?.fullUser?.photo;
@@ -399,7 +399,7 @@ class EatGifPlugin extends Plugin {
         big: false,
         peer: peer,
         photo_id: photo.photoId,
-      } as any;
+      } as never;
       const buffer = await client.downloadAsBuffer(location);
       return Buffer.from(buffer);
     } catch (err) {
