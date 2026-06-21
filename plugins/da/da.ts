@@ -12,6 +12,7 @@ import { JSONFile } from "lowdb/node";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
+import { Long } from "@mtcute/core";
 // 获取命令前缀
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -135,7 +136,7 @@ async function searchMyMessagesOptimized(
         limit: batchSize,
         maxId: 0,
         minId: 0,
-        hash: 0 as any
+        hash: Long.fromInt(0)
       });
 
       // 正确处理搜索结果类型
@@ -432,7 +433,7 @@ const da = async (msg: MessageContext) => {
               filter: { _: "channelParticipantsAdmins" },
               offset: 0,
               limit: 100,
-              hash: 0 as any,
+              hash: Long.fromInt(0),
             });
             if ("users" in adminResult) {
               const admins = (adminResult as { users?: { id: number | string }[] }).users ?? [];

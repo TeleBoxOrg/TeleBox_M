@@ -1,4 +1,5 @@
 import { TelegramClient, html } from "@mtcute/node";
+import { Long } from "@mtcute/core";
 import type { MessageContext } from "@mtcute/dispatcher";
 import path from "path";
 import fs from "fs";
@@ -338,7 +339,7 @@ async function fetchUserInfo(client: TelegramClient, userId: number): Promise<an
       const inputUser = input as { userId?: number; accessHash?: bigint | number };
       const res = await client.call({
         _: 'users.getUsers',
-        id: [{ _: 'inputUser', userId: inputUser.userId ?? 0, accessHash: (inputUser.accessHash ?? 0n) as any }]
+        id: [{ _: 'inputUser', userId: inputUser.userId ?? 0, accessHash: Long.fromBigInt(BigInt(inputUser.accessHash ?? 0)) }]
       }) as unknown as unknown[];
       const user = res?.[0];
       if (user && !hasRawType(user, 'userEmpty')) {

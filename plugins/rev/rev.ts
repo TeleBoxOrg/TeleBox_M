@@ -156,7 +156,7 @@ class REVPlugin extends Plugin {
 					peer: await client.resolvePeer(msg.chat.id),
 					id: msg.id,
 					message: reversed,
-					entities: reversedEntities as any,
+					entities: reversedEntities as unknown as tl.TypeMessageEntity[],
 				});
 				return;
 			} catch (err) {
@@ -259,7 +259,7 @@ class REVPlugin extends Plugin {
 		replyMsg: Message,
 		inputPath: string
 	) {
-		const buf = await client.downloadAsBuffer(replyMsg.media as any);
+		const buf = await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileLocation);
 		fs.writeFileSync(inputPath, buf as Buffer);
 		if (!fs.existsSync(inputPath)) {
 			throw new Error('下载媒体失败，请稍后再试');

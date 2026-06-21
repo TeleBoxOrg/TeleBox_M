@@ -336,7 +336,7 @@ class JavDBPlugin extends Plugin {
 
         // 保存到临时文件
         const tmpPath = path.join(os.tmpdir(), `javdb_cover_${Date.now()}.jpg`);
-        await fs.promises.writeFile(tmpPath, Buffer.from(imgResp.data as any));
+        await fs.promises.writeFile(tmpPath, Buffer.from(imgResp.data as ArrayBuffer));
 
         try {
           // 上传文件并发送（带剧透标记）
@@ -359,7 +359,7 @@ class JavDBPlugin extends Plugin {
         const t = setTimeout(async () => {
           pendingTimers.delete(t);
           if (getCurrentGeneration() !== gen) return;
-          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as any); } catch (e) { /* noop */ }
+          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e) { /* noop */ }
         }, 60_000);
         pendingTimers.add(t);
       }
