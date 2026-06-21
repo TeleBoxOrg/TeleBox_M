@@ -15,6 +15,7 @@ import http from "http";
 import https from "https";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { getMessageText as getMessageTextFromGuard, getMessageReplyToId } from "@utils/entityTypeGuards";
+import { logger } from "@utils/logger";
 
 type RepoEntry = {
   tag: string;
@@ -73,7 +74,7 @@ const getRepliedMessageText = async (msg: MessageContext): Promise<string> => {
   try {
     const replied = await safeGetReplyMessage(msg);
     return getMessageText(replied).trim();
-  } catch (e) { /* noop */ }
+  } catch (e) { logger.warn('[deepwiki] get replied message text failed:', e) }
 
   return "";
 };
@@ -86,7 +87,7 @@ const getRepliedMessageId = async (msg: MessageContext): Promise<number | undefi
     const replied = await safeGetReplyMessage(msg);
     const rid = (replied as { id?: number })?.id;
     if (typeof rid === "number") return rid;
-  } catch (e) { /* noop */ }
+  } catch (e) { logger.warn('[deepwiki] get replied message id failed:', e) }
 
   return undefined;
 };
@@ -952,7 +953,7 @@ class DeepWikiPlugin extends Plugin {
 
         try {
           await original.delete();
-        } catch (e) { /* noop */ }
+        } catch (e) { logger.warn('[deepwiki] delete original msg failed:', e) }
       } catch (err: any) {
         await MessageSender.sendOrEdit(original, this.formatError(err), "html");
       }

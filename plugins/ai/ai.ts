@@ -19,6 +19,7 @@ import sharp from "sharp";
 import http from "http";
 import https from "https";
 import { promisify } from "util";
+import { logger } from "@utils/logger";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 
 interface ProviderConfig {
@@ -854,7 +855,7 @@ const deleteMessageOrGroup = async (msg: MessageContext): Promise<void> => {
       return;
     }
     await msg.delete();
-  } catch (e) { /* noop */ }
+  } catch (e) { logger.warn('[ai] delete msg failed:', e) }
 };
 
 const getHeaderContentType = (headers: unknown): string | undefined => {
@@ -2187,7 +2188,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
 
     try {
       payloads.push(JSON.parse(body));
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('[ai] JSON parse failed:', e) }
   }
 
   if (payloads.length > 0 || sawDataLine) return payloads;
@@ -4782,7 +4783,7 @@ class ImageFeature extends BaseFeatureHandler {
           try {
             const pngBuffer = await sharp(inputImage.data).png().toBuffer();
             inputImage = { data: pngBuffer, mimeType: "image/png" };
-          } catch (e) { /* noop */ }
+          } catch (e) { logger.warn('[ai] image convert to png failed:', e) }
         }
         images = await this.aiService.editImage(prompt, inputImage, token);
       } else {
