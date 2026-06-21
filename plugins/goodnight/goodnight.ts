@@ -39,7 +39,7 @@ class GreetingPlugin extends Plugin {
     };
     
     // 数据库实例
-    private db: any;
+    private db!: Awaited<ReturnType<typeof JSONFilePreset<DBData>>>;
     
     // 关键词配置
     private readonly sleepKeywords = ["晚安", "晚", "睡觉", "睡了", "去睡了", "晚安喵"];
@@ -50,8 +50,7 @@ class GreetingPlugin extends Plugin {
     }
 
   cleanup(): void {
-    // 引用重置：清空实例级 db / cache / manager 引用，便于 reload 后重新初始化。
-    this.db = null;
+    // 引用重置：db 由 reload 后重新初始化自动覆盖，无需显式清空。
   }
 
   async setup(): Promise<void> {

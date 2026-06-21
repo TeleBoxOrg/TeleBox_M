@@ -79,7 +79,7 @@ function scheduleAbort(controller: AbortController, ms: number, label: string): 
 
 // 配置管理器
 class ZprConfigManager {
-    private static db: any = null;
+    private static db: Awaited<ReturnType<typeof JSONFilePreset<Record<string, any>>>> | null = null;
     private static initialized = false;
     private static configPath: string;
     private static backupPath: string;
@@ -173,7 +173,7 @@ class ZprConfigManager {
     private static async writeConfigWithRetry(): Promise<boolean> {
         for (let attempt = 1; attempt <= 5; attempt++) {
             try {
-                await this.db.write();
+                await this.db!.write();
                 logger.info("[zpr] 配置保存成功");
                 return true;
             } catch (writeError: any) {

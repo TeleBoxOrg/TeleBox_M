@@ -147,7 +147,7 @@ const DEFAULT_CONFIG: Record<string, string> = {
 
 // 配置管理器
 class ConfigManager {
-  private static db: any = null;
+  private static db: Awaited<ReturnType<typeof JSONFilePreset<Record<string, any>>>> | null = null;
   private static initialized = false;
   private static initLock = false;  // 添加锁防止并发初始化
   private static configPath: string;

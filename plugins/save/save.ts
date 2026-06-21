@@ -126,7 +126,7 @@ class PrometheusPlugin extends Plugin {
   description = help_text;
   
   private tempDir = createDirectoryInTemp("prometheus");
-  private db: any = null;
+  private db: Awaited<ReturnType<typeof JSONFilePreset<PrometheusDB>>> | null = null;
   private lastEditText: Map<string, string> = new Map();
   private chatDisplayNameCache: Map<string, string> = new Map();
   private activeTempFiles: Set<string> = new Set();
@@ -422,26 +422,26 @@ class PrometheusPlugin extends Plugin {
   
   private async getUserConfig(userId: string): Promise<UserConfig> {
     await this.initDB();
-    if (!this.db.data.users[userId]) {
-      this.db.data.users[userId] = { 
+    if (!this.db!.data.users[userId]) {
+      this.db!.data.users[userId] = {
         target: "me",
         showSource: false  // 默认关闭来源显示
       };
-      await this.db.write();
+      await this.db!.write();
     }
-    return this.db.data.users[userId];
+    return this.db!.data.users[userId];
   }
-  
+
   private async setUserConfig(userId: string, config: Partial<UserConfig>): Promise<void> {
     await this.initDB();
-    if (!this.db.data.users[userId]) {
-      this.db.data.users[userId] = { 
+    if (!this.db!.data.users[userId]) {
+      this.db!.data.users[userId] = {
         target: "me",
         showSource: false
       };
     }
-    Object.assign(this.db.data.users[userId], config);
-    await this.db.write();
+    Object.assign(this.db!.data.users[userId], config);
+    await this.db!.write();
   }
   
   // 生成消息跳转链接

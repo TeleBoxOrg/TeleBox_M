@@ -196,7 +196,7 @@ class XMSLPlugin extends Plugin {
 		apiKey: '',
 		model: 'gpt-4',
 	};
-	private db: any = null;
+	private db!: Awaited<ReturnType<typeof JSONFilePreset<XMSLConfig>>>;
 	private baseDir: string = '';
 
 	// 更新帮助文档，加入 .xm 别名说明
