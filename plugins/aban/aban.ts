@@ -42,7 +42,7 @@ function getFloodWaitSeconds(error: unknown): number | null {
   m = msg.match(/wait of (\d+) seconds?/i);
   if (m) return parseInt(m[1], 10);
   // teleproto FloodWaitError 的 seconds 字段
-  const seconds = (error as any)?.seconds;
+  const seconds = (error as { seconds?: number })?.seconds;
   if (typeof seconds === "number" && Number.isFinite(seconds)) return seconds;
   return null;
 }
@@ -176,8 +176,8 @@ class UserResolver {
     
     // 从回复消息解析
     const reply = await safeGetReplyMessage(message);
-    if ((reply as any)?.senderId) {
-      const uid = Number((reply as any).senderId);
+    if ((reply as { senderId?: number | string })?.senderId) {
+      const uid = Number((reply as { senderId?: number | string }).senderId);
       const sender = await this.getReplySender(reply);
       const participant = sender?._ === 'user'
         ? await this.safeGetInputEntity(client, sender)
@@ -247,15 +247,15 @@ class UserResolver {
 
   private static async getReplySender(reply: any): Promise<any> {
     try {
-      return await (reply as any).getSender?.();
+      return await (reply as { getSender?: () => Promise<unknown> }).getSender?.();
     } catch (e) {
       return reply.sender;
     }
   }
 
   private static getChatType(message: any): "channel" | "chat" | "unknown" {
-    if ((message as any).isChannel) return "channel";
-    if ((message as any).isGroup) return "chat";
+    if ((message as { isChannel?: boolean }).isChannel) return "channel";
+    if ((message as { isGroup?: boolean }).isGroup) return "chat";
     return "unknown";
   }
 
@@ -264,7 +264,7 @@ class UserResolver {
     target: any
   ): Promise<any | null> {
     try {
-      return await (client as any).resolvePeer(target);
+      return await (client as unknown as { resolvePeer: (target: unknown) => Promise<unknown> }).resolvePeer(target);
     } catch (e) {
       return null;
     }
@@ -275,7 +275,7 @@ class UserResolver {
     target: any
   ): Promise<any | undefined> {
     try {
-      return await (client as any).getInputEntity(target);
+      return await (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(target);
     } catch (e) {
       return undefined;
     }
@@ -287,12 +287,12 @@ class UserResolver {
     userId: number,
     knownEntity?: any
   ): Promise<any | undefined> {
-    const chat = (message as any).peerId;
+    const chat = (message as { peerId?: unknown }).peerId;
     if (!chat) {
       return undefined;
     }
 
-    if ((message as any).isChannel) {
+    if ((message as { isChannel?: boolean }).isChannel) {
       try {
         let offset = 0;
         const limit = 200;
@@ -303,8 +303,8 @@ class UserResolver {
               filter: { _: 'channelParticipantsRecent' },
               offset,
               limit,
-              hash: 0 as any,
-            });
+              hash: 0,
+            } as unknown as Parameters<typeof client.call>[0]);
 
           const participants: any[] = res?.participants || [];
           const users: any[] = res?.users || [];
@@ -324,10 +324,10 @@ class UserResolver {
       }
     }
 
-    if ((message as any).isGroup) {
+    if ((message as { isGroup?: boolean }).isGroup) {
       try {
         const peer: any = knownEntity || await this.safeGetEntity(client, chat);
-        const chatId = Number(peer?.chatId ?? peer?.id ?? (chat as any)?.chatId);
+        const chatId = Number(peer?.chatId ?? peer?.id ?? (chat as { chatId?: number })?.chatId);
         if (!Number.isFinite(chatId)) {
           return undefined;
         }
@@ -446,7 +446,7 @@ async function resolveChannelInput(
       };
   }
   // 兜底：让 teleproto 走自己的 entity cache / dialogs 解析
-  return await (client as any).getInputEntity(group.id);
+  return await (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(group.id);
 }
 
 /**
@@ -473,15 +473,15 @@ class PermissionManager {
     return 'channel';
   }
 
-  private static getBasicGroupChatId(chatId: any): number {
-    return Number(chatId?.chatId ?? chatId?.id ?? chatId);
+  private static getBasicGroupChatId(chatId: { chatId?: number; id?: number }): number {
+    return Number(chatId?.chatId ?? chatId?.id);
   }
 
-  private static async getBasicGroupParticipants(client: TelegramClient, chatId: any): Promise<any[] | null> {
+  private static async getBasicGroupParticipants(client: TelegramClient, chatId: unknown): Promise<Array<{ _?: string; userId?: number }> | null> {
     const full = await client.call({
         _: 'messages.getFullChat',
-        chatId: bigInt(this.getBasicGroupChatId(chatId)),
-      } as any) as any;
+        chatId: Number(this.getBasicGroupChatId(chatId as { chatId?: number; id?: number })),
+      } as Parameters<typeof client.call>[0]) as { fullChat?: { participants?: { _?: string; participants?: Array<{ _?: string; userId?: number }> } } };
 
     const participants = full?.fullChat?.participants;
     if (!participants || participants?._ === 'chatParticipantsForbidden') {
@@ -504,7 +504,7 @@ class PermissionManager {
           return false;
         }
 
-        const meParticipant = participants.find((p: any) => Number(p?.userId) === Number((me as any).id));
+        const meParticipant = participants.find((p: { userId?: number }) => Number(p?.userId) === Number((me as { id?: number | string }).id));
         return meParticipant?._ === 'chatParticipantCreator' || meParticipant?._ === 'chatParticipantAdmin';
       }
 
@@ -571,7 +571,7 @@ class PermissionManager {
           return false;
         }
 
-        const meParticipant = participants.find((p: any) => Number(p?.userId) === Number((me as any).id));
+        const meParticipant = participants.find((p: { userId?: number }) => Number(p?.userId) === Number((me as { id?: number | string }).id));
         return meParticipant?._ === 'chatParticipantCreator' || meParticipant?._ === 'chatParticipantAdmin';
       }
 
@@ -600,8 +600,8 @@ class GroupManager {
   private static async getAllManageableDialogs(client: TelegramClient): Promise<any[]> {
     const dialogMap = new Map<number, any>();
 
-    const collectDialogs = async (params: Record<string, any>) => {
-      const dialogs = await (client as any).getDialogs(params);
+    const collectDialogs = async (params: Record<string, unknown>) => {
+      const dialogs = await (client as unknown as { getDialogs: (params: Record<string, unknown>) => Promise<Array<Record<string, unknown>>> }).getDialogs(params);
       for (const dialog of dialogs || []) {
         if (dialog.isChannel || dialog.isGroup) {
           dialogMap.set(Number(dialog.id), dialog);
@@ -702,7 +702,7 @@ class BanManager {
     if (participant) {
       return participant;
     }
-    return (client as any).getInputEntity(userId);
+    return (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(userId);
   }
 
   private static getErrorReason(error: unknown): string {
@@ -723,9 +723,8 @@ class BanManager {
     return 'channel';
   }
 
-  private static getBasicGroupChatId(chatId: any): number {
-    const id = Number(chatId?.chatId ?? chatId?.id ?? chatId);
-    return id;
+  private static getBasicGroupChatId(chatId: { chatId?: number; id?: number }): number {
+    return Number(chatId?.chatId ?? chatId?.id);
   }
 
   private static async applyBanLikeAction(
@@ -872,7 +871,7 @@ class BanManager {
         return false;
       }
 
-      const resolvedParticipant = participant || await (client as any).resolvePeer(userId);
+      const resolvedParticipant = participant || await (client as { resolvePeer: (target: unknown) => Promise<unknown> }).resolvePeer(userId);
       
       await client.call({
           _: 'channels.deleteParticipantHistory',
@@ -936,7 +935,7 @@ class BanManager {
         if (group.kind === 'chat') {
           return client.call({
               _: 'messages.deleteChatUser',
-              chatId: Number(bigInt(this.getBasicGroupChatId(group.id))),
+              chatId: Number(this.getBasicGroupChatId({ id: group.id })),
               userId: resolvedParticipant,
             });
         }
@@ -1291,7 +1290,7 @@ class CommandHandlers {
       const display = UserResolver.formatUser(user, uid);
 
       // 立即返回处理中状态
-      const statusActionText = (message as any).isGroup && !(message as any).isChannel ? '移出' : '封禁';
+      const statusActionText = (message as { isGroup?: boolean; isChannel?: boolean }).isGroup && !(message as { isChannel?: boolean }).isChannel ? '移出' : '封禁';
       const status = await MessageManager.smartEdit(
         message,
         `⚡ 在${groups.length}个频道/群组中${statusActionText}该用户...`,
@@ -1361,7 +1360,7 @@ class CommandHandlers {
           : '';
 
         // 更新最终结果
-        const finalActionText = (message as any).isGroup && !(message as any).isChannel ? '移出' : '封禁';
+        const finalActionText = (message as { isGroup?: boolean; isChannel?: boolean }).isGroup && !(message as { isChannel?: boolean }).isChannel ? '移出' : '封禁';
         const result = `✅ 在${success}个频道/群组中${finalActionText}该用户 ${htmlEscape(display)}${failureSummary}${capabilityNote}\n🗑️当前群组消息: ${deleteSuccess ? '✓已清理' : '✗'} | ⏱️${elapsed.toFixed(1)}s`;
         
         // 更新为最终结果

@@ -11,6 +11,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { logger } from "@utils/logger";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
+import type { InputChannel, InputPeerChannel, InputUser, InputPeerUser } from "@utils/tlTypes";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -120,10 +121,10 @@ function isMessageNotModified(error: any): boolean {
 
 async function editMessageIgnoringNotModified(
   msg: MessageContext,
-  options: { text: any }
+  options: { text: unknown }
 ): Promise<void> {
   try {
-    await msg.edit(options as any);
+    await msg.edit(options as { text: string });
   } catch (error) {
     if (!isMessageNotModified(error)) throw error;
   }
@@ -131,7 +132,7 @@ async function editMessageIgnoringNotModified(
 
 async function deleteMessageQuiet(msg: MessageContext): Promise<void> {
   try {
-    const target = msg as any;
+    const target = msg as MessageContext & { safeDelete?: (opts: { revoke: boolean }) => Promise<void>; delete?: (opts: { revoke: boolean }) => Promise<void> };
     if (typeof target.safeDelete === "function") {
       await target.safeDelete({ revoke: true });
       return;
@@ -150,19 +151,19 @@ async function respondToCommand(
   options: CommandResponse,
   ignoreNotModified?: boolean
 ): Promise<void> {
-  const editText = options.parseMode === "html" ? html(options.text) as any : options.text;
-  const sendContent = options.parseMode === "html" ? html(options.text) as any : options.text;
+  const editText = options.parseMode === "html" ? html(options.text) : options.text;
+  const sendContent = options.parseMode === "html" ? html(options.text) : options.text;
 
   if (!trigger) {
     if (ignoreNotModified) {
       await editMessageIgnoringNotModified(msg, { text: editText });
       return;
     }
-    await msg.edit({ text: editText } as any);
+    await msg.edit({ text: editText } as { text: string });
     return;
   }
 
-  const client = (msg as any).client;
+  const client = (msg as MessageContext & { client?: unknown }).client;
   const peer = msg.chat.id;
   if (!client || !peer) {
     await editMessageIgnoringNotModified(msg, { text: editText });
@@ -207,7 +208,7 @@ function getJobKey(chatKey: string, userId: number): string {
 }
 
 function messageHasReply(msg: MessageContext): boolean {
-  return !!(msg.replyToMessage?.id || (msg as any).replyToMsgId);
+  return !!(msg.replyToMessage?.id || (msg as { replyToMsgId?: number }).replyToMsgId);
 }
 
 function getTargetSourceMessage(msg: MessageContext, trigger?: MessageContext): MessageContext {
@@ -252,30 +253,30 @@ function serializeUser(user: any): StoredUser {
   };
 }
 
-function deserializeChannel(stored: StoredChannel): any {
+function deserializeChannel(stored: StoredChannel): InputChannel | InputPeerChannel {
   if (stored.className === "InputChannel") {
-    return { _: "inputChannel", channelId: Number(stored.channelId), accessHash: Number(stored.accessHash) } as any;
+    return { _: "inputChannel", channelId: Number(stored.channelId), accessHash: Number(stored.accessHash) } as InputChannel;
   }
-  return { _: "inputPeerChannel", channelId: Number(stored.channelId), accessHash: Number(stored.accessHash) } as any;
+  return { _: "inputPeerChannel", channelId: Number(stored.channelId), accessHash: Number(stored.accessHash) } as InputPeerChannel;
 }
 
-function deserializeUser(stored: StoredUser): any {
+function deserializeUser(stored: StoredUser): InputUser | InputPeerUser {
   if (stored.className === "InputUser") {
-    return { _: "inputUser", userId: Number(stored.userId), accessHash: Number(stored.accessHash) } as any;
+    return { _: "inputUser", userId: Number(stored.userId), accessHash: Number(stored.accessHash) } as InputUser;
   }
-  return { _: "inputPeerUser", userId: Number(stored.userId), accessHash: Number(stored.accessHash) } as any;
+  return { _: "inputPeerUser", userId: Number(stored.userId), accessHash: Number(stored.accessHash) } as InputPeerUser;
 }
 
-function toSendPeer(channel: any): any {
+function toSendPeer(channel: InputChannel | InputPeerChannel): InputPeerChannel {
   if (channel?._ === "inputPeerChannel") return channel;
   if (channel?._ === "inputChannel") {
     return {
       _: "inputPeerChannel",
       channelId: channel.channelId,
       accessHash: channel.accessHash,
-    } as any;
+    } as InputPeerChannel;
   }
-  return channel;
+  return channel as InputPeerChannel;
 }
 
 function hasNonOtherAdminRights(rights?: any): boolean {
@@ -299,7 +300,7 @@ async function formatEntity(target: any, mention?: boolean, throwErrorIfFailed?:
   let id: any;
   let entity: any;
   try {
-    entity = target?._ ? target : await client.getChat(target as any);
+    entity = target?._ ? target : await client.getChat(target as string | number);
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
@@ -369,7 +370,7 @@ class TmpAdminPlugin extends Plugin {
         return;
       }
 
-      const isInChannel = (msg as any).isChannel;
+      const isInChannel = (msg as { isChannel?: boolean }).isChannel;
       if (!isInChannel) {
         await respondToCommand(msg, trigger, {
           text: `请在超级群/频道中使用 <code>${commandName}</code> 命令`,
@@ -382,7 +383,7 @@ class TmpAdminPlugin extends Plugin {
         await respondToCommand(msg, trigger, { text: "Telegram 客户端未初始化" });
         return;
       }
-      const channel = client.resolvePeer(msg.chat.id) as any;
+      const channel = client.resolvePeer(msg.chat.id) as unknown as { _?: string; channelId?: number | string; accessHash?: number | string };
       const chatEntity = await msg.getCompleteChat();
       if (!channel || !hasRawType(chatEntity, "channel")) {
         await respondToCommand(msg, trigger, { text: "无法获取当前超级群/频道实体" });
@@ -826,7 +827,7 @@ class TmpAdminPlugin extends Plugin {
   }
 
   private async sendReply(job: TempAdminJob, message: string): Promise<void> {
-    const text = html(message) as any;
+    const text = html(message) as unknown as string;
 
     try {
       await job.client.sendText(job.peerId, text, {
@@ -873,12 +874,12 @@ class TmpAdminPlugin extends Plugin {
     targetEntity: any
   ): Promise<any> {
     const client = await getGlobalClient();
-    const info = await (client as any).call({
+    const info = await (client as unknown as { call: (params: Record<string, unknown>) => Promise<unknown> }).call({
       _: "channels.getParticipant",
       channel,
       participant: targetEntity,
     });
-    return (info as any)?.participant;
+    return (info as { participant?: unknown })?.participant;
   }
 
   private async resolveUserFromReplyOrArg(
@@ -895,7 +896,7 @@ class TmpAdminPlugin extends Plugin {
 
       let sender: any;
       try {
-        sender = await (reply as any).getCompleteSender?.();
+        sender = await (reply as { getCompleteSender?: () => Promise<unknown> }).getCompleteSender?.();
       } catch (e) {
         sender = undefined;
       }
@@ -905,12 +906,12 @@ class TmpAdminPlugin extends Plugin {
         return { id: Number(sender.id), entity: input };
       }
 
-      const uid = Number((reply as any).sender?.id);
+      const uid = Number((reply as { sender?: { id?: number | string } }).sender?.id);
       if (!uid) return {};
 
       try {
         const input = client.resolvePeer(uid);
-        const full = await client.getChat(input as any);
+        const full = await client.getChat(input as unknown as Parameters<typeof client.getChat>[0]);
         if (hasRawType(full, "user")) {
           return { id: Number((full as { id?: number }).id), entity: input };
         }
@@ -922,7 +923,7 @@ class TmpAdminPlugin extends Plugin {
     if (!arg) return {};
 
     try {
-      const full = await client.getChat(arg as any);
+      const full = await client.getChat(arg as string);
       if (!hasRawType(full, "user")) return {};
       const fullId = (full as { id?: number }).id;
       if (fullId === undefined) return {};
@@ -936,7 +937,7 @@ class TmpAdminPlugin extends Plugin {
         let offset = 0;
         const limit = 200;
         for (let i = 0; i < 5; i++) {
-          const result: any = await (client as any).call({
+          const result: unknown = await (client as unknown as { call: (params: Record<string, unknown>) => Promise<unknown> }).call({
             _: "channels.getParticipants",
             channel,
             filter: { _: "channelParticipantsRecent" },
@@ -944,13 +945,13 @@ class TmpAdminPlugin extends Plugin {
             limit,
             hash: 0,
           });
-          const participants: any[] = result?.participants || [];
-          const users: any[] = result?.users || [];
-          const found = participants.find((p: any) => Number(p.userId) === numericId);
+          const participants: Array<{ userId?: number }> = (result as { participants?: Array<{ userId?: number }> })?.participants || [];
+          const users: Array<{ id?: number }> = (result as { users?: Array<{ id?: number }> })?.users || [];
+          const found = participants.find((p) => Number(p.userId) === numericId);
           if (found) {
-            const user = users.find((u: any) => Number(u.id) === numericId);
+            const user = users.find((u) => Number(u.id) === numericId);
             if (user) {
-              const input = client.resolvePeer(user.id);
+              const input = client.resolvePeer(user.id as number);
               return { id: Number(user.id), entity: input };
             }
           }
