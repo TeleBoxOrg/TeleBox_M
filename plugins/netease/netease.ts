@@ -102,7 +102,7 @@ async function fetchAndSendAudio(
   }
 
   // 轮询新消息：优先寻找按钮消息，其次直接媒体消息
-  let replyWithButtons: any | undefined;
+  let replyWithButtons: Message | undefined;
   let mediaMsg: Message | undefined;
   for (let i = 0; i < 20; i++) {
     await sleep(700);
@@ -110,7 +110,8 @@ async function fetchAndSendAudio(
     for (const m of msgs.slice().reverse()) {
       if (!m.isOutgoing && (m.date?.getTime?.() || 0) >= startTs) {
         if (!mediaMsg && m.media) mediaMsg = m;
-        if (!replyWithButtons && ((m as any).buttonCount || 0) > 0) replyWithButtons = m;
+        const btnCount = (m as { buttonCount?: number }).buttonCount || 0;
+        if (!replyWithButtons && btnCount > 0) replyWithButtons = m;
       }
     }
     if (mediaMsg || replyWithButtons) break;
@@ -121,7 +122,7 @@ async function fetchAndSendAudio(
     try {
       await (replyWithButtons as any).click({});
     } catch (e) {
-      await msg.edit({ text: html(`❌ 点击按钮失败：${htmlEscape((e as any)?.message || String(e))}`) });
+      await msg.edit({ text: html(`❌ 点击按钮失败：${htmlEscape((e as { message?: string })?.message || String(e))}`) });
       return;
     }
 
@@ -133,7 +134,7 @@ async function fetchAndSendAudio(
         if (
           !m.isOutgoing &&
           m.media &&
-          (m.date?.getTime?.() || 0) >= ((replyWithButtons as any).date?.getTime?.() || startTs)
+          (m.date?.getTime?.() || 0) >= (replyWithButtons?.date?.getTime?.() || startTs)
         ) {
           mediaMsg = m;
           break;
@@ -150,6 +151,8 @@ async function fetchAndSendAudio(
 
   // 以纯上传形式回传 - 下载后重新发送
   try {
+    // Note: downloadAsBuffer expects FileDownloadLocation, but MessageMedia doesn't match.
+    // The cast is needed because mtcute doesn't provide a direct conversion path.
     const buffer = await client.downloadAsBuffer(mediaMsg.media as any);
     const replyToId = msg.replyToMessage?.id;
     await client.sendMedia(msg.chat.id, {

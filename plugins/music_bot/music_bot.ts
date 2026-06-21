@@ -3,6 +3,7 @@ import _ from "lodash";
 import { getPrefixes } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { Message } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { logger } from "@utils/logger";
@@ -115,13 +116,13 @@ async function searchAndSendMusic(
   }
 
   // Wait for bot's reply that contains buttons, then click first
-  let replyWithButtons: any | undefined;
+  let replyWithButtons: Message | undefined;
   for (let i = 0; i < 15; i++) {
     await sleep(700);
     const msgs = await client.getHistory(bot, { limit: 1 });
     for (const m of msgs.slice().reverse()) {
       const mDate = m.date instanceof Date ? Math.floor(m.date.getTime() / 1000) : (m.date as number || 0);
-      if (!m.isOutgoing && mDate >= startTs && (m.raw as any)?.replyMarkup?._ === 'replyInlineMarkup') {
+      if (!m.isOutgoing && mDate >= startTs && (m.raw as { replyMarkup?: { _?: string } })?.replyMarkup?._ === 'replyInlineMarkup') {
         replyWithButtons = m;
         break;
       }
@@ -159,13 +160,13 @@ async function searchAndSendMusic(
   }
 
   // After clicking, wait for the next incoming message with media
-  let mediaMsg: any | undefined;
+  let mediaMsg: Message | undefined;
   for (let i = 0; i < 20; i++) {
     await sleep(700);
     const msgs = await client.getHistory(bot, { limit: 6 });
     for (const m of msgs.slice().reverse()) {
       const mDate = m.date instanceof Date ? Math.floor(m.date.getTime() / 1000) : (m.date as number || 0);
-      const replyDate = replyWithButtons?.date instanceof Date ? Math.floor(replyWithButtons.date.getTime() / 1000) : ((replyWithButtons?.date as any) || startTs);
+      const replyDate = replyWithButtons?.date instanceof Date ? Math.floor(replyWithButtons.date.getTime() / 1000) : (replyWithButtons?.date as number | undefined) ?? startTs;
       if (
         !m.isOutgoing &&
         mDate >= replyDate &&
@@ -184,6 +185,8 @@ async function searchAndSendMusic(
   }
 
   // Send the media back to the user
+  // Note: mediaMsg.media is MessageMedia (high-level), but sendMedia expects InputMediaLike.
+  // The cast is needed because mtcute doesn't provide a direct conversion path.
   if (action === "ym") {
     await client.sendMedia(msg.chat.id, { type: "audio", file: mediaMsg.media as any }, { replyTo: msg.replyToMessage?.id ?? undefined });
   } else {
