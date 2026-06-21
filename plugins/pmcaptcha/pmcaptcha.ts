@@ -1753,12 +1753,11 @@ const pmcaptcha = async (message: MessageContext) => {
         if (!sub) {
           const list = cfg.whitelist();
           if (!list.length) { await edit("📋 <b>白名单为空</b>"); break; }
-          const rows: string[] = [];
-          for (const id of list) {
-            if (await isBot(client, id)) continue;
-            const name     = await getDisplayName(client, id);
-            rows.push(`• ${userLink(id, name)}`);
-          }
+          const rows = (await Promise.all(list.map(async (id) => {
+            if (await isBot(client, id)) return null;
+            const name = await getDisplayName(client, id);
+            return `• ${userLink(id, name)}`;
+          }))).filter((r): r is string => r !== null);
           if (!rows.length) { await edit("📋 <b>白名单为空</b>"); break; }
           await edit(`📋 <b>白名单 (${rows.length})</b>\n\n${rows.join("\n")}`);
           break;
@@ -1888,14 +1887,13 @@ const pmcaptcha = async (message: MessageContext) => {
           const list = cfg.verified();
           if (!list.length) { await edit("📋 <b>验证通过记录为空</b>"); break; }
           const wlSet = new Set(cfg.whitelist());
-          const rows: string[] = [];
-          for (const r of list) {
-            if (wlSet.has(r.id)) continue;           // 白名单优先级更高，不重复显示
-            if (await isBot(client, r.id)) continue;
+          const rows = (await Promise.all(list.map(async (r) => {
+            if (wlSet.has(r.id)) return null;
+            if (await isBot(client, r.id)) return null;
             if (r.username) usernameCache.set(r.id, r.username);
             const name = await getDisplayName(client, r.id).catch(() => r.name);
-            rows.push(`• ${userLink(r.id, name)}\n  <i>${htmlEscape(fmtTime(r.time))}</i>`);
-          }
+            return `• ${userLink(r.id, name)}\n  <i>${htmlEscape(fmtTime(r.time))}</i>`;
+          }))).filter((r): r is string => r !== null);
           if (!rows.length) { await edit("📋 <b>验证通过记录为空</b>"); break; }
           await edit(`✅ <b>验证通过 (${rows.length})</b>\n\n${rows.join("\n\n")}`);
           break;
@@ -1907,15 +1905,14 @@ const pmcaptcha = async (message: MessageContext) => {
           if (!list.length) { await edit("📋 <b>验证失败记录为空</b>"); break; }
           const wlSet       = new Set(cfg.whitelist());
           const verifiedSet = new Set(cfg.verified().map(v => v.id));
-          const rows: string[] = [];
-          for (const r of list) {
-            if (wlSet.has(r.id))       continue;    // 白名单优先级最高
-            if (verifiedSet.has(r.id)) continue;    // 已通过验证，优先级高于失败
-            if (await isBot(client, r.id)) continue;
+          const rows = (await Promise.all(list.map(async (r) => {
+            if (wlSet.has(r.id)) return null;
+            if (verifiedSet.has(r.id)) return null;
+            if (await isBot(client, r.id)) return null;
             if (r.username) usernameCache.set(r.id, r.username);
             const name = await getDisplayName(client, r.id).catch(() => r.name);
-            rows.push(`• ${userLink(r.id, name)} — ${htmlEscape(rLbl[r.reason])}\n  <i>${htmlEscape(fmtTime(r.time))}</i>`);
-          }
+            return `• ${userLink(r.id, name)} — ${htmlEscape(rLbl[r.reason])}\n  <i>${htmlEscape(fmtTime(r.time))}</i>`;
+          }))).filter((r): r is string => r !== null);
           if (!rows.length) { await edit("📋 <b>验证失败记录为空</b>"); break; }
           await edit(`❌ <b>验证失败 (${rows.length})</b>\n\n${rows.join("\n\n")}`);
           break;

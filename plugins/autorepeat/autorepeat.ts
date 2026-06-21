@@ -617,17 +617,17 @@ class CommandHandlers {
         const endIdx = Math.min(startIdx + pageSize, groups.length);
         const pageGroups = groups.slice(startIdx, endIdx);
 
-        const lines: string[] = [];
-        for (const gid of pageGroups) {
-          try {
-            const entity: any = await client.getPeer(gid);
-                const title = htmlEscape(entity.title || "Unknown Group");
-                lines.push(`• <b>${title}</b> (<code>${gid}</code>)`);
-
-          } catch (e) {
-            lines.push(`• <code>${gid}</code> (无法获取信息)`);
-          }
-        }
+        const lines = await Promise.all(
+          pageGroups.map(async (gid) => {
+            try {
+              const entity: any = await client.getPeer(gid);
+              const title = htmlEscape(entity.title || "Unknown Group");
+              return `• <b>${title}</b> (<code>${gid}</code>)`;
+            } catch (e) {
+              return `• <code>${gid}</code> (无法获取信息)`;
+            }
+          })
+        );
 
         await MessageManager.smartEdit(
           message,

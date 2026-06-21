@@ -1309,27 +1309,30 @@ async function handleSeatAction(
   const rawResolvedIds = new Set<string>();
   const failures: string[] = [];
 
-  for (const identifier of identifiers) {
-    try {
-      const user = await resolveUserForSeatAction(target, identifier);
-      if (!user) {
-        if (/^-?\d+$/.test(identifier.trim())) {
-          rawResolvedIds.add(String(Number(identifier.trim())));
-        } else {
-          failures.push(`${identifier}（未找到用户）`);
+  // 并行解析所有用户标识符
+  const results = await Promise.all(
+    identifiers.map(async (identifier) => {
+      try {
+        const user = await resolveUserForSeatAction(target, identifier);
+        if (!user) {
+          if (/^-?\\d+$/.test(identifier.trim())) {
+            return { type: "rawId" as const, value: String(Number(identifier.trim())) };
+          }
+          return { type: "failure" as const, value: `${identifier}（未找到用户）` };
         }
-        continue;
+        return { type: "user" as const, value: user };
+      } catch (error: any) {
+        if (/^-?\\d+$/.test(identifier.trim())) {
+          return { type: "rawId" as const, value: String(Number(identifier.trim())) };
+        }
+        return { type: "failure" as const, value: `${identifier}（${normalizeErrorMessage(error?.message || "解析失败")}）` };
       }
-      resolvedUsers.set(getUserIdString(user), user);
-    } catch (error: any) {
-      if (/^-?\d+$/.test(identifier.trim())) {
-        rawResolvedIds.add(String(Number(identifier.trim())));
-      } else {
-        failures.push(
-          `${identifier}（${normalizeErrorMessage(error?.message || "解析失败")}）`,
-        );
-      }
-    }
+    })
+  );
+  for (const r of results) {
+    if (r.type === "user") resolvedUsers.set(getUserIdString(r.value), r.value);
+    else if (r.type === "rawId") rawResolvedIds.add(r.value);
+    else failures.push(r.value);
   }
 
   const resolvedList = Array.from(resolvedUsers.values());
@@ -1359,13 +1362,12 @@ async function handleSeatAction(
     for (const user of resolvedList) {
       lines.push(`• ${buildUserDisplay(user)}`);
     }
-    for (const userId of Array.from(rawResolvedIds)) {
-      if (!resolvedUsers.has(userId)) {
-        const cachedUser = await getCachedUserInfo(target, userId);
-        lines.push(
-          `• ${buildUserDisplayFromCache(userId, cachedUser)} <code>（按 ID 直接记录）</code>`,
-        );
-      }
+    const uncachedUserIds = Array.from(rawResolvedIds).filter((userId) => !resolvedUsers.has(userId));
+    const cachedUsers = await Promise.all(uncachedUserIds.map((userId) => getCachedUserInfo(target, userId)));
+    for (let i = 0; i < uncachedUserIds.length; i++) {
+      lines.push(
+        `• ${buildUserDisplayFromCache(uncachedUserIds[i], cachedUsers[i])} <code>（按 ID 直接记录）</code>`,
+      );
     }
   }
 
