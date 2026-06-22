@@ -209,26 +209,29 @@ async function callCodexImage(
         for (const dataLine of dataLines) {
           if (dataLine === "[DONE]") continue;
 
-          let payloadObj: any;
+          let payloadObj: unknown;
           try {
             payloadObj = JSON.parse(dataLine);
           } catch (e: unknown) {
             continue;
           }
 
-          const eventType = payloadObj?.type;
+          const evt = payloadObj as Record<string, unknown> | null;
+          const eventType = evt?.type as string | undefined;
           if (eventType === "response.created") {
-            responseId = payloadObj?.response?.id || responseId;
-            status = payloadObj?.response?.status || status;
+            const resp = evt?.response as Record<string, unknown> | null;
+            responseId = (resp?.id as string) || responseId;
+            status = (resp?.status as string) || status;
           } else if (
             eventType === "response.image_generation_call.partial_image"
           ) {
-            imageBase64 = payloadObj?.partial_image_b64 || imageBase64;
-            revisedPrompt = payloadObj?.revised_prompt || revisedPrompt;
-            status = payloadObj?.status || status;
+            imageBase64 = (evt?.partial_image_b64 as string) || imageBase64;
+            revisedPrompt = (evt?.revised_prompt as string) || revisedPrompt;
+            status = (evt?.status as string) || status;
           } else if (eventType === "response.completed") {
-            status = payloadObj?.response?.status || status;
-            responseId = payloadObj?.response?.id || responseId;
+            const resp2 = evt?.response as Record<string, unknown> | null;
+            status = (resp2?.status as string) || status;
+            responseId = (resp2?.id as string) || responseId;
           }
         }
 
@@ -253,22 +256,23 @@ async function callCodexImage(
       let imageBase64: string | null = null;
       let revisedPrompt: string | null = null;
 
-      const visit = (value: any): void => {
+      const visit = (value: unknown): void => {
         if (!value || typeof value !== "object") return;
+        const obj = value as Record<string, unknown>;
         if (
-          typeof value.partial_image_b64 === "string" &&
-          value.partial_image_b64
+          typeof obj.partial_image_b64 === "string" &&
+          obj.partial_image_b64
         ) {
-          imageBase64 = value.partial_image_b64;
+          imageBase64 = obj.partial_image_b64;
         }
-        if (typeof value.revised_prompt === "string" && value.revised_prompt) {
-          revisedPrompt = value.revised_prompt;
+        if (typeof obj.revised_prompt === "string" && obj.revised_prompt) {
+          revisedPrompt = obj.revised_prompt;
         }
-        if (Array.isArray(value)) {
-          for (const item of value) visit(item);
+        if (Array.isArray(obj)) {
+          for (const item of obj) visit(item);
           return;
         }
-        for (const nested of Object.values(value)) {
+        for (const nested of Object.values(obj)) {
           if (nested && typeof nested === "object") visit(nested);
         }
       };

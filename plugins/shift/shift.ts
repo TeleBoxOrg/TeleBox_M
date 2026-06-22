@@ -20,6 +20,7 @@ import {
 } from "@utils/entityHelpers";
 import { getPrefixes } from "@utils/pluginManager";
 import { JSONFilePreset } from "lowdb/node";
+import type { Low } from "lowdb";
 import * as fs from "fs";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
@@ -165,7 +166,7 @@ interface BackupTask {
 
 // Initialize database (支持双模式)
 let sqliteDb: Database.Database | null = null;
-let lowdb: any = null;
+let lowdb: Low<ShiftDatabaseV2> | null = null;
 let useLowdb = false;
 
 // 尝试初始化数据库
@@ -1229,7 +1230,7 @@ async function exportRules(): Promise<string> {
 
 async function importRules(jsonData: string, merge = false): Promise<void> {
   // 兼容历史错误导出：若解析结果为字符串，则再次解析
-  let parsed: any = JSON.parse(jsonData);
+  let parsed: unknown = JSON.parse(jsonData);
   if (typeof parsed === "string") {
     try {
       parsed = JSON.parse(parsed);

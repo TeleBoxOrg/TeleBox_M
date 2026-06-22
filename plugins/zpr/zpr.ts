@@ -313,13 +313,14 @@ const handle404Error = (proxyHost: string, failedProxies: string[]) => {
 };
 
 // 辅助函数：检查是否为超时错误
-const isTimeoutError = (error: any): boolean => {
-    return error.code === 'ECONNABORTED' || 
+const isTimeoutError = (error: unknown): boolean => {
+    const err = error as { code?: string; name?: string };
+    return err.code === 'ECONNABORTED' || 
            getErrorMessage(error)?.includes('timeout') ||
            getErrorMessage(error)?.includes('canceled') ||
            getErrorMessage(error)?.includes('cancelled') ||
-           error.name === 'AbortError' ||
-           error.code === 'ETIMEDOUT';
+           err.name === 'AbortError' ||
+           err.code === 'ETIMEDOUT';
 };
 
 interface DownloadResult {

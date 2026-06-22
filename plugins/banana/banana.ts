@@ -11,6 +11,7 @@ import { getErrorMessage } from "@utils/errorHelpers";
 import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MessageMedia } from "@mtcute/core";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -175,11 +176,11 @@ function maskKey(key: string): string {
   return `${key.slice(0, 4)}***${key.slice(-4)}`;
 }
 
-function resolveMimeType(media: any): string {
+function resolveMimeType(media: MessageMedia): string {
   // mtcute media types
   if (media?.type === "photo") return "image/jpeg";
-  if (typeof media?.mimeType === "string" && media.mimeType.startsWith("image/")) {
-    return media.mimeType;
+  if (typeof (media as { mimeType?: string })?.mimeType === "string" && (media as { mimeType?: string }).mimeType?.startsWith("image/")) {
+    return (media as { mimeType?: string }).mimeType!;
   }
   return "image/png";
 }
@@ -363,7 +364,7 @@ async function handleImageEdit(
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${FIXED_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  let responseData: any;
+  let responseData: GeminiResponseData | undefined;
   try {
     const response = await axios.post(url, requestBody, { timeout: 120000 });
     responseData = response.data;

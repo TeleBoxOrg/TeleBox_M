@@ -215,11 +215,9 @@ class TeletypePlugin extends Plugin {
     const cursor = "█";
     let buffer = "";
     
-    let currentMsg: any = await msg.edit({
+    await msg.edit({
       text: html(cursor)
     });
-    
-    if (!currentMsg) return;
     
     await this.sleep(interval);
     
@@ -229,20 +227,16 @@ class TeletypePlugin extends Plugin {
       const bufferWithCursor = `${htmlEscape(buffer)}${cursor}`;
       
       try {
-        currentMsg = await currentMsg?.edit({
+        await msg.edit({
           text: html(bufferWithCursor)
         });
         
-        if (!currentMsg) return;
-        
         await this.sleep(interval);
         
-        if (buffer.length > 0 && currentMsg) {
-          currentMsg = await currentMsg.edit({
+        if (buffer.length > 0) {
+          await msg.edit({
             text: html(htmlEscape(buffer))
           });
-          
-          if (!currentMsg) return;
         }
         
       } catch (error: unknown) {
@@ -257,11 +251,9 @@ class TeletypePlugin extends Plugin {
     
     const finalText = htmlEscape(text);
     try {
-      if (currentMsg) {
-        await currentMsg.edit({
-          text: html(finalText)
-        });
-      }
+      await msg.edit({
+        text: html(finalText)
+      });
     } catch (error: unknown) {
       if (!getErrorMessage(error).includes("MESSAGE_NOT_MODIFIED")) {
         throw error;
