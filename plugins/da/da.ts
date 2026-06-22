@@ -276,7 +276,7 @@ const fastDeleteBatch = async (
         await client.deleteMessagesById(chatId as never, [message.id], { revoke: true });
         task.deletedMessages++;
         await sleep(50);
-      } catch (e) { /* noop */ }
+      } catch (e) { logger.warn('操作失败', e) }
     }
     
     await saveTask(task);

@@ -216,7 +216,7 @@ async function getLatestBotMessageId(client: any): Promise<number> {
     if (history.length > 0) {
       return history[0].id;
     }
-  } catch (e) { /* history fetch failed */ }
+  } catch (e) { logger.warn('获取历史记录失败', e) }
   return 0;
 }
 

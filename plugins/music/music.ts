@@ -382,7 +382,7 @@ class ConfigManager {
       if (key === CONFIG.KEYS.API && legacy.settings?.apikey) {
         return legacy.settings.apikey ?? defaultValue ?? "";
       }
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('操作失败', e) }
 
     return defaultValue || DEFAULT_CONFIG[key] || "";
   }
@@ -923,7 +923,7 @@ class Downloader {
         }
         logger.info(`[Music] Found yt-dlp via: ${cmd.split(" ")[0]}`);
         break;
-      } catch (e) { /* noop */ }
+      } catch (e) { logger.warn('操作失败', e) }
     }
 
     // Check FFmpeg
@@ -1282,7 +1282,7 @@ class Downloader {
       try {
         const ok = await this.fetchAlbumCoverUsingAPI(metadata, thumbnailPath);
         if (ok) hasThumbnail = true;
-      } catch (e) { /* noop */ }
+      } catch (e) { logger.warn('操作失败', e) }
 
       // 获取视频元数据
       try {

@@ -344,10 +344,10 @@ class JavDBPlugin extends Plugin {
           await client.sendMedia(msg.chat.id, { type: 'photo', file: tmpPath, caption: html(caption), spoiler: true }, { replyTo: msg.replyToMessage?.id });
 
           // 删除原查询消息
-          try { await msg.delete(); } catch (e) { /* noop */ }
+          try { await msg.delete(); } catch (e) { logger.warn('操作失败', e) }
         } finally {
           // 清理临时文件
-          try { await fs.promises.unlink(tmpPath); } catch (e) { /* noop */ }
+          try { await fs.promises.unlink(tmpPath); } catch (e) { logger.warn('操作失败', e) }
         }
       } catch (e) {
         // 封面下载失败，仅发送文本
@@ -360,7 +360,7 @@ class JavDBPlugin extends Plugin {
         const t = setTimeout(async () => {
           pendingTimers.delete(t);
           if (getCurrentGeneration() !== gen) return;
-          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e) { /* noop */ }
+          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e) { logger.warn('操作失败', e) }
         }, 60_000);
         pendingTimers.add(t);
       }

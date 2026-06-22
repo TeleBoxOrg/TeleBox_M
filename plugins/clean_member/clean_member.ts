@@ -709,7 +709,7 @@ const clean_member = async (msg: MessageContext) => {
         if (chatInfo) {
           chatTitle = getTitle(chatInfo) || "目标群组";
         }
-      } catch (_) { /* chatInfo unavailable, use default title */ }
+      } catch (e) { logger.warn('获取聊天信息失败', e) }
       chatId = channelEntity;
     } catch (error: unknown) {
       await msg.edit({

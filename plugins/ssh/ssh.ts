@@ -539,7 +539,7 @@ class SSHPlugin extends Plugin {
         const backupTimestamp = dayjs().format("YYYYMMDD_HHmmss");
         try {
           await execAsync(`cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.backup.${backupTimestamp} 2>/dev/null || true`);
-        } catch (e) { /* noop */ }
+        } catch (e) { logger.warn('操作失败', e) }
         
         await msg.edit({ text: "🔄 正在替换密钥..." });
         // 直接写入公钥，确保格式正确
@@ -550,7 +550,7 @@ class SSHPlugin extends Plugin {
         let existingKeys = "";
         try {
           existingKeys = fs.readFileSync("/root/.ssh/authorized_keys", "utf-8");
-        } catch (e) { /* noop */ }
+        } catch (e) { logger.warn('操作失败', e) }
         
         // 检查密钥是否已存在（通过比较公钥数据部分）
         const newKeyData = keyParts[1];
@@ -607,7 +607,7 @@ class SSHPlugin extends Plugin {
       try {
         const keysContent = fs.readFileSync("/root/.ssh/authorized_keys", "utf-8");
         keyCount = keysContent.trim().split('\n').filter(line => line.trim() && !line.startsWith('#')).length;
-      } catch (e) { /* noop */ }
+      } catch (e) { logger.warn('操作失败', e) }
 
       // 生成状态消息
       let setupMessage = "";

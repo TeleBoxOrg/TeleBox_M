@@ -1371,7 +1371,7 @@ class SummaryPlugin extends Plugin {
               const username = getUsername(entity) ?? undefined;
               chatLink = buildChatLink(task.chatId, username);
             }
-          } catch (e) { /* 忽略 */ }
+          } catch (e) { logger.warn('操作失败', e) }
 
           const chatDisplay = task.chatDisplay || task.chatId;
           const linkText = chatLink ? ` <a href="${attrEscape(chatLink)}">${htmlEscape(chatDisplay)}</a>` : ` ${htmlEscape(chatDisplay)}`;

@@ -1226,7 +1226,7 @@ async function importRules(jsonData: string, merge = false): Promise<void> {
   if (typeof parsed === "string") {
     try {
       parsed = JSON.parse(parsed);
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('操作失败', e) }
   }
   const newRules = parsed as { [key: string]: ShiftRule };
 
