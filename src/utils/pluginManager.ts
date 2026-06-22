@@ -153,7 +153,7 @@ async function setPlugins(basePath: string) {
   const aliasList = aliasDB.list();
   aliasDB.close();
 
-  for await (const file of files) {
+  for (const file of files) {
     const pluginPath = path.resolve(basePath, file);
     const mod = dynamicRequireWithDeps(pluginPath);
     if (!mod) continue;
