@@ -22,6 +22,39 @@ interface GitHubRepo {
   permissions?: GitHubRepoPermissions;
 }
 
+interface GitHubPullRequest {
+  number: number;
+  title: string;
+  user?: { login?: string };
+  mergeable?: boolean;
+  mergeable_state?: string;
+  state?: string;
+  html_url?: string;
+  body?: string;
+  head?: { sha?: string; ref?: string };
+  base?: { sha?: string; ref?: string };
+}
+
+interface GitHubPullRequestDetail {
+  number: number;
+  title: string;
+  user: string;
+  mergeable?: boolean;
+  state?: string;
+}
+
+interface GitHubApiError {
+  message?: string;
+}
+
+function extractGitHubApiError(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: GitHubApiError } }).response;
+    if (response?.data?.message) return response.data.message;
+  }
+  return undefined;
+}
+
 // HTML转义函数
 const htmlEscape = (text: string): string =>
   text.replace(/[&<>"']/g, (m) => ({
@@ -254,7 +287,7 @@ class GitManagerPlugin extends Plugin {
       params: { state: "open", per_page: 50 }
     });
 
-    const list: any[] = response.data || [];
+    const list: GitHubPullRequest[] = response.data || [];
     if (!list.length) {
       await msg.edit({ text: html`ℹ️ 仓库 <code>${htmlEscape(repoName)}</code> 中没有待处理的PR。` });
       return;
@@ -276,7 +309,7 @@ class GitManagerPlugin extends Plugin {
           return { number: item.number, title: item.title || "", user: item?.user?.login || "" };
         }
       })
-    )) as { number: number; title: string; user: string; mergeable?: boolean; state?: string }[];
+    )) as GitHubPullRequestDetail[];
 
     const prList = details.map((pr) => {
       const flag = pr.mergeable === true ? "✅ 可合并" : pr.mergeable === false ? `⛔ 不可合并(${pr.state || "unknown"})` : "❓ 未知";
@@ -337,7 +370,7 @@ class GitManagerPlugin extends Plugin {
       params: { state: "open", per_page: 100 }
     });
 
-    const prsList: any[] = prsResponse.data || [];
+    const prsList: GitHubPullRequest[] = prsResponse.data || [];
     if (!prsList.length) {
       await msg.edit({ text: html`ℹ️ 仓库 <code>${htmlEscape(repoName)}</code> 中没有待处理的PR。` });
       return;
@@ -372,18 +405,15 @@ class GitManagerPlugin extends Plugin {
         report += `✅ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>成功</b>\n`;
         successCount++;
       } catch (error: unknown) {
-        const errObj = error as Record<string, unknown>;
-        const resp = errObj.response as Record<string, unknown> | undefined;
-        const data = resp?.data as Record<string, unknown> | undefined;
-        const errorMsg = (typeof data?.message === "string" ? data.message : undefined) || getErrorMessage(error);
-        report += `❌ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>失败:</b> ${htmlEscape(errorMsg)}\n`;
+        const errorMsg = extractGitHubApiError(error) || getErrorMessage(error);
+        report += `❌ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>失败:</b> ${htmlEscape(errorMsg)}\\n`;
         failCount++;
       }
       // 编辑消息以显示进度
-      await sendLongMessage(msg, report + `\n🔄 进度: ${successCount + failCount}/${mergeablePRs.length}...`);
+      await sendLongMessage(msg, report + `\\n🔄 进度: ${successCount + failCount}/${mergeablePRs.length}...`);
     }
 
-    report += `\n🎉 <b>操作完成:</b> ${successCount}个成功, ${failCount}个失败。`;
+    report += `\\n🎉 <b>操作完成:</b> ${successCount}个成功, ${failCount}个失败。`;
     await sendLongMessage(msg, report);
   }
 }

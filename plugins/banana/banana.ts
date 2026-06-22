@@ -20,6 +20,30 @@ interface BananaConfig {
   maxBytes: number;
 }
 
+// Gemini API response types
+interface GeminiInlinePart {
+  text?: string;
+  inline_data?: { data?: string; mime_type?: string; mimeType?: string };
+  inlineData?: { data?: string; mime_type?: string; mimeType?: string };
+  data?: string;
+  mime_type?: string;
+  mimeType?: string;
+}
+
+interface GeminiCandidate {
+  content?: { parts?: GeminiInlinePart[] };
+  finishReason?: string;
+}
+
+interface GeminiPromptFeedback {
+  blockReason?: string;
+}
+
+interface GeminiResponseData {
+  candidates?: GeminiCandidate[];
+  promptFeedback?: GeminiPromptFeedback;
+}
+
 const FIXED_MODEL = "gemini-3-pro-image-preview";
 const DEFAULT_MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 const MIN_ALLOWED_IMAGE_BYTES = 256 * 1024; // 256KB
@@ -356,9 +380,9 @@ async function handleImageEdit(
     return;
   }
 
-  const candidates: any[] = responseData?.candidates || [];
+  const candidates: GeminiCandidate[] = (responseData as GeminiResponseData | undefined)?.candidates || [];
   if (!candidates.length) {
-    const blockReason = responseData?.promptFeedback?.blockReason;
+    const blockReason = (responseData as GeminiResponseData | undefined)?.promptFeedback?.blockReason;
     if (blockReason) {
       await msg.edit({ text: `❌ 请求被阻止: ${blockReason}` });
     } else {
@@ -373,11 +397,11 @@ async function handleImageEdit(
     return;
   }
 
-  const inlineParts: any[] = [];
+  const inlineParts: Array<{ data?: string; mime_type?: string; mimeType?: string }> = [];
   const textParts: string[] = [];
 
   for (const candidate of candidates) {
-    const parts: any[] = candidate?.content?.parts || [];
+    const parts: GeminiInlinePart[] = candidate?.content?.parts || [];
     for (const part of parts) {
       // Support both snake_case and camelCase responses
       const inlineData = part?.inline_data || part?.inlineData;

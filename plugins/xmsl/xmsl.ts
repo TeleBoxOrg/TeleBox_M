@@ -18,6 +18,34 @@ import { promisify } from 'util';
 const execFileAsync = promisify(execFile);
 const XMSL_TEMP_DIR = createDirectoryInTemp('xmsl');
 
+// OpenAI API types
+interface OpenAiMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | OpenAiContentPart[];
+}
+
+interface OpenAiContentPart {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: { url: string };
+}
+
+interface OpenAiChatRequest {
+  model: string;
+  messages: OpenAiMessage[];
+  temperature?: number;
+}
+
+// Gemini API types
+interface GeminiPart {
+  text?: string;
+  inlineData?: { mimeType: string; data: string };
+}
+
+interface GeminiContent {
+  parts: GeminiPart[];
+}
+
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -634,14 +662,14 @@ model: <code>${this.config.model}</code><br>
 			timeout: 60000,
 		});
 
-		const messages: any[] = [];
+		const messages: OpenAiMessage[] = [];
 		if (SYSTEM_PROMPT) {
 			messages.push({ role: 'system', content: SYSTEM_PROMPT });
 		}
 
 		// 构建用户消息内容
 		if (imageInfo) {
-			const content: any[] = [];
+			const content: OpenAiContentPart[] = [];
 			if (question) {
 				content.push({ type: 'text', text: question });
 			} else {
@@ -674,7 +702,7 @@ model: <code>${this.config.model}</code><br>
 		)}:generateContent`;
 
 		// 构建内容部分
-		const parts: any[] = [];
+		const parts: GeminiPart[] = [];
 		if (question) {
 			parts.push({ text: question });
 		} else if (imageInfo) {
