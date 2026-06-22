@@ -1699,8 +1699,7 @@ class ConfigManager {
   }
 
   private async notifyListeners(newConfig: DB): Promise<void> {
-    for (const listener of this.listeners)
-      await listener.onConfigChanged(newConfig);
+    await Promise.all(this.listeners.map((listener) => listener.onConfigChanged(newConfig)));
   }
 }
 

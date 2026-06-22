@@ -143,20 +143,16 @@ async function ensureQuoteAssets(): Promise<void> {
     const missingVendor = QUOTE_DEP_FILES.filter((rel) => !fs.existsSync(path.join(quoteDir, rel)));
     if (missingVendor.length > 0) {
       logger.warn("quote loader installing missing vendor", { from: currentVersion || undefined, to: QUOTE_PLUGIN_VERSION, count: missingVendor.length });
-      for (const rel of missingVendor) {
-        await downloadFileIfMissingOrChanged(`${QUOTE_BASE_URL}/${rel}`, path.join(quoteDir, rel));
-      }
+      await Promise.all(missingVendor.map((rel) => downloadFileIfMissingOrChanged(`${QUOTE_BASE_URL}/${rel}`, path.join(quoteDir, rel))));
     }
     fs.mkdirSync(quoteDir, { recursive: true });
     fs.writeFileSync(versionFile, QUOTE_PLUGIN_VERSION);
   }
 
-  for (const rel of QUOTE_ASSET_FILES) {
-    const filePath = path.join(QUOTE_ASSETS_DIR, rel);
-    if (!fs.existsSync(filePath)) {
-      logger.warn("quote loader downloading asset", { rel });
-      await downloadFileIfMissingOrChanged(`${QUOTE_ASSETS_BASE_URL}/${rel}`, filePath);
-    }
+  const missingAssets = QUOTE_ASSET_FILES.filter((rel) => !fs.existsSync(path.join(QUOTE_ASSETS_DIR, rel)));
+  if (missingAssets.length > 0) {
+    logger.warn("quote loader downloading missing assets", { count: missingAssets.length });
+    await Promise.all(missingAssets.map((rel) => downloadFileIfMissingOrChanged(`${QUOTE_ASSETS_BASE_URL}/${rel}`, path.join(QUOTE_ASSETS_DIR, rel))));
   }
 
   for (const font of QUOTE_FONT_FILES) {
