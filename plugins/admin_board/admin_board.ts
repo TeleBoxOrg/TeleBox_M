@@ -1194,7 +1194,7 @@ async function findUserInChatParticipants(
 async function findUserInChannelParticipants(
   target: TargetChat,
   identifier: string,
-): Promise<any | undefined> {
+): Promise<tl.RawUser | undefined> {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
@@ -1203,20 +1203,22 @@ async function findUserInChannelParticipants(
 
   if (username) {
     try {
-      const res: any = await client.call({
+      const res = await client.call({
         _: 'channels.getParticipants',
         channel: target.entity,
-        filter: { _: 'channelParticipantsSearch', q: username },
+        filter: { _: 'channelParticipantsSearch', q: username } as tl.TypeChannelParticipantsFilter,
         offset: 0,
         limit: 200,
         hash: Long.fromNumber(0),
       });
 
-      const users: any[] = res?.users || [];
-      const matched = users.find((user: any) => {
+      const rawRes = res as tl.channels.RawChannelParticipants;
+      const users = (rawRes.users ?? []).filter(
+        (user): user is tl.RawUser => hasRawType(user, "user"),
+      );
+      const matched = users.find((user) => {
         return (
-          hasRawType(user, "user") &&
-          (user.username || "").toLowerCase() === username
+          (user.username ?? "").toLowerCase() === username
         );
       });
       if (matched) return matched;
@@ -1230,24 +1232,25 @@ async function findUserInChannelParticipants(
   const limit = 200;
 
   for (let index = 0; index < 5; index++) {
-    const result: any = await client.call({
+    const result = await client.call({
       _: 'channels.getParticipants',
       channel: inputChannel,
-      filter: { _: 'channelParticipantsRecent' },
+      filter: { _: 'channelParticipantsRecent' } as tl.TypeChannelParticipantsFilter,
       offset,
       limit,
       hash: Long.fromNumber(0),
     });
 
-    const users: any[] = (result?.users || []).filter(
-      (user: any) => hasRawType(user, "user"),
+    const rawResult = result as tl.channels.RawChannelParticipants;
+    const users = (rawResult.users ?? []).filter(
+      (user): user is tl.RawUser => hasRawType(user, "user"),
     );
     const matched = users.find(
-      (user: any) => String(user.id) === String(Number(identifier)),
+      (user) => String(user.id) === String(Number(identifier)),
     );
     if (matched) return matched;
 
-    const participants: any[] = result?.participants || [];
+    const participants = rawResult.participants ?? [];
     if (!participants.length) break;
     offset += participants.length;
   }
@@ -1258,7 +1261,7 @@ async function findUserInChannelParticipants(
 async function resolveUserForSeatAction(
   target: TargetChat,
   identifier: string,
-): Promise<any | undefined> {
+): Promise<tl.RawUser | undefined> {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
@@ -1272,7 +1275,7 @@ async function resolveUserForSeatAction(
     try {
       const entity = await client.getChat(candidate);
       if (hasRawType(entity, "user")) {
-        return entity;
+        return entity.raw as unknown as tl.RawUser;
       }
     } catch (e) { logger.warn(`[admin_board] Ignore and continue to target-specific fallback.:`, e) }
   }
