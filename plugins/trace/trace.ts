@@ -403,9 +403,12 @@ class TracePlugin extends Plugin {
     response += `👤 <b>追踪的用户</b> (${userCount})\n`;
     if (userCount > 0) {
         response += `┌──────────\n`;
-        let index = 0;
-        for (const userId in users) {
-            const userEntity = await this.formatEntity(userId);
+        const userIds = Object.keys(users);
+        const userEntities = await Promise.all(
+            userIds.map((userId) => this.formatEntity(userId))
+        );
+        userIds.forEach((userId, index) => {
+            const userEntity = userEntities[index];
             const standardEmojis = users[userId].filter((r: string | BigInteger) => typeof r === 'string');
             const customEmojis = users[userId].filter((r: string | BigInteger) => typeof r !== 'string');
             const reactions = standardEmojis.join('') + 
@@ -413,8 +416,7 @@ class TracePlugin extends Plugin {
             const prefix = index === userCount - 1 ? '└' : '├';
             response += `${prefix} ${userEntity.display}\n`;
             response += `${prefix === '└' ? ' ' : '│'} └ ${reactions}\n`;
-            index++;
-        }
+        });
     } else {
         response += `└ <i>暂无追踪用户</i>\n`;
     }
