@@ -12,6 +12,7 @@ import { html } from "@mtcute/html-parser";
 import { TelegramClient } from "@mtcute/node";
 import type { Chat, Peer } from "@mtcute/core";
 import { safeGetMessages } from "@utils/safeGetMessages";
+import type { ClientWithGetMessages } from "@utils/clientInternals";
 import {
   safeForwardMessage,
   parseEntityId,
@@ -44,11 +45,7 @@ interface ShiftStatsRow {
 }
 
 // Extended client interface for getMessages method not in standard mtcute types
-// Using a single overload with any return is safer than inline double-casts
-interface ClientWithGetMessages {
-  getMessages(id: number, params: { limit: number; offset: number }): Promise<any>;
-  getMessages(id: number, params: { limit: number; ids: undefined }): Promise<any>;
-}
+// (now imported from @utils/clientInternals)
 
 async function formatEntity(
   target: any,

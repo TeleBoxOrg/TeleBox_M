@@ -1,5 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { ClientWithDownload, ClientWithGetMessages, ClientWithSendFile } from "@utils/clientInternals";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import type { Low } from "lowdb";
@@ -716,7 +717,7 @@ const collectImagePartsFromSingleMessage = async (
   if (!msg.media || !msg.client) return;
 
   if ((msg.media as unknown as { type?: string })?.type === 'photo') {
-    const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown) => Promise<unknown> }).downloadMedia(msg.media);
+    const downloaded = await (msg.client as unknown as ClientWithDownload).downloadMedia(msg.media);
     const buffer = await normalizeDownloadedMedia(downloaded);
     if (!buffer) return;
     const dataUrl = `data:image/jpeg;base64,${buffer.toString("base64")}`;
@@ -741,7 +742,7 @@ const collectImagePartsFromSingleMessage = async (
     const thumb = getDocumentThumb(doc);
 
     if (!isAnimated && docMime.startsWith("image/")) {
-      const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown, opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia(msg.media);
+      const downloaded = await (msg.client as unknown as ClientWithDownload).downloadMedia(msg.media);
       const buffer = await normalizeDownloadedMedia(downloaded);
       if (!buffer) return;
       const dataUrl = `data:${docMime};base64,${buffer.toString("base64")}`;
@@ -752,7 +753,7 @@ const collectImagePartsFromSingleMessage = async (
     let frameBuffer: Buffer | null = null;
 
     if (thumb) {
-      const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown, opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia(msg.media, { thumb });
+      const downloaded = await (msg.client as unknown as ClientWithDownload).downloadMedia(msg.media, { thumb });
       const buffer = await normalizeDownloadedMedia(downloaded);
       if (buffer) {
         try {
@@ -764,7 +765,7 @@ const collectImagePartsFromSingleMessage = async (
     }
 
     if (!frameBuffer) {
-      const downloaded = await (msg.client as unknown as { downloadMedia: (media: unknown, opts?: Record<string, unknown>) => Promise<unknown> }).downloadMedia(msg.media);
+      const downloaded = await (msg.client as unknown as ClientWithDownload).downloadMedia(msg.media);
       const buffer = await normalizeDownloadedMedia(downloaded);
       if (buffer) {
         try {
@@ -800,7 +801,7 @@ const getMessageImageParts = async (
   const peer = msg.chat.id;
   const sameGroupMessages: MessageContext[] = [];
 
-  const messages = await (msg.client as unknown as { getMessages: (peer: unknown, opts: { limit: number }) => Promise<MessageContext[]> }).getMessages(peer, { limit: 50 });
+  const messages = await (msg.client as unknown as ClientWithGetMessages).getMessages(peer, { limit: 50 });
   for (const m of messages) {
     if (!(m as unknown as { client?: unknown })?.client) continue;
 
@@ -830,7 +831,7 @@ const getGroupedMessageIds = async (msg: MessageContext): Promise<number[]> => {
   const peer = msg.chat.id;
   const ids: number[] = [];
 
-  const messages = await (msg.client as unknown as { getMessages: (peer: unknown, opts: { limit: number }) => Promise<MessageContext[]> }).getMessages(peer, { limit: 50 });
+  const messages = await (msg.client as unknown as ClientWithGetMessages).getMessages(peer, { limit: 50 });
   for (const m of messages) {
     if (!(m as unknown as { client?: unknown })?.client) continue;
     const g = (m as unknown as { groupedId?: string | number }).groupedId;
@@ -1446,7 +1447,7 @@ class MessageUtils {
 
         const topicRootId = getTopicRootId(msg);
         const replyTo = replyToId ?? topicRootId;
-        await (msg.client as unknown as { sendFile: (peer: unknown, opts: Record<string, unknown>) => Promise<void> }).sendFile(peerId, {
+        await (msg.client as unknown as ClientWithSendFile).sendFile(peerId, {
           file: pathToSend,
           forceDocument: !options.previewEnabled,
           caption,

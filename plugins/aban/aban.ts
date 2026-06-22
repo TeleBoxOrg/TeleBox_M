@@ -4,6 +4,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { TelegramClient } from "@mtcute/node";
+import type { ClientInternals } from "@utils/clientInternals";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import path from "path";
@@ -266,7 +267,7 @@ class UserResolver {
     target: any
   ): Promise<any | null> {
     try {
-      return await (client as unknown as { resolvePeer: (target: unknown) => Promise<unknown> }).resolvePeer(target);
+      return await (client as unknown as ClientInternals).resolvePeer(target);
     } catch (e: unknown) {
       return null;
     }
@@ -277,7 +278,7 @@ class UserResolver {
     target: any
   ): Promise<any | undefined> {
     try {
-      return await (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(target);
+      return await (client as unknown as ClientInternals).getInputEntity(target);
     } catch (e: unknown) {
       return undefined;
     }
@@ -451,7 +452,7 @@ async function resolveChannelInput(
       };
   }
   // 兜底：让 teleproto 走自己的 entity cache / dialogs 解析
-  return await (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(group.id);
+  return await (client as unknown as ClientInternals).getInputEntity(group.id);
 }
 
 /**
@@ -606,7 +607,7 @@ class GroupManager {
     const dialogMap = new Map<number, any>();
 
     const collectDialogs = async (params: Record<string, unknown>) => {
-      const dialogs = await (client as unknown as { getDialogs: (params: Record<string, unknown>) => Promise<Array<Record<string, unknown>>> }).getDialogs(params);
+      const dialogs = await (client as unknown as ClientInternals).getDialogs(params);
       for (const dialog of dialogs || []) {
         if (dialog.isChannel || dialog.isGroup) {
           dialogMap.set(Number(dialog.id), dialog);
@@ -707,7 +708,7 @@ class BanManager {
     if (participant) {
       return participant;
     }
-    return (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(userId);
+    return (client as unknown as ClientInternals).getInputEntity(userId);
   }
 
   private static getErrorReason(error: unknown): string {
