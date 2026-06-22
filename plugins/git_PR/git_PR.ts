@@ -406,14 +406,14 @@ class GitManagerPlugin extends Plugin {
         successCount++;
       } catch (error: unknown) {
         const errorMsg = extractGitHubApiError(error) || getErrorMessage(error);
-        report += `❌ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>失败:</b> ${htmlEscape(errorMsg)}\\n`;
+        report += `❌ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>失败:</b> ${htmlEscape(errorMsg)}\n`;
         failCount++;
       }
       // 编辑消息以显示进度
-      await sendLongMessage(msg, report + `\\n🔄 进度: ${successCount + failCount}/${mergeablePRs.length}...`);
+      await sendLongMessage(msg, report + `\n🔄 进度: ${successCount + failCount}/${mergeablePRs.length}...`);
     }
 
-    report += `\\n🎉 <b>操作完成:</b> ${successCount}个成功, ${failCount}个失败。`;
+    report += `\n🎉 <b>操作完成:</b> ${successCount}个成功, ${failCount}个失败。`;
     await sendLongMessage(msg, report);
   }
 }
