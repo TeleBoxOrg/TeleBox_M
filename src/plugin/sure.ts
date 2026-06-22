@@ -227,7 +227,12 @@ async function handleMsgAddDel(
         db.addMsg(input);
       }
     } else {
-      db.delMsg(input);
+      const found = db.lsMsgs().find((m) => m.msg === input);
+      if (found) {
+        db.delMsg(found.id);
+      } else {
+        throw new Error(`找不到消息: ${input}`);
+      }
     }
   });
   sureCache.ts = 0; // 失效缓存

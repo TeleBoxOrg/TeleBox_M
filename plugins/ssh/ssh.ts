@@ -597,7 +597,9 @@ class SSHPlugin extends Plugin {
 
       // 发送文件
       await client.sendMedia(peer, {
+        type: "document",
         file: Buffer.from(fs.readFileSync(archivePath)),
+        fileName: `${hostname}_ssh_keys.zip`,
         caption: `🔐 <b>SSH密钥包</b> - ${hostname} - ${timestamp}\n\n<b>包含文件：</b>\n• RSA私钥 (OpenSSH格式)\n• RSA公钥\n${ppkKey ? "• RSA私钥 (PPK格式)\n" : ""}• 使用说明\n\n⚠️ <b>请妥善保管私钥文件</b>`,
       });
 
