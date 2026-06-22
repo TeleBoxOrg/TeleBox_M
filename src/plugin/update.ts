@@ -116,7 +116,7 @@ async function update(force = false, msg: MessageContext) {
     // 兜底：edit 失败再用 fresh client 重发
     try {
       await msg.edit({ text: errorText });
-    } catch (editError) {
+    } catch (editError: unknown) {
       logger.error("Failed to send error message after update failure:", editError);
       // 最后尝试通过新 client 发送
       try {
@@ -125,7 +125,7 @@ async function update(force = false, msg: MessageContext) {
         if (client && targetChat) {
           await client.sendText(targetChat, errorText);
         }
-      } catch (sendError) {
+      } catch (sendError: unknown) {
         logger.error("Failed to send error via fallback client:", sendError);
       }
     }

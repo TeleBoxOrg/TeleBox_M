@@ -227,7 +227,7 @@ ${recentErrors ? `<b>⚠️ 最近错误:</b>\n${recentErrors}` : ""}`;
           text: message,
         });
         return task.savedMessageId;
-      } catch (editError) {
+      } catch (editError: unknown) {
         // 如果编辑失败，创建新消息
         logger.info("编辑收藏夹消息失败，创建新消息:", editError);
       }
@@ -426,7 +426,7 @@ const da = async (msg: MessageContext) => {
           isAdmin =
             result.participant?._ === "channelParticipantAdmin" ||
             result.participant?._ === "channelParticipantCreator";
-        } catch (permError) {
+        } catch (permError: unknown) {
           logger.info("权限检查失败，尝试备用方法:", permError);
           try {
             const adminResult: any = await client.call({
@@ -443,7 +443,7 @@ const da = async (msg: MessageContext) => {
                 (admin) => Number(admin.id) === Number(myId)
               );
             }
-          } catch (adminListError) {
+          } catch (adminListError: unknown) {
             logger.info("管理员列表获取失败:", adminListError);
             isAdmin = false;
           }

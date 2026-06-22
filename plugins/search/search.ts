@@ -832,7 +832,7 @@ class SearchService {
     } finally {
       try {
         await fs.unlink(tempFilePath);
-      } catch (cleanupError) {
+      } catch (cleanupError: unknown) {
         logger.warn("清理临时文件失败:", cleanupError);
       }
     }

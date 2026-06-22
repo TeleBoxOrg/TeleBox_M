@@ -467,7 +467,7 @@ async function installAllPlugins(msg: MessageContext) {
           };
           await db.write();
           logger.info(`[TPM] 已记录插件信息到数据库: ${plugin}`);
-        } catch (dbError) {
+        } catch (dbError: unknown) {
           logger.error(`[TPM] 记录插件信息失败: ${dbError}`);
         }
 
@@ -590,7 +590,7 @@ async function installMultiplePlugins(pluginNames: string[], msg: MessageContext
           };
           await db.write();
           logger.info(`[TPM] 已记录插件信息到数据库: ${pluginName}`);
-        } catch (dbError) {
+        } catch (dbError: unknown) {
           logger.error(`[TPM] 记录插件信息失败: ${dbError}`);
         }
 
@@ -1317,7 +1317,7 @@ async function updateAllPlugins(msg: MessageContext) {
           db.data[pluginName]._updatedAt = Date.now();
           await db.write();
           logger.info(`[TPM] 已更新插件数据库记录: ${pluginName}`);
-        } catch (dbError) {
+        } catch (dbError: unknown) {
           logger.error(`[TPM] 更新插件数据库记录失败: ${dbError}`);
         }
 
@@ -1337,7 +1337,7 @@ async function updateAllPlugins(msg: MessageContext) {
     logger.error("[TPM] 一键更新失败:", error);
     try {
       await statusMsg.edit({ text: `❌ 一键更新失败: ${htmlEscape(String(error))}` });
-    } catch (editError) {
+    } catch (editError: unknown) {
       logger.info(`[TPM] 错误消息编辑失败: ${editError}`);
     }
   }

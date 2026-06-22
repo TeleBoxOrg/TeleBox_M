@@ -1061,7 +1061,7 @@ class MusicHubPlugin extends Plugin {
       const caption = this.buildSongCaption(song, urlInfo);
       await this.sendTelegramUrl(client, msg, urlInfo, caption, session);
       await this.finishSongSend(msg, session);
-    } catch (directError) {
+    } catch (directError: unknown) {
       const progress = this.createTransferProgressReporter(updateStatus, song);
       await progress.report({
         stage: "download",
@@ -1085,7 +1085,7 @@ class MusicHubPlugin extends Plugin {
         );
         await progress.stop();
         await this.finishSongSend(msg, session);
-      } catch (fallbackError) {
+      } catch (fallbackError: unknown) {
         await progress.stop();
         await updateStatus(
           `❌ <b>上传失败，保留下载链接</b>\n${codeTag(urlInfo.url)}\n\n` +

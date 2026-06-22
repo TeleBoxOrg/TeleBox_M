@@ -134,7 +134,7 @@ class ClearStickerPlugin extends Plugin {
               await msg.edit({
                 text: progressText
               });
-            } catch (deleteError) {
+            } catch (deleteError: unknown) {
               logger.error("Failed to delete sticker messages:", deleteError);
             }
           }
@@ -152,7 +152,7 @@ class ClearStickerPlugin extends Plugin {
           // 节流，避免触发限制
           await new Promise(resolve => setTimeout(resolve, 1200));
           
-        } catch (historyError) {
+        } catch (historyError: unknown) {
           logger.error("Failed to get chat history:", historyError);
           hasMore = false;
         }

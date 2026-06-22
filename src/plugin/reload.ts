@@ -50,7 +50,7 @@ async function updateReloadStatus(params: {
     logger.error("Failed to edit reload status message, falling back to sendText:", error);
     try {
       await client?.sendText(targetChat, isHtml ? html(text) : text);
-    } catch (sendError) {
+    } catch (sendError: unknown) {
       logger.error("Fallback sendText also failed (client may be destroyed):", sendError);
     }
   }
@@ -334,7 +334,7 @@ async function memoryMonitorTask() {
             `• 当前总内存：<code>${afterReloadMemory.rss.toFixed(2)} MB</code>`
           ));
         }
-      } catch (reloadError) {
+      } catch (reloadError: unknown) {
         logger.error("[Memory Monitor] 自动重建 Runtime 失败:", reloadError);
       }
 
@@ -458,7 +458,7 @@ class ReloadPlugin extends Plugin {
             text: `❌ 插件重新加载失败\n错误信息：${errorMessage}\n请检查控制台日志获取详细信息`,
             isHtml: false,
           });
-        } catch (editError) {
+        } catch (editError: unknown) {
           logger.error("Failed to update reload status message:", editError);
         }
       }

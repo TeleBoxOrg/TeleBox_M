@@ -856,7 +856,7 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
       try {
         await msg.edit({ text: initialText });
         statusMsg = msg;
-      } catch (editError) {
+      } catch (editError: unknown) {
         logger.error("Critical: Fallback edit also failed.", editError);
       }
     }
