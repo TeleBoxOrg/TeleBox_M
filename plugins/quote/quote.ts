@@ -125,7 +125,7 @@ function quoteResourcesReady(): boolean {
   const quoteDir = path.join(quotePluginDir(), "quote");
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
-  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { logger.debug("[quote] version file not found, skipping cache check"); }
+  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_: unknown) { logger.debug("[quote] version file not found, skipping cache check"); }
   if (currentVersion !== QUOTE_PLUGIN_VERSION) return false;
   if (QUOTE_DEP_FILES.some((rel) => !fs.existsSync(path.join(quoteDir, rel)))) return false;
   if (QUOTE_ASSET_FILES.some((rel) => !fs.existsSync(path.join(QUOTE_ASSETS_DIR, rel)))) return false;
@@ -137,7 +137,7 @@ async function ensureQuoteAssets(): Promise<void> {
   const quoteDir = path.join(quotePluginDir(), "quote");
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
-  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { logger.debug("[quote] version file not found"); }
+  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_: unknown) { logger.debug("[quote] version file not found"); }
 
   if (currentVersion !== QUOTE_PLUGIN_VERSION) {
     const missingVendor = QUOTE_DEP_FILES.filter((rel) => !fs.existsSync(path.join(quoteDir, rel)));
@@ -260,7 +260,7 @@ function parseArgs(text: string): QuoteArgs {
 
 function asBigInt(value: any): bigint | undefined {
   if (value === undefined || value === null) return undefined;
-  try { return BigInt(value.value ?? value); } catch (_) { logger.debug("[quote] BigInt conversion failed", _); return undefined; }
+  try { return BigInt(value.value ?? value); } catch (_: unknown) { logger.debug("[quote] BigInt conversion failed", _); return undefined; }
 }
 
 function idNumber(value: any): number {
@@ -353,7 +353,7 @@ async function forwardedSource(msg: MessageContext): Promise<{ peer?: any; entit
 function stableEntityKey(entity: any): string | undefined {
   const raw = entity?.id ?? entity?.userId ?? entity?.channelId ?? entity?.chatId ?? entity?.accessHash ?? entity;
   if (!raw) return undefined;
-  try { return typeof raw === "bigint" ? raw.toString() : JSON.stringify(raw, (_, v) => typeof v === "bigint" ? v.toString() : v); } catch (_) { logger.debug("[quote] JSON stringify failed, falling back to String()", _); return String(raw); }
+  try { return typeof raw === "bigint" ? raw.toString() : JSON.stringify(raw, (_, v) => typeof v === "bigint" ? v.toString() : v); } catch (_: unknown) { logger.debug("[quote] JSON stringify failed, falling back to String()", _); return String(raw); }
 }
 
 async function getPeerEntity(client: any, peer: any): Promise<any | undefined> {
@@ -364,7 +364,7 @@ async function getPeerEntity(client: any, peer: any): Promise<any | undefined> {
     const entity = await client.resolvePeer(peer);
     entityCache.set(key, entity);
     return entity;
-  } catch (_) {
+  } catch (_: unknown) {
     entityCache.set(key, undefined);
     return undefined;
   }
@@ -578,12 +578,12 @@ async function waitForStableFile(filePath: string, timeoutMs = 8000): Promise<Bu
           lastSize = size;
         }
       }
-    } catch (_) { logger.debug("[quote] file stability check failed, continuing poll", _); }
+    } catch (_: unknown) { logger.debug("[quote] file stability check failed, continuing poll", _); }
     await sleepMs(120);
   }
   try {
     if (fs.existsSync(filePath) && fs.statSync(filePath).size > 0) return fs.readFileSync(filePath);
-  } catch (_) { logger.debug("[quote] final fallback read failed", _); }
+  } catch (_: unknown) { logger.debug("[quote] final fallback read failed", _); }
   return undefined;
 }
 
@@ -715,7 +715,7 @@ async function probeAnimatedInfo(buffer: Buffer): Promise<{ fps: number; duratio
     logger.warn("quote animated probe failed", getErrorMessage(err));
     return { fps: 12, duration: 2 };
   } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_: unknown) { logger.debug("[quote] cleanup: input already removed", _); }
   }
 }
 
@@ -750,16 +750,16 @@ async function convertAnimatedEmojiToPng(buffer: Buffer): Promise<Buffer | undef
         return await (await getSharp())(png, { animated: false }).ensureAlpha().png({ force: true }).toBuffer();
       }
     }
-  } catch (_) { logger.warn(`[quote] keep fallback quiet; normal static buffers and unsupported tgs land here:`, _) } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
-    try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { logger.debug("[quote] cleanup: output already removed", _); }
+  } catch (_: unknown) { logger.warn(`[quote] keep fallback quiet; normal static buffers and unsupported tgs land here:`, _) } finally {
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_: unknown) { logger.debug("[quote] cleanup: input already removed", _); }
+    try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_: unknown) { logger.debug("[quote] cleanup: output already removed", _); }
   }
 
   try {
     // Some animated emoji downloads are tgs/lottie. Sharp cannot render lottie,
     // but if Telegram provided a raster thumbnail this path is not used.
     return await (await getSharp())(buffer, { animated: false }).resize(128, 128, { fit: "inside" }).png({ force: true }).toBuffer();
-  } catch (_) {
+  } catch (_: unknown) {
     return undefined;
   }
 }
@@ -786,8 +786,8 @@ async function extractAnimatedFrames(buffer: Buffer, size: number, frameCount: n
     logger.warn("quote animated frame extract failed", getErrorMessage(err));
     return [];
   } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
-    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { logger.debug("[quote] cleanup: dir already removed", _); }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_: unknown) { logger.debug("[quote] cleanup: input already removed", _); }
+    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_: unknown) { logger.debug("[quote] cleanup: dir already removed", _); }
   }
 }
 
@@ -800,7 +800,7 @@ async function bufferToCanvas(buffer: Buffer): Promise<any | undefined> {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     return canvas;
-  } catch (_) {
+  } catch (_: unknown) {
     return undefined;
   }
 }
@@ -881,7 +881,7 @@ async function probeWebmAlpha(buffer: Buffer): Promise<string> {
   } catch (err: unknown) {
     return `probe-failed:${getErrorMessage(err)}`;
   } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_: unknown) { logger.debug("[quote] cleanup: input already removed", _); }
   }
 }
 
@@ -956,8 +956,8 @@ async function encodeFramesToWebm(frames: Buffer[], fps = TG_STICKER_FPS): Promi
     quoteTiming("webm.encode_total", t0, { frames: frames.length, bytes: best?.length || 0, crf: bestCrf });
     return best || Buffer.alloc(0);
   } finally {
-    for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { logger.debug("[quote] cleanup: output already removed", _); }
-    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { logger.debug("[quote] cleanup: dir already removed", _); }
+    for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_: unknown) { logger.debug("[quote] cleanup: output already removed", _); }
+    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_: unknown) { logger.debug("[quote] cleanup: dir already removed", _); }
   }
 }
 async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs): Promise<{ image: Buffer; ext: string; width?: number; height?: number; duration?: number }> {
@@ -1069,7 +1069,7 @@ async function normalizeCustomEmojiBuffer(buffer: Buffer | undefined): Promise<B
   }
   try {
     return await (await getSharp())(buffer, { animated: false }).resize(128, 128, { fit: "inside" }).png({ force: true }).toBuffer();
-  } catch (_) {
+  } catch (_: unknown) {
     return buffer;
   }
 }
@@ -1299,7 +1299,7 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
     }
   } catch (err: unknown) {
     logger.warn("quote: reply with media failed, falling back to text", err);
-    try { await msg.replyText(text); } catch (_) { logger.warn("[quote] fallback reply also failed", _); }
+    try { await msg.replyText(text); } catch (_: unknown) { logger.warn("[quote] fallback reply also failed", _); }
   }
 }
 
