@@ -6,6 +6,7 @@ import Database from "better-sqlite3";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // 配置存储键名
 const CONFIG_KEYS = {
@@ -233,11 +234,12 @@ async function makeRequest(url: string, endpoint: string): Promise<any> {
     }
 
     return response.data;
-  } catch (error: any) {
-    if (error.response) {
-      throw new Error(`API 请求失败: HTTP ${error.response.status}`);
+  } catch (error: unknown) {
+    if (error !== null && error !== undefined && typeof error === "object" && "response" in error && (error as { response?: { status?: number } }).response) {
+      const resp = (error as { response: { status?: number } }).response;
+      throw new Error(`API 请求失败: HTTP ${resp.status}`);
     }
-    throw new Error(`网络请求失败: ${error.message}`);
+    throw new Error(`网络请求失败: ${getErrorMessage(error)}`);
   }
 }
 
@@ -290,8 +292,8 @@ async function getServerInfo(baseUrl: string): Promise<string> {
 • **内存总量**: \`${formatBytes(totalMemory)}\`
 • **交换分区总量**: \`${formatBytes(totalSwap)}\`
 • **硬盘总量**: \`${formatBytes(totalDisk)}\``;
-  } catch (error: any) {
-    throw new Error(`获取服务器信息失败: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`获取服务器信息失败: ${getErrorMessage(error)}`);
   }
 }
 
@@ -438,8 +440,8 @@ async function getNodesOverview(baseUrl: string): Promise<string> {
 • **下载速度**: \`${formatSpeed(totalDownSpeed)}\`
 • **上传速度**: \`${formatSpeed(totalUpSpeed)}\`
 • **连接数**: \`${totalTcpConnections} TCP / ${totalUdpConnections} UDP\``;
-  } catch (error: any) {
-    throw new Error(`获取节点总览失败: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`获取节点总览失败: ${getErrorMessage(error)}`);
   }
 }
 
@@ -565,8 +567,8 @@ async function getNodeDetails(
     } UDP\`
 
 **⏰ 更新时间**: \`${updateTime}\``;
-  } catch (error: any) {
-    throw new Error(`获取节点详情失败: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`获取节点详情失败: ${getErrorMessage(error)}`);
   }
 }
 
@@ -642,10 +644,10 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
 • <code>komari _set_url &lt;URL&gt;</code> - 设置 Komari 服务器 URL`,
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Komari处理错误:", error);
 
-    const errorMsg = `❌ 错误：${error.message}`;
+    const errorMsg = `❌ 错误：${getErrorMessage(error)}`;
     await msg.edit({ text: html`${errorMsg}` });
 
     setTimeout(() => {

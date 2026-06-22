@@ -9,6 +9,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import { getTitle } from "@utils/entityTypeGuards";
 import type { tl } from "@mtcute/core";
 import Long from "long";
@@ -278,17 +279,18 @@ async function removeChatMember(client: TelegramClient, channelEntity: any, user
       },
     });
     logger.info(`用户 ${userId} 已移出并解封，可重新加入`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(`移出用户 ${userId} 失败:`, error);
-    if (error.errorMessage && error.errorMessage.includes("FLOOD_WAIT")) {
-      const seconds = parseInt(error.errorMessage.match(/\d+/)?.[0] || "60");
+    const errorMsg = getErrorMessage(error);
+    if (errorMsg.includes("FLOOD_WAIT")) {
+      const seconds = parseInt(errorMsg.match(/\d+/)?.[0] || "60");
       logger.info(`遇到频率限制，等待 ${seconds} 秒后重试`);
       await sleep(seconds * 1000);
       await removeChatMember(client, channelEntity, userId);
-    } else if (error.errorMessage && error.errorMessage.includes("USER_NOT_PARTICIPANT")) {
+    } else if (errorMsg.includes("USER_NOT_PARTICIPANT")) {
       logger.info(`用户 ${userId} 已不在群组中`);
       return;
-    } else if (error.errorMessage && error.errorMessage.includes("CHAT_ADMIN_REQUIRED")) {
+    } else if (errorMsg.includes("CHAT_ADMIN_REQUIRED")) {
       logger.info(`无权限移出用户 ${userId}（可能是管理员）`);
       throw error;
     } else {
@@ -483,11 +485,11 @@ async function streamProcessMembers(options: StreamProcessOptions): Promise<Stre
                   hasMore = false;
                   break;
                 }
-              } catch (error: any) {
+              } catch (error: unknown) {
                 logger.error(`Failed to remove user ${uid}:`, error);
                 const failedUser: FailedUserInfo = {
                   ...userInfo,
-                  error_message: error.message || error.toString()
+                  error_message: getErrorMessage(error)
                 };
                 result.failedUsers.push(failedUser);
               }
@@ -709,9 +711,9 @@ const clean_member = async (msg: MessageContext) => {
         }
       } catch (_) { /* chatInfo unavailable, use default title */ }
       chatId = channelEntity;
-    } catch (error: any) {
+    } catch (error: unknown) {
       await msg.edit({
-        text: html`❌ <b>错误：</b>无法访问指定群组<br><br>请确认群组ID正确且您是该群组成员<br>错误: ${htmlEscape(error.message || error.toString())}`,
+        text: html`❌ <b>错误：</b>无法访问指定群组<br><br>请确认群组ID正确且您是该群组成员<br>错误: ${htmlEscape(getErrorMessage(error))}`,
       });
       return;
     }
