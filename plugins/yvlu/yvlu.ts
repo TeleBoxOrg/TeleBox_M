@@ -369,7 +369,6 @@ function convertEntities(entities: Api.TypeMessageEntity[]): any[] {
   if (!entities) return [];
 
   return entities.map((entity) => {
-    // console.log(entity);
     const baseEntity = {
       offset: entity.offset,
       length: entity.length,
