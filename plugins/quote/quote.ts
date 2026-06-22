@@ -124,7 +124,7 @@ function quoteResourcesReady(): boolean {
   const quoteDir = path.join(quotePluginDir(), "quote");
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
-  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { /* version file may not exist yet */ }
+  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { logger.debug("[quote] version file not found, skipping cache check"); }
   if (currentVersion !== QUOTE_PLUGIN_VERSION) return false;
   if (QUOTE_DEP_FILES.some((rel) => !fs.existsSync(path.join(quoteDir, rel)))) return false;
   if (QUOTE_ASSET_FILES.some((rel) => !fs.existsSync(path.join(QUOTE_ASSETS_DIR, rel)))) return false;
@@ -136,7 +136,7 @@ async function ensureQuoteAssets(): Promise<void> {
   const quoteDir = path.join(quotePluginDir(), "quote");
   const versionFile = path.join(quoteDir, ".version");
   let currentVersion = "";
-  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { /* version file may not exist yet */ }
+  try { currentVersion = fs.readFileSync(versionFile, "utf8").trim(); } catch (_) { logger.debug("[quote] version file not found"); }
 
   if (currentVersion !== QUOTE_PLUGIN_VERSION) {
     const missingVendor = QUOTE_DEP_FILES.filter((rel) => !fs.existsSync(path.join(quoteDir, rel)));
@@ -263,7 +263,7 @@ function parseArgs(text: string): QuoteArgs {
 
 function asBigInt(value: any): bigint | undefined {
   if (value === undefined || value === null) return undefined;
-  try { return BigInt(value.value ?? value); } catch (_) { return undefined; }
+  try { return BigInt(value.value ?? value); } catch (_) { logger.debug("[quote] BigInt conversion failed", _); return undefined; }
 }
 
 function idNumber(value: any): number {
@@ -356,7 +356,7 @@ async function forwardedSource(msg: MessageContext): Promise<{ peer?: any; entit
 function stableEntityKey(entity: any): string | undefined {
   const raw = entity?.id ?? entity?.userId ?? entity?.channelId ?? entity?.chatId ?? entity?.accessHash ?? entity;
   if (!raw) return undefined;
-  try { return typeof raw === "bigint" ? raw.toString() : JSON.stringify(raw, (_, v) => typeof v === "bigint" ? v.toString() : v); } catch (_) { return String(raw); }
+  try { return typeof raw === "bigint" ? raw.toString() : JSON.stringify(raw, (_, v) => typeof v === "bigint" ? v.toString() : v); } catch (_) { logger.debug("[quote] JSON stringify failed, falling back to String()", _); return String(raw); }
 }
 
 async function getPeerEntity(client: any, peer: any): Promise<any | undefined> {
@@ -581,12 +581,12 @@ async function waitForStableFile(filePath: string, timeoutMs = 8000): Promise<Bu
           lastSize = size;
         }
       }
-    } catch (_) { /* file may be unstable during write, keep polling */ }
+    } catch (_) { logger.debug("[quote] file stability check failed, continuing poll", _); }
     await sleepMs(120);
   }
   try {
     if (fs.existsSync(filePath) && fs.statSync(filePath).size > 0) return fs.readFileSync(filePath);
-  } catch (_) { /* final fallback read, may fail if file doesn't exist */ }
+  } catch (_) { logger.debug("[quote] final fallback read failed", _); }
   return undefined;
 }
 
@@ -718,7 +718,7 @@ async function probeAnimatedInfo(buffer: Buffer): Promise<{ fps: number; duratio
     logger.warn("quote animated probe failed", err?.message || err);
     return { fps: 12, duration: 2 };
   } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup: input may already be removed */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
   }
 }
 
@@ -754,8 +754,8 @@ async function convertAnimatedEmojiToPng(buffer: Buffer): Promise<Buffer | undef
       }
     }
   } catch (_) { logger.warn(`[quote] keep fallback quiet; normal static buffers and unsupported tgs land here:`, _) } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
-    try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
+    try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { logger.debug("[quote] cleanup: output already removed", _); }
   }
 
   try {
@@ -789,8 +789,8 @@ async function extractAnimatedFrames(buffer: Buffer, size: number, frameCount: n
     logger.warn("quote animated frame extract failed", err?.message || err);
     return [];
   } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
-    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
+    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { logger.debug("[quote] cleanup: dir already removed", _); }
   }
 }
 
@@ -884,7 +884,7 @@ async function probeWebmAlpha(buffer: Buffer): Promise<string> {
   } catch (err: any) {
     return `probe-failed:${err?.message || err}`;
   } finally {
-    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { /* cleanup */ }
+    try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
   }
 }
 
@@ -959,8 +959,8 @@ async function encodeFramesToWebm(frames: Buffer[], fps = TG_STICKER_FPS): Promi
     quoteTiming("webm.encode_total", t0, { frames: frames.length, bytes: best?.length || 0, crf: bestCrf });
     return best || Buffer.alloc(0);
   } finally {
-    for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { /* cleanup */ }
-    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { /* cleanup */ }
+    for (const output of outputs) try { if (fs.existsSync(output)) fs.unlinkSync(output); } catch (_) { logger.debug("[quote] cleanup: output already removed", _); }
+    try { if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true }); } catch (_) { logger.debug("[quote] cleanup: dir already removed", _); }
   }
 }
 async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs): Promise<{ image: Buffer; ext: string; width?: number; height?: number; duration?: number }> {
@@ -1302,7 +1302,7 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
     }
   } catch (err) {
     logger.warn("quote: reply with media failed, falling back to text", err);
-    try { await msg.replyText(text); } catch (_) { /* fallback also failed, silent */ }
+    try { await msg.replyText(text); } catch (_) { logger.warn("[quote] fallback reply also failed", _); }
   }
 }
 

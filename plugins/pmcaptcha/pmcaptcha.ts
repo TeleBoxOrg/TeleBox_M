@@ -36,7 +36,7 @@ function attrEscape(value: any): string {
 
 // ─── 日志 ─────────────────────────────────────────────────────────────────────
 
-enum LogLevel { INFO = 1, WARN = 2, ERROR = 3 }
+enum LogLevel { DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3 }
 
 function log(level: LogLevel, message: string, data?: any) {
   const prefix = `[PMCaptcha] [${new Date().toISOString()}] [${LogLevel[level]}]`;
@@ -497,7 +497,7 @@ async function tryGetCanvas(): Promise<any> {
     _canvas = await import("canvas");
     log(LogLevel.INFO, "canvas module loaded");
     return _canvas;
-  } catch (e) { /* canvas not available, will try install */ }
+  } catch (e) { log(LogLevel.DEBUG, "canvas not available, will try install", e); }
 
   if (_canvasInstalling) {
     const deadline = Date.now() + 60_000;
@@ -523,7 +523,7 @@ async function tryGetCanvas(): Promise<any> {
   try {
     const canvasId = require.resolve("canvas");
     if (require.cache[canvasId]) delete require.cache[canvasId];
-  } catch (e) { /* canvas not in cache */ }
+  } catch (e) { log(LogLevel.DEBUG, "canvas not in cache", e); }
 
   try {
     _canvas = await import("canvas");
@@ -941,7 +941,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
           log(LogLevel.WARN, `canvas unavailable for user ${userId}`);
           try {
             await client.sendText(userId, "❌ 验证服务暂时不可用，请稍后再试。");
-          } catch (e) { /* user blocked bot */ }
+          } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
           return;
         }
 
@@ -997,7 +997,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
           if (!isStateCurrent(state)) return;
           try {
             await client.sendText(userId, html("⏰ 验证超时，对话已被限制。"));
-          } catch (e) { /* user blocked bot */ }
+          } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
           if (!isStateCurrent(state)) return;
           await runFailActions(client, userId);
         }, { label: `pmcaptcha-timeout:${userId}` }).catch((error) => {
@@ -1042,7 +1042,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     log(LogLevel.WARN, `handleReply: empty answer for user ${userId}`);
     removeCaptchaState(userId);
     await cleanupCaptchaMessages(client, userId, state);
-    try { await client.sendText(userId, html("❌ 验证状态异常，请联系对方重置。")); } catch (e) { /* user blocked bot */ }
+    try { await client.sendText(userId, html("❌ 验证状态异常，请联系对方重置。")); } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
     return;
   }
 
@@ -1066,7 +1066,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     if (!isStateCurrent(state)) return;
     try {
       await client.sendText(userId, html("✅ 验证通过！欢迎与我对话。"));
-    } catch (e) { /* user blocked bot */ }
+    } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
     return;
   }
 
@@ -1084,7 +1084,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     log(LogLevel.INFO, `User ${userId} failed captcha (max tries)`);
     try {
       await client.sendText(userId, html("❌ 验证失败次数过多，对话已被限制。"));
-    } catch (e) { /* user blocked bot */ }
+    } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
     if (!isStateCurrent(state)) return;
     await runFailActions(client, userId);
   } else {
@@ -1093,7 +1093,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
       const hintMsg = await client.sendText(userId, html(`❌ 答案错误，${htmlEscape(hint)}`));
       if (!isStateCurrent(state)) return;
       state.msgIds.push(hintMsg.id);
-    } catch (e) { /* user blocked bot */ }
+    } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
   }
 }
 
@@ -1409,7 +1409,7 @@ const pmcaptcha = async (message: MessageContext) => {
       const tmp = await client.sendText(message.chat.id, html(enabling
         ? "✅ <b>PMCaptcha 已启用</b>"
         : `🚫 <b>PMCaptcha 已禁用</b><br>验证配置已保留，下次启用后自动恢复`));
-      try { await message.delete(); } catch (e) { /* msg already deleted */ }
+      try { await message.delete(); } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: message already deleted", e); }
       getActiveLifecycle()?.setTimeout(() => {
         void (tmp as { delete?: () => Promise<unknown> }).delete?.().catch(() => undefined);
       }, 3000, { label: "pmcaptcha-command-cleanup" });
@@ -1422,7 +1422,7 @@ const pmcaptcha = async (message: MessageContext) => {
       await message.edit({text});
     } catch (e: unknown) {
       if (String(e).includes("Could not find the input entity")) {
-        try { await message.replyText(html(text), { disableWebPreview: true } as { disableWebPreview?: boolean }); } catch (e) { /* user blocked bot */ }
+        try { await message.replyText(html(text), { disableWebPreview: true } as { disableWebPreview?: boolean }); } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: user blocked bot, replyText failed", e); }
       } else {
         throw e;
       }
@@ -1719,7 +1719,7 @@ const pmcaptcha = async (message: MessageContext) => {
           try {
             const r = await safeGetMessages(client, message.chat.id, { ids: [message.replyToMessage.id] });
             if (r[0]?.sender?.id) tid = Number(r[0].sender.id);
-          } catch (e) { /* reply fetch failed */ }
+          } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: reply fetch failed", e); }
         }
         if (!tid && args[1]) tid = await resolveUser(client, args[1]);
         if (!tid || tid <= 0) {
@@ -1779,7 +1779,7 @@ const pmcaptcha = async (message: MessageContext) => {
             try {
               const r = await safeGetMessages(client, message.chat.id, { ids: [message.replyToMessage.id] });
               if (r[0]?.sender?.id) tid = Number(r[0].sender.id);
-            } catch (e) { /* reply fetch failed */ }
+            } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: reply fetch failed", e); }
           }
           if (!tid && args[2]) tid = await resolveUser(client, args[2]);
           if (!tid || tid <= 0) { await edit("❌ 请提供有效的用户 ID / 用户名，或回复用户消息"); break; }
@@ -1954,7 +1954,7 @@ const pmcaptcha = async (message: MessageContext) => {
     }
   } catch (e) {
     log(LogLevel.ERROR, "Command error", e);
-    try { await edit(`❌ 命令执行失败: ${htmlEscape(e)}`); } catch (e) { /* edit failed */ }
+    try { await edit(`❌ 命令执行失败: ${htmlEscape(e)}`); } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: edit failed", e); }
   }
 };
 
