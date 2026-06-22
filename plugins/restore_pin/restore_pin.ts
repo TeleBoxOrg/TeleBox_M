@@ -44,7 +44,7 @@ class RestorePinPlugin extends Plugin {
   /**
    * 获取管理员日志
    */
-  private async getAdminLog(channel: tl.TypeInputChannel): Promise<any> {
+  private async getAdminLog(channel: tl.TypeInputChannel): Promise<tl.channels.TypeAdminLogResults> {
     const client = await getGlobalClient();
     if (!client) throw new Error("客户端未初始化");
 
@@ -67,21 +67,21 @@ class RestorePinPlugin extends Plugin {
   /**
    * 从管理员日志中提取取消置顶事件
    */
-  private getUnpinMessages(events: any): number[] {
+  private getUnpinMessages(events: tl.channels.RawAdminLogResults): number[] {
     const messageIds: number[] = [];
-    
+
     for (const event of (events.events || [])) {
       // 检查是否为取消置顶事件
-      const action = event.action;
-      if (action && hasRawType(action, 'channelAdminLogEventActionUpdatePinned')) {
-        const message = action.message;
+      const action = event.action as tl.RawChannelAdminLogEventActionUpdatePinned;
+      if (action && action._ === 'channelAdminLogEventActionUpdatePinned') {
+        const message = action.message as tl.RawMessage | undefined;
         if (message && !hasRawType(message, 'messageEmpty') && !message.pinned) { // 取消置顶
           const messageId = message.id;
           messageIds.push(messageId);
         }
       }
     }
-    
+
     // 去重并返回
     return [...new Set(messageIds)];
   }
@@ -89,7 +89,7 @@ class RestorePinPlugin extends Plugin {
   /**
    * 恢复单条消息的置顶
    */
-  private async pinMessage(chatId: any, messageId: number): Promise<boolean> {
+  private async pinMessage(chatId: tl.TypeInputPeer, messageId: number): Promise<boolean> {
     const client = await getGlobalClient();
     if (!client) return false;
 
@@ -111,7 +111,7 @@ class RestorePinPlugin extends Plugin {
   /**
    * 批量恢复置顶
    */
-  private async restorePins(msg: MessageContext, chatId: any, messageIds: number[]): Promise<void> {
+  private async restorePins(msg: MessageContext, chatId: tl.TypeInputPeer, messageIds: number[]): Promise<void> {
     if (messageIds.length === 0) {
       await msg.edit({ text: html`✅ 没有需要恢复的置顶消息` });
       return;

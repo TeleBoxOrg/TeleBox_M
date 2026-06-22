@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { Message, MessageEntity, MessageMedia, Photo, Sticker, Video, Audio, Document, RawDocument } from "@mtcute/core";
+import type { TelegramClient } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { promisify } from 'util';
@@ -257,7 +258,7 @@ class REVPlugin extends Plugin {
 	}
 
 	private async downloadMedia(
-		client: any,
+		client: TelegramClient,
 		replyMsg: Message,
 		inputPath: string
 	) {
@@ -291,7 +292,7 @@ class REVPlugin extends Plugin {
 	}
 
 	private async sendTransformedMedia(
-		client: any,
+		client: TelegramClient,
 		msg: MessageContext,
 		replyMsg: Message,
 		outputPath: string,
@@ -300,31 +301,16 @@ class REVPlugin extends Plugin {
 		captionText?: string,
 		captionEntities: readonly MessageEntity[] = []
 	) {
-		const sendOptions: any = {
-			file: outputPath,
+		await client.sendMedia(msg.chat.id, outputPath, {
 			replyTo: replyMsg.id,
-		};
-
-		// 处理文字说明
-		if (captionText) {
-			const { reversed, reversedEntities } = this.reverseStringWithEntities(
-				captionText,
-				captionEntities
-			);
-			sendOptions.caption = reversed;
-			if (reversedEntities.length > 0) {
-				sendOptions.entities = reversedEntities;
-			}
-		}
-
-		// WebM 和 WebP 作为贴纸发送
-		if (isWebm || isWebp) {
-			sendOptions.attributes = [
-				{ _: 'documentAttributeSticker', alt: 'fan', stickerset: { _: 'inputStickerSetEmpty' } } as tl.RawDocumentAttributeSticker,
-			];
-		}
-
-		await client.sendMedia(msg.chat.id, sendOptions);
+			...(captionText ? (() => {
+				const { reversed, reversedEntities } = this.reverseStringWithEntities(captionText, captionEntities);
+				return {
+					caption: reversed,
+					...(reversedEntities.length > 0 ? { entities: reversedEntities } : {}),
+				};
+			})() : {}),
+		});
 	}
 
 	private async cleanupMessage(msg: MessageContext) {
