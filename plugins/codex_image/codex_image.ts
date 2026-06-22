@@ -281,6 +281,7 @@ async function callCodexImage(
         responseId: typeof data.id === "string" ? data.id : responseId,
       };
     } catch (e: unknown) {
+      logger.debug('[codex_image] readStreamResult parse failed:', e);
       return null;
     }
   };

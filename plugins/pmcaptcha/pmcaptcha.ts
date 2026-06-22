@@ -1192,7 +1192,7 @@ async function resolveUser(client: TelegramClient, arg: string): Promise<number 
       return Number((user as { id?: unknown }).id);
     }
     return null;
-  } catch (e: unknown) { return null; }
+  } catch (e: unknown) { logger.debug('[pmcaptcha] resolveUser failed for arg:', e); return null; }
 }
 
 function fmtTime(iso: string): string {
