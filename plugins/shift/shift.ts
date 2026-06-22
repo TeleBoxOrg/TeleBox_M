@@ -42,6 +42,13 @@ interface ShiftStatsRow {
   stats_data: string;
 }
 
+// Extended client interface for getMessages method not in standard mtcute types
+// Using a single overload with any return is safer than inline double-casts
+interface ClientWithGetMessages {
+  getMessages(id: number, params: { limit: number; offset: number }): Promise<any>;
+  getMessages(id: number, params: { limit: number; ids: undefined }): Promise<any>;
+}
+
 async function formatEntity(
   target: any,
   mention?: boolean,
@@ -962,7 +969,7 @@ class BackupManager {
     try {
       throwIfAborted(signal);
       // 获取消息总数
-      const messages = await (client as unknown as { getMessages: (id: number, params: { limit: number; ids: undefined }) => Promise<{ total?: number }> }).getMessages(task.sourceId, { limit: 1, ids: undefined });
+      const messages = await (client as unknown as ClientWithGetMessages).getMessages(task.sourceId, { limit: 1, ids: undefined });
       const totalCount = messages.total || 0;
       task.totalMessages = totalCount;
 
@@ -975,7 +982,7 @@ class BackupManager {
 
         while (collecting) {
           throwIfAborted(signal);
-          const batch = await (client as unknown as { getMessages: (id: number, params: { limit: number; offset: number }) => Promise<Array<{ id: number }>> }).getMessages(task.sourceId, { limit: batchSize, offset: collectOffset });
+          const batch = await (client as unknown as ClientWithGetMessages).getMessages(task.sourceId, { limit: batchSize, offset: collectOffset });
 
           if (batch.length === 0) {
             collecting = false;
@@ -1045,7 +1052,7 @@ class BackupManager {
 
         while (hasMore && task.status === "running") {
           throwIfAborted(signal);
-          const batch = await (client as unknown as { getMessages: (id: number, params: { limit: number; offset: number }) => Promise<Array<{ id: number }>> }).getMessages(task.sourceId, { limit: batchSize, offset: offsetId });
+          const batch = await (client as unknown as ClientWithGetMessages).getMessages(task.sourceId, { limit: batchSize, offset: offsetId });
 
           if (batch.length === 0) {
             hasMore = false;

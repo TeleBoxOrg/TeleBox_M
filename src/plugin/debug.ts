@@ -268,7 +268,7 @@ class DebugPlugin extends Plugin {
         // Fallback: just try plain text
         try {
           await target.replyText(reply.text || "");
-        } catch (e2) {
+        } catch (e2: unknown) {
           logger.warn("[debug.echo] 回退发送也失败", e2);
         }
       }
