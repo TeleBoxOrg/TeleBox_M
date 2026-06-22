@@ -1087,7 +1087,7 @@ ${codeTag(this.configPath)}
 
           if (!newName) {
             await msg.edit({
-              text: `❌ 请提供贴纸包名称\n用法: <code>${commandName} config sticker 贴纸包名称</code>`,
+              text: `❌ 请提供贴纸包名称<br>用法: <code>${commandName} config sticker 贴纸包名称</code>`,
               parseMode: "html",
             });
             return;
@@ -1128,7 +1128,7 @@ ${codeTag(this.configPath)}
           await this.loadConfig();
 
           await msg.edit({
-            text: `✅ 贴纸包名称已设置为: ${codeTag(newName)}\n贴纸包链接: t.me/addstickers/${htmlEscape(newName)}`,
+            text: `✅ 贴纸包名称已设置为: ${codeTag(newName)}<br>贴纸包链接: t.me/addstickers/${htmlEscape(newName)}`,
             parseMode: "html",
           });
           break;
@@ -1136,7 +1136,7 @@ ${codeTag(this.configPath)}
 
         default:
           await msg.edit({
-            text: `❌ 未知的配置项: ${codeTag(subCommand)}\n\n可用配置命令:\n<code>${commandName} config sticker 贴纸包名称</code> - 设置贴纸包名称`,
+            text: `❌ 未知的配置项: ${codeTag(subCommand)}<br><br>可用配置命令:<br><code>${commandName} config sticker 贴纸包名称</code> - 设置贴纸包名称`,
             parseMode: "html",
           });
       }
@@ -1182,7 +1182,7 @@ ${codeTag(this.configPath)}
         this.config.stickerSetShortName.trim() === ""
       ) {
         await msg.edit({
-          text: `❌ 未配置贴纸包!\n请编辑配置文件: ${htmlEscape(this.configPath)}\n设置 stickerSetShortName`,
+          text: `❌ 未配置贴纸包!<br>请编辑配置文件: ${htmlEscape(this.configPath)}<br>设置 stickerSetShortName`,
           parseMode: "html",
         });
         return;
@@ -1274,7 +1274,7 @@ ${codeTag(this.configPath)}
           );
 
           await msg.edit({
-            text: `✅ 已成功添加到贴纸包!\n贴纸包: t.me/addstickers/${htmlEscape(this.config.stickerSetShortName)}`,
+            text: `✅ 已成功添加到贴纸包!<br>贴纸包: t.me/addstickers/${htmlEscape(this.config.stickerSetShortName)}`,
             parseMode: "html",
           });
         } catch (error: unknown) {
@@ -1327,7 +1327,7 @@ ${codeTag(this.configPath)}
           );
 
           await msg.edit({
-            text: `✅ 已成功添加到贴纸包!\n贴纸包: t.me/addstickers/${htmlEscape(this.config.stickerSetShortName)}`,
+            text: `✅ 已成功添加到贴纸包!<br>贴纸包: t.me/addstickers/${htmlEscape(this.config.stickerSetShortName)}`,
             parseMode: "html",
           });
         } catch (error: unknown) {
@@ -1408,7 +1408,7 @@ ${codeTag(this.configPath)}
       );
 
       await msg.edit({
-        text: `✅ 已创建贴纸包并添加第一个贴纸!\n贴纸包: t.me/addstickers/${htmlEscape(
+        text: `✅ 已创建贴纸包并添加第一个贴纸!<br>贴纸包: t.me/addstickers/${htmlEscape(
           this.config!.stickerSetShortName
         )}`,
         parseMode: "html",
