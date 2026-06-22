@@ -5,6 +5,7 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { TelegramClient } from "@mtcute/node";
+import type { Peer, Chat, User, Dialog } from "@mtcute/node";
 import type { tl } from "@mtcute/core";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
@@ -14,8 +15,18 @@ import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { isMegagroup, getMessageFwdFrom, hasRawType, getRawType } from "@utils/entityTypeGuards";
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
+
+/** Get the display title from a Peer (Chat or User) */
+function getPeerTitle(entity: Peer | null): string {
+  if (!entity) return '';
+  if (entity.type === 'chat') return (entity as Chat).title;
+  if (entity.type === 'user') return `${(entity as User).firstName}${(entity as User).lastName ? ` ${(entity as User).lastName}` : ''}`;
+  return '';
+}
 
 function htmlEscape(text: string): string {
   return String(text)
@@ -54,29 +65,31 @@ const HELP_TEXT = `<b>自动复读插件使用说明</b>
 `;
 
 async function getAllManageableGroupIds(client: TelegramClient): Promise<number[]> {
-  const dialogsById = new Map<number, any>();
+  const dialogsById = new Map<number, Dialog>();
 
-  const collectDialogs = async (params: Record<string, any>) => {
-    const dialogs: any[] = [];
+  const collectDialogs = async (params?: { folder?: number }) => {
+    const dialogs: Dialog[] = [];
     for await (const dialog of client.iterDialogs(params)) {
       dialogs.push(dialog);
     }
     for (const dialog of dialogs || []) {
-      if (dialog.isGroup || (dialog.isChannel && isMegagroup(dialog.entity))) {
-        dialogsById.set(Number(dialog.id), dialog);
+      const peer = dialog.peer;
+      // Include chats (groups, supergroups, channels) but not users
+      if (peer.type !== 'user') {
+        dialogsById.set(Number(peer.id), dialog);
       }
     }
   };
 
   await collectDialogs({});
-  await collectDialogs({ folderId: 1 });
+  await collectDialogs({ folder: 1 });
 
   return Array.from(dialogsById.keys());
 }
 
 // ==================== 缓存管理器 ====================
 type CacheData = {
-  cache: Record<string, any>;
+  cache: Record<string, unknown>;
   daily_history?: Record<string, string[]>; // groupId -> textHashes[]
   last_day_check?: number;
   trigger_config?: { timeWindow: number; minUsers: number }; // 触发条件配置
@@ -112,13 +125,13 @@ class CacheManager {
     }
   }
 
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     await this.initPromise;
     if (!this.db) return null;
     return this.db.data.cache[key] || null;
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: unknown): Promise<void> {
     await this.initPromise;
     if (!this.db) return;
     this.db.data.cache[key] = value;
@@ -191,7 +204,7 @@ class MessageManager {
 class PermissionManager {
   static async checkAdminPermission(
     client: TelegramClient,
-    chatId: any
+    chatId: number | string
   ): Promise<boolean> {
     try {
       const me = await client.getMe();
@@ -477,7 +490,7 @@ class CommandHandlers {
                   return {
                     success: true,
                     chatId: chatId,
-                    title: entity.title || `群组 ${chatId}`
+                    title: (entity as { title?: string }).title || `群组 ${chatId}`
                   };
                 }
               } catch (e: unknown) { logger.warn(`[autorepeat] 继续尝试其他方式:`, e) }
@@ -492,11 +505,11 @@ class CommandHandlers {
         if (msgFlags.isGroup || (msgFlags.isChannel && !msgFlags.isPrivate)) {
           const chatId = Number(message.chat.id);
           try {
-            const entity: any = await client.getPeer(chatId);
+            const entity: Peer | Chat | User | null = await client.getPeer(chatId);
             return {
               success: true,
               chatId: chatId,
-              title: entity.title || `群组 ${chatId}`
+              title: getPeerTitle(entity) || `群组 ${chatId}`
             };
           } catch (e: unknown) {
             return {
@@ -518,11 +531,11 @@ class CommandHandlers {
         const chatId = Number(identifier);
         if (!isNaN(chatId)) {
           try {
-            const entity: any = await client.getPeer(chatId);
+            const entity: Peer | Chat | User | null = await client.getPeer(chatId);
             return {
               success: true,
               chatId: chatId,
-              title: entity.title || `群组 ${chatId}`
+              title: getPeerTitle(entity) || `群组 ${chatId}`
             };
           } catch (e: unknown) {
               const safeIdentifier = htmlEscape(identifier);
@@ -539,7 +552,7 @@ class CommandHandlers {
       const username = this.extractUsernameFromUrl(identifier);
       if (username) {
         try {
-          const entity: any = await client.getPeer(username);
+          const entity: Peer | Chat | User | null = await client.getPeer(username);
           
           const entityRaw = getRawType(entity);
           if (entityRaw === 'chat' || (entityRaw === 'channel' && isMegagroup(entity))) {
@@ -548,7 +561,7 @@ class CommandHandlers {
             return {
               success: true,
               chatId: chatId,
-              title: entity.title || username
+              title: getPeerTitle(entity) || username
             };
           } else {
             return {
@@ -625,8 +638,8 @@ class CommandHandlers {
         const lines = await Promise.all(
           pageGroups.map(async (gid) => {
             try {
-              const entity: any = await client.getPeer(gid);
-              const title = htmlEscape(entity.title || "Unknown Group");
+              const entity: Peer | Chat | User | null = await client.getPeer(gid);
+              const title = htmlEscape(getPeerTitle(entity) || "Unknown Group");
               return `• <b>${title}</b> (<code>${gid}</code>)`;
             } catch (e: unknown) {
               return `• <code>${gid}</code> (无法获取信息)`;

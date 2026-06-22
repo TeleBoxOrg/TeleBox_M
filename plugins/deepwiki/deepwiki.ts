@@ -1,9 +1,11 @@
 import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { Message } from "@mtcute/core";
 import { getGlobalClient } from "@utils/globalClient";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { JSONFilePreset } from "lowdb/node";
+import { Low } from "lowdb";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { TelegramFormatter } from "@utils/telegramFormatter";
 import { TelegraphFormatter } from "@utils/telegraphFormatter";
@@ -99,12 +101,12 @@ class UserError extends Error {
   }
 }
 
-const requireUser = (cond: any, msg: string) => {
+const requireUser = (cond: unknown, msg: string) => {
   if (!cond) throw new UserError(msg);
 };
 
 class MessageSender {
-  static async sendOrEdit(msg: MessageContext, text: string, parseMode: "markdown" | "html" = "html"): Promise<any | undefined> {
+  static async sendOrEdit(msg: MessageContext, text: string, parseMode: "markdown" | "html" = "html"): Promise<Message | undefined> {
     try {
       return await msg.edit({ text: html(text), disableWebPreview: true });
     } catch (e: unknown) {
@@ -118,7 +120,7 @@ class MessageSender {
     parseMode: "markdown" | "html" = "html",
     replyToId?: number,
     linkPreview: boolean = false
-  ): Promise<any | undefined> {
+  ): Promise<Message | undefined> {
     const topicRootId = getTopicRootId(msg);
     const replyTo = replyToId ?? topicRootId;
 
@@ -136,8 +138,8 @@ const getTopicRootId = (msg: MessageContext): number | undefined => {
 };
 
 class DeepWikiStore {
-  private dbMain: any;
-  private dbCtx: any;
+  private dbMain!: Low<MainDB>;
+  private dbCtx!: Low<CtxDB>;
 
   private gk(chatKey: string): string {
     return chatKey || "unknown";
@@ -334,21 +336,21 @@ class DeepWikiStore {
 }
 
 class DeepWikiMcp {
-  private client: any | null = null;
+  private client: Client | null = null;
   private connecting: Promise<void> | null = null;
   private repoKey: string | null = null;
   private questionKey: string | null = null;
   private closed = false;
 
-  private extractText(result: any): string {
-    const parts = result?.content;
+  private extractText(result: unknown): string {
+    const parts = (result as { content?: unknown })?.content;
     if (!Array.isArray(parts)) {
       if (typeof result === "string") return result;
-      if (typeof result?.text === "string") return result.text;
+      if (typeof (result as { text?: string })?.text === "string") return (result as { text: string }).text;
       return String(result ?? "");
     }
-    const texts = parts
-      .map((p: any) => {
+    const texts = (parts as Array<{ type?: string; text?: string }>)
+      .map((p) => {
         if (p?.type === "text" && typeof p?.text === "string") return p.text;
         if (typeof p?.text === "string") return p.text;
         return "";
@@ -409,7 +411,7 @@ class DeepWikiMcp {
       this.questionKey = questionKey;
     }
 
-    const result = await this.client.callTool({
+    const result = await this.client!.callTool({
       name: "ask_question",
       arguments: {
         repoName: repoKey,
@@ -572,16 +574,17 @@ const buildQAHtml = (headerLines: string[], question: string, answerMarkdown: st
   return header ? `${header}\n${qBlock}${aBlock}` : `${qBlock}${aBlock}`;
 };
 
-const toIdString = (v: any): string => {
+const toIdString = (v: unknown): string => {
   try {
     if (v === null || v === undefined) return "";
     if (typeof v === "string") return v;
     if (typeof v === "number" || typeof v === "bigint") return String(v);
-    if (typeof v === "object") {
-      if (v.channelId !== undefined) return String(v.channelId);
-      if (v.chatId !== undefined) return String(v.chatId);
-      if (v.userId !== undefined) return String(v.userId);
-      if (v.id !== undefined) return String(v.id);
+    if (typeof v === "object" && v !== null) {
+      const obj = v as { channelId?: unknown; chatId?: unknown; userId?: unknown; id?: unknown };
+      if (obj.channelId !== undefined) return String(obj.channelId);
+      if (obj.chatId !== undefined) return String(obj.chatId);
+      if (obj.userId !== undefined) return String(obj.userId);
+      if (obj.id !== undefined) return String(obj.id);
     }
     return String(v);
   } catch (e: unknown) {
@@ -681,9 +684,9 @@ class DeepWikiPlugin extends Plugin {
     );
   }
 
-  private formatError(err: any): string {
+  private formatError(err: unknown): string {
     if (err instanceof UserError) return `🚫 ${err.message}`;
-    const msg = typeof err?.message === "string" ? err.message : String(err);
+    const msg = typeof (err as { message?: unknown })?.message === "string" ? (err as { message: string }).message : String(err);
     return `❌ <b>错误:</b> ${escapeHtml(msg)}`;
   }
 
