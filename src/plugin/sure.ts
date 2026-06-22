@@ -53,9 +53,18 @@ function getSureMsgs() {
   return sureCache.msgs;
 }
 
+interface DisplayEntity {
+  id?: number;
+  title?: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string | null;
+  type?: string;
+}
+
 function buildDisplay(
   id: number,
-  entity: any,
+  entity: DisplayEntity | null | undefined,
   isUser: boolean,
   mention?: boolean,
 ) {
@@ -80,9 +89,9 @@ async function handleAddDel(
   target: string,
   action: "add" | "del",
 ) {
-  let entity: any;
-  let uid: any;
-  let display: any;
+  let entity: DisplayEntity | null | undefined;
+  let uid: number | undefined;
+  let display: string = "";
   if (target) {
     try {
       entity = await msg.client?.getChat(target);
@@ -145,12 +154,12 @@ ${users.map((u) => "- " + u.username).join("<br>")}`,
 }
 async function handleChatAddDel(
   msg: MessageContext,
-  target: any,
+  target: string | undefined,
   action: "add" | "del",
 ) {
-  let entity: any;
-  let cid: any;
-  let display: any;
+  let entity: DisplayEntity | null | undefined;
+  let cid: number | undefined;
+  let display: string = "";
   if (target) {
     try {
       entity = await msg.client?.getChat(target);
@@ -203,7 +212,7 @@ ${chats.map((c) => "- " + c.name).join("<br>")}`,
 }
 async function handleMsgAddDel(
   msg: MessageContext,
-  input: any,
+  input: string,
   action: "add" | "del",
   id?: string,
 ) {

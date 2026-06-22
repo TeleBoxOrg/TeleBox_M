@@ -13,8 +13,9 @@ import archiver from "archiver";
 import dayjs from "dayjs";
 import crypto from "crypto";
 
-// SSH2模块直接导入 - 跳过类型检查
-// @ts-ignore
+import type { TelegramClient } from '@mtcute/core/client.js';
+import type { InputPeerLike } from '@mtcute/core/highlevel/types/index.js';
+// @ts-ignore - ssh2 has no type declarations
 import { Client as SSH2Client } from 'ssh2';
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
@@ -148,7 +149,7 @@ const DEFAULT_CONFIG: Record<string, string> = {
 
 // 配置管理器
 class ConfigManager {
-  private static db: Awaited<ReturnType<typeof JSONFilePreset<Record<string, any>>>> | null = null;
+  private static db: Awaited<ReturnType<typeof JSONFilePreset<Record<string, string>>>> | null = null;
   private static initialized = false;
   private static initLock = false;  // 添加锁防止并发初始化
   private static configPath: string;
@@ -177,7 +178,7 @@ class ConfigManager {
         createDirectoryInAssets("sshkey"),
         "sshkey_config.json"
       );
-      this.db = await JSONFilePreset<Record<string, any>>(
+      this.db = await JSONFilePreset<Record<string, string>>(
         this.configPath,
         { ...DEFAULT_CONFIG }
       );
@@ -440,7 +441,7 @@ class SSHPlugin extends Plugin {
   }
 
   // 生成SSH密钥
-  private async generateSSHKeys(msg: MessageContext, client: any, mode: "add" | "replace" = "add"): Promise<void> {
+  private async generateSSHKeys(msg: MessageContext, client: TelegramClient, mode: "add" | "replace" = "add"): Promise<void> {
     await msg.edit({ text: "🔄 正在生成SSH密钥对..." });
 
     const timestamp = dayjs().format("YYYYMMDD_HHmmss");
@@ -581,7 +582,7 @@ class SSHPlugin extends Plugin {
 
       // 获取目标会话
       const targetChat = await ConfigManager.get(CONFIG_KEYS.TARGET_CHAT);
-      let peer: any;
+      let peer: InputPeerLike;
 
       if (targetChat === "me") {
         peer = "me";
@@ -840,7 +841,7 @@ ${keysContent}`;
       }
 
       const targetChat = await ConfigManager.get(CONFIG_KEYS.TARGET_CHAT);
-      let peer: any;
+      let peer: InputPeerLike;
 
       if (targetChat === "me") {
         peer = "me";
