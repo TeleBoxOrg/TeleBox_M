@@ -9,7 +9,7 @@ export class TelegramFormatter {
    * 约束：Telegram HTML 不支持 <br> / <p> / <ul> / <li> 等标签，只能用 \n 换行。
    */
   static markdownToHtml(md: string, options?: { collapseSafe?: boolean }): string {
-    const collapseSafe = options?.collapseSafe === true;
+    const collapseSafe = !!options?.collapseSafe;
 
     const src = (md || "")
       // 移除可能干扰 Telegram HTML 解析的 cite 标签

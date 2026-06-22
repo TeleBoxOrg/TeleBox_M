@@ -7,6 +7,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { hasRawType, getMessageMedia } from "@utils/entityTypeGuards";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { TelegramClient } from "@mtcute/node";
+import type { Chat } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
 // 使用简化的事件类型定义
 interface NewMessageEvent {
@@ -334,7 +335,7 @@ class ImageMonitorPlugin extends Plugin {
               await MessageManager.edit(msg, "❌ 无法解析群组ID或用户名。");
               return;
             }
-            const entity: any = await client.getChat(peerIdentifier).catch(() => null);
+            const entity = await client.getChat(peerIdentifier).catch(() => null);
             let chatName: string;
             if (entity && 'username' in entity && entity.username) {
               chatName = `@${entity.username}`;
@@ -345,7 +346,7 @@ class ImageMonitorPlugin extends Plugin {
             }
 
             if (!config.monitoredChats.some(c => c.id === peerId)) {
-              config.monitoredChats.push({ id: peerId, name: chatName, username: entity?.username });
+              config.monitoredChats.push({ id: peerId, name: chatName, username: entity?.username ?? undefined });
               await ConfigManager.saveConfig();
               await MessageManager.edit(msg, `✅ 已添加监控群组: <code>${htmlEscape(chatName)}</code> (<code>${peerId}</code>)`);
             } else {
@@ -365,7 +366,7 @@ class ImageMonitorPlugin extends Plugin {
               await MessageManager.edit(msg, "❌ 无法解析群组ID或用户名。");
               return;
             }
-            const entity: any = await client.getChat(peerIdentifier).catch(() => null);
+            const entity = await client.getChat(peerIdentifier).catch(() => null);
             let chatName: string;
             if (entity && 'username' in entity && entity.username) {
               chatName = `@${entity.username}`;

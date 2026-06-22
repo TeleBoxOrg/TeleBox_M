@@ -312,7 +312,7 @@ class GitManagerPlugin extends Plugin {
     )) as GitHubPullRequestDetail[];
 
     const prList = details.map((pr) => {
-      const flag = pr.mergeable === true ? "✅ 可合并" : pr.mergeable === false ? `⛔ 不可合并(${pr.state || "unknown"})` : "❓ 未知";
+      const flag = pr.mergeable ? "✅ 可合并" : pr.mergeable === false ? `⛔ 不可合并(${pr.state || "unknown"})` : "❓ 未知";
       return `• <b>#${pr.number}</b>: ${htmlEscape(pr.title)}\n  作者: <code>${htmlEscape(pr.user)}</code> | 状态: ${flag}`;
     }).join("\n\n");
 

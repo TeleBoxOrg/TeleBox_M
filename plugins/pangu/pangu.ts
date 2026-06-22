@@ -260,7 +260,7 @@ class PanguPlugin extends Plugin {
   // 更新统计
   private updateStats(): void {
     const enabledChats = Object.values(this.db.data.chats)
-      .filter(v => v === true).length;
+      .filter(v => v).length;
     this.db.data.stats.enabledChats = enabledChats;
   }
 

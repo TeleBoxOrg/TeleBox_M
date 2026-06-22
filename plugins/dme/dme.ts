@@ -306,7 +306,7 @@ function isMyMessageByIdentity(
   if (senderId?.toString?.() === myId.toString()) {
     return true;
   }
-  if (message.out === true) {
+  if (message.out) {
     return true;
   }
   const identityCandidates = [message.fromId, message.senderId];
@@ -395,7 +395,7 @@ async function searchMyMessagesOptimized(
           (m.fromId?.userId === myId ||
             m.fromId?.channelId === myId ||
             m.senderId?.toString() === myId.toString() ||
-            m.out === true)
+            m.out)
       );
       
       // 合并去重
@@ -666,7 +666,7 @@ async function isRestrictedGroup(client: TelegramClient, chatPeer: any): Promise
         _: "channels.getFullChannel",
         channel: chatPeer,
       });
-      return fullChannel?.fullChat?.noforwards === true;
+      return !!fullChannel?.fullChat?.noforwards;
     }
     
     if (chatPeer._ === "inputPeerChat") {
@@ -797,7 +797,7 @@ async function traditionalStreamProcessing(
               .catch(() => false)
           );
           const editResults = await Promise.allSettled(editPromises);
-          const edited = editResults.filter(r => r.status === "fulfilled" && r.value === true).length;
+          const edited = editResults.filter(r => r.status === "fulfilled" && r.value).length;
           totalEdited += edited;
           logger.info(`[DME] 传统模式成功编辑 ${edited} 条媒体`);
         }
@@ -809,7 +809,7 @@ async function traditionalStreamProcessing(
           );
           const textEditResults = await Promise.allSettled(textEditPromises);
           const textEdited = textEditResults.filter(
-            (r) => r.status === "fulfilled" && r.value === true
+            (r) => r.status === "fulfilled" && r.value
           ).length;
           totalEdited += textEdited;
           logger.info(`[DME] 传统模式成功编辑 ${textEdited} 条文本`);
@@ -960,7 +960,7 @@ async function quickDeleteMyMessages(
         (m: any) =>
           m._ === "message" &&
           isMessageInTopic(m, topicRootId) &&
-          ((m.fromId?.userId === myId || m.fromId?.channelId === myId) || m.out === true)
+          ((m.fromId?.userId === myId || m.fromId?.channelId === myId) || m.out)
       );
 
       if (messagesToDelete.length === 0) {
@@ -1045,7 +1045,7 @@ async function searchEditAndDeleteMyMessages(
         _: "channels.getFullChannel",
         channel: chatPeer,
       });
-      const isBroadcast = fullChannel?.fullChat?.broadcast === true;
+      const isBroadcast = !!fullChannel?.fullChat?.broadcast;
       
       if (isCreator && isBroadcast) {
         logger.info(`[DME] 检测到私人频道且为频道主，直接按数量删除`);
@@ -1130,7 +1130,7 @@ async function searchEditAndDeleteMyMessages(
       const batchMessages = allBatchMessages.filter(
         (m: any) =>
           isMessageInTopic(m, topicRootId) &&
-          ((m.fromId?.userId === myId || m.fromId?.channelId === myId) || m.out === true)
+          ((m.fromId?.userId === myId || m.fromId?.channelId === myId) || m.out)
       );
 
       offsetId = allBatchMessages[allBatchMessages.length - 1].id;
@@ -1163,7 +1163,7 @@ async function searchEditAndDeleteMyMessages(
             .catch(() => false)
         );
         const editResults = await Promise.allSettled(editPromises);
-        const edited = editResults.filter(r => r.status === "fulfilled" && r.value === true).length;
+        const edited = editResults.filter(r => r.status === "fulfilled" && r.value).length;
         totalEdited += edited;
         logger.info(`[DME] 批次编辑 ${edited}/${mediaMessages.length} 条媒体`);
       }
@@ -1174,7 +1174,7 @@ async function searchEditAndDeleteMyMessages(
         );
         const textEditResults = await Promise.allSettled(textEditPromises);
         const textEdited = textEditResults.filter(
-          (r) => r.status === "fulfilled" && r.value === true
+          (r) => r.status === "fulfilled" && r.value
         ).length;
         totalEdited += textEdited;
         logger.info(`[DME] 批次编辑 ${textEdited}/${textMessages.length} 条文本`);
