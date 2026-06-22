@@ -16,6 +16,7 @@ import * as path from "path";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { Long } from "@mtcute/core";
+import type { MtcuteInputMediaLike } from "@utils/mtcuteTypes";
 
 // 常量配置
 const CONFIG = {
@@ -174,7 +175,7 @@ async function editMediaMessageToAntiRecall(
     await client.editMessage({
       chatId: chatPeer,
       message: message.id,
-      media: buffer as unknown as import("@mtcute/core").InputMediaLike,
+      media: buffer as unknown as MtcuteInputMediaLike,
     });
     return true;
   } catch (e: unknown) {

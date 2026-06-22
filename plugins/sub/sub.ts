@@ -3,6 +3,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInTemp } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteFileDownloadLocation } from "@utils/mtcuteTypes";
 import type { Chat } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getRawType } from "@utils/entityTypeGuards";
@@ -523,7 +524,7 @@ echo "后端: http://\\$IP:3001/\\$SECRET"`;
             }
             await msg.edit({ text: "♻️ 恢复中..." });
             const _restoreClient = await getGlobalClient();
-            const buf = await _restoreClient.downloadAsBuffer(reply.media as unknown as import("@mtcute/core").FileDownloadLocation);
+            const buf = await _restoreClient.downloadAsBuffer(reply.media as MtcuteFileDownloadLocation);
             const restoreFile = `/tmp/restore_${Date.now()}.tgz`;
             fs.writeFileSync(restoreFile, Buffer.from(buf));
 

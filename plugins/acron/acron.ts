@@ -2,6 +2,7 @@ import {
   getPrefixes
 } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
@@ -322,7 +323,7 @@ async function scheduleTask(task: AcronTask) {
           entityLike,
           t.message,
           replyTo ? { replyTo } : undefined,
-        ) as unknown as import("@mtcute/dispatcher").MessageContext;
+        ) as MtcuteMessageContext;
         if (cmd && sudoMsg)
           await dealCommandPluginWithMessage({ cmd, msg: sudoMsg });
         if (idx >= 0) {

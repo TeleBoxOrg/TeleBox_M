@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteFileDownloadLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import * as fs from "fs/promises";
@@ -596,7 +597,7 @@ class OpenListPlugin extends Plugin {
       await msg.edit({ text: `正在下载: ${htmlEscape(fileName)}` });
 
       const client = await getGlobalClient();
-      const buffer = await client.downloadAsBuffer(replyToMsg.media as unknown as import("@mtcute/core").FileDownloadLocation);
+      const buffer = await client.downloadAsBuffer(replyToMsg.media as MtcuteFileDownloadLocation);
 
       if (!buffer || !(buffer instanceof Buffer)) {
         await msg.edit({ text: "文件下载失败或格式不支持。" });

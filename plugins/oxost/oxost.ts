@@ -3,6 +3,7 @@ import axios from "axios";
 import { getPrefixes } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient, tryGetCurrentGenerationContext } from "@utils/globalClient";
 import { Buffer } from "buffer";
@@ -100,7 +101,7 @@ class Ox0Plugin extends Plugin {
       await msg.edit({ text: "⏳ 正在下载并上传..." });
       try {
         const client = await getGlobalClient();
-        const downloaded = await client.downloadAsBuffer(replied.media as unknown as import("@mtcute/core").FileLocation);
+        const downloaded = await client.downloadAsBuffer(replied.media as MtcuteFileLocation);
         const buffer = Buffer.isBuffer(downloaded) ? downloaded : Buffer.from(downloaded);
         if (buffer.length === 0) {
           await sendLongHtml(msg, `❌ <b>错误:</b> 媒体下载失败或为空`);

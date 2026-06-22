@@ -1,6 +1,7 @@
 import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
@@ -667,7 +668,7 @@ class BfPlugin extends Plugin {
         // Download file — backupMsg.media may be a Document (which extends FileLocation),
         // but TypeScript can't verify that through the MessageMedia union, so we cast.
         const tempPath = path.join(os.tmpdir(), `restore_${Date.now()}.tar.gz`);
-        const media = backupMsg!.media as unknown as import("@mtcute/node").FileLocation;
+        const media = backupMsg!.media as MtcuteFileLocation;
         const buffer = await client.downloadAsBuffer(media);
 
         if (!buffer) {

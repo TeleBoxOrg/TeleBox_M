@@ -3,6 +3,7 @@ import path from "path";
 import type { Low } from "lowdb";
 import { JSONFilePreset } from "lowdb/node";
 import { Plugin } from "@utils/pluginBase";
+import type { MtcuteFileDownloadLocation } from "@utils/mtcuteTypes";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
@@ -119,7 +120,7 @@ async function downloadReplyImage(
     throw new Error("无法获取客户端实例");
   }
 
-  const buffer = await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileDownloadLocation) as Buffer;
+  const buffer = await client.downloadAsBuffer(replyMsg.media as MtcuteFileDownloadLocation) as Buffer;
 
   if (!buffer?.length) {
     throw new Error("未能获取参考图数据");

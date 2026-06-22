@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteInputChannel, MtcuteInputPeer } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
@@ -175,8 +176,8 @@ class PortballPlugin extends Plugin {
       try {
         await client.call({
           _: 'channels.editBanned',
-          channel: await client.resolvePeer(msg.chat.id) as unknown as import("@mtcute/core").tl.TypeInputChannel,
-          participant: await client.resolvePeer(sender.id) as unknown as import("@mtcute/core").tl.TypeInputPeer,
+          channel: await client.resolvePeer(msg.chat.id) as unknown as MtcuteInputChannel,
+          participant: await client.resolvePeer(sender.id) as MtcuteInputPeer,
           bannedRights: {
             _: 'chatBannedRights',
             untilDate: untilDate,

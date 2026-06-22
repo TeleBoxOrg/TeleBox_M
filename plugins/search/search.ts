@@ -3,6 +3,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import type { Message, Video, Document, Chat, User, TelegramClient } from "@mtcute/node";
 import { tl } from "@mtcute/node";
 import { Long } from "@mtcute/core";
+import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import fs from "fs/promises";
@@ -531,7 +532,7 @@ class SearchService {
     const docMedia = replied ? getMessageDocumentMedia(replied) : null;
     if (!replied || !docMedia) throw new Error("❌ 请回复备份文件。");
 
-    const buffer = await this.client.downloadAsBuffer(replied.media as unknown as import("@mtcute/core").FileLocation);
+    const buffer = await this.client.downloadAsBuffer(replied.media as MtcuteFileLocation);
     if (!buffer) throw new Error("下载文件失败。");
 
     const handles = buffer.toString().split("\n").map((h: string) => h.trim()).filter(Boolean);
@@ -798,7 +799,7 @@ class SearchService {
     const statusMsg = await this.client.sendText(originalMsg.chat.id, `🔥 正在下载视频...`, { replyTo: originalMsg.id });
 
     try {
-      const buffer = await this.client.downloadAsBuffer(video.media as unknown as import("@mtcute/core").FileLocation);
+      const buffer = await this.client.downloadAsBuffer(video.media as MtcuteFileLocation);
       await fs.writeFile(tempFilePath, Buffer.from(buffer));
       await this.client.editMessage({ chatId: originalMsg.chat.id, message: statusMsg.id, text: `✅ 下载完成，正在上传...` });
 

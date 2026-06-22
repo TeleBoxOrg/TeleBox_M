@@ -3,6 +3,7 @@ import _ from "lodash";
 import { getPrefixes } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 import type { User, Chat } from "@mtcute/node";
 import { html, thtml } from "@mtcute/html-parser";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
@@ -171,7 +172,7 @@ async function run(text: string, msg: MessageContext, trigger?: MessageContext) 
   if (!client) return;
   const sudoMsg = await client.sendText(msg.chat.id, text, {
     replyTo: (msg.replyToMessage?.id ?? undefined) as number | undefined,
-  }) as unknown as import("@mtcute/dispatcher").MessageContext;
+  }) as MtcuteMessageContext;
   if (cmd && sudoMsg)
     await dealCommandPluginWithMessage({ cmd, msg: sudoMsg, trigger: msg });
 }

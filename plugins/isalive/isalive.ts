@@ -3,6 +3,7 @@ import { Plugin } from "@utils/pluginBase";
 import { getGlobalClient } from "@utils/globalClient";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { User, Chat } from "@mtcute/node";
+import type { MtcuteLong } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
@@ -443,7 +444,7 @@ class IsAlivePlugin extends Plugin {
               addOffset: 0,
               maxId: 0,
               minId: 0,
-              hash: 0 as unknown as import("@mtcute/core").Long,
+              hash: 0 as unknown as MtcuteLong,
             });
             const msgs = (searchResult?.messages || []).filter((m: any) => Number(m?.fromId?.userId || m?.peerId?.userId) === Number(userRaw.id));
             const messages = msgs.length > 0 ? msgs : [];

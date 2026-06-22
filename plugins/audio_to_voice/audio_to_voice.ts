@@ -3,6 +3,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { Audio, Document, InputMediaVoice } from "@mtcute/core";
+import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import fs from "fs";
 import path from "path";
 import { createDirectoryInTemp } from "@utils/pathHelpers";
@@ -118,7 +119,7 @@ class AudioToVoicePlugin extends Plugin {
         // 下载音频文件
         const media = audioMsg.media!;
         // Audio/Document extend RawDocument which extends FileLocation, compatible with downloadAsBuffer
-        const buffer = await client.downloadAsBuffer(media as unknown as import("@mtcute/core").FileLocation);
+        const buffer = await client.downloadAsBuffer(media as MtcuteFileLocation);
         fs.writeFileSync(audioPath, buffer as Buffer);
 
         // 使用 FFmpeg 转码为 OGG/Opus（Telegram 语音格式）

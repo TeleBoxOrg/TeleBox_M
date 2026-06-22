@@ -8,6 +8,7 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
 import { getErrorMessage } from "@utils/errorHelpers";
+import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 
@@ -319,7 +320,7 @@ async function handleImageEdit(
 
   let mediaBuffer: Buffer | null = null;
   try {
-    mediaBuffer = Buffer.from(await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileLocation));
+    mediaBuffer = Buffer.from(await client.downloadAsBuffer(replyMsg.media as MtcuteFileLocation));
   } catch (error: unknown) {
     await msg.edit({ text: `❌ 图片下载失败: ${error}` });
     return;

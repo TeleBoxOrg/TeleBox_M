@@ -1,6 +1,7 @@
 import { Plugin } from '@utils/pluginBase';
 import { getPrefixes } from '@utils/pluginManager';
 import { createDirectoryInTemp } from '@utils/pathHelpers';
+import type { MtcuteFileLocation } from '@utils/mtcuteTypes';
 import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -260,7 +261,7 @@ class REVPlugin extends Plugin {
 		replyMsg: Message,
 		inputPath: string
 	) {
-		const buf = await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileLocation);
+		const buf = await client.downloadAsBuffer(replyMsg.media as MtcuteFileLocation);
 		fs.writeFileSync(inputPath, buf as Buffer);
 		if (!fs.existsSync(inputPath)) {
 			throw new Error('下载媒体失败，请稍后再试');

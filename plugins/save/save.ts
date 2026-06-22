@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteFileDownloadLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets, createDirectoryInTemp } from "@utils/pathHelpers";
@@ -620,7 +621,7 @@ class PrometheusPlugin extends Plugin {
       
       const mediaLocation = message.media as unknown as { raw?: { _?: string } };
       if (!mediaLocation) return null;
-      const buffer = await client.downloadAsBuffer(mediaLocation as unknown as import("@mtcute/core").FileDownloadLocation);
+      const buffer = await client.downloadAsBuffer(mediaLocation as MtcuteFileDownloadLocation);
       if (buffer && buffer.length > 0) {
         await fs.writeFile(finalFilePath, buffer);
         this.activeTempFiles.add(finalFilePath);

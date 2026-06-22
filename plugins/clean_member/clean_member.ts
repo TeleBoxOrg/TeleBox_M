@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import type { TelegramClient } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteInputChannel, MtcuteInputPeer, MtcuteLong } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
@@ -200,8 +201,8 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
     try {
       const result: any = await client.call({
         _: 'channels.getParticipant',
-        channel: await client.resolvePeer(msg.chat.id) as unknown as import("@mtcute/core").tl.TypeInputChannel,
-        participant: me.id as unknown as import("@mtcute/core").tl.TypeInputPeer,
+        channel: await client.resolvePeer(msg.chat.id) as unknown as MtcuteInputChannel,
+        participant: me.id as unknown as MtcuteInputPeer,
       });
       if (result?.participant?._ === 'channelParticipantAdmin' || 
           result?.participant?._ === 'channelParticipantCreator') {
@@ -213,11 +214,11 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
     try {
       const result: any = await client.call({
         _: 'channels.getParticipants',
-        channel: await client.resolvePeer(msg.chat.id) as unknown as import("@mtcute/core").tl.TypeInputChannel,
+        channel: await client.resolvePeer(msg.chat.id) as unknown as MtcuteInputChannel,
         filter: { _: 'channelParticipantsAdmins' },
         offset: 0,
         limit: 100,
-        hash: 0 as unknown as import("@mtcute/core").Long,
+        hash: 0 as unknown as MtcuteLong,
       });
       if ('users' in result) {
         const admins = result.users as RawUser[];

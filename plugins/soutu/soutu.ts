@@ -1,5 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { getGlobalClient } from "@utils/globalClient";
@@ -88,7 +89,7 @@ class SoutuPlugin extends Plugin {
     
     try {
       const client = await getGlobalClient();
-      const downloaded = await client.downloadAsBuffer(replied.media as unknown as import("@mtcute/core").FileLocation);
+      const downloaded = await client.downloadAsBuffer(replied.media as MtcuteFileLocation);
       const buffer = Buffer.isBuffer(downloaded) ? downloaded : Buffer.from(downloaded);
       if (buffer.length === 0) {
         await msg.edit({ text: html`❌ <b>错误:</b> 图片下载失败或为空` });

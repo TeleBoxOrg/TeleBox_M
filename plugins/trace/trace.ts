@@ -3,6 +3,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteInputPeerLike, MtcuteReactions } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { JSONFilePreset } from "lowdb/node";
 import * as path from "path";
@@ -501,7 +502,7 @@ class TracePlugin extends Plugin {
     let id: number | bigint | undefined;
     let entity: { _?: unknown; id?: number | bigint; title?: string; firstName?: string; lastName?: string; username?: string | null } | undefined;
     try {
-      entity = (typeof target !== 'string' && target?._) ? target : await client?.getChat(target as unknown as import("@mtcute/core").InputPeerLike);
+      entity = (typeof target !== 'string' && target?._) ? target : await client?.getChat(target as MtcuteInputPeerLike);
       if (!entity) throw new Error("无法获取entity");
       id = entity.id;
     } catch (e: unknown) {
@@ -575,7 +576,7 @@ class TracePlugin extends Plugin {
       _: "messages.sendReaction",
       peer,
       msgId,
-      reaction: reactionObjects as unknown as import("@mtcute/core").tl.TypeReaction[],
+      reaction: reactionObjects as MtcuteReactions,
       big,
     });
   }
