@@ -249,7 +249,7 @@ class MessageModePlugin extends Plugin {
 
       case "list":
         await msg.edit({
-          text: html`⚪ 白名单列表：<br><code>${htmlEscape(list.join("\n")) || "空"}</code>`,
+          text: html`⚪ 白名单列表：<br><code>${htmlEscape(list.join("<br>")) || "空"}</code>`,
         });
         return;
 
@@ -283,7 +283,7 @@ class MessageModePlugin extends Plugin {
 
       case "list":
         await msg.edit({
-          text: html`⚫ 黑名单列表：<br><code>${htmlEscape(list.join("\n")) || "空"}</code>`,
+          text: html`⚫ 黑名单列表：<br><code>${htmlEscape(list.join("<br>")) || "空"}</code>`,
         });
         return;
 

@@ -459,7 +459,7 @@ class StickerToPicPlugin extends Plugin {
       } else if (getErrorMessage(error).includes('DOCUMENT_INVALID')) {
         errorMsg = "❌ <b>无效的文档文件</b>";
       } else {
-        errorMsg += `\n\n<b>错误详情:</b> ${htmlEscape(getErrorMessage(error))}`;
+        errorMsg += `<br><br><b>错误详情:</b> ${htmlEscape(getErrorMessage(error))}`;
       }
       
       await msg.edit({
