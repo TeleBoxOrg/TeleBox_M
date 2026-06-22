@@ -40,6 +40,7 @@ enum SubCommand {
 /** Resolved peer info with commonly needed properties */
 interface ResolvedPeerInfo {
   peer: tl.TypeInputPeer;
+  chat: Chat;
   rawType: string;
   title?: string;
   username?: string;
@@ -49,10 +50,11 @@ interface ResolvedPeerInfo {
 
 /**
  * Resolve a peer and extract commonly needed properties.
- * Replaces patterns like:
- *   const entity = await client.resolvePeer(id) as any;
- *   if ((entity as any)._ === 'channel') ...
- *   const title = (entity as any).title;
+ * Uses type-safe mtcute APIs instead of `as any` casts:
+ *   const peer = await client.resolvePeer(id);
+ *   const chat = await client.getChat(peer);
+ *   const isChannel = chat.raw._ === 'channel';
+ *   const title = chat.raw.title;
  */
 async function resolvePeerInfo(client: TelegramClient, id: string | number): Promise<ResolvedPeerInfo> {
   const peer = await client.resolvePeer(id);
@@ -68,7 +70,7 @@ async function resolvePeerInfo(client: TelegramClient, id: string | number): Pro
   const username = isChannel ? channelRaw.username : undefined;
   const isMegagroup = isChannel ? Boolean(channelRaw.megagroup) : false;
   const isBroadcast = isChannel ? Boolean(channelRaw.broadcast) : false;
-  return { peer, rawType, title, username, isMegagroup, isBroadcast };
+  return { peer, chat, rawType, title, username, isMegagroup, isBroadcast };
 }
 
 /**
@@ -233,7 +235,7 @@ class SearchService {
     }
   }
 
-  private async discoverLinkedGroup(channel: any): Promise<string | undefined> {
+  private async discoverLinkedGroup(channel: tl.TypeInputChannel): Promise<string | undefined> {
     try {
       const fullChannel = await this.client.call({
         _: 'channels.getFullChannel',
@@ -408,7 +410,7 @@ class SearchService {
 
             let linkedGroup: string | undefined;
             if (peerInfo.isBroadcast && !peerInfo.isMegagroup) {
-                linkedGroup = await this.discoverLinkedGroup(peerInfo.peer);
+                linkedGroup = await this.discoverLinkedGroup(peerInfo.peer as unknown as tl.TypeInputChannel);
             }
 
             this.config.channelList.push({
@@ -635,7 +637,7 @@ class SearchService {
               if (groupIdStr) {
                 if (processedGroupIds.has(groupIdStr)) continue;
 
-                const historyResult: any = await this.client.call({
+                const historyResult = await this.client.call({
                   _: 'messages.getHistory' as const,
                   peer: entity,
                   limit: 20,
@@ -645,8 +647,9 @@ class SearchService {
                   maxId: 0,
                   minId: 0,
                   hash: Long.fromNumber(0),
-                });
-                const surroundingMessages: Message[] = (historyResult?.messages || []).filter((m: any) => m != null);
+                }) as tl.messages.RawMessages;
+                // Raw TL messages from getHistory; cast to high-level Message for compatibility
+                const surroundingMessages = (historyResult.messages ?? []).filter((m): m is tl.TypeMessage => m != null) as unknown as Message[];
 
                 const groupedId = foundMsg.groupedId;
                 if (!groupedId) continue;

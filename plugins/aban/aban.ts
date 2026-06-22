@@ -14,6 +14,7 @@ import { safeGetMe } from "@utils/authGuards";
 import { npm_install } from "@utils/npm_install";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import type { tl } from "@mtcute/core";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -298,17 +299,20 @@ class UserResolver {
         let offset = 0;
         const limit = 200;
         for (let i = 0; i < 5; i++) {
-          const res: any = await client.call({
+          const res = await client.call({
               _: 'channels.getParticipants',
               channel: chat,
-              filter: { _: 'channelParticipantsRecent' },
+              filter: { _: 'channelParticipantsRecent' } as tl.TypeChannelParticipantsFilter,
               offset,
               limit,
               hash: 0,
             } as unknown as Parameters<typeof client.call>[0]);
 
-          const participants: any[] = res?.participants || [];
-          const users: any[] = res?.users || [];
+          const rawRes = res as tl.channels.RawChannelParticipants;
+          const participants = rawRes.participants ?? [];
+          const users = (rawRes.users ?? []).filter(
+            (u): u is tl.RawUser => u != null && (u as tl.RawUser)._ === 'user',
+          );
           const matchedUser = users.find((u) => Number(u?.id) === userId);
           if (matchedUser) {
             const input = await this.safeGetInputEntity(client, matchedUser);
