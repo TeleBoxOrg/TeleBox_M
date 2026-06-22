@@ -3,6 +3,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import type { tl } from "@mtcute/core";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -99,12 +100,12 @@ class ClearStickerPlugin extends Plugin {
           for (const message of history) {
             if (message.media) {
               // raw is RawMessage | RawMessageService; only RawMessage has .media
-              const rawMsg = message.raw as { media?: { _: string; document?: { _: string; attributes?: { _: string }[] } } } | null;
+              const rawMsg = message.raw as tl.RawMessage | null;
               if (rawMsg?.media?._ === 'messageMediaDocument') {
                 const document = rawMsg.media.document;
                 if (document?._ === 'document') {
-                  const isSticker = document.attributes?.some((attr: any) => 
-                    attr._ === 'documentAttributeSticker'
+                  const isSticker = document.attributes?.some(
+                    (attr: tl.TypeDocumentAttribute) => attr._ === 'documentAttributeSticker'
                   );
                   
                   if (isSticker) {

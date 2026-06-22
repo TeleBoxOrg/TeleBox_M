@@ -6,6 +6,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import type { Message } from "@mtcute/core";
 import { getRawType } from "@utils/entityTypeGuards";
 import { Long } from "@mtcute/core";
 
@@ -175,22 +176,22 @@ class PaoluPlugin extends Plugin {
         let hasMore = true;
         
         while (hasMore) {
-          const history: any[] = await client.getHistory(chatId, {
+          const history = await client.getHistory(chatId, {
             limit: BATCH_SIZE,
             ...(offsetId ? { offsetId } : {}),
           });
-          
+
           if (!history || history.length === 0) {
             hasMore = false;
             break;
           }
-          
+
           // 过滤掉当前命令消息
-          const messagesToDelete = history.filter((m: any) => m.id !== msg.id);
-          
+          const messagesToDelete = history.filter((m) => m.id !== msg.id);
+
           if (messagesToDelete.length > 0) {
             try {
-              await client.deleteMessagesById(chatId, messagesToDelete.map((m: any) => m.id), { revoke: true });
+              await client.deleteMessagesById(chatId, messagesToDelete.map((m) => m.id), { revoke: true });
               deletedCount += messagesToDelete.length;
             } catch (delErr) {
               // 逐个删除

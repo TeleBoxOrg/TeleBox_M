@@ -932,17 +932,22 @@ async function collectAdminStats(
   const stats: AdminStat[] = [];
   const admins = adminCollection.visibleAdmins;
 
-  for (let index = 0; index < admins.length; index++) {
-    if (index === 0 || (index + 1) % 5 === 0 || index === admins.length - 1) {
-      await msg.edit({
-        text: `📊 正在统计管理员排序简表...\n目标: <b>${htmlEscape(
-          target.titleDisplay,
-        )}</b>\n进度: <code>${index + 1}/${admins.length}</code>`,
-        disableWebPreview: true,
-      });
-    }
+  // 分批并行处理，每批 5 个，减少总等待时间
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < admins.length; i += BATCH_SIZE) {
+    const end = Math.min(i + BATCH_SIZE, admins.length);
+    await msg.edit({
+      text: `📊 正在统计管理员排序简表...\n目标: <b>${htmlEscape(
+        target.titleDisplay,
+      )}</b>\n进度: <code>${end}/${admins.length}</code>`,
+      disableWebPreview: true,
+    });
 
-    stats.push(await collectAdminStat(target, admins[index], lockedSeatSet));
+    const batch = admins.slice(i, end);
+    const batchResults = await Promise.all(
+      batch.map((admin) => collectAdminStat(target, admin, lockedSeatSet)),
+    );
+    stats.push(...batchResults);
   }
 
   return {
