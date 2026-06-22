@@ -179,7 +179,7 @@ class IdsPlugin extends Plugin {
       const u = full.users[0];
       if (u?.photo?._ !== "userProfilePhotoEmpty") return `DC${u.photo.dcId}`;
       return "无头像";
-    } catch (e) { return "未知"; }
+    } catch (e) { logger.warn('ids: getDcId failed', e); return "未知"; }
   }
 
   private formatUserInfo(info: any): string {

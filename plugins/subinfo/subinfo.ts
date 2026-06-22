@@ -206,9 +206,9 @@ async function getNodeInfo(url: string): Promise<{ node_count: number | string, 
         type_count: Object.fromEntries(Object.entries(typeCount).filter(([, v]) => v > 0)),
         regions: Object.fromEntries(Object.entries(regions).filter(([, v]) => v > 0)),
       };
-    } catch (e) { logger.warn('Base64 解析失败', e) }
+    } catch (e) { logger.warn('subinfo: parseSubscription failed', e); }
     return null;
-  } catch (e) { return null; }
+  } catch (e) { logger.warn('subinfo: parseSubscription outer catch', e); return null; }
 }
 
 // 判断订阅周期类型 (单次/月付/长期)

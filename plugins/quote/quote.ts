@@ -103,7 +103,7 @@ function requireOrInstall(pkg: string): any {
   try {
     return require(pkg);
   } catch (err: unknown) {
-    const code = (err as any)?.code;
+    const code = (err as { code?: string })?.code;
     if (code !== "MODULE_NOT_FOUND" && code !== "ERR_MODULE_NOT_FOUND") throw err;
     logger.warn("quote loader installing npm package", { pkg });
     npm_install(pkg);
@@ -1399,7 +1399,7 @@ export class QuotePlugin {
         }
         logger.warn("quote command finished", { ms: Date.now() - quoteStartedAt, bytes: result.image?.length, ext: result.ext, replyTo: replyTargetId });
       } catch (err: unknown) {
-        logger.error("quote command failed", (err as any)?.stack || getErrorMessage(err));
+        logger.error("quote command failed", (err as { stack?: string })?.stack || getErrorMessage(err));
         await editProgress(msg, `❌ quote 失败：${getErrorMessage(err)}`);
       }
   }

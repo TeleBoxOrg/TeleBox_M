@@ -213,7 +213,7 @@ class DataManager {
       this.db!.data.users[settings.user_id.toString()] = { ...settings };
       await this.db!.write();
       return true;
-    } catch (e) { return false; }
+    } catch (e) { logger.warn('autochangename: saveUserSettings failed', e); return false; }
   }
 
   static async getRandomTexts(): Promise<string[]> {
@@ -230,7 +230,7 @@ class DataManager {
         .filter(t => t.length > 0 && t.length <= 50);
       await this.db!.write();
       return true;
-    } catch (e) { return false; }
+    } catch (e) { logger.warn('autochangename: saveRandomTexts failed', e); return false; }
   }
 
   static async getAllEnabledUsers(): Promise<number[]> {
@@ -559,7 +559,7 @@ class NameManager {
       }).split(':')[0]);
       const clocks = ['🕛', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚'];
       return clocks[hour % 12];
-    } catch (e) { return '🕐'; }
+    } catch (e) { logger.warn('autochangename: getClockEmoji failed', e); return '🕐'; }
   }
 
   private getDoubleStruckUpper(char: string): string {

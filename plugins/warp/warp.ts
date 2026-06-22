@@ -25,10 +25,11 @@ class SystemExecutor {
        const { stdout, stderr } = await execAsync(cmd);
        return { success: true, output: String(stdout ?? "").trim(), error: String(stderr ?? "").trim() };
      } catch (e: unknown) {
+       const err = e as { stdout?: string; stderr?: string };
        return {
          success: false,
-         output: String((e as any)?.stdout ?? "").trim(),
-         error: String((e as any)?.stderr ?? getErrorMessage(e) ?? "").trim(),
+         output: String(err?.stdout ?? "").trim(),
+         error: String(err?.stderr ?? getErrorMessage(e) ?? "").trim(),
        };
      }
    }
