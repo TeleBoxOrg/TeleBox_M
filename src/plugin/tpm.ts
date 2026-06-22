@@ -15,6 +15,8 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { JSONFilePreset } from "lowdb/node";
 import { getPrefixes } from "@utils/pluginManager";
 import { tryGetCurrentGenerationContext, getGlobalClient } from "@utils/globalClient";
+import type { InputPeerLike } from "@mtcute/node";
+import type { Message } from "@mtcute/node";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -83,7 +85,7 @@ async function sendOrEditMessage(
   text: string, 
   options?: { linkPreview?: boolean }
 ): Promise<MessageContext> {
-  const editOpts: any = { text };
+  const editOpts: { text: string; disableWebPreview?: boolean } = { text };
   if (options?.linkPreview === false) editOpts.disableWebPreview = true;
 
   try {
@@ -95,8 +97,8 @@ async function sendOrEditMessage(
 
   const client = await getGlobalClient();
   if (!client) return msg;
-  const sendOpts: any = {};
-  if (msg.replyToMessage) sendOpts.replyTo = msg.replyToMessage.id;
+  const sendOpts: { replyTo?: number } = {};
+  if (msg.replyToMessage?.id) sendOpts.replyTo = msg.replyToMessage.id;
   try {
     const newMsg = await client.sendText(msg.chat.id, text, sendOpts);
     return newMsg as MessageContext;
@@ -246,7 +248,7 @@ async function getDatabase() {
   return db;
 }
 
-async function getMediaFileName(msg: any): Promise<string> {
+async function getMediaFileName(msg: MessageContext | Message): Promise<string> {
   const metadata = msg.media as unknown as { document?: { attributes?: Array<{ fileName?: string }> } };
   return metadata.document!.attributes![0].fileName!;
 }
@@ -908,17 +910,23 @@ async function uploadPlugin(args: string[], msg: MessageContext) {
   
   const statusMsg = await sendOrEditMessage(msg, `正在上传插件 ${pluginName}...`);
   
-  const sendOptions: any = {
+  const sendOptions: { file: string; thumb?: string; caption?: string; replyTo?: number } = {
     file: pluginPath,
     thumb: path.join(process.cwd(), "telebox.png"),
     caption: `**TeleBox_Plugin ${pluginName} plugin.**`,
   };
 
-  if (msg.replyToMessage?.threadId || msg.replyToMessage?.id) {
-    sendOptions.replyTo = msg.replyToMessage?.threadId || msg.replyToMessage?.id;
+  if (msg.replyToMessage?.threadId) {
+    sendOptions.replyTo = msg.replyToMessage.threadId;
+  } else if (msg.replyToMessage?.id) {
+    sendOptions.replyTo = msg.replyToMessage.id;
   }
 
-  const _sendClient = await getGlobalClient(); await _sendClient.sendMedia(msg.chat.id, sendOptions);
+  const _sendClient = await getGlobalClient();
+  await _sendClient.sendMedia(msg.chat.id, pluginPath, {
+    caption: `**TeleBox_Plugin ${pluginName} plugin.**`,
+    ...(sendOptions.replyTo ? { replyTo: sendOptions.replyTo } : {}),
+  });
   
   if (statusMsg.id !== msg.id) {
     await statusMsg.delete();

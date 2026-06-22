@@ -114,7 +114,7 @@ async function httpPing(
           "User-Agent": "TeleBox-Ping/1.0",
         },
       },
-      (res: any) => {
+      (res: { statusCode?: number; headers?: Record<string, string> }) => {
         const end = performance.now();
         req.destroy();
         resolve(Math.round(end - start));

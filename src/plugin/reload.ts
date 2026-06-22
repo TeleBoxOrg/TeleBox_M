@@ -1,6 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { html, TelegramClient } from "@mtcute/node";
+import { html, TelegramClient, type InputPeerLike } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { createDirectoryInTemp, createDirectoryInAssets } from "@utils/pathHelpers";
 import fs from "fs";
@@ -34,7 +34,7 @@ const pendingExitTimers = new Set<ReturnType<typeof setTimeout>>();
 
 async function updateReloadStatus(params: {
   client: TelegramClient;
-  targetChat: any;
+  targetChat: InputPeerLike;
   targetMessageId: number;
   text: string;
   isHtml?: boolean;

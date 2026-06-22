@@ -16,7 +16,7 @@ const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
 /** Resolve a peer (user or chat) – replaces gramjs's getEntity */
-async function resolvePeer(client: TelegramClient, input: any): Promise<Peer | null> {
+async function resolvePeer(client: TelegramClient, input: string | number | Peer): Promise<Peer | null> {
   try {
     return await client.getPeer(input);
   } catch (e: unknown) {
@@ -161,7 +161,7 @@ class DebugPlugin extends Plugin {
       const input = args.join("");
       const reply = await safeGetReplyMessage(msg);
       const peerInput = input || String(reply?.sender?.id || msg.chat.id);
-      let entity: any;
+      let entity: Peer | null = null;
       try {
         entity = await msg.client.getPeer(peerInput);
       } catch (e: unknown) {
@@ -299,7 +299,7 @@ async function parseTelegramLink(
 
     if (messageMatch) {
       const [, chatIdentifier, messageId] = messageMatch;
-      let chatId: any;
+      let chatId: string;
 
       if (cleanLink.includes("/c/")) {
         // 私有群组/频道链接: https://t.me/c/1272003941/940776
@@ -481,7 +481,7 @@ async function formatMessageInfo(msg: Message): Promise<string> {
 // 格式化用户信息
 async function formatUserInfo(
   client: TelegramClient,
-  userId: any,
+  userId: number | string,
   title: string = "USER",
   showCommonGroups: boolean = true
 ): Promise<string> {

@@ -645,7 +645,7 @@ export class TelegraphFormatter {
       end: number;
     }> = [];
 
-    const pushIfValid = (kind: any, start: number, end: number) => {
+    const pushIfValid = (kind: "image" | "link" | "code" | "strong" | "strike" | "underline" | "em", start: number, end: number) => {
       if (start >= 0 && end > start) candidates.push({ kind, start, end });
     };
 

@@ -28,21 +28,24 @@ function formatCN(date: Date): string {
 }
 
 async function formatEntity(
-  target: any,
+  target: string | { _type?: string } | null,
   mention?: boolean,
   throwErrorIfFailed?: boolean
 ) {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
   if (!target) throw new Error("无效的目标");
-  let id: any;
-  let entity: any;
+  let id: number | string | undefined;
+  let entity: { _type?: string; id?: number | string; title?: string; firstName?: string; lastName?: string; username?: string } | null = null;
   try {
     // If target is already an mtcute entity (has _type marker), use it directly;
     // otherwise resolve it via getChat
-    entity = target?._type
-      ? target
-      : await client.getChat(target);
+    if (target && typeof target === "object" && target._type) {
+      entity = target as { _type?: string; id?: number | string; title?: string; firstName?: string; lastName?: string; username?: string };
+    } else {
+      const chat = await client.getChat(target as string);
+      entity = chat as { _type?: string; id?: number | string; title?: string; firstName?: string; lastName?: string; username?: string };
+    }
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
@@ -50,7 +53,7 @@ async function formatEntity(
     logger.error(e);
     if (throwErrorIfFailed)
       throw new Error(
-        `无法获取 ${target} 的 entity: ${getErrorMessage(e) || "未知错误"}`
+        `无法获取 ${typeof target === "string" ? target : "目标"} 的 entity: ${getErrorMessage(e) || "未知错误"}`
       );
   }
   const displayParts: string[] = [];
@@ -65,11 +68,11 @@ async function formatEntity(
 
   if (id) {
     displayParts.push(
-      "firstName" in entity
+      entity && "firstName" in entity
         ? `<a href="tg://user?id=${id}">${id}</a>`
         : `<a href="https://t.me/c/${id}">${id}</a>`
     );
-  } else if (!target?._type) {
+  } else if (!(target && typeof target === "object" && target._type)) {
     displayParts.push(`<code>${target}</code>`);
   }
 

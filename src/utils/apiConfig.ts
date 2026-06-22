@@ -2,12 +2,13 @@ import fs from "fs";
 import path from "path";
 import readline from "readline";
 import { logger } from "@utils/logger";
+import type { LegacyProxyConfig } from "./mtcuteClient";
 
 interface TelegramAPI {
   api_id?: number;
   api_hash?: string;
   session?: string;
-  proxy?: any;
+  proxy?: LegacyProxyConfig;
   connectionRetries?: number;
 }
 

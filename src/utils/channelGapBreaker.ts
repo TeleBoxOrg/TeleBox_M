@@ -17,6 +17,22 @@
  */
 
 import { logger } from "./logger";
+import type { TelegramClient } from "@mtcute/node";
+
+/** Shape of the internal client properties we access for gap breaking. */
+interface GapBreakerClient {
+  updateManager?: {
+    channels?: Map<string, {
+      pts?: { current?: () => number | string; clearSkippedUpdates?: () => void; setRequesting?: (v: boolean) => void };
+      timer?: ReturnType<typeof setTimeout>;
+    }>;
+    channelFailRetryTimers?: Map<string, ReturnType<typeof setTimeout>>;
+    channelFailTimeoutS?: Map<string, unknown> & { has?: (key: string) => boolean };
+  };
+  _channelPts?: Map<string, number | string>;
+  _pendingChannelUpdates?: Map<string, unknown> & { has?: (key: string) => boolean };
+  _fetchingChannelDifference?: Map<string, unknown> & { has?: (key: string) => boolean };
+}
 
 // Note: this module intentionally does NOT import getGlobalClient — it needs
 // SYNC access to the active runtime's client (see tryGetClient() below), and
@@ -214,7 +230,7 @@ function silentlyClearChannelPts(channelId: string): void {
  * a summary so the caller can log the resolved layout for diagnostics.
  */
 function clearChannelStateOnClient(
-  client: any,
+  client: GapBreakerClient,
   channelId: string,
 ): { cleared: boolean; oldPts: number | string | null; layout: string } {
   let cleared = false;
@@ -272,7 +288,7 @@ function clearChannelStateOnClient(
   if (!cleared) {
     if (client._channelPts && typeof client._channelPts.get === "function" && client._channelPts.has(channelId)) {
       layout = "legacy";
-      oldPts = client._channelPts.get(channelId);
+      oldPts = client._channelPts.get(channelId) ?? null;
       client._channelPts.delete(channelId);
       cleared = true;
     }
@@ -300,7 +316,7 @@ function clearChannelStateOnClient(
  * The client has _channelPts, _pendingChannelUpdates, and
  * _fetchingChannelDifference as internal Maps/Sets.
  */
-function tryGetClient(): any | null {
+function tryGetClient(): unknown {
   try {
     // Sync access required; getGlobalClient() is async and unsuitable here.
     // tryGetCurrentRuntime returns the live runtime synchronously when set.

@@ -1,8 +1,8 @@
 import type { TelegramClient, Message, InputPeerLike } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 
-function isUndefinedDateCrash(error: any): boolean {
-  const message = String(error?.message || error || "");
+function isUndefinedDateCrash(error: unknown): boolean {
+  const message = String(error && typeof error === 'object' && 'message' in error ? (error as { message?: string }).message : error || "");
   return (
     message.includes("Cannot read properties of undefined") &&
     message.includes("reading 'date'")

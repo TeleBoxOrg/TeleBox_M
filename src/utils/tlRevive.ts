@@ -2,11 +2,12 @@
 // mtcute 的 TL 对象是带 _ 字段的普通对象,不需要 class 构造函数。
 // 序列化时 _ 字段已自动保留,还原时只需递归处理 Buffer 和嵌套对象。
 
-type JsonLike = any;
+type JsonLike = unknown;
 
-function isBufferLike(v: any): v is { type: "Buffer"; data: number[] } {
+function isBufferLike(v: unknown): v is { type: "Buffer"; data: number[] } {
   return (
-    v && typeof v === "object" && v.type === "Buffer" && Array.isArray(v.data)
+    v != null && typeof v === "object" && "type" in v && "data" in v &&
+    (v as { type: unknown }).type === "Buffer" && Array.isArray((v as { data: unknown }).data)
   );
 }
 
@@ -29,7 +30,7 @@ export function reviveTl<T = any>(input: JsonLike): T {
 
   // mtcute TL objects are plain objects with _ field.
   // No constructor resolution needed — just recursively revive nested properties.
-  const revived: Record<string, any> = {};
+  const revived: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(input)) {
     revived[k] = reviveTl(v);
   }
