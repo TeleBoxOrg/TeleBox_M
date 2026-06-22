@@ -11,6 +11,7 @@ import { isUser, hasRawType } from "@utils/entityTypeGuards";
 import { User, Chat } from "@mtcute/node";
 import { Long } from "@mtcute/core";
 import type { tl } from "@mtcute/core";
+import type { MtcuteInputChannel, MtcuteInputPeer, MtcuteLong, MtcuteInputUser } from "@utils/mtcuteTypes";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -169,11 +170,11 @@ class ManageAdminPlugin extends Plugin {
                   // scan up to 1000 participants
                   const res = await client.call({
                     _: 'channels.getParticipants',
-                    channel: channel as unknown as tl.TypeInputChannel,
+                    channel: channel as unknown as MtcuteInputChannel,
                     filter: { _: 'channelParticipantsRecent' },
                     offset,
                     limit,
-                    hash: 0 as unknown as Long,
+                    hash: 0 as unknown as MtcuteLong,
                   });
                   const participants: Array<{ userId: number }> = (res as { participants?: Array<{ userId: number }> })?.participants || [];
                   const users: Array<{ id: number }> = (res as { users?: Array<{ id: number }> })?.users || [];
@@ -204,8 +205,8 @@ class ManageAdminPlugin extends Plugin {
         try {
           const info = await client.call({
             _: 'channels.getParticipant',
-            channel: channel as unknown as tl.TypeInputChannel,
-            participant: targetEntity as unknown as tl.TypeInputPeer,
+            channel: channel as unknown as MtcuteInputChannel,
+            participant: targetEntity as unknown as MtcuteInputPeer,
           });
           return (info as { participant?: unknown })?.participant;
         } catch (e: unknown) {
@@ -219,7 +220,7 @@ class ManageAdminPlugin extends Plugin {
           if (!me) return false;
           const info = await client.call({
             _: 'channels.getParticipant',
-            channel: channel as unknown as tl.TypeInputChannel,
+            channel: channel as unknown as MtcuteInputChannel,
             participant: await client.resolvePeer(me.id),
           });
           const part = (info as { participant?: unknown })?.participant;
@@ -286,8 +287,8 @@ class ManageAdminPlugin extends Plugin {
           if (isChannelChat) {
             await client.call({
               _: 'channels.editAdmin',
-              channel: channel as unknown as tl.TypeInputChannel,
-              userId: userEntity as unknown as tl.TypeInputUser,
+              channel: channel as unknown as MtcuteInputChannel,
+              userId: userEntity as unknown as MtcuteInputUser,
               adminRights: adminRightsToUse as unknown as tl.RawChatAdminRights,
               rank: rankToUse,
             });
@@ -298,7 +299,7 @@ class ManageAdminPlugin extends Plugin {
             await client.call({
               _: 'messages.editChatAdmin',
               chatId: msg.chat.id,
-              userId: userEntity as unknown as tl.TypeInputUser,
+              userId: userEntity as unknown as MtcuteInputUser,
               isAdmin: true,
             });
           }
@@ -357,8 +358,8 @@ class ManageAdminPlugin extends Plugin {
           if (msg.chat instanceof Chat && msg.chat.isGroup) {
             await client.call({
               _: 'channels.editAdmin',
-              channel: channel as unknown as tl.TypeInputChannel,
-              userId: userEntity as unknown as tl.TypeInputUser,
+              channel: channel as unknown as MtcuteInputChannel,
+              userId: userEntity as unknown as MtcuteInputUser,
               adminRights: { _: 'chatAdminRights' } as unknown as tl.RawChatAdminRights,
               rank: "",
             });
@@ -366,7 +367,7 @@ class ManageAdminPlugin extends Plugin {
             await client.call({
               _: 'messages.editChatAdmin',
               chatId: msg.chat.id,
-              userId: userEntity as unknown as tl.TypeInputUser,
+              userId: userEntity as unknown as MtcuteInputUser,
               isAdmin: false,
             });
           }
@@ -395,11 +396,11 @@ class ManageAdminPlugin extends Plugin {
           }
           const result = await client.call({
             _: 'channels.getParticipants',
-            channel: channel as unknown as tl.TypeInputChannel,
+            channel: channel as unknown as MtcuteInputChannel,
             filter: { _: 'channelParticipantsAdmins' },
             offset: 0,
             limit: 200,
-            hash: 0 as unknown as Long,
+            hash: 0 as unknown as MtcuteLong,
           });
 
           const participants: Array<{ userId: number; rank?: string }> = (result as { participants?: Array<{ userId: number; rank?: string }> })?.participants || [];

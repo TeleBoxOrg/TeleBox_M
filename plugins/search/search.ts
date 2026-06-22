@@ -3,7 +3,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import type { Message, Video, Document, Chat, User, TelegramClient } from "@mtcute/node";
 import { tl } from "@mtcute/node";
 import { Long } from "@mtcute/core";
-import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
+import type { MtcuteFileLocation, MtcuteInputChannel } from "@utils/mtcuteTypes";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import fs from "fs/promises";
@@ -410,7 +410,7 @@ class SearchService {
 
             let linkedGroup: string | undefined;
             if (peerInfo.isBroadcast && !peerInfo.isMegagroup) {
-                linkedGroup = await this.discoverLinkedGroup(peerInfo.peer as unknown as tl.TypeInputChannel);
+                linkedGroup = await this.discoverLinkedGroup(peerInfo.peer as unknown as MtcuteInputChannel);
             }
 
             this.config.channelList.push({

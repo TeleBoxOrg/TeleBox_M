@@ -7,6 +7,7 @@ import { html } from "@mtcute/html-parser";
 import { TelegramClient } from "@mtcute/node";
 import type { Peer, Chat, User, Dialog } from "@mtcute/node";
 import type { tl } from "@mtcute/core";
+import type { MtcuteInputChannel } from "@utils/mtcuteTypes";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import path from "path";
@@ -210,7 +211,7 @@ class PermissionManager {
       const me = await client.getMe();
       const participant = await client.call({
         _: 'channels.getParticipant',
-        channel: await client.resolvePeer(chatId) as unknown as tl.TypeInputChannel,
+        channel: await client.resolvePeer(chatId) as unknown as MtcuteInputChannel,
         participant: await client.resolvePeer(me.id),
       });
 

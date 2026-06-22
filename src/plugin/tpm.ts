@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import axios from "axios";
 import { logger } from "@utils/logger";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 
 import type { MessageContext } from "@mtcute/dispatcher";
 
@@ -1430,7 +1431,7 @@ if (require.main === module) {
     edit: async ({ text }: { text: string }) => {
       logger.info(text);
     },
-  } as unknown as MessageContext)
+  } as unknown as MtcuteMessageContext)
     .then(() => {
       logger.info("Plugins processed successfully");
     })

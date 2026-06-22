@@ -3,6 +3,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets, createDirectoryInTemp } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 import type { Message } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
 import sharp from "sharp";
@@ -359,7 +360,7 @@ class PicToStickerPlugin extends Plugin {
       if (msg.replyToMessage) {
         const repliedMsg = await msg.getReplyTo();
         if (repliedMsg) {
-          targetMsg = repliedMsg as unknown as MessageContext;
+          targetMsg = repliedMsg as MtcuteMessageContext;
         }
       }
 

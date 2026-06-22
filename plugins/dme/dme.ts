@@ -7,6 +7,7 @@ import { safeGetMe } from "@utils/authGuards";
 
 import { TelegramClient } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteInputMediaLike } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getEntityWithHash } from "@utils/entityHelpers";
@@ -16,7 +17,6 @@ import * as path from "path";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { Long } from "@mtcute/core";
-import type { MtcuteInputMediaLike } from "@utils/mtcuteTypes";
 
 // 常量配置
 const CONFIG = {

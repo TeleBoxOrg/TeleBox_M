@@ -86,3 +86,19 @@ export type MtcuteInputMediaLike = InputMediaLike;
  * Replaces: `as unknown as import("@mtcute/core").tl.TypeReaction[]`
  */
 export type MtcuteReactions = tl.TypeReaction[];
+
+/**
+ * TL TypeInputUser from @mtcute/core.
+ * Used when resolvePeer result needs to be cast to InputUser.
+ *
+ * Replaces: `as unknown as import("@mtcute/core").tl.TypeInputUser`
+ */
+export type MtcuteInputUser = tl.TypeInputUser;
+
+/**
+ * TL TypeMessageEntity array from @mtcute/core.
+ * Used when entities need to be cast to TypeMessageEntity[].
+ *
+ * Replaces: `as unknown as import("@mtcute/core").tl.TypeMessageEntity[]`
+ */
+export type MtcuteMessageEntities = tl.TypeMessageEntity[];

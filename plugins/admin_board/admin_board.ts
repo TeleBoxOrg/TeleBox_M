@@ -13,6 +13,7 @@ import { getErrorMessage } from "@utils/errorHelpers";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
 import { Long } from "@mtcute/core";
 import type { tl } from "@mtcute/core";
+import type { MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -1094,10 +1095,10 @@ async function demoteAdminInTarget(
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
-  const inputUser = await client.resolvePeer(user.id) as unknown as tl.TypeInputUser;
+  const inputUser = await client.resolvePeer(user.id) as unknown as MtcuteInputUser;
 
   if (target.isChannel) {
-    const inputChannel = await client.resolvePeer(target.entity.id) as unknown as tl.TypeInputChannel;
+    const inputChannel = await client.resolvePeer(target.entity.id) as unknown as MtcuteInputChannel;
     await client.call({
       _: 'channels.editAdmin',
       channel: inputChannel,
@@ -1232,7 +1233,7 @@ async function findUserInChannelParticipants(
 
   if (!isNumeric) return undefined;
 
-  const inputChannel = await client.resolvePeer(target.entity.id) as unknown as tl.TypeInputChannel;
+  const inputChannel = await client.resolvePeer(target.entity.id) as unknown as MtcuteInputChannel;
   let offset = 0;
   const limit = 200;
 

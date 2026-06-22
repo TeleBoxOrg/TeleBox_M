@@ -4,6 +4,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets, createDirectoryInTemp } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 import type { Message } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
 import { JSONFilePreset } from "lowdb/node";
@@ -1165,7 +1166,7 @@ class MusicHubPlugin extends Plugin {
       statusUpdateQueue = statusUpdateQueue
         .catch(() => undefined)
         .then(async () => {
-          const updated = await this.editOrReplaceMessage(msg, statusMessage as unknown as MessageContext | undefined, text);
+          const updated = await this.editOrReplaceMessage(msg, statusMessage as MtcuteMessageContext | undefined, text);
           if (updated) statusMessage = updated;
         })
         .catch(() => undefined);
@@ -1264,7 +1265,7 @@ class MusicHubPlugin extends Plugin {
     } catch (error: unknown) {
       await this.editOrReplaceMessage(
         msg,
-        statusMessage as unknown as MessageContext | undefined,
+        statusMessage as MtcuteMessageContext | undefined,
         `❌ <b>搜索失败</b>\n<code>${htmlEscape(error instanceof Error ? error.message : String(error))}</code>\n\n` +
           `💡 可尝试 ${codeTag(`${commandName} check`)} 查看源状态。`
       );

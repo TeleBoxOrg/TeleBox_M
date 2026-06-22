@@ -1,7 +1,7 @@
 import { Plugin } from '@utils/pluginBase';
 import { getPrefixes } from '@utils/pluginManager';
 import { createDirectoryInTemp } from '@utils/pathHelpers';
-import type { MtcuteFileLocation } from '@utils/mtcuteTypes';
+import type { MtcuteFileLocation, MtcuteMessageEntities } from '@utils/mtcuteTypes';
 import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -158,7 +158,7 @@ class REVPlugin extends Plugin {
 					peer: await client.resolvePeer(msg.chat.id),
 					id: msg.id,
 					message: reversed,
-					entities: reversedEntities as unknown as tl.TypeMessageEntity[],
+					entities: reversedEntities as unknown as MtcuteMessageEntities,
 				});
 				return;
 			} catch (err: unknown) {

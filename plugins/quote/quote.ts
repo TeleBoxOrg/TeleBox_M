@@ -1,5 +1,6 @@
 import { TelegramClient, Message } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 import { getGlobalClient } from "@utils/globalClient";
 import * as fs from "fs";
 import * as path from "path";
@@ -1152,7 +1153,7 @@ async function replyPreview(msg: MessageContext, includeReply: boolean, args: Qu
   const reply = await safeGetReplyMessage(msg).catch(() => undefined);
   if (!reply) return undefined;
   // safeGetReplyMessage returns Message, but downstream fns expect MessageContext
-  const replyCtx = reply as unknown as MessageContext;
+  const replyCtx = reply as MtcuteMessageContext;
   const entity = await senderEntity(replyCtx);
   const name = displayName(entity);
   return {

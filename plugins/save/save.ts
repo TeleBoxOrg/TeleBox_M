@@ -1,7 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
-import type { MtcuteFileDownloadLocation } from "@utils/mtcuteTypes";
+import type { MtcuteFileDownloadLocation, MtcuteMessageContext } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets, createDirectoryInTemp } from "@utils/pathHelpers";
@@ -792,7 +792,7 @@ class PrometheusPlugin extends Plugin {
       caption: sendOptions.caption,
       replyTo: replyMsg?.id,
     });
-    return sentMsg as unknown as MessageContext;
+    return sentMsg as MtcuteMessageContext;
   }
   
   private async processMessage(
@@ -817,7 +817,7 @@ class PrometheusPlugin extends Plugin {
           fromChatId: sourceMsg.chat.id,
           messages: [sourceMsg.id]
         });
-        forwardedMessage = result[0] as unknown as MessageContext;
+        forwardedMessage = result[0] as MtcuteMessageContext;
         
         await this.safeEditMessage(replyMsg, `${progress}✅ 转发成功`, true);
         
@@ -839,7 +839,7 @@ class PrometheusPlugin extends Plugin {
           const text = sourceMsg.text || '';
           if (text) {
             // 发送文本消息，获取发送的消息
-            forwardedMessage = await client.sendText(targetPeer, text) as unknown as MessageContext;
+            forwardedMessage = await client.sendText(targetPeer, text) as MtcuteMessageContext;
             
             await this.safeEditMessage(replyMsg, `${progress}✅ 文本内容已发送`, true);
             
@@ -1352,7 +1352,7 @@ class PrometheusPlugin extends Plugin {
           const localGroupDirName = localTarget ? `group_${messageInfo.groupedId}` : undefined;
            
           for (let j = 0; j < groupMessages.length; j++) {
-            const groupMsg = groupMessages[j] as unknown as MessageContext;
+            const groupMsg = groupMessages[j] as MtcuteMessageContext;
             const groupProgress = `[${i + 1}/${total}] [${j + 1}/${groupMessages.length}] `;
             const result = localTarget
               ? await this.processMessageToLocal(groupMsg, msg, messageInfo.chatId, groupMsg.id, groupProgress, {
