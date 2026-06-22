@@ -46,6 +46,16 @@ interface GeminiContent {
   parts: GeminiPart[];
 }
 
+interface GeminiChatRequest {
+  contents: GeminiContent[];
+  generationConfig: {
+    temperature: number;
+  };
+  systemInstruction?: {
+    parts: { text: string }[];
+  };
+}
+
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -718,7 +728,7 @@ model: <code>${this.config.model}</code><br>
 			});
 		}
 
-		const requestBody: any = {
+		const requestBody: GeminiChatRequest = {
 			contents: [{ parts }],
 			generationConfig: {
 				temperature: 0.7,
@@ -744,7 +754,7 @@ model: <code>${this.config.model}</code><br>
 		const responseParts = response.data?.candidates?.[0]?.content?.parts || [];
 		return (
 			responseParts
-				.map((p: any) => p.text || '')
+				.map((p: GeminiPart) => p.text || '')
 				.join('')
 				.trim() || '无法获取回复'
 		);

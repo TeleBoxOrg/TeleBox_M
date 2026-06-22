@@ -39,6 +39,10 @@ const DEFAULT_CONFIG = {
     [CONFIG_KEYS.PROXY_HOST]: "i.pximg.net"
 };
 
+interface ZprConfig {
+    [CONFIG_KEYS.PROXY_HOST]: string;
+}
+
 const baseHeaders = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.2651.74"
 };
@@ -80,7 +84,7 @@ function scheduleAbort(controller: AbortController, ms: number, label: string): 
 
 // 配置管理器
 class ZprConfigManager {
-    private static db: Awaited<ReturnType<typeof JSONFilePreset<Record<string, any>>>> | null = null;
+    private static db: Awaited<ReturnType<typeof JSONFilePreset<ZprConfig>>> | null = null;
     private static initialized = false;
     private static configPath: string;
     private static backupPath: string;
@@ -96,7 +100,7 @@ class ZprConfigManager {
             // 尝试从备份恢复损坏的配置
             await this.validateAndRestore();
             
-            this.db = await JSONFilePreset<Record<string, any>>(
+            this.db = await JSONFilePreset<ZprConfig>(
                 this.configPath,
                 { ...DEFAULT_CONFIG }
             );

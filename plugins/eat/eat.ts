@@ -269,7 +269,7 @@ async function sendRawSticker(params: {
     fileMime: "image/webp",
   });
 
-  const callParams: any = {
+  const callParams: Record<string, unknown> = {
     _: "messages.sendMedia",
     peer,
     media: {
@@ -281,7 +281,7 @@ async function sendRawSticker(params: {
         { _: "documentAttributeImageSize", w: width, h: height },
         { _: "documentAttributeFilename", file_name: "output.webp" },
       ],
-    } as unknown as object,
+    } as unknown as tl.RawInputMediaUploadedDocument,
     random_id: Math.floor(Math.random() * 2 ** 53),
   };
   if (replyMsgId) {
