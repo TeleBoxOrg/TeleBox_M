@@ -449,18 +449,26 @@ class CleanPlugin extends Plugin {
     let successCount = 0, failedCount = 0;
     const failedEntities: string[] = [];
     
-    for (const entity of bannedUsers) {
-      const success = await unbanUser(client, chatEntity, entity.id);
-      if (success) {
-        successCount++;
-      } else {
-        failedCount++;
-        const displayName = entity.type === 'user' 
-          ? `${entity.firstName}(${entity.id})` 
-          : `${entity.title || entity.firstName}[${entity.type}](${entity.id})`;
-        failedEntities.push(displayName);
-      }
-      await sleep(500);
+    // 分批并行解封，每批 3 个，批次间隔 500ms 避免触发频控
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < bannedUsers.length; i += BATCH_SIZE) {
+      const batch = bannedUsers.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(
+        batch.map((entity) => unbanUser(client, chatEntity, entity.id))
+      );
+      results.forEach((success, idx) => {
+        const entity = batch[idx];
+        if (success) {
+          successCount++;
+        } else {
+          failedCount++;
+          const displayName = entity.type === 'user' 
+            ? `${entity.firstName}(${entity.id})` 
+            : `${entity.title || entity.firstName}[${entity.type}](${entity.id})`;
+          failedEntities.push(displayName);
+        }
+      });
+      if (i + BATCH_SIZE < bannedUsers.length) await sleep(500);
     }
     
     let statsText = "";
