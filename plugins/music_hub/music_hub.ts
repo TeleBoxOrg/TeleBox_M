@@ -662,7 +662,7 @@ class MusicHubPlugin extends Plugin {
 
     try {
       await message.delete();
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('操作失败', e) }
   }
 
   private async sendTextMessage(

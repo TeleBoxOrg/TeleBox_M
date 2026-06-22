@@ -170,8 +170,8 @@ async function getNodeInfo(url: string): Promise<{ node_count: number | string, 
           regions: Object.fromEntries(Object.entries(regions).filter(([, v]) => v > 0))
         };
       }
-    } catch (e) { /* 忽略 YAML 解析错误 */ }
-    
+    } catch (e) { logger.warn('YAML 解析失败', e) }
+
     // 2. 尝试解析 Base64 (V2Ray/Shadowsocks 原始链接)
     try {
       const decoded = Buffer.from(res.data, 'base64').toString();
@@ -206,7 +206,7 @@ async function getNodeInfo(url: string): Promise<{ node_count: number | string, 
         type_count: Object.fromEntries(Object.entries(typeCount).filter(([, v]) => v > 0)),
         regions: Object.fromEntries(Object.entries(regions).filter(([, v]) => v > 0)),
       };
-    } catch (e) { /* 忽略 Base64 解析错误 */ }
+    } catch (e) { logger.warn('Base64 解析失败', e) }
     return null;
   } catch (e) { return null; }
 }
@@ -481,7 +481,7 @@ class SubinfoPlugin extends Plugin {
       try {
         const replyMsg = await safeGetReplyMessage(msg);
         if (replyMsg) sourceText = (replyMsg.text ?? '') + ' ' + ((replyMsg as { caption?: string }).caption ?? '');
-      } catch (e) { /* 忽略 */ }
+      } catch (e) { logger.warn('获取回复消息失败', e) }
     }
     if (cleanParts.length > 0) sourceText += ' ' + cleanParts.join(' ');
     sourceText = sourceText.trim();
@@ -659,7 +659,7 @@ class SubinfoPlugin extends Plugin {
       try {
         const replyMsg = await safeGetReplyMessage(msg);
         if (replyMsg) sourceText = (replyMsg.text ?? '') + ' ' + ((replyMsg as { caption?: string }).caption ?? '');
-      } catch (e) { /* 忽略 */ }
+      } catch (e) { logger.warn('获取回复消息失败', e) }
     }
     if (cleanParts.length > 0) sourceText += ' ' + cleanParts.join(' ');
     sourceText = sourceText.trim();

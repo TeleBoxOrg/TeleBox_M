@@ -133,7 +133,7 @@ class ManageAdminPlugin extends Plugin {
           let sender: unknown;
           try {
             sender = await (r as MessageContext).getCompleteSender?.();
-          } catch (e) { /* noop */ }
+          } catch (e) { logger.warn('操作失败', e) }
           if (sender && !isUser(sender)) {
             // Fallback to senderId
             const uid = Number((r.sender as { id?: number })?.id);
@@ -141,7 +141,7 @@ class ManageAdminPlugin extends Plugin {
               try {
                 const input = client.resolvePeer(uid);
                 return { id: uid, entity: input };
-              } catch (e) { /* noop */ }
+              } catch (e) { logger.warn('操作失败', e) }
             }
             return { id: undefined, entity: undefined };
           }
@@ -192,7 +192,7 @@ class ManageAdminPlugin extends Plugin {
                   if (!participants.length) break;
                   offset += participants.length;
                 }
-              } catch (e) { /* noop */ }
+              } catch (e) { logger.warn('操作失败', e) }
             }
             return { id: undefined, entity: undefined };
           }
@@ -315,7 +315,7 @@ class ManageAdminPlugin extends Plugin {
             ) {
               appliedRank = (refreshed as { rank?: string }).rank || "";
             }
-          } catch (e) { /* noop */ }
+          } catch (e) { logger.warn('操作失败', e) }
 
           const u = await formatEntity(userId || userEntity, true);
           const rankOk = appliedRank === rankToUse;

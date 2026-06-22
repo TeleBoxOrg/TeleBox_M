@@ -709,7 +709,7 @@ class NameManager {
     } catch (e) {
       settings.weather_compact = "";
       settings.weather_cache_ts = now;
-      try { await DataManager.saveUserSettings(settings); } catch (e) { /* ignore */ }
+      try { await DataManager.saveUserSettings(settings); } catch (e) { logger.warn('操作失败', e) }
       return "";
     }
   }

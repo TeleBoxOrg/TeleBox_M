@@ -1340,7 +1340,7 @@ const dme = async (msg: MessageContext) => {
       await client.deleteMessagesById(chatPeer, [msg.id], {
         revoke: true,
       });
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('操作失败', e) }
 
     // 执行主要操作
     logger.info(`[DME] ========== 开始执行DME任务 ==========`);

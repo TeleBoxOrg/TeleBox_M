@@ -671,10 +671,10 @@ class PrometheusPlugin extends Plugin {
           const filePath = path.join(this.tempDir, entry);
           try {
             await fs.unlink(filePath);
-          } catch (e) { /* noop */ }
+          } catch (e) { logger.warn('操作失败', e) }
         })
       );
-    } catch (e) { /* noop */ }
+    } catch (e) { logger.warn('操作失败', e) }
   }
 
   private async saveMediaToLocal(
