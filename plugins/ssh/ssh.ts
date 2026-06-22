@@ -575,7 +575,7 @@ class SSHPlugin extends Plugin {
         try {
           await modifySSHConfig("PubkeyAuthentication", "yes", false);
           await modifySSHConfig("AuthorizedKeysFile", "/root/.ssh/authorized_keys", false);
-        } catch (configError) {
+        } catch (configError: unknown) {
           logger.info("[ssh] SSH配置优化失败，但密钥已正确设置:", configError);
         }
       }

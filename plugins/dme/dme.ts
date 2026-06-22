@@ -106,7 +106,7 @@ async function deleteMessagesWithRetry(
     try {
       await client.call({ _: "updates.getState" });
       logger.info(`[DME] 已触发跨平台同步刷新`);
-    } catch (syncError) {
+    } catch (syncError: unknown) {
       logger.info(`[DME] 同步刷新失败，但不影响删除操作:`, syncError);
     }
     
@@ -370,7 +370,7 @@ async function searchMyMessagesOptimized(
       );
       logger.info(`[DME] Search API找到 ${allMessages.length} 条消息`);
     }
-  } catch (searchError) {
+  } catch (searchError: unknown) {
     logger.info(`[DME] Search API失败，尝试GetHistory:`, searchError);
   }
 
@@ -408,7 +408,7 @@ async function searchMyMessagesOptimized(
       }
       
       logger.info(`[DME] GetHistory补充后总计 ${allMessages.length} 条消息`);
-    } catch (historyError) {
+    } catch (historyError: unknown) {
       logger.info(`[DME] GetHistory也失败:`, historyError);
     }
   }

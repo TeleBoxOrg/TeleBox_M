@@ -208,7 +208,7 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
           result?.participant?._ === 'channelParticipantCreator') {
         return true;
       }
-    } catch (participantError) {
+    } catch (participantError: unknown) {
       logger.info('GetParticipant failed, trying alternative method:', participantError);
     }
     try {
@@ -224,7 +224,7 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
         const admins = result.users as RawUser[];
         return admins.some(admin => Number(admin.id) === Number(me.id));
       }
-    } catch (adminListError) {
+    } catch (adminListError: unknown) {
       logger.info('GetParticipants admin list failed:', adminListError);
     }
     return false;

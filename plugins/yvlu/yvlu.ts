@@ -857,7 +857,7 @@ class YvluPlugin extends Plugin {
                           `[yvlu] TGS -> WebM 转换成功，大小: ${finalBuffer.length}`,
                         );
                       }
-                    } catch (convertError) {
+                    } catch (convertError: unknown) {
                       logger.error(`[yvlu] TGS 转换失败:`, convertError);
                     }
                   }
@@ -870,7 +870,7 @@ class YvluPlugin extends Plugin {
                       logger.info(
                         `[yvlu] MP4 -> WebM 转换成功，大小: ${finalBuffer.length}`,
                       );
-                    } catch (convertError) {
+                    } catch (convertError: unknown) {
                       logger.error(`[yvlu] MP4 转换失败:`, convertError);
                       // 转换失败时保持原格式
                     }
@@ -1025,7 +1025,7 @@ class YvluPlugin extends Plugin {
             }
 
             logger.info("[yvlu] 文件发送成功");
-          } catch (fileError) {
+          } catch (fileError: unknown) {
             logger.error(`发送文件失败: ${fileError}`);
             await msg.edit({ text: `发送文件失败: ${htmlEscape(String(fileError))}`, parseMode: "html" });
             return;

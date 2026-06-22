@@ -666,7 +666,7 @@ class GroupManager {
       
       try {
         await this.cache.set("managed_groups_v3", groups);
-      } catch (cacheError) {
+      } catch (cacheError: unknown) {
         logger.error(`[GroupManager] 缓存群组失败: ${cacheError}`);
       }
     } catch (error: unknown) {

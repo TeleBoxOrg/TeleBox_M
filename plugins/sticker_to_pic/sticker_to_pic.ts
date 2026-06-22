@@ -53,7 +53,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
           }
           logger.info('[sticker_to_pic] ImageMagick自动安装成功 (apt)');
           return true;
-        } catch (aptError) {
+        } catch (aptError: unknown) {
           // 尝试yum (CentOS/RHEL)
           try {
             try {
@@ -64,7 +64,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
             }
             logger.info('[sticker_to_pic] ImageMagick自动安装成功 (yum)');
             return true;
-          } catch (yumError) {
+          } catch (yumError: unknown) {
             // 尝试dnf (Fedora)
             try {
               try {
@@ -75,7 +75,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
               }
               logger.info('[sticker_to_pic] ImageMagick自动安装成功 (dnf)');
               return true;
-            } catch (dnfError) {
+            } catch (dnfError: unknown) {
               logger.error('[sticker_to_pic] Linux系统自动安装失败，可能需要手动安装');
               return false;
             }
@@ -89,7 +89,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
           execSync('brew install imagemagick', { stdio: 'pipe' });
           logger.info('[sticker_to_pic] ImageMagick自动安装成功 (brew)');
           return true;
-        } catch (brewError) {
+        } catch (brewError: unknown) {
           // 尝试安装Homebrew后再安装ImageMagick
           try {
             logger.info('[sticker_to_pic] 正在安装Homebrew...');
@@ -124,7 +124,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
         logger.error('[sticker_to_pic] 不支持的操作系统');
         return false;
       }
-    } catch (installError) {
+    } catch (installError: unknown) {
       logger.error('[sticker_to_pic] ImageMagick自动安装出错:', installError);
       return false;
     }
@@ -232,7 +232,7 @@ class StickerToPicPlugin extends Plugin {
               await msg.edit({
                 text: html(`🎉 <b>ImageMagick自动安装成功！</b><br><br><b>版本信息:</b><br><code>${htmlEscape(versionLine)}</code><br><br>✅ <b>状态:</b> 现在可以正常使用贴纸转换功能`)
               });
-            } catch (versionError) {
+            } catch (versionError: unknown) {
               await msg.edit({
                 text: html("🎉 <b>ImageMagick自动安装成功！</b><br><br>✅ <b>状态:</b> 现在可以正常使用贴纸转换功能")
               });
@@ -444,7 +444,7 @@ class StickerToPicPlugin extends Plugin {
           if (fs.existsSync(outputPath)) {
             fs.unlinkSync(outputPath);
           }
-        } catch (cleanupError) {
+        } catch (cleanupError: unknown) {
           logger.error('[sticker_to_pic] 清理临时文件失败:', cleanupError);
         }
       }

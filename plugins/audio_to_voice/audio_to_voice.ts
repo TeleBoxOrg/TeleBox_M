@@ -159,14 +159,14 @@ class AudioToVoicePlugin extends Plugin {
           // 如果是回复的音频，删除状态消息
           try {
             await msg.delete();
-          } catch (deleteError) {
+          } catch (deleteError: unknown) {
             logger.warn("删除状态消息失败:", deleteError);
           }
         } else {
           // 如果是消息本身的音频，清空消息内容
           try {
             await msg.edit({ text: "" });
-          } catch (editError) {
+          } catch (editError: unknown) {
             logger.warn("清空消息失败:", editError);
           }
         }

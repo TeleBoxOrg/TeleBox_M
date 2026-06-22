@@ -107,7 +107,7 @@ const dc = async (msg: MessageContext) => {
             text: html`📍 <b>${htmlEscape(title)}</b> 所在数据中心为: <b>DC${photo.dcId}</b>`,
           });
           return;
-        } catch (chatError) {
+        } catch (chatError: unknown) {
           await msg.edit({
             text: html`❌ 无法获取该对象的 DC 信息`,
           });
@@ -166,7 +166,7 @@ const dc = async (msg: MessageContext) => {
           targetUser = param;
         }
       }
-    } catch (entityError) {
+    } catch (entityError: unknown) {
       logger.error("解析消息实体失败:", entityError);
       // 降级为直接使用参数
       if (/^\d+$/.test(param)) {

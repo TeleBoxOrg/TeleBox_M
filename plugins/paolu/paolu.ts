@@ -87,7 +87,7 @@ class PaoluPlugin extends Plugin {
             isAdmin =
               pType === "channelParticipantAdmin" ||
               pType === "channelParticipantCreator";
-          } catch (permError) {
+          } catch (permError: unknown) {
             logger.info("权限检查失败，尝试备用方法:", permError);
             try {
               const adminResult: any = await client.call({
@@ -104,7 +104,7 @@ class PaoluPlugin extends Plugin {
                   (admin) => String(admin.id) === String(me.id)
                 );
               }
-            } catch (adminListError) {
+            } catch (adminListError: unknown) {
               logger.info("管理员列表获取失败:", adminListError);
               isAdmin = false;
             }
@@ -151,7 +151,7 @@ class PaoluPlugin extends Plugin {
           },
         });
         logger.info(`[PAOLU] 已禁言群组 ${chatId}`);
-      } catch (banError) {
+      } catch (banError: unknown) {
         logger.error("[PAOLU] 禁言操作失败:", banError);
       }
 
@@ -193,14 +193,14 @@ class PaoluPlugin extends Plugin {
             try {
               await client.deleteMessagesById(chatId, messagesToDelete.map((m) => m.id), { revoke: true });
               deletedCount += messagesToDelete.length;
-            } catch (delErr) {
+            } catch (delErr: unknown) {
               // 逐个删除
               for (const m of messagesToDelete) {
                 try {
                   await client.deleteMessagesById(chatId, [m.id], { revoke: true });
                   deletedCount++;
                   await sleep(100);
-                } catch (individualError) {
+                } catch (individualError: unknown) {
                   logger.error(`[PAOLU] 删除单条消息失败 (ID: ${m.id}):`, individualError);
                 }
               }
@@ -221,14 +221,14 @@ class PaoluPlugin extends Plugin {
 
         logger.info(`[PAOLU] 删除完成，共删除 ${deletedCount} 条消息`);
 
-      } catch (deleteError) {
+      } catch (deleteError: unknown) {
         logger.error("[PAOLU] 删除消息失败:", deleteError);
       }
 
       // 3. 删除命令消息本身
       try {
         await msg.delete();
-      } catch (deleteError) {
+      } catch (deleteError: unknown) {
         logger.error("[PAOLU] 删除命令消息失败:", deleteError);
       }
 
@@ -244,7 +244,7 @@ class PaoluPlugin extends Plugin {
           }
         }, 10000);
 
-      } catch (sendError) {
+      } catch (sendError: unknown) {
         logger.error("[PAOLU] 发送完成提示失败:", sendError);
       }
 
