@@ -8,7 +8,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import fs from "fs/promises";
 import path from "path";
-import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
+import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 
@@ -293,10 +293,9 @@ class SearchService {
       for (const textMsg of groupMessages) {
         if (this.isMessageMatching(textMsg, query) && hasReplies(textMsg)) {
           logger.info(`找到匹配消息 #${textMsg.id}，正在精确获取其 ${getReplyCount(textMsg)} 条评论...`);
-          const commentsParams: { ids?: number | number[] } = { ids: [] };
-          // Note: limit and replyTo are not supported by safeGetMessages; fetching by replyTo would need a different approach
-          void textMsg.id;
-          const comments = await safeGetMessages(this.client, linkedGroupEntity, commentsParams);
+          // TODO: safeGetMessages does not support replyTo-based fetching.
+          // Use client.getReplies() or similar mtcute API to fetch actual replies.
+          const comments: Message[] = [];
 
           const videoReplies = comments.filter((msg: Message) =>
             getMessageVideo(msg) != null &&
@@ -769,7 +768,7 @@ class SearchService {
       try {
         await this.client.deleteMessagesById(originalMsg.chat.id, [originalMsg.id]);
       } catch (e: unknown) {
-        logger.warn("删除原始消息失败，可能已被删除");
+        logger.warn("删除原始消息失败，可能已被删除:", e);
       }
     }
   }

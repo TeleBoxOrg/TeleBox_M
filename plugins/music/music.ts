@@ -221,7 +221,7 @@ class DependencyManager {
       logger.info("[Music] FFmpeg 已就绪");
       return true;
     } catch (e: unknown) {
-      logger.info("[Music] FFmpeg 未找到");
+      logger.info("[Music] FFmpeg 未找到:", e);
       return false;
     }
   }
@@ -934,7 +934,7 @@ class Downloader {
       result.ffmpeg = true;
       // 静默检查，不输出日志
     } catch (e: unknown) {
-      logger.info("[Music] FFmpeg 未找到，音频处理功能受限");
+      logger.info("[Music] FFmpeg 未找到，音频处理功能受限:", e);
     }
 
     return result;

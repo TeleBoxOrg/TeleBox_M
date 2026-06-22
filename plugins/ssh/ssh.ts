@@ -957,7 +957,7 @@ ${keysContent}`;
           try {
             await execAsync(`service iptables save`);
           } catch (e: unknown) {
-            logger.info("[ssh] 无法持久化iptables规则");
+            logger.info("[ssh] 无法持久化iptables规则:", e);
           }
         }
       } catch (firewallError: unknown) {
@@ -1274,7 +1274,7 @@ ${keysContent}`;
         try {
           await execAsync(`service iptables save`);
         } catch (e: unknown) {
-          logger.info("[sshkey] 无法持久化iptables规则");
+          logger.info("[sshkey] 无法持久化iptables规则:", e);
         }
       }
 
@@ -1315,7 +1315,7 @@ ${keysContent}`;
         try {
           await execAsync(`service iptables save`);
         } catch (e: unknown) {
-          logger.info("[sshkey] 无法持久化iptables规则");
+          logger.info("[sshkey] 无法持久化iptables规则:", e);
         }
       }
 

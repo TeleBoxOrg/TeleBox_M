@@ -195,14 +195,14 @@ async function installDependencies(msg: MessageContext): Promise<void> {
     try {
       require.resolve("better-sqlite3");
     } catch (e: unknown) {
-      logger.info("[INSTALLING] 'better-sqlite3' not found. Installing via npm...");
+      logger.info("[INSTALLING] 'better-sqlite3' not found. Installing via npm...", e);
       await execFileAsync("npm", ["install", "better-sqlite3"], { cwd: "/root/telebox" });
       logger.info("[SUCCESS] Installed 'better-sqlite3'.");
     }
     try {
       execSync("command -v sshpass");
     } catch (e: unknown) {
-      logger.info("[INSTALLING] 'sshpass' not found. Installing via system package manager...");
+      logger.info("[INSTALLING] 'sshpass' not found. Installing via system package manager...", e);
       if (fs.existsSync("/usr/bin/apt-get"))
         await execFileAsync("sudo", ["apt-get", "update"], { timeout: 120000 }).then(() =>
           execFileAsync("sudo", ["apt-get", "install", "-y", "sshpass"], { timeout: 120000 })

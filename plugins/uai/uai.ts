@@ -237,7 +237,7 @@ async function collectMessages(
             iterParams.fromUser = userEntity;
             logger.info(`[UAI] Using fromUser filter: ${filterSenderId}`);
         } catch (e: unknown) {
-            logger.info(`[UAI] Failed to get entity for ${filterSenderId}, falling back to manual filter`);
+            logger.info(`[UAI] Failed to get entity for ${filterSenderId}, falling back to manual filter:`, e);
             // 如果获取实体失败，使用较小的扫描范围避免 flood
             iterParams.limit = Math.min(maxCount * 20, 3000);
         }

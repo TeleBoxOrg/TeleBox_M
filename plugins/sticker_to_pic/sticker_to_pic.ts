@@ -98,7 +98,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
             logger.info('[sticker_to_pic] ImageMagick自动安装成功 (brew)');
             return true;
           } catch (e: unknown) {
-            logger.error('[sticker_to_pic] macOS自动安装失败');
+            logger.error('[sticker_to_pic] macOS自动安装失败:', e);
             return false;
           }
         }
@@ -116,7 +116,7 @@ const ensureImageMagick = async (showProgress: boolean = false, msg?: MessageCon
             logger.info('[sticker_to_pic] ImageMagick自动安装成功 (scoop)');
             return true;
           } catch (e: unknown) {
-            logger.error('[sticker_to_pic] Windows系统需要手动安装ImageMagick');
+            logger.error('[sticker_to_pic] Windows系统需要手动安装ImageMagick:', e);
             return false;
           }
         }
