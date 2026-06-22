@@ -13,7 +13,7 @@ export function isAuthKeyUnregisteredError(error: unknown): boolean {
 export async function safeGetMe(client: TelegramClient): Promise<User | undefined> {
   try {
     return await client.getMe();
-  } catch (error) {
+  } catch (error: unknown) {
     if (isAuthKeyUnregisteredError(error)) {
       return undefined;
     }
@@ -31,7 +31,7 @@ export async function safeCheckAuthorization(client: TelegramClient): Promise<bo
   try {
     await client.getMe();
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     if (isAuthKeyUnregisteredError(error)) {
       return false;
     }

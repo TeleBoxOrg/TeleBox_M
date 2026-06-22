@@ -315,7 +315,7 @@ async function findUserFromGroups(
           dialogMap.set(key, dialog);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("findUserFromGroups getDialogs error:", error);
     }
   };
@@ -338,13 +338,13 @@ async function findUserFromGroups(
               return participant;
             }
           }
-        } catch (e) {
+        } catch (e: unknown) {
           // 跳过无法获取成员的群组
           continue;
         }
       }
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("findUserFromGroups error:", e);
   }
   return null;
@@ -388,7 +388,7 @@ class IsAlivePlugin extends Plugin {
             // 先尝试常规方式获取
             try {
               entity = await client.getChat(userId) as User | Chat;
-            } catch (e) {
+            } catch (e: unknown) {
               // 常规方式失败，尝试从群组成员中查找
               await msg.edit({
                 text: html`🔍 正在从群组成员中查找用户...`,
@@ -461,7 +461,7 @@ class IsAlivePlugin extends Plugin {
               });
             }
           }
-        } catch (e) {
+        } catch (e: unknown) {
           lastMessageTime = null;
           lastMessageDate = null;
         }

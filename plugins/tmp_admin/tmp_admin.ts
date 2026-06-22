@@ -126,7 +126,7 @@ async function editMessageIgnoringNotModified(
 ): Promise<void> {
   try {
     await msg.edit(options as { text: string });
-  } catch (error) {
+  } catch (error: unknown) {
     if (!isMessageNotModified(error)) throw error;
   }
 }
@@ -141,7 +141,7 @@ async function deleteMessageQuiet(msg: MessageContext): Promise<void> {
     if (typeof target.delete === "function") {
       await target.delete({ revoke: true });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[tmp_admin] 删除 sudo 命令副本失败:", error);
   }
 }
@@ -175,7 +175,7 @@ async function respondToCommand(
     await client.sendText(peer, sendContent, {
       replyTo: trigger.id,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     await client.sendText(peer, sendContent);
   }
 
@@ -650,7 +650,7 @@ class TmpAdminPlugin extends Plugin {
             job.channel,
             job.userEntity
           );
-        } catch (e) {
+        } catch (e: unknown) {
           scheduleRetry(e);
           return;
         }
@@ -667,7 +667,7 @@ class TmpAdminPlugin extends Plugin {
 
         try {
           await this.demoteAdmin(job.client, job.channel, job.userEntity);
-        } catch (e) {
+        } catch (e: unknown) {
           scheduleRetry(e);
           return;
         }
@@ -765,7 +765,7 @@ class TmpAdminPlugin extends Plugin {
   private async deleteStoredJobQuiet(key: string): Promise<void> {
     try {
       await this.deleteStoredJob(key);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[tmp_admin] 删除持久化任务失败 ${key}:`, error);
     }
   }
@@ -773,7 +773,7 @@ class TmpAdminPlugin extends Plugin {
   private async persistJobQuiet(key: string, job: TempAdminJob): Promise<void> {
     try {
       await this.persistJob(key, job);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[tmp_admin] 更新持久化任务失败 ${key}:`, error);
     }
   }
@@ -804,7 +804,7 @@ class TmpAdminPlugin extends Plugin {
           expiresAt: stored.expiresAt,
           retryCount: stored.retryCount || 0,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`[tmp_admin] 跳过无法恢复的任务 ${key}:`, error);
         removedKeys.push(key);
       }
@@ -834,7 +834,7 @@ class TmpAdminPlugin extends Plugin {
       await job.client.sendText(job.peerId, text, {
         ...(job.replyToMsgId ? { replyTo: job.replyToMsgId } : {}),
       });
-    } catch (e) {
+    } catch (e: unknown) {
       if (!job.replyToMsgId) throw e;
       await job.client.sendText(job.peerId, text);
     }
@@ -843,7 +843,7 @@ class TmpAdminPlugin extends Plugin {
   private async sendReplyQuiet(job: TempAdminJob, message: string): Promise<void> {
     try {
       await this.sendReply(job, message);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[tmp_admin] 发送到期通知失败:", error);
     }
   }
@@ -898,7 +898,7 @@ class TmpAdminPlugin extends Plugin {
       let sender: any;
       try {
         sender = await (reply as { getCompleteSender?: () => Promise<unknown> }).getCompleteSender?.();
-      } catch (e) {
+      } catch (e: unknown) {
         sender = undefined;
       }
 
@@ -916,7 +916,7 @@ class TmpAdminPlugin extends Plugin {
         if (hasRawType(full, "user")) {
           return { id: Number((full as { id?: number }).id), entity: input };
         }
-      } catch (e) {
+      } catch (e: unknown) {
         return {};
       }
     }
@@ -930,7 +930,7 @@ class TmpAdminPlugin extends Plugin {
       if (fullId === undefined) return {};
       const input = client.resolvePeer(fullId);
       return { id: Number(fullId), entity: input };
-    } catch (e) {
+    } catch (e: unknown) {
       const numericId = Number(arg);
       if (!Number.isFinite(numericId)) return {};
 
@@ -959,7 +959,7 @@ class TmpAdminPlugin extends Plugin {
           if (!participants.length) break;
           offset += participants.length;
         }
-      } catch (e) {
+      } catch (e: unknown) {
         return {};
       }
     }

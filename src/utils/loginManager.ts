@@ -114,13 +114,13 @@ export async function initializeClientSession(
       // receives ZERO updates — commands never trigger. Explicitly start it.
       try {
         await (client as unknown as { startUpdatesLoop?: () => Promise<void> }).startUpdatesLoop?.();
-      } catch (e) {
+      } catch (e: unknown) {
         logger.warn("[LOGIN] startUpdatesLoop failed (updates may be inactive):", e);
       }
       closeReadlineInterface();
       return { meId: me.id ? String(me.id) : undefined };
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("[loginManager] operation failed:", e);
   }
 

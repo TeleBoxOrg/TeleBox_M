@@ -380,7 +380,7 @@ async function senderEntity(msg: MessageContext): Promise<any | undefined> {
       if (key) entityCache.set(key, sender);
       return sender;
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.debug("quote: sender entity from message failed", err);
   }
   const client = await getGlobalClient().catch(() => null);
@@ -1049,7 +1049,7 @@ async function generateAnimatedQuoteWebm(quoteMessages: any[], args: QuoteArgs):
     const probe = await loadImage(rendered[0]);
     width = probe.width;
     height = probe.height;
-  } catch (err) {
+  } catch (err: unknown) {
     logger.debug("quote: canvas probe failed, using defaults", err);
   }
   const encoded = await encodeFramesToWebm(rendered, fps);
@@ -1297,7 +1297,7 @@ async function editProgress(msg: MessageContext, text: string): Promise<void> {
         text,
       });
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.warn("quote: reply with media failed, falling back to text", err);
     try { await msg.replyText(text); } catch (_) { logger.warn("[quote] fallback reply also failed", _); }
   }

@@ -145,7 +145,7 @@ if (db) {
     if (!hasMessageIdColumn) {
       db.exec(`ALTER TABLE lottery_config ADD COLUMN message_id TEXT`);
     }
-  } catch (error) { logger.warn(`[lottery] Table doesn't exist yet, will be created below:`, error) }
+  } catch (error: unknown) { logger.warn(`[lottery] Table doesn't exist yet, will be created below:`, error) }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS lottery_config (
@@ -390,7 +390,7 @@ function deleteLotteryActivity(lotteryId: number): boolean {
     
     transaction();
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to delete lottery activity:", error);
     return false;
   }
@@ -499,7 +499,7 @@ function addParticipantToLottery(lotteryId: number, participant: AddParticipantI
     
     transaction();
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to add participant:", error);
     return false;
   }
@@ -578,13 +578,13 @@ async function validateUserConditions(client: TelegramClient, user: LotteryUser,
         if (!participant) {
           return { valid: false, reason: `需要关注频道 ${lottery.required_channel} 才能参与抽奖` };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         return { valid: false, reason: `需要关注指定频道才能参与抽奖` };
       }
     }
 
     return { valid: true };
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Error validating user conditions:", error);
     return { valid: true }; // Default to allow if validation fails
   }
@@ -691,7 +691,7 @@ async function distributePrizes(client: TelegramClient, lottery: LotteryConfigRo
         }
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to distribute prizes:", error);
     throw error;
   }
@@ -726,7 +726,7 @@ async function sendPrizeToWinner(client: TelegramClient, winner: LotteryUser, pr
 
     logger.info(`Prize sent to user ${winner.user_id} (${displayName})`);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`Failed to send prize to user ${winner.user_id}:`, error);
     return false;
   }
@@ -769,7 +769,7 @@ async function isUserAdmin(client: TelegramClient, chatId: string, userId: strin
       return member.status === "admin" || member.status === "creator";
     }
     return false;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Error checking admin status:", error);
     return false;
   }
@@ -782,7 +782,7 @@ async function performLotteryDraw(client: TelegramClient, lottery: LotteryConfig
       try {
         await client.deleteMessagesById(lottery.chat_id, [parseInt(lottery.message_id)], { revoke: true });
         logger.info(`[lottery] Deleted original lottery message ${lottery.message_id}`);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.warn("Failed to delete original lottery message:", error);
       }
     }
@@ -868,7 +868,7 @@ async function performLotteryDraw(client: TelegramClient, lottery: LotteryConfig
     stmt.run(lottery.id);
     
     
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to perform lottery draw:", error);
     await client.sendText(lottery.chat_id, html(`❌ <b>开奖失败</b><br><br>发生错误，请稍后重试。`));
   }
@@ -890,7 +890,7 @@ async function handleEnhancedLotteryJoin(msg: any): Promise<void> {
     } else {
       return;
     }
-  } catch (e) {
+  } catch (e: unknown) {
     return;
   }
 
@@ -922,12 +922,12 @@ async function handleEnhancedLotteryJoin(msg: any): Promise<void> {
         try {
           await replyMsg.delete();
           await msg.delete();
-        } catch (error) {
+        } catch (error: unknown) {
           logger.warn("Failed to delete duplicate participation messages:", error);
         }
       }, activeLottery.delete_delay * 1000);
       pendingTimers.add(t1);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn("Failed to handle duplicate participation:", error);
     }
     return;
@@ -938,7 +938,7 @@ async function handleEnhancedLotteryJoin(msg: any): Promise<void> {
   if (!validation.valid) {
     try {
       await msg.delete(); // Silently delete invalid participation
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn("Failed to delete invalid participation message:", error);
     }
     return;
@@ -979,12 +979,12 @@ async function handleEnhancedLotteryJoin(msg: any): Promise<void> {
       try {
         await replyMsg.delete();
         await msg.delete();
-      } catch (error) {
+      } catch (error: unknown) {
         logger.warn("Failed to delete participation messages:", error);
       }
     }, activeLottery.delete_delay * 1000);
     pendingTimers.add(t2);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn("Failed to send join confirmation:", error);
   }
 
@@ -1124,7 +1124,7 @@ const lottery = async (msg: MessageContext) => {
       } else {
         throw new Error("无法获取聊天ID");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       await msg.edit({
         text: html(`❌ <b>获取聊天ID失败:</b> ${htmlEscape(String(error))}`)
       });
@@ -1337,7 +1337,7 @@ const lottery = async (msg: MessageContext) => {
           } else {
             logger.info(`[lottery] Pinned lottery message silently`);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.warn("Failed to pin lottery message:", error);
         }
       }
@@ -1645,7 +1645,7 @@ const lottery = async (msg: MessageContext) => {
             fileName,
             caption: html(`📋 <b>完整参与名单</b><br><br>🎯 活动: ${htmlEscape(activeLottery.title)}<br>👥 总计: ${currentCount} 人`)
           });
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error("Failed to send participants file:", error);
           // Fallback to truncated list
           const displayList = participants.slice(0, 30).map((p, index) => {
@@ -1756,7 +1756,7 @@ class LotteryPlugin extends Plugin {
     if (db) {
       try {
         db.close();
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
       db = null as unknown as typeof db;
     }
   }

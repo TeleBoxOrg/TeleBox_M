@@ -182,7 +182,7 @@ class KkpPlugin extends Plugin {
           clearTimeout(listener.timeout);
           try {
             client.onNewMessage.remove(listener.handler);
-          } catch (error) {
+          } catch (error: unknown) {
             logger.warn("[kkp] 移除事件监听器失败:", error);
           }
           this.messageListeners.delete(listenerId);
@@ -207,7 +207,7 @@ class KkpPlugin extends Plugin {
           if (senderId === botId && messageDate >= startTime - 1000) {
             if (this.isVideoMessage(message)) cleanup(message);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error("[kkp] 消息处理失败:", error);
           cleanup(null);
         }
@@ -221,7 +221,7 @@ class KkpPlugin extends Plugin {
       });
       try {
         client.onNewMessage.add(messageHandler);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("[kkp] 添加事件监听器失败:", error);
         cleanup(null);
       }
@@ -292,7 +292,7 @@ class KkpPlugin extends Plugin {
 
             try {
               await client.readHistory(peerId);
-            } catch (e) { logger.error('[kkp] markAsRead failed:', e); }
+            } catch (e: unknown) { logger.error('[kkp] markAsRead failed:', e); }
             await msg.delete();
           } else {
             await msg.edit({ text: html`❌ 无法提取视频文件` });
@@ -319,7 +319,7 @@ class KkpPlugin extends Plugin {
       if (client) {
         try {
           client.onNewMessage.remove(listener.handler);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.warn("[kkp] cleanup 移除监听器失败:", error);
         }
       }

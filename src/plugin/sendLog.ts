@@ -61,7 +61,7 @@ async function findLogFiles(): Promise<{
       ) {
         errLog = logPath;
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[sendLog] operation failed:", e);
     }
   }

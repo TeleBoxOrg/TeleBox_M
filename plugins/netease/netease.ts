@@ -61,7 +61,7 @@ async function ensureBotReady(msg: MessageContext) {
       _: "contacts.unblock",
       id: await client.resolvePeer(bot),
     });
-  } catch (e) { logger.warn('[netease] unblock bot failed:', e) }
+  } catch (e: unknown) { logger.warn('[netease] unblock bot failed:', e) }
 
   // 静音通知
   try {
@@ -75,12 +75,12 @@ async function ensureBotReady(msg: MessageContext) {
         muteUntil: 2147483647,
       },
     });
-  } catch (e) { logger.warn('[netease] mute bot failed:', e) }
+  } catch (e: unknown) { logger.warn('[netease] mute bot failed:', e) }
 
   // 启动 bot（首次使用）
   try {
     await client.sendText(bot, "/start");
-  } catch (e) { logger.warn('[netease] start bot failed:', e) }
+  } catch (e: unknown) { logger.warn('[netease] start bot failed:', e) }
 }
 
 async function fetchAndSendAudio(
@@ -94,11 +94,11 @@ async function fetchAndSendAudio(
   // 发送命令
   try {
     await client.sendText(bot, commandToBot);
-  } catch (e) {
+  } catch (e: unknown) {
     try {
       // 回退：有些 bot 可能只接收文本
       await client.sendText(bot, commandToBot.replace(/^\/(?:search|music)\s+/, ""));
-    } catch (e) { logger.warn('[netease] send fallback text failed:', e) }
+    } catch (e: unknown) { logger.warn('[netease] send fallback text failed:', e) }
   }
 
   // 轮询新消息：优先寻找按钮消息，其次直接媒体消息
@@ -134,7 +134,7 @@ async function fetchAndSendAudio(
           });
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       await msg.edit({ text: html(`❌ 点击按钮失败：${htmlEscape((e as { message?: string })?.message || String(e))}`) });
       return;
     }
@@ -175,7 +175,7 @@ async function fetchAndSendAudio(
       caption,
       ...(replyToId ? { replyTo: replyToId } : {}),
     });
-  } catch (e) {
+  } catch (e: unknown) {
     // Fallback: forward the message
     try {
       await client.forwardMessagesById({
@@ -183,7 +183,7 @@ async function fetchAndSendAudio(
         messages: [mediaMsg.id],
         toChatId: msg.chat.id,
       });
-    } catch (e) { logger.warn('[netease] forward message failed:', e) }
+    } catch (e: unknown) { logger.warn('[netease] forward message failed:', e) }
   }
 }
 
@@ -206,7 +206,7 @@ class NeteasePlugin extends Plugin {
         await msg.edit({
           text: html(`🔎 处理中：<code>${htmlEscape(keyword)}</code>`),
         });
-      } catch (e) { logger.warn('[netease] edit msg failed:', e) }
+      } catch (e: unknown) { logger.warn('[netease] edit msg failed:', e) }
 
       await ensureBotReady(msg);
 
@@ -224,7 +224,7 @@ class NeteasePlugin extends Plugin {
 
       try {
         await msg.delete();
-      } catch (e) { logger.warn('[netease] delete msg failed:', e) }
+      } catch (e: unknown) { logger.warn('[netease] delete msg failed:', e) }
     },
   };
 }

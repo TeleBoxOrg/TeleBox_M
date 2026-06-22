@@ -211,7 +211,7 @@ class HisPlugin extends Plugin {
       } else {
         targetDisplay = targetEntity.toString();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       targetDisplay = targetEntity.toString();
     }
 
@@ -229,9 +229,9 @@ class HisPlugin extends Plugin {
             const chatIdStr = String(chatId).replace("-100", "");
             baseLinkUrl = `https://t.me/c/${chatIdStr}/`;
           }
-        } catch (e) { logger.warn(`[his] Not a channel, try regular chat:`, e) }
+        } catch (e: unknown) { logger.warn(`[his] Not a channel, try regular chat:`, e) }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[HIS] Could not get chat entity for linking:", error);
     }
 

@@ -46,7 +46,7 @@ async function updateReloadStatus(params: {
       message: targetMessageId,
       text: isHtml ? html(text) : text,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to edit reload status message, falling back to sendText:", error);
     try {
       await client?.sendText(targetChat, isHtml ? html(text) : text);
@@ -199,7 +199,7 @@ const editExitMsg = async () => {
       });
       fs.unlinkSync(exitFile);
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("Failed to edit exit message:", e);
   }
 };
@@ -352,7 +352,7 @@ async function memoryMonitorTask() {
         `[Memory Monitor] 正常: Heap ${memory.heapUsed.toFixed(2)}MB / ${config.memoryThreshold}MB, RSS ${memory.rss.toFixed(2)}MB / ${config.rssThreshold}MB, Heap增长 ${formatMb(growth.heapGrowth)}, RSS增长 ${formatMb(growth.rssGrowth)}`
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[Memory Monitor] 定时任务执行失败:", error);
   }
 }
@@ -446,7 +446,7 @@ class ReloadPlugin extends Plugin {
           text: output,
           isHtml: false,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Plugin reload failed:", error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         try {
@@ -473,7 +473,7 @@ class ReloadPlugin extends Plugin {
       scheduleTrackedTimeout(async () => {
         try {
           await execAsync("pm2 restart telebox");
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error("PM2 restart failed:", error);
         }
       }, 500);
@@ -498,7 +498,7 @@ class ReloadPlugin extends Plugin {
         await msg.edit({
           text: html(`${infoText}<br><br><b>状态：</b> ${statusEmoji} ${statusText}`),
         });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("[Health] 命令执行失败:", error);
         await msg.edit({
           text: html(`❌ 获取内存信息失败：${htmlEscape(error instanceof Error ? error.message : String(error))}`),

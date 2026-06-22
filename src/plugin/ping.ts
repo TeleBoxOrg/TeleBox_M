@@ -214,7 +214,7 @@ async function pingDataCenters(): Promise<string[]> {
       let pingTime = "0";
       try {
         pingTime = String(Math.round(parseFloat(stdout.trim())));
-      } catch (e) {
+      } catch (e: unknown) {
         pingTime = "0";
       }
 
@@ -228,7 +228,7 @@ async function pingDataCenters(): Promise<string[]> {
       results.push(
         `🌐 <b>DC${dc} (${dcLocation}):</b> <code>${pingTime}ms</code>`
       );
-    } catch (error) {
+    } catch (error: unknown) {
       const dcLocation =
         dc === 1 || dc === 3
           ? "Miami"

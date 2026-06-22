@@ -102,7 +102,7 @@ class ZprConfigManager {
             );
             this.initialized = true;
             logger.info("[zpr] 配置初始化成功");
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error("[zpr] 初始化配置失败:", error);
             await this.handleInitError();
         }
@@ -115,7 +115,7 @@ class ZprConfigManager {
 
             const configContent = await fs.readFile(this.configPath, 'utf8');
             JSON.parse(configContent); // 验证JSON格式
-        } catch (error) {
+        } catch (error: unknown) {
             logger.warn("[zpr] 配置文件损坏，尝试从备份恢复");
             await this.restoreFromBackup();
         }
@@ -128,7 +128,7 @@ class ZprConfigManager {
                 await fs.copyFile(this.backupPath, this.configPath);
                 logger.info("[zpr] 从备份恢复配置成功");
             }
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error("[zpr] 备份恢复失败:", error);
             await this.createDefaultConfig();
         }
@@ -166,7 +166,7 @@ class ZprConfigManager {
                 await fs.copyFile(this.configPath, this.backupPath);
                 logger.info("[zpr] 配置备份创建成功");
             }
-        } catch (error) {
+        } catch (error: unknown) {
             logger.warn("[zpr] 创建备份失败:", error);
         }
     }
@@ -232,7 +232,7 @@ class ZprConfigManager {
 
             // 写入配置，增强重试机制
             return await this.writeConfigWithRetry();
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error("[zpr] 设置代理失败:", error);
             return false;
         } finally {
@@ -301,7 +301,7 @@ interface MediaGroup {
 const editHtmlMessage = async (msg: MessageContext, text: string) => {
     try {
         await msg.edit({ text: html(text) });
-    } catch (error) {
+    } catch (error: unknown) {
         logger.warn("[zpr] 消息编辑失败:", error);
     }
 };
@@ -524,7 +524,7 @@ async function getResult(message: MessageContext, r18 = 0, tag = "", num = 1): P
                 await editHtmlMessage(message, `📡 更新默认代理为: ${bestProxy}`);
                 await ZprConfigManager.setProxyHost(bestProxy);
                 logger.info(`[zpr] 已切换到更稳定的代理: ${bestProxy}`);
-            } catch (err) {
+            } catch (err: unknown) {
                 logger.warn(`[zpr] 更新默认代理失败:`, err);
             }
         }
@@ -637,7 +637,7 @@ class ZprPlugin extends Plugin {
                 
                 try {
                     await editHtmlMessage(msg, "📤 传送中。。。");
-                } catch (e) { logger.error('[zpr] edit message failed:', e); }
+                } catch (e: unknown) { logger.error('[zpr] edit message failed:', e); }
                 
                 try {
                     // 逐个发送图片文件
@@ -673,7 +673,7 @@ class ZprPlugin extends Plugin {
 
                     try {
                         await msg.delete();
-                    } catch (e) { logger.error('[zpr] delete message failed:', e); }
+                    } catch (e: unknown) { logger.error('[zpr] delete message failed:', e); }
                 } catch (error: unknown) {
                     logger.error("[zpr] 插件执行失败:", error);
                     await editHtmlMessage(msg, `❌ <b>插件执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`);

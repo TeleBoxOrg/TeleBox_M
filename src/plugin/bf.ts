@@ -230,7 +230,7 @@ async function createBackup(
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
       /* ignored */
-    } catch (e) { logger.error("[quality] ignored error:", e); }
+    } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
   }
 }
 
@@ -574,7 +574,7 @@ class BfPlugin extends Plugin {
               caption: html(caption),
               fileName: backupName,
             });
-          } catch (err) {
+          } catch (err: unknown) {
             logger.error(`发送到 ${dest} 失败:`, err);
             if (dest !== "me") {
               await client.sendMedia("me", {
@@ -600,7 +600,7 @@ class BfPlugin extends Plugin {
             `💾 <b>大小</b>: ${(stats.size / 1024 / 1024).toFixed(2)} MB`
           ),
         });
-      } catch (error) {
+      } catch (error: unknown) {
         await msg.edit({
           text: `❌ 备份失败: ${String(error)}`,
         });
@@ -614,7 +614,7 @@ class BfPlugin extends Plugin {
             fs.unlinkSync(path.join(os.tmpdir(), f));
           }
           /* ignored */
-        } catch (e) { logger.error("[quality] ignored error:", e); }
+        } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
       }
     },
 
@@ -688,7 +688,7 @@ class BfPlugin extends Plugin {
           fs.unlinkSync(tempPath);
           fs.rmSync(extractPath, { recursive: true, force: true });
           /* ignored */
-        } catch (e) { logger.error("[quality] ignored error:", e); }
+        } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
 
         // 尝试重载插件
         try {
@@ -703,12 +703,12 @@ class BfPlugin extends Plugin {
               text: "✅ 恢复完成，请重启程序",
             });
           }
-        } catch (e) {
+        } catch (e: unknown) {
           await msg.edit({
             text: "✅ 恢复完成，请重启程序",
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         await msg.edit({
           text: `❌ 恢复失败: ${String(error)}`,
         });

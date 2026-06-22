@@ -259,13 +259,13 @@ const help_text = [
   "",
   `<pre>${commandName} add 一键强制更新并退出重启`,
   `return !msg.forwardInfo && ['a', 'b'].includes(msg.sender?.username) && msg.text === '${mainPrefix}${mainPrefix}'`,
-  `await run('${mainPrefix}update -f', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e) { console.warn('[kitt] 删除消息失败:', e) }; await run('${mainPrefix}exit', msg)</pre>`,
+  `await run('${mainPrefix}update -f', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e: unknown) { console.warn('[kitt] 删除消息失败:', e) }; await run('${mainPrefix}exit', msg)</pre>`,
   "",
   `- <code>username</code> 为 <code>a</code> 或 <code>b</code> 的用户可使用 <code>,,</code> 一键更新已安装的远程插件`,
   "",
   `<pre>${commandName} add 一键更新已安装的远程插件`,
   `return !msg.forwardInfo && ['a', 'b'].includes(msg.sender?.username) && msg.text === ',,'`,
-  `await run('${mainPrefix}tpm update', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e) { console.warn('[kitt] 删除消息失败:', e) };</pre>`,
+  `await run('${mainPrefix}tpm update', msg); await run('${mainPrefix}dme 1', msg); try { await msg.delete() } catch (e: unknown) { console.warn('[kitt] 删除消息失败:', e) };</pre>`,
   "",
   "▎管理",
   `<code>${commandName} ls</code>, <code>${commandName} list</code>: 列出所有任务`,
@@ -418,7 +418,7 @@ class KittPlugin extends Plugin {
         let matched;
         try {
           matched = await exec(match, msg, undefined, options);
-        } catch (e) {
+        } catch (e: unknown) {
           logger.error(
             `[KITT] 任务 ${id}${remark ? ` ${remark}` : ""} 匹配时出错:`,
             e
@@ -430,7 +430,7 @@ class KittPlugin extends Plugin {
               `[KITT] 任务 ${id}${remark ? ` ${remark}` : ""} 匹配成功`
             );
             await exec(action, msg, undefined, options);
-          } catch (e) {
+          } catch (e: unknown) {
             logger.error(
               `[KITT] 任务 ${id}${remark ? ` ${remark}` : ""} 执行时出错:`,
               e

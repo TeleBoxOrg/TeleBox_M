@@ -83,7 +83,7 @@ async function getTrollImage(): Promise<string | null> {
       return CONFIG.TROLL_IMAGE_PATH;
     }
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[DME] 下载防撤回图片失败:", error);
     return null;
   }
@@ -177,7 +177,7 @@ async function editMediaMessageToAntiRecall(
       media: buffer as unknown as import("@mtcute/core").InputMediaLike,
     });
     return true;
-  } catch (e) {
+  } catch (e: unknown) {
     // 任意编辑失败(含 MESSAGE_EDIT_TIME_EXPIRED)静默跳过
     return false;
   }
@@ -209,7 +209,7 @@ async function editTextMessageToPlaceholder(
       text: TEXT_PLACEHOLDER,
     });
     return true;
-  } catch (e) {
+  } catch (e: unknown) {
     return false;
   }
 }
@@ -675,7 +675,7 @@ async function isRestrictedGroup(client: TelegramClient, chatPeer: any): Promise
     }
     
     return false;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.info(`[DME] 检测群组限制失败:`, error);
     return false;
   }
@@ -1061,7 +1061,7 @@ async function searchEditAndDeleteMyMessages(
       } else {
         logger.info(`[DME] 无频道管理权限，使用普通模式`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.info(`[DME] 权限检查失败，使用普通模式:`, error);
     }
   }
@@ -1340,7 +1340,7 @@ const dme = async (msg: MessageContext) => {
       await client.deleteMessagesById(chatPeer, [msg.id], {
         revoke: true,
       });
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
 
     // 执行主要操作
     logger.info(`[DME] ========== 开始执行DME任务 ==========`);

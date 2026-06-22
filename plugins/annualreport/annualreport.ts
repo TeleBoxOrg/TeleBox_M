@@ -30,7 +30,7 @@ async function getAllDialogs(client: any): Promise<any[]> {
           dialogMap.set(key, dialog);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 获取对话列表失败:", error);
     }
   };
@@ -91,7 +91,7 @@ class AnnualReportPlugin extends Plugin {
           channelCount++;
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 获取对话统计失败:", error);
     }
     
@@ -112,7 +112,7 @@ class AnnualReportPlugin extends Plugin {
       } else if (result.users && result.users.length > 0) {
         return result.users.length;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 获取黑名单失败:", error);
     }
     
@@ -128,7 +128,7 @@ class AnnualReportPlugin extends Plugin {
         const days = Math.floor((Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24));
         return days;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 读取LICENSE文件失败:", error);
     }
     
@@ -159,7 +159,7 @@ class AnnualReportPlugin extends Plugin {
       }
 
       return userPlugins + systemPlugins;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 统计插件数量失败:", error);
       return 0;
     }
@@ -178,7 +178,7 @@ class AnnualReportPlugin extends Plugin {
         text += `「${htmlEscape(data.from)}」`;
       }
       return text;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AnnualReport] 获取一言失败:", error);
       return '"用代码表达言语的魅力，用代码书写山河的壮丽。" —— 一言「一言开发者中心」';
     }

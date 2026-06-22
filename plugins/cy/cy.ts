@@ -36,7 +36,7 @@ function ensureCjkFont(): void {
       registerFont(fontPath, { family: CJK_FONT_FAMILY });
       cjkFontRegistered = true;
       break;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`[cy] 注册中文字体失败: ${fontPath}`, error);
     }
   }
@@ -111,7 +111,7 @@ function readScheduleConfig(): CyScheduleConfig {
       times: Array.isArray(raw.times) ? raw.times.map(String).filter(isValidTime).slice(0, 12) : [],
       limit: normalizeLimit(raw.limit),
     };
-  } catch (e) {
+  } catch (e: unknown) {
     return { ...DEFAULT_SCHEDULE };
   }
 }
@@ -496,7 +496,7 @@ class CyPlugin extends Plugin {
       try {
         const client = await getGlobalClient();
         await sendCloudToTarget(client, msg.chat.id, limit, msg.replyToMessage?.id || msg.id);
-      } catch (error) {
+      } catch (error: unknown) {
         await msg.edit({ text: "没有统计到足够的热词。" });
         return;
       }

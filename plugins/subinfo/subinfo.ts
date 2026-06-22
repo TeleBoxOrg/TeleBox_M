@@ -171,7 +171,7 @@ async function getNodeInfo(url: string): Promise<{ node_count: number | string, 
           regions: Object.fromEntries(Object.entries(regions).filter(([, v]) => v > 0))
         };
       }
-    } catch (e) { logger.warn('YAML 解析失败', e) }
+    } catch (e: unknown) { logger.warn('YAML 解析失败', e) }
 
     // 2. 尝试解析 Base64 (V2Ray/Shadowsocks 原始链接)
     try {
@@ -207,9 +207,9 @@ async function getNodeInfo(url: string): Promise<{ node_count: number | string, 
         type_count: Object.fromEntries(Object.entries(typeCount).filter(([, v]) => v > 0)),
         regions: Object.fromEntries(Object.entries(regions).filter(([, v]) => v > 0)),
       };
-    } catch (e) { logger.warn('subinfo: parseSubscription failed', e); }
+    } catch (e: unknown) { logger.warn('subinfo: parseSubscription failed', e); }
     return null;
-  } catch (e) { logger.warn('subinfo: parseSubscription outer catch', e); return null; }
+  } catch (e: unknown) { logger.warn('subinfo: parseSubscription outer catch', e); return null; }
 }
 
 // 判断订阅周期类型 (单次/月付/长期)
@@ -269,10 +269,10 @@ async function getWebsiteInfo(url: string): Promise<{ website: string | null; we
     let response;
     try {
       response = await axios.get(baseUrl + '/auth/login', { headers, timeout: 5000, maxRedirects: 5 });
-    } catch (e) {
+    } catch (e: unknown) {
       try {
         response = await axios.get(baseUrl, { headers, timeout: 5000, maxRedirects: 5 });
-      } catch (e) {
+      } catch (e: unknown) {
         return { website: baseUrl, websiteName: "连接失败" };
       }
     }
@@ -291,7 +291,7 @@ async function getWebsiteInfo(url: string): Promise<{ website: string | null; we
       return { website: baseUrl, websiteName: title || null };
     }
 
-  } catch (e) { logger.warn(`[subinfo] 忽略错误:`, e) }
+  } catch (e: unknown) { logger.warn(`[subinfo] 忽略错误:`, e) }
   return { website: null, websiteName: null };
 }
 
@@ -332,7 +332,7 @@ class SubinfoPlugin extends Plugin {
       });
       REMOTE_CONFIG_MAPPINGS = mappings;
       return Object.keys(REMOTE_CONFIG_MAPPINGS).length;
-    } catch (error) {
+    } catch (error: unknown) {
       // 忽略加载失败
       return 0;
     }
@@ -362,7 +362,7 @@ class SubinfoPlugin extends Plugin {
           if (namePart) return decodeURIComponent(Buffer.from(namePart, 'binary').toString('utf-8'));
         }
       }
-    } catch (e) { logger.warn(`[subinfo] 忽略解析错误:`, e) }
+    } catch (e: unknown) { logger.warn(`[subinfo] 忽略解析错误:`, e) }
     return null;
   }
 
@@ -454,7 +454,7 @@ class SubinfoPlugin extends Plugin {
         if (expireTs && Date.now() > expireTs * 1000) { status = "过期"; statusEmoji = "❌"; }
 
         // 获取节点信息
-        try { result.nodeInfo = await getNodeInfo(url); } catch (e) { result.nodeInfo = null; }
+        try { result.nodeInfo = await getNodeInfo(url); } catch (e: unknown) { result.nodeInfo = null; }
 
         return {
             ...result, success: true, status, statusEmoji, upload, download, total, used, remain, percent, expireTs, startTs
@@ -482,7 +482,7 @@ class SubinfoPlugin extends Plugin {
       try {
         const replyMsg = await safeGetReplyMessage(msg);
         if (replyMsg) sourceText = (replyMsg.text ?? '') + ' ' + ((replyMsg as { caption?: string }).caption ?? '');
-      } catch (e) { logger.warn('获取回复消息失败', e) }
+      } catch (e: unknown) { logger.warn('获取回复消息失败', e) }
     }
     if (cleanParts.length > 0) sourceText += ' ' + cleanParts.join(' ');
     sourceText = sourceText.trim();
@@ -628,7 +628,7 @@ class SubinfoPlugin extends Plugin {
         try {
             await client.sendMedia(msg.chat.id, { type: "document" as const, file: fileBuffer, fileName: `subinfo_report_${dateStr}.txt` }, { caption: `✅ 订阅查询报告 (共 ${urls.length} 个链接)\n${statsText.trim()}` });
             await msg.delete();
-        } catch (e) {
+        } catch (e: unknown) {
               const preview = isTxtOutput
                 ? splitLongMessage(resultText, 1024)[0]
                 : htmlEscape(splitLongMessage(resultText, 1024)[0]);
@@ -660,7 +660,7 @@ class SubinfoPlugin extends Plugin {
       try {
         const replyMsg = await safeGetReplyMessage(msg);
         if (replyMsg) sourceText = (replyMsg.text ?? '') + ' ' + ((replyMsg as { caption?: string }).caption ?? '');
-      } catch (e) { logger.warn('获取回复消息失败', e) }
+      } catch (e: unknown) { logger.warn('获取回复消息失败', e) }
     }
     if (cleanParts.length > 0) sourceText += ' ' + cleanParts.join(' ');
     sourceText = sourceText.trim();
@@ -760,7 +760,7 @@ class SubinfoPlugin extends Plugin {
         try {
             await client.sendMedia(msg.chat.id, { type: "document" as const, file: fileBuffer, fileName: `cha_report_${dateStr}.txt` }, { caption: `✅ 简洁订阅查询报告 (共 ${urls.length} 个链接)` });
             await msg.delete(); 
-        } catch (e) {
+        } catch (e: unknown) {
               const preview = isTxtOutput
                 ? splitLongMessage(finalOutput, 1024)[0]
                 : htmlEscape(splitLongMessage(finalOutput, 1024)[0]);

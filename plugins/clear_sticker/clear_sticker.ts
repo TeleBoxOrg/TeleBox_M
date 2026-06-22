@@ -172,11 +172,11 @@ class ClearStickerPlugin extends Plugin {
           scheduleTimer(async () => {
             try {
               await msg.delete();
-            } catch (error) {
+            } catch (error: unknown) {
               logger.error("Failed to delete result message:", error);
             }
           }, 3000);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error("Failed to edit final message:", error);
         }
       } else {
@@ -185,7 +185,7 @@ class ClearStickerPlugin extends Plugin {
         });
       }
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("ClearSticker plugin error:", error);
       await msg.edit({
         text: "❌ 清理贴纸消息时出现错误。"

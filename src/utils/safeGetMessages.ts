@@ -37,7 +37,7 @@ export async function safeGetMessages(
   try {
     const result = await client.getMessages(entity, ids);
     return result.filter((m): m is Message => m != null);
-  } catch (error) {
+  } catch (error: unknown) {
     if (isUndefinedDateCrash(error)) {
       return [];
     }
@@ -62,7 +62,7 @@ export async function safeGetReplyMessage(
     try {
       const replied = await (msg as MessageContext).getReplyTo();
       return replied ?? undefined;
-    } catch (e) {
+    } catch (e: unknown) {
       return undefined;
     }
   }

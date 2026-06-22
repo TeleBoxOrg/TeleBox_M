@@ -27,7 +27,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
     pLimitReady = (async () => {
       try {
         npm_install("p-limit");
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
       pLimit = (await import("p-limit")).default;
     })();
   }
@@ -240,7 +240,7 @@ class UserResolver {
           chatType: this.getChatType(message),
         };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[UserResolver] 解析失败: ${error}`);
     }
     
@@ -250,7 +250,7 @@ class UserResolver {
   private static async getReplySender(reply: any): Promise<any> {
     try {
       return await (reply as { getSender?: () => Promise<unknown> }).getSender?.();
-    } catch (e) {
+    } catch (e: unknown) {
       return reply.sender;
     }
   }
@@ -267,7 +267,7 @@ class UserResolver {
   ): Promise<any | null> {
     try {
       return await (client as unknown as { resolvePeer: (target: unknown) => Promise<unknown> }).resolvePeer(target);
-    } catch (e) {
+    } catch (e: unknown) {
       return null;
     }
   }
@@ -278,7 +278,7 @@ class UserResolver {
   ): Promise<any | undefined> {
     try {
       return await (client as unknown as { getInputEntity: (target: unknown) => Promise<unknown> }).getInputEntity(target);
-    } catch (e) {
+    } catch (e: unknown) {
       return undefined;
     }
   }
@@ -324,7 +324,7 @@ class UserResolver {
           if (!participants.length) break;
           offset += participants.length;
         }
-      } catch (e) {
+      } catch (e: unknown) {
         return undefined;
       }
     }
@@ -352,7 +352,7 @@ class UserResolver {
         if (matchedUser) {
           return await this.safeGetInputEntity(client, matchedUser);
         }
-      } catch (e) {
+      } catch (e: unknown) {
         return undefined;
       }
     }
@@ -398,7 +398,7 @@ class MessageManager {
               await client.deleteMessagesById(message.peerId, [message.id], {
                 revoke: true,
               });
-            } catch (e) {
+            } catch (e: unknown) {
               const msg = e instanceof Error ? e.message : String(e);
               if (!msg.includes('MESSAGE_ID_INVALID')) {
                 logger.error(`删除消息失败: ${e}`);
@@ -526,7 +526,7 @@ class PermissionManager {
         return !!(rights?.banUsers || rights?.deleteMessages);
       }
       return false;
-    } catch (error) {
+    } catch (error: unknown) {
       return false;
     }
   }
@@ -558,7 +558,7 @@ class PermissionManager {
         p?._ === 'channelParticipantCreator' ||
         p?._ === 'channelParticipantAdmin'
       );
-    } catch (error) {
+    } catch (error: unknown) {
       return false;
     }
   }
@@ -592,7 +592,7 @@ class PermissionManager {
         return !!p.adminRights?.deleteMessages;
       }
       return false;
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -669,7 +669,7 @@ class GroupManager {
       } catch (cacheError) {
         logger.error(`[GroupManager] 缓存群组失败: ${cacheError}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[GroupManager] 获取群组失败: ${error}`);
     }
     
@@ -784,7 +784,7 @@ class BanManager {
 
       await this.applyBanLikeAction(client, chatId, resolvedParticipant, rights, 'ban');
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[BanManager] 封禁失败: ${error}`);
       return false;
     }
@@ -804,7 +804,7 @@ class BanManager {
 
       await this.applyBanLikeAction(client, chatId, resolvedParticipant, rights, 'unban');
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[BanManager] 解封失败: ${error}`);
       return false;
     }
@@ -833,7 +833,7 @@ class BanManager {
 
       await this.applyBanLikeAction(client, chatId, resolvedParticipant, rights, 'mute');
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[BanManager] 禁言失败: ${error}`);
       return false;
     }
@@ -856,7 +856,7 @@ class BanManager {
       }
 
       return await this.unbanUser(client, chatId, userId, participant);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[BanManager] 踢出失败: ${error}`);
       return false;
     }
@@ -905,7 +905,7 @@ class BanManager {
     let resolvedParticipant: any;
     try {
       resolvedParticipant = await this.resolveParticipant(client, userId, participant);
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: 0,
         failed: groups.length,
@@ -961,7 +961,7 @@ class BanManager {
         try {
           await buildRequest();
           return { success: true as const, group };
-        } catch (error) {
+        } catch (error: unknown) {
           const floodSecs = getFloodWaitSeconds(error);
           if (floodSecs !== null && floodSecs <= 8 && retriesLeft > 0) {
             await sleep((floodSecs + 1) * 1000);
@@ -1034,7 +1034,7 @@ class BanManager {
     let resolvedParticipant: any;
     try {
       resolvedParticipant = await this.resolveParticipant(client, userId, participant);
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: 0,
         failed: groups.length,
@@ -1074,7 +1074,7 @@ class BanManager {
         try {
           await buildRequest();
           return { success: true, group };
-        } catch (error) {
+        } catch (error: unknown) {
           const floodSecs = getFloodWaitSeconds(error);
           if (floodSecs !== null && floodSecs <= 8 && retriesLeft > 0) {
             await sleep((floodSecs + 1) * 1000);
@@ -1274,7 +1274,7 @@ class CommandHandlers {
             try {
               const target = await resolvePermissionTarget(client, group);
               return await PermissionManager.isTargetAdmin(client, target, uid);
-            } catch (e) {
+            } catch (e: unknown) {
               return false;
             }
           })
@@ -1423,7 +1423,7 @@ class CommandHandlers {
             try {
               const target = await resolvePermissionTarget(client, group);
               return await PermissionManager.isTargetAdmin(client, target, uid);
-            } catch (e) {
+            } catch (e: unknown) {
               return false;
             }
           })

@@ -236,7 +236,7 @@ ${recentErrors ? `<b>⚠️ 最近错误:</b>\n${recentErrors}` : ""}`;
     // 创建新消息
     const savedMsg = await client.sendText("me", html(message));
     return savedMsg.id;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("发送进度到收藏夹失败:", error);
     return undefined;
   }
@@ -276,7 +276,7 @@ const fastDeleteBatch = async (
         await client.deleteMessagesById(chatId as never, [message.id], { revoke: true });
         task.deletedMessages++;
         await sleep(50);
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
     }
     
     await saveTask(task);
@@ -380,7 +380,7 @@ const da = async (msg: MessageContext) => {
       if ("title" in chat) {
         chatName = chat.title || "未知群组";
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("获取群聊信息失败:", error);
     }
 
@@ -449,7 +449,7 @@ const da = async (msg: MessageContext) => {
           }
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("权限检查失败:", e);
       isAdmin = false;
     }
@@ -537,7 +537,7 @@ const da = async (msg: MessageContext) => {
 
           // 静默处理，无进度反馈
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("[DA] 优化删除失败:", error);
         task.errors.push(`优化删除失败: ${error}`);
         task.isRunning = false;

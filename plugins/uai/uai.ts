@@ -236,7 +236,7 @@ async function collectMessages(
             const userEntity = await client.resolvePeer(filterSenderId);
             iterParams.fromUser = userEntity;
             logger.info(`[UAI] Using fromUser filter: ${filterSenderId}`);
-        } catch (e) {
+        } catch (e: unknown) {
             logger.info(`[UAI] Failed to get entity for ${filterSenderId}, falling back to manual filter`);
             // 如果获取实体失败，使用较小的扫描范围避免 flood
             iterParams.limit = Math.min(maxCount * 20, 3000);
@@ -577,7 +577,7 @@ class UAIPlugin extends Plugin {
                             const channelEntity = await client.resolvePeer(channelPeerId) as { title?: string; username?: string };
                             channelName = channelEntity.title || channelEntity.username || "频道";
                             channelUsername = channelEntity.username;
-                        } catch (e) { logger.error('[uai] resolvePeer failed:', e); }
+                        } catch (e: unknown) { logger.error('[uai] resolvePeer failed:', e); }
                         const displayName = channelUsername ? `@${channelUsername}` : channelName;
 
                         const userInfo = `来源: ${channelName}${channelUsername ? ` (@${channelUsername})` : ""}`;
@@ -598,7 +598,7 @@ class UAIPlugin extends Plugin {
                             const entity = await client.resolvePeer(fwdId.userId) as { firstName?: string; username?: string };
                             sourceName = entity.firstName || entity.username || "用户";
                             sourceUsername = entity.username;
-                        } catch (e) {
+                        } catch (e: unknown) {
                             logger.debug("uai: resolvePeer failed for forward source", e);
                         }
                     }
@@ -613,7 +613,7 @@ class UAIPlugin extends Plugin {
                             const entity = await client.resolvePeer(Number(senderId)) as { firstName?: string; username?: string };
                             sourceName = entity.firstName || entity.username || "用户";
                             sourceUsername = entity.username;
-                        } catch (e) {
+                        } catch (e: unknown) {
                             logger.debug("uai: resolvePeer failed for sender", e);
                         }
                     }

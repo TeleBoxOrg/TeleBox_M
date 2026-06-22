@@ -89,7 +89,7 @@ async function sendOrEditMessage(
   try {
     await msg.edit(editOpts);
     return msg;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.info(`[TPM] 编辑消息失败，尝试发送新消息: ${error}`);
   }
 
@@ -100,7 +100,7 @@ async function sendOrEditMessage(
   try {
     const newMsg = await client.sendText(msg.chat.id, text, sendOpts);
     return newMsg as MessageContext;
-  } catch (e) {
+  } catch (e: unknown) {
     return msg;
   }
 }
@@ -129,7 +129,7 @@ async function reloadAndFinalize(
 
   try {
     await loadPlugins();
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[TPM] 重新加载插件失败:", error);
   }
 
@@ -140,7 +140,7 @@ async function reloadAndFinalize(
       message: targetMsgId,
       text: finalText,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.info(`[TPM] 最终状态消息编辑失败 (reload 后): ${error}`);
   }
 }
@@ -158,7 +158,7 @@ async function updateProgressMessage(
   try {
     await msg.edit(messageOptions);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.info(`[TPM] 编辑进度消息失败，静默继续: ${error}`);
     return false;
   }
@@ -226,7 +226,7 @@ async function sendLongMessage(
         text: firstMessage,
         ...messageOptions,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const _client = await getGlobalClient();
       await _client.sendText(msg.chat.id, firstMessage);
     }
@@ -267,7 +267,7 @@ function normalizeGithubUrl(input: string): string {
       return parsed.toString();
     }
     return input;
-  } catch (e) {
+  } catch (e: unknown) {
     return input;
   }
 }
@@ -319,7 +319,7 @@ async function fetchWithRetry<T>(
           ...(options?.headers || {}),
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       lastError = error;
       const status = axios.isAxiosError(error) ? error.response?.status : undefined;
       if (!status || !RETRYABLE_STATUS.has(status) || attempt === MAX_RETRIES) {
@@ -376,7 +376,7 @@ async function installRemotePlugin(plugin: string, msg: MessageContext) {
       db.data[plugin] = { ...res.data[plugin], _updatedAt: Date.now() };
       await db.write();
       logger.info(`[TPM] 已记录插件信息到数据库: ${plugin}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[TPM] 记录插件信息失败: ${error}`);
     }
 
@@ -471,7 +471,7 @@ async function installAllPlugins(msg: MessageContext) {
 
         installedCount++;
         await lifecycleDelay(100, "tpm:batch-install-throttle");
-      } catch (error) {
+      } catch (error: unknown) {
         failedCount++;
         failedPlugins.push(`${plugin} (${htmlEscape(String(error))})`);
         logger.error(`[TPM] 安装插件 ${plugin} 失败:`, error);
@@ -491,7 +491,7 @@ async function installAllPlugins(msg: MessageContext) {
     resultMsg += `\n\n🔄 插件已重新加载，可以开始使用!`;
 
     await reloadAndFinalize(statusMsg, resultMsg);
-  } catch (error) {
+  } catch (error: unknown) {
     await sendOrEditMessage(statusMsg, `❌ 批量安装失败: ${error}`);
     logger.error("[TPM] 批量安装插件失败:", error);
   }
@@ -594,7 +594,7 @@ async function installMultiplePlugins(pluginNames: string[], msg: MessageContext
 
         installedCount++;
         await lifecycleDelay(100, "tpm:batch-install-throttle");
-      } catch (error) {
+      } catch (error: unknown) {
         failedCount++;
         failedPlugins.push(`${pluginName} (${htmlEscape(String(error))})`);
         logger.error(`[TPM] 安装插件 ${pluginName} 失败:`, error);
@@ -625,7 +625,7 @@ async function installMultiplePlugins(pluginNames: string[], msg: MessageContext
     resultMsg += `\n\n🔄 插件已重新加载，可以开始使用!`;
 
     await reloadAndFinalize(statusMsg, resultMsg);
-  } catch (error) {
+  } catch (error: unknown) {
     await sendOrEditMessage(statusMsg, `❌ 批量安装失败: ${error}`);
     logger.error("[TPM] 批量安装插件失败:", error);
   }
@@ -667,7 +667,7 @@ async function installPlugin(args: string[], msg: MessageContext) {
             await sendOrEditMessage(statusMsg, `❌ 插件验证失败\n文件不是有效插件`);
             return;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
           }
@@ -686,7 +686,7 @@ async function installPlugin(args: string[], msg: MessageContext) {
             overrideMessage = `\n⚠️ 已覆盖之前已安装的远程插件\n若需保持更新, 请 ${codeTag(`${mainPrefix}tpm i ${pluginName}`)}`;
             logger.info(`[TPM] 已从数据库中清除同名插件记录: ${pluginName}`);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`[TPM] 清除数据库记录失败: ${error}`);
         }
 
@@ -731,7 +731,7 @@ async function uninstallPlugin(plugin: string, msg: MessageContext) {
         await db.write();
         logger.info(`[TPM] 已从数据库中删除插件记录: ${plugin}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[TPM] 删除插件数据库记录失败: ${error}`);
     }
     finalText = `插件 ${plugin} 已卸载`;
@@ -783,7 +783,7 @@ async function uninstallMultiplePlugins(
             logger.info(`[TPM] 已从数据库中删除插件记录: ${trimmedName}`);
           }
           results.push({ name: trimmedName, success: true });
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`[TPM] 卸载插件 ${trimmedName} 失败:`, error);
           results.push({
             name: trimmedName,
@@ -810,7 +810,7 @@ async function uninstallMultiplePlugins(
     }
 
     await db.write();
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[TPM] 批量卸载过程中发生错误:`, error);
     await sendOrEditMessage(msg, `批量卸载过程中发生错误: ${
         error instanceof Error ? error.message : String(error)
@@ -863,12 +863,12 @@ async function uninstallAllPlugins(msg: MessageContext) {
           try {
             fs.unlinkSync(full);
             removed++;
-          } catch (e) {
+          } catch (e: unknown) {
             failed.push(file);
           }
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[TPM] 扫描插件目录失败:", e);
     }
 
@@ -876,7 +876,7 @@ async function uninstallAllPlugins(msg: MessageContext) {
       const db = await getDatabase();
       for (const k of Object.keys(db.data)) delete db.data[k];
       await db.write();
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[TPM] 清空数据库失败:", e);
     }
 
@@ -888,7 +888,7 @@ async function uninstallAllPlugins(msg: MessageContext) {
       }`;
     }
     await reloadAndFinalize(statusMsg, text);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[TPM] 清空插件目录失败:", error);
     await sendOrEditMessage(msg, `❌ 清空插件目录失败: ${error}`);
   }
@@ -959,7 +959,7 @@ async function search(msg: MessageContext) {
           }
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[TPM] 读取本地插件失败:", error);
     }
 
@@ -1083,7 +1083,7 @@ async function search(msg: MessageContext) {
     const footer = installTip + repoLink;
 
     await sendLongMessage(statusMsg, fullMessage, { linkPreview: false }, true, footer);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[TPM] 搜索插件失败:", error);
     await sendOrEditMessage(msg, `❌ 搜索插件失败: ${error}`);
   }
@@ -1111,7 +1111,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
           )
           .map((f) => f.replace(/\.ts$/, ""));
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error("[TPM] 读取本地插件目录失败:", err);
     }
 
@@ -1172,7 +1172,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
           const stat = fs.statSync(filePath);
           mtime = stat.mtime.toLocaleString("zh-CN");
           /* ignored */
-        } catch (e) { logger.error("[quality] ignored error:", e); }
+        } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
         localLinesVerbose.push(`${nameTag} 🗄 ${mtime}`);
       } else {
         localLinesSimple.push(nameTag);
@@ -1221,7 +1221,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
     const fullMessage = messageParts.join("\n");
     
     await sendLongMessage(statusMsg, fullMessage, { linkPreview: false }, true, footer);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[TPM] 读取插件数据库失败:", error);
     await sendOrEditMessage(msg, `❌ 读取数据库失败: ${error}`);
   }
@@ -1315,7 +1315,7 @@ async function updateAllPlugins(msg: MessageContext) {
 
         updatedCount++;
         await lifecycleDelay(100, "tpm:update-throttle");
-      } catch (error) {
+      } catch (error: unknown) {
         failedCount++;
         failedPlugins.push(`${pluginName} (${htmlEscape(String(error))})`);
         logger.error(`[TPM] 更新插件 ${pluginName} 失败:`, error);
@@ -1325,7 +1325,7 @@ async function updateAllPlugins(msg: MessageContext) {
     const finalText = `✅ 更新完成 (成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个)`;
     await reloadAndFinalize(statusMsg, finalText);
     logger.info(`[TPM] 更新完成。统计: 成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[TPM] 一键更新失败:", error);
     try {
       await statusMsg.edit({ text: `❌ 一键更新失败: ${htmlEscape(String(error))}` });

@@ -78,7 +78,7 @@ async function checkTgsDependencies(): Promise<{
       "-c",
       "from rlottie_python import LottieAnimation",
     ]);
-  } catch (e) {
+  } catch (e: unknown) {
     return {
       ok: false,
       message:
@@ -87,7 +87,7 @@ async function checkTgsDependencies(): Promise<{
   }
   try {
     await execFileAsync("ffmpeg", ["-version"]);
-  } catch (e) {
+  } catch (e: unknown) {
     return {
       ok: false,
       message: "缺少 ffmpeg，请安装: apt-get install -y ffmpeg",
@@ -140,13 +140,13 @@ anim.save_animation(sys.argv[2])
   } finally {
     try {
       fs.unlinkSync(tgsPath);
-    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e: unknown) { logger.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(gifPath);
-    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e: unknown) { logger.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(webmPath);
-    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e: unknown) { logger.warn('[yvlu] 清理临时文件失败:', e) }
   }
 }
 
@@ -211,10 +211,10 @@ async function convertMp4ToWebm(mp4Buffer: Buffer): Promise<Buffer> {
   } finally {
     try {
       fs.unlinkSync(mp4Path);
-    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e: unknown) { logger.warn('[yvlu] 清理临时文件失败:', e) }
     try {
       fs.unlinkSync(webmPath);
-    } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
+    } catch (e: unknown) { logger.warn('[yvlu] 清理临时文件失败:', e) }
   }
 }
 
@@ -268,7 +268,7 @@ function getWebPDimensions(imageBuffer: any): {
     // 如果无法解析，返回默认尺寸
     logger.warn("Unknown WebP format, using default dimensions");
     return { width: 512, height: 768 };
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn("Failed to parse WebP dimensions:", error);
     return { width: 512, height: 768 };
   }
@@ -318,7 +318,7 @@ const resolveForwardSenderFromHeader = async (
       if (entity) {
         return entity;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       const errMsg = (error?.errorMessage || error?.message || "").toString();
       if (!errMsg.includes("CHANNEL_PRIVATE")) {
         logger.warn("解析转发发送者失败", error);
@@ -454,7 +454,7 @@ async function generateQuote(
     // - 当 type === 'quote' 且 format === 'webp' 时，后端会生成 webp 贴纸（但 JSON 下没有 ext 字段）
     // - 当 type === 'image' 时，后端最终输出的是 png（带背景的图片）
     return { buffer: response.data, ext: "webp" };
-  } catch (error) {
+  } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       logger.error(`quote-api请求失败:`, {
         status: error.response?.status,
@@ -525,7 +525,7 @@ class YvluPlugin extends Plugin {
       this.config = JSON.parse(configData);
       logger.info("yvlu配置已加载:", this.config);
       logger.info("stickerSetShortName:", this.config?.stickerSetShortName);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("加载yvlu配置失败:", error);
       this.config = { stickerSetShortName: "" };
     }
@@ -606,7 +606,7 @@ class YvluPlugin extends Plugin {
                 if (peerId) {
                   sender = await client.resolvePeer(peerId);
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 logger.warn("从 peerId 获取发送者失败", e);
               }
             }
@@ -618,7 +618,7 @@ class YvluPlugin extends Plugin {
               if (!forwardedSender) {
                 try {
                   forwardedSender = await message.forward?.getSender();
-                } catch (error) {
+                } catch (error: unknown) {
                   logger.warn("获取转发发送者失败", error);
                 }
               }
@@ -688,7 +688,7 @@ class YvluPlugin extends Plugin {
                 } else {
                   logger.warn("下载的头像数据无效或用户无头像");
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 logger.warn("下载用户头像失败", e);
               }
             }
@@ -733,7 +733,7 @@ class YvluPlugin extends Plugin {
                         replyName = composed || rUser || "unknown";
                       }
                     }
-                  } catch (e) {
+                  } catch (e: unknown) {
                     logger.warn('[yvlu] 解析回复发送者信息失败:', e);
                   }
 
@@ -786,11 +786,11 @@ class YvluPlugin extends Plugin {
                         };
                       }
                     }
-                  } catch (e) {
+                  } catch (e: unknown) {
                     logger.warn('[yvlu] 解析回复引用信息失败:', e);
                   }
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 logger.warn("处理回复引用失败: ", e);
               }
             }
@@ -890,7 +890,7 @@ class YvluPlugin extends Plugin {
                   );
                 }
               }
-            } catch (e) {
+            } catch (e: unknown) {
               logger.error("下载媒体失败", e);
             }
 
@@ -990,7 +990,7 @@ class YvluPlugin extends Plugin {
               } finally {
                 try {
                   fs.unlinkSync(webmPath);
-                } catch (e) { logger.warn('[yvlu] 清理临时文件失败:', e) }
+                } catch (e: unknown) { logger.warn('[yvlu] 清理临时文件失败:', e) }
               }
             } else {
               // webp/png 格式：发送为静态贴纸
@@ -1036,7 +1036,7 @@ class YvluPlugin extends Plugin {
 
           const end = Date.now();
           logger.info(`语录生成耗时: ${end - start}ms`);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`语录生成失败: ${error}`);
           await msg.edit({ text: `语录生成失败: ${htmlEscape(String(error))}`, parseMode: "html" });
         }

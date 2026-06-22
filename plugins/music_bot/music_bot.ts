@@ -77,17 +77,17 @@ async function searchAndSendMusic(
     await msg.edit({
       text: `🔎 搜索中：<code>${htmlEscape(displayKeyword ?? keyword)}</code>`,
     });
-  } catch (e) { logger.warn('[music_bot] edit msg failed:', e) }
+  } catch (e: unknown) { logger.warn('[music_bot] edit msg failed:', e) }
 
   // Ensure bot is unblocked and muted
   try {
     await client.call({ _: "contacts.unblock", id: await client.resolvePeer(bot) });
-  } catch (e) { logger.warn('[music_bot] unblock bot failed:', e) }
+  } catch (e: unknown) { logger.warn('[music_bot] unblock bot failed:', e) }
 
   try {
     const inputPeer = await client.resolvePeer(bot);
     await client.call({ _: "account.updateNotifySettings", peer: { _: "inputNotifyPeer", peer: inputPeer }, settings: { _: "inputPeerNotifySettings", silent: true, muteUntil: 2147483647 } });
-  } catch (e) { logger.warn('[music_bot] mute bot failed:', e) }
+  } catch (e: unknown) { logger.warn('[music_bot] mute bot failed:', e) }
 
   
 
@@ -95,7 +95,7 @@ async function searchAndSendMusic(
   const startTs = Math.floor(Date.now() / 1000);
   try {
     await client.sendText(bot, ["vk", "ym"].includes(action) ? keyword : `/${action} ${keyword}`);
-  } catch (e) {
+  } catch (e: unknown) {
     // Only on first failure, try to initialize the bot once per process
     if (!botReady.get(bot)) {
       try {
@@ -103,15 +103,15 @@ async function searchAndSendMusic(
         botReady.set(bot, true);
         await sleep(500);
         await client.sendText(bot, ["vk", "ym"].includes(action) ? keyword : `/${action} ${keyword}`);
-      } catch (e) {
+      } catch (e: unknown) {
         try {
           await client.sendText(bot, keyword);
-        } catch (e) { logger.warn('[music_bot] send keyword to bot failed:', e) }
+        } catch (e: unknown) { logger.warn('[music_bot] send keyword to bot failed:', e) }
       }
     } else {
       try {
         await client.sendText(bot, keyword);
-      } catch (e) { logger.warn('[music_bot] send keyword to bot failed:', e) }
+      } catch (e: unknown) { logger.warn('[music_bot] send keyword to bot failed:', e) }
     }
   }
 
@@ -154,13 +154,13 @@ async function searchAndSendMusic(
       }
       clicked = true;
       break;
-    } catch (e) { logger.warn(`[music_bot] click button attempt ${attempt} failed:`, e) }
+    } catch (e: unknown) { logger.warn(`[music_bot] click button attempt ${attempt} failed:`, e) }
   }
   if (!clicked) {
     try {
       await client.sendText(bot, "1");
       clicked = true;
-    } catch (e) { logger.warn('[music_bot] send fallback text failed:', e) }
+    } catch (e: unknown) { logger.warn('[music_bot] send fallback text failed:', e) }
   }
 
   // After clicking, wait for the next incoming message with media
@@ -198,7 +198,7 @@ async function searchAndSendMusic(
 
   try {
     await msg.delete();
-  } catch (e) { logger.warn('[music_bot] delete msg failed:', e) }
+  } catch (e: unknown) { logger.warn('[music_bot] delete msg failed:', e) }
 }
 
 function getRemarkFromMsg(msg: MessageContext | string, n: number): string {

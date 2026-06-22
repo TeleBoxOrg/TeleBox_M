@@ -296,7 +296,7 @@ async function handleImageEdit(
   let mediaBuffer: Buffer | null = null;
   try {
     mediaBuffer = Buffer.from(await client.downloadAsBuffer(replyMsg.media as unknown as import("@mtcute/core").FileLocation));
-  } catch (error) {
+  } catch (error: unknown) {
     await msg.edit({ text: `❌ 图片下载失败: ${error}` });
     return;
   }
@@ -433,7 +433,7 @@ async function handleImageEdit(
   if (sent) {
     try {
       await msg.delete();
-    } catch (error) {
+    } catch (error: unknown) {
       await msg.edit({ text: captionHtml });
     }
   } else {

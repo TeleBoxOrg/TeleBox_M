@@ -172,7 +172,7 @@ class MessageManager {
             await client.deleteMessagesById(message.chat.inputPeer, [message.id], {
               revoke: true,
             });
-          } catch (e) {
+          } catch (e: unknown) {
             logger.error(`删除消息失败: ${e}`);
           }
         }, deleteAfter * 1000);
@@ -208,7 +208,7 @@ class PermissionManager {
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: unknown) {
       return false;
     }
   }
@@ -336,7 +336,7 @@ class AutoRepeatManager {
       // 检查是否满足复读条件
       await this.tryRepeat(chatId, text, msgs);
 
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error(`[AutoRepeat] Error: ${e}`);
     }
   }
@@ -371,7 +371,7 @@ class AutoRepeatManager {
           try {
             await client.sendText(chatId, text);
             logger.info(`[AutoRepeat] Group ${chatId} repeated: ${contentKey}`);
-          } catch (e) {
+          } catch (e: unknown) {
             // 发送失败则移除标记（可选，视需求而定，为了防刷通常不移除）
             logger.error(`[AutoRepeat] Failed to send: ${e}`);
           }
@@ -450,7 +450,7 @@ class CommandHandlers {
         }
       }
       return null;
-    } catch (e) {
+    } catch (e: unknown) {
       return null;
     }
   }
@@ -480,10 +480,10 @@ class CommandHandlers {
                     title: entity.title || `群组 ${chatId}`
                   };
                 }
-              } catch (e) { logger.warn(`[autorepeat] 继续尝试其他方式:`, e) }
+              } catch (e: unknown) { logger.warn(`[autorepeat] 继续尝试其他方式:`, e) }
             }
           }
-        } catch (e) { logger.warn(`[autorepeat] 继续尝试其他方式:`, e) }
+        } catch (e: unknown) { logger.warn(`[autorepeat] 继续尝试其他方式:`, e) }
       }
 
       // 2. 如果没有提供标识符，检查是否在群组中
@@ -498,7 +498,7 @@ class CommandHandlers {
               chatId: chatId,
               title: entity.title || `群组 ${chatId}`
             };
-          } catch (e) {
+          } catch (e: unknown) {
             return {
               success: true,
               chatId: chatId,
@@ -524,7 +524,7 @@ class CommandHandlers {
               chatId: chatId,
               title: entity.title || `群组 ${chatId}`
             };
-          } catch (e) {
+          } catch (e: unknown) {
               const safeIdentifier = htmlEscape(identifier);
               return {
                 success: false,
@@ -628,7 +628,7 @@ class CommandHandlers {
               const entity: any = await client.getPeer(gid);
               const title = htmlEscape(entity.title || "Unknown Group");
               return `• <b>${title}</b> (<code>${gid}</code>)`;
-            } catch (e) {
+            } catch (e: unknown) {
               return `• <code>${gid}</code> (无法获取信息)`;
             }
           })

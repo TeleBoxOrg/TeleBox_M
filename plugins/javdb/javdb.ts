@@ -64,7 +64,7 @@ async function sendLongMessage(client: any, msg: MessageContext, htmlContent: st
   const first = parts[0] + (parts.length > 1 ? `\n\n📄 (1/${parts.length})` : "");
   try {
     await msg.edit({ text: html(first) });
-  } catch (e) {
+  } catch (e: unknown) {
     await client.sendText(msg.chat.id, html(first), { replyTo: msg.id });
   }
   // 注意：消息必须按顺序逐条发送，不能并行（每条消息依赖前一条发送完成以保持顺序）
@@ -344,12 +344,12 @@ class JavDBPlugin extends Plugin {
           await client.sendMedia(msg.chat.id, { type: 'photo', file: tmpPath, caption: html(caption), spoiler: true }, { replyTo: msg.replyToMessage?.id });
 
           // 删除原查询消息
-          try { await msg.delete(); } catch (e) { logger.warn('操作失败', e) }
+          try { await msg.delete(); } catch (e: unknown) { logger.warn('操作失败', e) }
         } finally {
           // 清理临时文件
-          try { await fs.promises.unlink(tmpPath); } catch (e) { logger.warn('操作失败', e) }
+          try { await fs.promises.unlink(tmpPath); } catch (e: unknown) { logger.warn('操作失败', e) }
         }
-      } catch (e) {
+      } catch (e: unknown) {
         // 封面下载失败，仅发送文本
         await sendLongMessage(client, msg, caption);
       }
@@ -360,7 +360,7 @@ class JavDBPlugin extends Plugin {
         const t = setTimeout(async () => {
           pendingTimers.delete(t);
           if (getCurrentGeneration() !== gen) return;
-          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e) { logger.warn('操作失败', e) }
+          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e: unknown) { logger.warn('操作失败', e) }
         }, 60_000);
         pendingTimers.add(t);
       }

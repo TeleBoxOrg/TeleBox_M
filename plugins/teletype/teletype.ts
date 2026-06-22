@@ -59,7 +59,7 @@ class TeletypePlugin extends Plugin {
         autoMode: false as boolean,
         enabledUsers: [] as string[]
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[${this.PLUGIN_NAME}] 数据库初始化失败:`, error);
       this.db = {
         data: { autoMode: false, enabledUsers: [] },

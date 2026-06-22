@@ -62,7 +62,7 @@ class RePlugin extends Plugin {
                 // 如果在论坛话题中，指定话题的线程 ID
                 ...(threadId ? { toThreadId: threadId } : {}),
               });
-            } catch (error) {
+            } catch (error: unknown) {
               if (error instanceof Error && error.message.includes("CHAT_FORWARDS_RESTRICTED")) {
                 forwardFailed = true;
                 break;
@@ -81,7 +81,7 @@ class RePlugin extends Plugin {
             }
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         if (error instanceof Error) {
           await client.sendText(msg.chat.id, error.message || "发生错误，无法复读消息。请稍后再试。");
         } else {
@@ -109,7 +109,7 @@ class RePlugin extends Plugin {
         toChatId: peerId,
         ...(topMsgId ? { replyTo: topMsgId } : {}),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("复制消息失败:", error);
       throw error;
     }

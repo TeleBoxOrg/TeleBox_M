@@ -25,7 +25,7 @@ export async function unbanUser(
       participantId: user,
     });
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`解封用户失败:`, error);
     return false;
   }
@@ -52,7 +52,7 @@ export async function banUser(
       untilDate: untilDate ? untilDate : undefined,
     });
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`封禁用户失败:`, error);
     return false;
   }
@@ -80,7 +80,7 @@ export async function kickUser(
 
     // 立即解封
     return await unbanUser(client, channel, user);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`踢出用户失败:`, error);
     return false;
   }
@@ -169,7 +169,7 @@ export async function getBannedUsers(
         }
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("获取被封禁用户失败:", error);
   }
 

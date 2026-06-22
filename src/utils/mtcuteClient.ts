@@ -70,7 +70,7 @@ function buildTransport(
       password: proxy.password,
       version: proxy.socksType === 4 ? 4 : 5,
     });
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn("[CLIENT] 代理配置解析失败，回退到直连:", e);
     return undefined;
   }
@@ -111,7 +111,7 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
     if (typeof lvl === "number" && (client as unknown as { log?: { level: number } }).log) {
       (client as unknown as { log: { level: number } }).log.level = lvl;
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("[mtcuteClient] operation failed:", e);
   }
 

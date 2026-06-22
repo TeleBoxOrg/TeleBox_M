@@ -109,7 +109,7 @@ class PaoluPlugin extends Plugin {
             }
           }
         }
-      } catch (e) {
+      } catch (e: unknown) {
         logger.error("权限检查失败:", e);
         isAdmin = false;
       }
@@ -165,7 +165,7 @@ class PaoluPlugin extends Plugin {
           if ("title" in chat) {
             chatName = chat.title || "未知群组";
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error("获取群聊信息失败:", error);
         }
 
@@ -238,7 +238,7 @@ class PaoluPlugin extends Plugin {
         scheduleTimer(async () => {
           try {
             await completionMsg?.delete();
-          } catch (e) {
+          } catch (e: unknown) {
             logger.error("[PAOLU] 自动删除完成提示失败:", e);
           }
         }, 10000);

@@ -220,7 +220,7 @@ function idToString(value: any): string {
     return JSON.stringify(value, (_key, item) =>
       typeof item === "bigint" ? item.toString() : item
     );
-  } catch (e) {
+  } catch (e: unknown) {
     return String(value);
   }
 }
@@ -339,7 +339,7 @@ function detectAudioExtension(url: string, contentType?: string): string {
     if (match && ["mp3", "flac", "m4a", "aac", "ogg", "wav"].includes(match[1])) {
       return match[1];
     }
-  } catch (e) { logger.warn('[music_hub] parse URL failed:', e) }
+  } catch (e: unknown) { logger.warn('[music_hub] parse URL failed:', e) }
 
   return "mp3";
 }
@@ -543,7 +543,7 @@ class MusicHubPlugin extends Plugin {
           };
         }
         errors.push(`${source}: 无结果`);
-      } catch (error) {
+      } catch (error: unknown) {
         errors.push(`${source}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
@@ -648,7 +648,7 @@ class MusicHubPlugin extends Plugin {
     try {
       await message.delete({ revoke: true });
       return;
-    } catch (e) { logger.warn('[music_hub] delete message failed:', e) }
+    } catch (e: unknown) { logger.warn('[music_hub] delete message failed:', e) }
 
     try {
       const client = (await getGlobalClient());
@@ -658,11 +658,11 @@ class MusicHubPlugin extends Plugin {
         await client.deleteMessagesById(peer, [id], { revoke: true });
         return;
       }
-    } catch (e) { logger.warn('[music_hub] delete message by id failed:', e) }
+    } catch (e: unknown) { logger.warn('[music_hub] delete message by id failed:', e) }
 
     try {
       await message.delete();
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
   }
 
   private async sendTextMessage(
@@ -683,7 +683,7 @@ class MusicHubPlugin extends Plugin {
       try {
         const edited = await targetMsg.edit({ text: html(text) });
         return edited || targetMsg;
-      } catch (error) {
+      } catch (error: unknown) {
         if (isMessageNotModifiedError(error)) return targetMsg;
         await this.deleteQuietly(targetMsg);
       }
@@ -908,10 +908,10 @@ class MusicHubPlugin extends Plugin {
           settled = true;
           try {
             if (typeof reader.destroy === "function") reader.destroy();
-          } catch (e) { logger.warn('[music_hub] reader destroy failed:', e) }
+          } catch (e: unknown) { logger.warn('[music_hub] reader destroy failed:', e) }
           try {
             if (typeof writer.destroy === "function") writer.destroy();
-          } catch (e) { logger.warn('[music_hub] writer destroy failed:', e) }
+          } catch (e: unknown) { logger.warn('[music_hub] writer destroy failed:', e) }
           reject(error instanceof Error ? error : new Error(String(error)));
         };
 
@@ -996,7 +996,7 @@ class MusicHubPlugin extends Plugin {
       if (tempFilePath) {
         try {
           fs.unlinkSync(tempFilePath);
-        } catch (e) { logger.warn('[music_hub] cleanup temp file failed:', e) }
+        } catch (e: unknown) { logger.warn('[music_hub] cleanup temp file failed:', e) }
       }
     }
   }
@@ -1034,7 +1034,7 @@ class MusicHubPlugin extends Plugin {
     let urlInfo: SongUrlInfo;
     try {
       urlInfo = await this.getSongUrl(song, config.br);
-    } catch (error) {
+    } catch (error: unknown) {
       await updateStatus(
         `❌ <b>获取播放链接失败</b>\n<code>${htmlEscape(error instanceof Error ? error.message : String(error))}</code>`
       );
@@ -1127,7 +1127,7 @@ class MusicHubPlugin extends Plugin {
         elapsedMs: Date.now() - started,
         sample: `${first.name} - ${formatArtists(first.artist)}`,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         key: source,
         ok: false,
@@ -1261,7 +1261,7 @@ class MusicHubPlugin extends Plugin {
       this.rememberSessionMessage(session, statusMessage);
       this.saveSession(msg, session);
       await this.editOrReplaceSessionMessage(msg, session, this.renderSearchPage(session));
-    } catch (error) {
+    } catch (error: unknown) {
       await this.editOrReplaceMessage(
         msg,
         statusMessage as unknown as MessageContext | undefined,

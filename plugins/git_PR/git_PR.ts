@@ -109,7 +109,7 @@ class ConfigManager {
         { ...DEFAULT_CONFIG }
       );
       this.initialized = true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[git] 初始化配置失败:", error);
     }
   }
@@ -126,7 +126,7 @@ class ConfigManager {
       this.db.data[key] = value;
       await this.db.write();
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[git] 设置配置失败 ${key}:`, error);
       return false;
     }
@@ -272,7 +272,7 @@ class GitManagerPlugin extends Plugin {
             mergeable: pr.data?.mergeable,
             state: pr.data?.mergeable_state
           };
-        } catch (e) {
+        } catch (e: unknown) {
           return { number: item.number, title: item.title || "", user: item?.user?.login || "" };
         }
       })
@@ -349,7 +349,7 @@ class GitManagerPlugin extends Plugin {
         try {
           const pr = await api.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${item.number}`);
           return pr.data?.mergeable ? item : null;
-        } catch (e) { logger.warn(`[git_PR] 忽略获取详情失败的PR:`, e); return null; }
+        } catch (e: unknown) { logger.warn(`[git_PR] 忽略获取详情失败的PR:`, e); return null; }
       })
     )).filter((item): item is NonNullable<typeof item> => item !== null);
 

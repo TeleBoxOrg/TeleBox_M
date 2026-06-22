@@ -54,7 +54,7 @@ async function loadUserData(): Promise<AllUserData> {
     }
     if (changed) await saveUserData(parsed);
     return parsed;
-  } catch (e) {
+  } catch (e: unknown) {
     const initial: AllUserData = {
       users: {},
       roles: getInitialRoles(),
@@ -152,7 +152,7 @@ async function generateMusic(
     if (meta.cover) {
       const coverPath = path.join(cacheDir, `${meta.album}.jpg`);
       try { await fs.access(coverPath); }
-      catch (e) {
+      catch (e: unknown) {
         const coverRes = await axios.get(meta.cover, { responseType: "arraybuffer" });
         await fs.writeFile(coverPath, coverRes.data);
       }
@@ -184,7 +184,7 @@ async function generateMusic(
     logger.error("生成音乐失败:", getErrorMessage(e) || String(e));
     return null;
   } finally {
-    try { await fs.unlink(rawFile); } catch (e) { logger.error('[t] cleanup raw file failed:', e); }
+    try { await fs.unlink(rawFile); } catch (e: unknown) { logger.error('[t] cleanup raw file failed:', e); }
   }
 }
 
@@ -204,7 +204,7 @@ async function generateSpeechSimple(
     await fs.writeFile(mp3File, res.data);
     await execPromise(`ffmpeg -y -i "${mp3File}" -c:a libopus -b:a 64k -vbr on "${oggFile}"`);
     return { oggFile, mp3File };
-  } catch (e) {
+  } catch (e: unknown) {
     return null;
   }
 }
@@ -217,7 +217,7 @@ async function deleteCommandMessage(msg: MessageContext) {
     } else {
       await msg.delete();
     }
-  } catch (e) { logger.error('[t] generateSpeech failed:', e); }
+  } catch (e: unknown) { logger.error('[t] generateSpeech failed:', e); }
 }
 
 // 文字转语音主处理
@@ -268,7 +268,7 @@ async function tts(msg: MessageContext) {
       }, {
         replyTo: replyToId,
       });
-      try { await fs.unlink(file); } catch (e) { logger.error('[t] cleanup file failed:', e); }
+      try { await fs.unlink(file); } catch (e: unknown) { logger.error('[t] cleanup file failed:', e); }
       await deleteCommandMessage(msg); // 发送后删命令
     } else {
       await msg.edit({ text: "❌ 生成失败" });
@@ -299,7 +299,7 @@ async function tts(msg: MessageContext) {
     }, {
       replyTo: replyToId,
     });
-    try { await fs.unlink(r.oggFile); await fs.unlink(r.mp3File); } catch (e) { logger.error('[t] cleanup audio files failed:', e); }
+    try { await fs.unlink(r.oggFile); await fs.unlink(r.mp3File); } catch (e: unknown) { logger.error('[t] cleanup audio files failed:', e); }
     await deleteCommandMessage(msg); // 发送后删命令
   } else {
     await msg.edit({ text: "❌ 生成失败" });

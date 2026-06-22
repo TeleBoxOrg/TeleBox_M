@@ -101,7 +101,7 @@ class PrefixPlugin extends Plugin {
           content += line + "\n";
         }
         fs.writeFileSync(envPath, content, "utf-8");
-      } catch (e) {
+      } catch (e: unknown) {
         persisted = false;
       }
       await loadPlugins();

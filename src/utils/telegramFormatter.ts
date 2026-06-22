@@ -577,7 +577,7 @@ export class TelegramFormatter {
       if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
       // 拒绝非 http/https 协议
       logger.warn(`[TelegramFormatter] 拒绝不安全的 URL 协议: ${u.protocol}`);
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn(`[TelegramFormatter] URL 解析失败: ${url}`, e);
     }
     return "";

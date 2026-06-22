@@ -517,7 +517,7 @@ async function getGroupMessages(chatId: string, count: number): Promise<MessageD
   try {
     const entity = await client.getChat(chatId);
     chatUsername = getUsername(entity) ?? undefined;
-  } catch (e) { logger.warn(`[sum] 忽略错误，使用私有链接格式:`, e) }
+  } catch (e: unknown) { logger.warn(`[sum] 忽略错误，使用私有链接格式:`, e) }
 
   const messageData: MessageData[] = [];
   for (const msg of messages) {
@@ -567,7 +567,7 @@ async function getGroupMessagesByTime(chatId: string, hours: number): Promise<Me
   try {
     const entity = await client.getChat(chatId);
     chatUsername = getUsername(entity) ?? undefined;
-  } catch (e) { logger.warn(`[sum] 忽略错误，使用私有链接格式:`, e) }
+  } catch (e: unknown) { logger.warn(`[sum] 忽略错误，使用私有链接格式:`, e) }
 
   const messageData: MessageData[] = [];
   for (const msg of messages) {
@@ -840,7 +840,7 @@ async function bootstrapTasks() {
       await scheduleTask(t);
     }
     logger.info(`[sum] 任务加载完成`);
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("[sum] bootstrap 失败:", e);
   }
 }
@@ -1088,7 +1088,7 @@ class SummaryPlugin extends Plugin {
               if (chatUsername) displayParts.push(htmlEscape(`@${chatUsername}`));
               displayParts.push(codeTag(chatId));
               chatDisplay = displayParts.join(" ");
-            } catch (e) {
+            } catch (e: unknown) {
               logger.error("获取群组信息失败:", e);
             }
           }
@@ -1372,7 +1372,7 @@ class SummaryPlugin extends Plugin {
               const username = getUsername(entity) ?? undefined;
               chatLink = buildChatLink(task.chatId, username);
             }
-          } catch (e) { logger.warn('操作失败', e) }
+          } catch (e: unknown) { logger.warn('操作失败', e) }
 
           const chatDisplay = task.chatDisplay || task.chatId;
           const linkText = chatLink ? ` <a href="${attrEscape(chatLink)}">${htmlEscape(chatDisplay)}</a>` : ` ${htmlEscape(chatDisplay)}`;

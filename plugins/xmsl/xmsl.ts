@@ -89,12 +89,12 @@ async function extractWebmFirstFrame(webmBuffer: Buffer): Promise<Buffer | null>
 			return fs.readFileSync(pngPath);
 		}
 		return null;
-	} catch (error) {
+	} catch (error: unknown) {
 		logger.error('[xmsl] WebM 第一帧提取失败:', error);
 		return null;
 	} finally {
-		try { fs.unlinkSync(webmPath); } catch (e) { logger.error('[xmsl] cleanup webm failed:', e); }
-		try { fs.unlinkSync(pngPath); } catch (e) { logger.error('[xmsl] cleanup png failed:', e); }
+		try { fs.unlinkSync(webmPath); } catch (e: unknown) { logger.error('[xmsl] cleanup webm failed:', e); }
+		try { fs.unlinkSync(pngPath); } catch (e: unknown) { logger.error('[xmsl] cleanup png failed:', e); }
 	}
 }
 
@@ -133,13 +133,13 @@ anim.save_animation(sys.argv[2])
 			return fs.readFileSync(pngPath);
 		}
 		return null;
-	} catch (error) {
+	} catch (error: unknown) {
 		logger.error('[xmsl] TGS 第一帧提取失败:', error);
 		return null;
 	} finally {
-		try { fs.unlinkSync(tgsPath); } catch (e) { logger.error('[xmsl] cleanup tgs failed:', e); }
-		try { fs.unlinkSync(gifPath); } catch (e) { logger.error('[xmsl] cleanup gif failed:', e); }
-		try { fs.unlinkSync(pngPath); } catch (e) { logger.error('[xmsl] cleanup png failed:', e); }
+		try { fs.unlinkSync(tgsPath); } catch (e: unknown) { logger.error('[xmsl] cleanup tgs failed:', e); }
+		try { fs.unlinkSync(gifPath); } catch (e: unknown) { logger.error('[xmsl] cleanup gif failed:', e); }
+		try { fs.unlinkSync(pngPath); } catch (e: unknown) { logger.error('[xmsl] cleanup png failed:', e); }
 	}
 }
 
@@ -383,7 +383,7 @@ class XMSLPlugin extends Plugin {
 					}
 				}
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error('[xmsl] 媒体提取失败:', error);
 		}
 
@@ -436,7 +436,7 @@ class XMSLPlugin extends Plugin {
 							}
 					}
 					}
-				} catch (error) {
+				} catch (error: unknown) {
 					logger.error('[xmsl] 获取回复消息失败:', error);
 				}
 			}

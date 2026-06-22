@@ -256,7 +256,7 @@ function extractDNSData(html: string): {
             totalRecords: domainRecords.length,
             filteredRecords: domainRecords.length - dnsLines.length,
         };
-    } catch (e) {
+    } catch (e: unknown) {
         return { dnsLines: [], totalRecords: 0, filteredRecords: 0 };
     }
 }
@@ -419,7 +419,7 @@ class BGPPlugin extends Plugin {
                         try {
                             await msg.delete();
                             msgDeleted = true;
-                        } catch (e) { logger.warn('[bgp] delete msg failed:', e) }
+                        } catch (e: unknown) { logger.warn('[bgp] delete msg failed:', e) }
 
                         await client.sendMedia(msg.chat.id, {
                             type: "photo",
@@ -460,7 +460,7 @@ class BGPPlugin extends Plugin {
                     try {
                         if (fs.existsSync(svgPath)) fs.unlinkSync(svgPath);
                         if (fs.existsSync(pngPath)) fs.unlinkSync(pngPath);
-                    } catch (e) { logger.warn('[bgp] cleanup temp files failed:', e) }
+                    } catch (e: unknown) { logger.warn('[bgp] cleanup temp files failed:', e) }
                 }
 
             } catch (err: unknown) {
@@ -471,7 +471,7 @@ class BGPPlugin extends Plugin {
                     } else {
                         await msg.edit({ text: html(errText) });
                     }
-                } catch (e) { logger.warn('[bgp] send error msg failed:', e) }
+                } catch (e: unknown) { logger.warn('[bgp] send error msg failed:', e) }
             }
         },
     };

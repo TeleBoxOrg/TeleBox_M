@@ -93,7 +93,7 @@ class IdsPlugin extends Plugin {
                 targetUser = replySender;
               }
             }
-          } catch (e) { logger.warn('[ids] get reply sender failed:', e) }
+          } catch (e: unknown) { logger.warn('[ids] get reply sender failed:', e) }
         }
 
         if (!targetUser && !targetId) {
@@ -150,7 +150,7 @@ class IdsPlugin extends Plugin {
         info.bio = full.fullUser.about || null;
         info.commonChats = full.fullUser.commonChatsCount || 0;
       }
-    } catch (e) { logger.warn('[ids] get full user info failed:', e) }
+    } catch (e: unknown) { logger.warn('[ids] get full user info failed:', e) }
 
     const chat = await msg.getCompleteChat();
     if (chat && (hasRawType(chat, 'channel') || hasRawType(chat, 'chat'))) {
@@ -164,7 +164,7 @@ class IdsPlugin extends Plugin {
           const jd = new Date(p.participant.date * 1000);
           info.joinedDate = `${jd.getFullYear()}-${(jd.getMonth()+1).toString().padStart(2,'0')}-${jd.getDate().toString().padStart(2,'0')} ${jd.getHours().toString().padStart(2,'0')}:${jd.getMinutes().toString().padStart(2,'0')}`;
         }
-      } catch (e) { logger.warn('[ids] get participant info failed:', e) }
+      } catch (e: unknown) { logger.warn('[ids] get participant info failed:', e) }
     }
 
     info.dc = await this.getUserDC(client, userId, user);
@@ -180,7 +180,7 @@ class IdsPlugin extends Plugin {
       const u = full.users[0];
       if (u?.photo?._ !== "userProfilePhotoEmpty") return `DC${u.photo.dcId}`;
       return "无头像";
-    } catch (e) { logger.warn('ids: getDcId failed', e); return "未知"; }
+    } catch (e: unknown) { logger.warn('ids: getDcId failed', e); return "未知"; }
   }
 
   private formatUserInfo(info: any): string {
@@ -226,7 +226,7 @@ class IdsPlugin extends Plugin {
     }
     const id = parseInt(target);
     if (!isNaN(id)) {
-      try { return { user: await client.getChat(id), id }; } catch (e) { return { user: null, id }; }
+      try { return { user: await client.getChat(id), id }; } catch (e: unknown) { return { user: null, id }; }
     }
     throw new Error("无效格式");
   }

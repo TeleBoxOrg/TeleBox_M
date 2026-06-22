@@ -169,7 +169,7 @@ class PrometheusPlugin extends Plugin {
   private async moveFile(sourcePath: string, destinationPath: string): Promise<void> {
     try {
       await fs.rename(sourcePath, destinationPath);
-    } catch (e) {
+    } catch (e: unknown) {
       await fs.copyFile(sourcePath, destinationPath);
       await fs.unlink(sourcePath);
     }
@@ -274,7 +274,7 @@ class PrometheusPlugin extends Plugin {
       const resolvedName = title ? String(title) : chatId;
       this.chatDisplayNameCache.set(chatId, resolvedName);
       return resolvedName;
-    } catch (e) {
+    } catch (e: unknown) {
       this.chatDisplayNameCache.set(chatId, chatId);
       return chatId;
     }
@@ -301,7 +301,7 @@ class PrometheusPlugin extends Plugin {
       if (replyMsg) {
         await this.safeEditMessage(replyMsg, `✅ 已转发并添加来源链接`, true);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`发送来源消息失败:`, error);
     }
   }
@@ -350,7 +350,7 @@ class PrometheusPlugin extends Plugin {
       const sourceText = `🔗 <b>批量保存来源</b>\n\n${wrappedBody}`;
 
       await client.sendText(targetPeer, sourceText, { replyTo: forwardedMsg.id });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`发送批量来源消息失败:`, error);
     }
   }
@@ -378,7 +378,7 @@ class PrometheusPlugin extends Plugin {
       }
 
       await client.sendText(targetPeer, `🔗 <b>范围保存来源</b>\n\n${blocks.join('\n\n')}`, { replyTo: forwardedMsg.id });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`发送范围来源消息失败:`, error);
     }
   }
@@ -417,7 +417,7 @@ class PrometheusPlugin extends Plugin {
     try {
       const dbPath = path.join(createDirectoryInAssets("prometheus"), "config.json");
       this.db = await JSONFilePreset<PrometheusDB>(dbPath, { users: {} });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`初始化数据库失败:`, error);
     }
   }
@@ -506,7 +506,7 @@ class PrometheusPlugin extends Plugin {
       const client = await getGlobalClient();
       const messages = await client.getMessages(chatId, [messageId]);
       return messages[0] as MessageContext | null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`获取消息失败:`, error);
       return null;
     }
@@ -550,7 +550,7 @@ class PrometheusPlugin extends Plugin {
         const ext = media.fileName ? path.extname(media.fileName).toLowerCase() : '';
         if (ext) return ext;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`获取文件扩展名失败:`, error);
     }
 
@@ -572,7 +572,7 @@ class PrometheusPlugin extends Plugin {
         if (media.mimeType?.includes('image/')) return 'photo';
         if (media.mimeType?.includes('image/gif')) return 'gif';
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`获取媒体类型失败:`, error);
     }
 
@@ -654,7 +654,7 @@ class PrometheusPlugin extends Plugin {
     if (filePath && existsSync(filePath)) {
       try {
         await fs.unlink(filePath);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`清理临时文件失败:`, error);
       }
     }
@@ -671,10 +671,10 @@ class PrometheusPlugin extends Plugin {
           const filePath = path.join(this.tempDir, entry);
           try {
             await fs.unlink(filePath);
-          } catch (e) { logger.warn('操作失败', e) }
+          } catch (e: unknown) { logger.warn('操作失败', e) }
         })
       );
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
   }
 
   private async saveMediaToLocal(
@@ -747,7 +747,7 @@ class PrometheusPlugin extends Plugin {
         mediaType: sourceMsg.media ? this.getMediaType(sourceMsg.media) : "unknown",
         groupedId: sourceMsg.groupedId?.toString(),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`保存媒体到本地失败:`, error);
       if (tempFileInfo?.path) {
         await this.cleanupTempFile(tempFileInfo.path);
@@ -1220,7 +1220,7 @@ class PrometheusPlugin extends Plugin {
       if (!localTarget) {
         try {
           targetPeer = await client.resolvePeer(target);
-        } catch (error) {
+        } catch (error: unknown) {
           await this.safeEditMessage(msg, `❌ 无法访问目标对话: <code>${htmlEscape(target)}</code>`, true);
           return;
         }

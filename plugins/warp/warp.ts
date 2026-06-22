@@ -73,7 +73,7 @@ class AccountManager {
       if (data.private_key && data.v6) {
         return { privateKey: data.private_key, address6: data.v6 };
       }
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
     return null;
   }
 
@@ -116,7 +116,7 @@ class WireproxyManager {
           return { privateKey: String(obj.private_key), address6: String(obj.v6) };
         }
       }
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
 
     // 远程注册免费账户
     try {
@@ -174,7 +174,7 @@ class WireproxyManager {
                 if (config.proxy && config.proxy.port === port) {
                   tgProxyStatus = `✅ 已配置 (端口: ${port})`;
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 tgProxyStatus = "❓ 配置文件解析失败";
               }
             }
@@ -192,7 +192,7 @@ class WireproxyManager {
                 if (musicProxy && musicProxy.includes(`:${port}`)) {
                   musicProxyStatus = `✅ 已配置 (端口: ${port})`;
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 musicProxyStatus = "❓ 配置文件解析失败";
               }
             }
@@ -230,7 +230,7 @@ class WireproxyManager {
           try {
             const data = JSON.parse(result.output);
             return `${data.ip} ${data.country} ${data.organisation}`.trim();
-          } catch (e) { logger.warn(`[warp] JSON parsing failed, continue to retry:`, e) }
+          } catch (e: unknown) { logger.warn(`[warp] JSON parsing failed, continue to retry:`, e) }
         }
         if (i < maxRetries - 1) {
           await new Promise(resolve => setTimeout(resolve, retryDelay));
@@ -594,7 +594,7 @@ class WarpPlugin extends Plugin {
       let config;
       try {
         config = JSON.parse(readResult.output);
-      } catch (e) {
+      } catch (e: unknown) {
         return "❌ config.json 文件格式错误。";
       }
 
@@ -647,7 +647,7 @@ class WarpPlugin extends Plugin {
       let config;
       try {
         config = JSON.parse(readResult.output);
-      } catch (e) {
+      } catch (e: unknown) {
         return "❌ config.json 文件格式错误。";
       }
 
@@ -727,7 +727,7 @@ class WarpPlugin extends Plugin {
         let config;
         try {
           config = JSON.parse(readResult.output);
-        } catch (e) {
+        } catch (e: unknown) {
           return "❌ Music 配置文件格式错误。";
         }
 
@@ -777,7 +777,7 @@ class WarpPlugin extends Plugin {
       let config;
       try {
         config = JSON.parse(readResult.output);
-      } catch (e) {
+      } catch (e: unknown) {
         return "❌ Music 配置文件格式错误。";
       }
 
@@ -859,7 +859,7 @@ class WarpPlugin extends Plugin {
               await msg.edit({ text: html("❌ Iptables/dnsmasq 方案似乎正在运行。请先禁用它，然后再启动 WireProxy。") });
               return;
             }
-          } catch (e) { logger.warn('操作失败', e) }
+          } catch (e: unknown) { logger.warn('操作失败', e) }
 
           const port = args[1] ? parseInt(args[1], 10) : undefined;
           await msg.edit({ text: html("🔄 正在启动 wireproxy...") });

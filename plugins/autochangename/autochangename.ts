@@ -213,7 +213,7 @@ class DataManager {
       this.db!.data.users[settings.user_id.toString()] = { ...settings };
       await this.db!.write();
       return true;
-    } catch (e) { logger.warn('autochangename: saveUserSettings failed', e); return false; }
+    } catch (e: unknown) { logger.warn('autochangename: saveUserSettings failed', e); return false; }
   }
 
   static async getRandomTexts(): Promise<string[]> {
@@ -230,7 +230,7 @@ class DataManager {
         .filter(t => t.length > 0 && t.length <= 50);
       await this.db!.write();
       return true;
-    } catch (e) { logger.warn('autochangename: saveRandomTexts failed', e); return false; }
+    } catch (e: unknown) { logger.warn('autochangename: saveRandomTexts failed', e); return false; }
   }
 
   static async getAllEnabledUsers(): Promise<number[]> {
@@ -419,7 +419,7 @@ class NameManager {
       if (!abbreviation) return null;
       if (/^GMT[+-]/.test(abbreviation)) return null;
       return abbreviation;
-    } catch (e) {
+    } catch (e: unknown) {
       return null;
     }
   }
@@ -441,7 +441,7 @@ class NameManager {
       const hours = parseInt(match[2], 10);
       const minutes = parseInt(match[3], 10);
       return sign * (hours * 60 + minutes);
-    } catch (e) {
+    } catch (e: unknown) {
       return null;
     }
   }
@@ -492,7 +492,7 @@ class NameManager {
       
       this.profileCache = { data: profile, timestamp: Date.now() };
       return profile;
-    } catch (e) {
+    } catch (e: unknown) {
       return null;
     }
   }
@@ -546,7 +546,7 @@ class NameManager {
         return "00:" + timeStr.slice(3);
       }
       return timeStr;
-    } catch (e) {
+    } catch (e: unknown) {
       const now = new Date();
       return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     }
@@ -559,7 +559,7 @@ class NameManager {
       }).split(':')[0]);
       const clocks = ['🕛', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚'];
       return clocks[hour % 12];
-    } catch (e) { logger.warn('autochangename: getClockEmoji failed', e); return '🕐'; }
+    } catch (e: unknown) { logger.warn('autochangename: getClockEmoji failed', e); return '🕐'; }
   }
 
   private getDoubleStruckUpper(char: string): string {
@@ -647,7 +647,7 @@ class NameManager {
       const result = await translate(normalized, { to: "en" });
       const translated = typeof result === "string" ? result : result?.text;
       return typeof translated === "string" && translated.trim() ? translated.trim() : normalized;
-    } catch (e) {
+    } catch (e: unknown) {
       return normalized;
     }
   }
@@ -706,10 +706,10 @@ class NameManager {
       settings.weather_cache_ts = now;
       await DataManager.saveUserSettings(settings);
       return compact;
-    } catch (e) {
+    } catch (e: unknown) {
       settings.weather_compact = "";
       settings.weather_cache_ts = now;
-      try { await DataManager.saveUserSettings(settings); } catch (e) { logger.warn('操作失败', e) }
+      try { await DataManager.saveUserSettings(settings); } catch (e: unknown) { logger.warn('操作失败', e) }
       return "";
     }
   }
@@ -759,7 +759,7 @@ class NameManager {
         return `GMT${sign}${offsetHours}`;
       }
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('[AutoChangeName] 时区计算失败:', error);
       return 'GMT+8';
     }
@@ -923,7 +923,7 @@ class NameManager {
           this.isUpdating = false;
         }
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[AutoChangeName] 启动自动更新失败:", error);
     }
   }
@@ -978,7 +978,7 @@ class AutoChangeNamePlugin extends Plugin {
       if (enabledUsers.length > 0) {
         nameManager.startAutoUpdate();
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[AutoChangeName] setup 重新初始化失败:", e);
     }
   }
@@ -1306,7 +1306,7 @@ America/New_York
     if (sub === "format") return this.handleTimezoneFormat(msg, userId, args.slice(1));
 
     const newTimezone = (sub === "set" ? args.slice(1) : args).join(" ").trim();
-    try { new Date().toLocaleString("en-US", { timeZone: newTimezone }); } catch (e) {
+    try { new Date().toLocaleString("en-US", { timeZone: newTimezone }); } catch (e: unknown) {
       return void await msg.edit({ text: html(`❌ <b>无效的时区标识符</b>`) });
     }
 
@@ -1497,7 +1497,7 @@ America/New_York
       settings.is_enabled = false;
       await DataManager.saveUserSettings(settings);
       await msg.edit({ text: html("✅ <b>已恢复原始昵称并禁用自动更新</b>") });
-    } catch (e) {
+    } catch (e: unknown) {
       await msg.edit({ text: html("❌ 重置失败") });
     }
   }
@@ -1514,7 +1514,7 @@ America/New_York
         }
       }));
       if (enabledUsers.length > 0) nameManager.startAutoUpdate();
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[AutoChangeName] 初始化失败:", e);
     }
   }
@@ -1527,7 +1527,7 @@ America/New_York
 const plugin = new AutoChangeNamePlugin();
 
 if (process.env.TELEBOX_AUTO_INIT !== 'false') {
-  (async () => { try { await plugin.init(); } catch (e) { logger.error("autochangename: init failed", e); } })();
+  (async () => { try { await plugin.init(); } catch (e: unknown) { logger.error("autochangename: init failed", e); } })();
 }
 
 export const __test__ = {

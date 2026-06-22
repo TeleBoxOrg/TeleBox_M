@@ -119,7 +119,7 @@ export async function getEntityWithHash(
     // 使用 resolvePeer 获取完整 InputPeer
     const entity = await client.resolvePeer(entityId);
     return entity;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[EntityHelper] 获取实体失败: ${entityId}`, error);
     throw new Error(`无法获取实体: ${entityId}`);
   }
@@ -222,7 +222,7 @@ export async function getBatchEntitiesWithHash(
     try {
       const entity = await getEntityWithHash(client, entityId);
       entities.push(entity);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`[EntityHelper] 跳过无效实体: ${entityId}`, error);
     }
   }

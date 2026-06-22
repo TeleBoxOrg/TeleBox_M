@@ -221,7 +221,7 @@ class SearchService {
       await fs.access(CONFIG_FILE_PATH);
       const data = await fs.readFile(CONFIG_FILE_PATH, "utf-8");
       this.config = { ...this.config, ...JSON.parse(data) };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.info("未找到搜索配置，使用默认配置。");
     }
   }
@@ -230,7 +230,7 @@ class SearchService {
     try {
       await fs.mkdir(path.dirname(CONFIG_FILE_PATH), { recursive: true });
       await fs.writeFile(CONFIG_FILE_PATH, JSON.stringify(this.config, null, 2));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("保存配置失败:", error);
     }
   }
@@ -767,7 +767,7 @@ class SearchService {
     if (!useSpoiler && isMessageOutgoing(originalMsg)) {
       try {
         await this.client.deleteMessagesById(originalMsg.chat.id, [originalMsg.id]);
-      } catch (e) {
+      } catch (e: unknown) {
         logger.warn("删除原始消息失败，可能已被删除");
       }
     }

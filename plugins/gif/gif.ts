@@ -155,7 +155,7 @@ class GifConverter {
         try {
           fs.unlinkSync(filePath);
           deletedCount++;
-        } catch (e) { logger.warn(`[gif] 忽略删除失败的文件:`, e) }
+        } catch (e: unknown) { logger.warn(`[gif] 忽略删除失败的文件:`, e) }
       }
 
       await msg.edit({
@@ -437,7 +437,7 @@ class GifConverter {
         if (fs.existsSync(file)) {
           fs.unlinkSync(file);
         }
-      } catch (e) {
+      } catch (e: unknown) {
         logger.warn(`清理文件失败: ${file}`, e);
       }
     });

@@ -9,7 +9,7 @@ function readVersion(): string {
     const packageJson = fs.readFileSync(packagePath, "utf-8");
     const packageData = JSON.parse(packageJson);
     return packageData.version || "未知版本";
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to read version:", error);
     return "未知版本";
   }
@@ -30,7 +30,7 @@ function readDisplayVersion(): string {
     }
 
     return `${version}(${commit})`;
-  } catch (e) {
+  } catch (e: unknown) {
     return version;
   }
 }
@@ -41,7 +41,7 @@ function readAppName(): string {
     const rawJson = fs.readFileSync(userConfig, "utf-8");
     const name = JSON.parse(rawJson);
     return name.app_name || `TeleBox ${readVersion()}`;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("无法读取config.json,", error);
     return `TeleBox ${readVersion()}`;
   }

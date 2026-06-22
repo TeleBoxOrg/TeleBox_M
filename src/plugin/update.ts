@@ -18,7 +18,7 @@ async function getRemotes(): Promise<string[]> {
   try {
     const { stdout } = await execAsync("git remote");
     return stdout.trim().split("\n").filter((r) => r.trim());
-  } catch (e) {
+  } catch (e: unknown) {
     return [];
   }
 }
@@ -32,7 +32,7 @@ async function getBranches(): Promise<string[]> {
       .map((b) => b.trim().replace(/^\*/, "").trim())
       .filter((b) => b && !b.includes("->"));
     return branches;
-  } catch (e) {
+  } catch (e: unknown) {
     return [];
   }
 }

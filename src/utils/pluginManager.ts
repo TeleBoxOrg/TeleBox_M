@@ -118,7 +118,7 @@ function purgeModuleCache(modulePaths: Iterable<string>): void {
           idsToDelete.add(id);
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[pluginManager] operation failed:", e);
     }
   }
@@ -138,7 +138,7 @@ function dynamicRequireWithDeps(filePath: string) {
     loadedPluginFiles.add(normalized);
     delete require.cache[require.resolve(normalized)];
     return require(normalized);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error(`Failed to require ${filePath}:`, err);
     return null;
   }
@@ -295,7 +295,7 @@ async function dealCommandPluginWithMessage(param: {
     if (handler) {
       await handler(targetMsg, trigger);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Command handler error:", error);
     const errorMsg = `处理命令时出错：${error instanceof Error ? error.message : String(error)}`;
     try {
@@ -370,7 +370,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
         if (runtime.generation !== getCurrentGeneration()) return;
         try {
           await messageHandler(msg);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error("listenMessageHandler NewMessage error:", error);
         }
       });
@@ -383,7 +383,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
           if (runtime.generation !== getCurrentGeneration()) return;
           try {
             await messageHandler(msg, { isEdited: true });
-          } catch (error) {
+          } catch (error: unknown) {
             logger.error("listenMessageHandler EditedMessage error:", error);
           }
         });
@@ -400,7 +400,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
           if (runtime.generation !== getCurrentGeneration()) return;
           try {
             await eh.handler(ctx);
-          } catch (error) {
+          } catch (error: unknown) {
             logger.error("eventHandler error:", error);
           }
         };
@@ -446,7 +446,7 @@ async function runPluginCleanup(plugin: Plugin, runtime: TeleBoxRuntime): Promis
   // cleanup from executing and crashing the reload flow.
   try {
     await plugin.cleanup?.();
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[RELOAD] Plugin cleanup failed: ${plugin.name || "unknown"}`, error);
   }
 }
@@ -502,7 +502,7 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
   for (const plugin of validPlugins) {
     try {
       await runPluginSetup(plugin, runtime);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(
         `[RELOAD] Plugin setup failed: ${plugin.name || "unknown"} (continuing with remaining plugins)`,
         error
@@ -562,7 +562,7 @@ async function loadPlugins(): Promise<boolean> {
     // already aborted, breaking plugin setup, event handlers, and cron tasks.
     await reloadRuntime();
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[RELOAD] loadPlugins via reloadRuntime failed:", error);
     return false;
   }

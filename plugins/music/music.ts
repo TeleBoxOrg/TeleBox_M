@@ -176,7 +176,7 @@ class DependencyManager {
         try {
           await execAsync(`npm install ${pkg}`);
           logger.info(`[music] ${pkg} installed successfully`);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`[music] Failed to install ${pkg}:`, error);
           return false;
         }
@@ -192,7 +192,7 @@ class DependencyManager {
       const packagePath = path.join(process.cwd(), "node_modules", packageName);
       await fs.promises.access(packagePath, fs.constants.F_OK);
       return true;
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -208,7 +208,7 @@ class DependencyManager {
         await execAsync(cmd);
         logger.info(`[music] yt-dlp found: ${cmd}`);
         return true;
-      } catch (e) {
+      } catch (e: unknown) {
         continue;
       }
     }
@@ -220,7 +220,7 @@ class DependencyManager {
       await execAsync("ffmpeg -version");
       logger.info("[Music] FFmpeg 已就绪");
       return true;
-    } catch (e) {
+    } catch (e: unknown) {
       logger.info("[Music] FFmpeg 未找到");
       return false;
     }
@@ -254,7 +254,7 @@ class Utils {
     try {
       await fs.promises.access(path);
       return true;
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -346,7 +346,7 @@ class ConfigManager {
       );
       this.initialized = true;
       // logger.info("[music] 配置管理器初始化成功 (lowdb)");
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[music] 初始化配置失败:", error);
     }
   }
@@ -383,7 +383,7 @@ class ConfigManager {
       if (key === CONFIG.KEYS.API && legacy.settings?.apikey) {
         return legacy.settings.apikey ?? defaultValue ?? "";
       }
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
 
     return defaultValue || DEFAULT_CONFIG[key] || "";
   }
@@ -398,7 +398,7 @@ class ConfigManager {
 
       await this.db.write(); // 自动保存
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[music] 设置配置失败 ${key}:`, error);
       return false;
     }
@@ -414,7 +414,7 @@ class ConfigManager {
       }
       await this.db.write();
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[Music] Failed to remove ${key}:`, error);
       return false;
     }
@@ -454,7 +454,7 @@ class ConfigManager {
 
       await this.db.write(); // 自动保存
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[music] 删除配置失败 ${key}:`, error);
       return false;
     }
@@ -522,7 +522,7 @@ class HttpClient {
                 data: parsedData,
                 headers: res.headers,
               });
-            } catch (error) {
+            } catch (error: unknown) {
               resolve({
                 status: res.statusCode || 0,
                 data: HttpClient.cleanResponseText(body),
@@ -712,7 +712,7 @@ class CookieConverter {
         parsed[0].hasOwnProperty("name") &&
         parsed[0].hasOwnProperty("value")
       );
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -746,7 +746,7 @@ class CookieConverter {
       }
 
       return netscapeLines.join("\n");
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("Failed to convert JSON to Netscape:", error);
       return input;
     }
@@ -798,7 +798,7 @@ class CookieConverter {
         (parsed[0].hasOwnProperty("storeId") ||
           parsed[0].hasOwnProperty("sameSite"))
       );
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -925,7 +925,7 @@ class Downloader {
         }
         logger.info(`[Music] Found yt-dlp via: ${cmd.split(" ")[0]}`);
         break;
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
     }
 
     // Check FFmpeg
@@ -933,7 +933,7 @@ class Downloader {
       await execAsync("ffmpeg -version");
       result.ffmpeg = true;
       // 静默检查，不输出日志
-    } catch (e) {
+    } catch (e: unknown) {
       logger.info("[Music] FFmpeg 未找到，音频处理功能受限");
     }
 
@@ -962,7 +962,7 @@ class Downloader {
             logger.info(`[Music] AI构建搜索词: ${finalQuery}`);
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.info(`[Music] AI识别失败，使用原始搜索词: ${error}`);
       }
 
@@ -1039,7 +1039,7 @@ class Downloader {
             logger.info(`[Music] Search successful with: ${config.command}`);
             break;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.info(`[Music] Search failed with: ${config.command}. Error:`, error);
         }
       }
@@ -1064,12 +1064,12 @@ class Downloader {
           logger.info(`[Music] 选中第一个结果 (JSON): ${firstEntry.title}`);
           return `https://www.youtube.com/watch?v=${firstEntry.id}`;
         }
-      } catch (e) {
+      } catch (e: unknown) {
         logger.error('[Music] Failed to parse JSON, returning null.', e);
       }
 
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[Music] Search error:", error);
       return null;
     }
@@ -1199,13 +1199,13 @@ class Downloader {
             logger.info(`[Music] 已从API获取专辑封面: ${source}`);
             return true;
           }
-        } catch (e) {
+        } catch (e: unknown) {
           // 尝试下一个源
           continue;
         }
       }
       return false;
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -1231,14 +1231,14 @@ class Downloader {
               if (!buf || buf.length === 0) return resolve(false);
               await fs.promises.writeFile(destPath, buf);
               resolve(true);
-            } catch (e) {
+            } catch (e: unknown) {
               resolve(false);
             }
           });
         });
         req.on("error", () => resolve(false));
         req.end();
-      } catch (e) {
+      } catch (e: unknown) {
         resolve(false);
       }
     });
@@ -1284,7 +1284,7 @@ class Downloader {
       try {
         const ok = await this.fetchAlbumCoverUsingAPI(metadata, thumbnailPath);
         if (ok) hasThumbnail = true;
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
 
       // 获取视频元数据
       try {
@@ -1323,7 +1323,7 @@ class Downloader {
             }`
           );
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.info("[music] 无法获取视频信息，使用已有元数据");
       }
 
@@ -1359,7 +1359,7 @@ class Downloader {
               break;
             }
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.info("[music] 缩略图下载失败，继续下载音频");
         }
       }
@@ -1463,7 +1463,7 @@ class Downloader {
       }
 
       return { audioPath: null };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[music] 下载失败:", error);
       return { audioPath: null };
     }
@@ -1622,7 +1622,7 @@ class Downloader {
 
       logger.info("[music] 元数据和封面嵌入成功");
       return audioPath;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[music] 元数据嵌入失败:", error);
       // 如果失败，返回原文件
       return audioPath;
@@ -1699,7 +1699,7 @@ class Downloader {
       const newSize = fs.statSync(outputPath).size;
       logger.info(`[music] OPUS 转 MP3 成功 (${Utils.formatSize(newSize)})`);
       return outputPath;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[music] OPUS 转换错误:", error);
       return audioPath;
     }
@@ -1759,7 +1759,7 @@ class Downloader {
       }
 
       return mp3Path;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[music] MP3 封面嵌入失败:", error);
       return mp3Path;
     }
@@ -1780,7 +1780,7 @@ class Downloader {
           logger.info(`[music] Cleaned old temp file: ${file}`);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[music] Clean temp files error:", error);
     }
   }
@@ -1829,7 +1829,7 @@ class MusicPlugin extends Plugin {
         } else if (stdout.includes("Updated")) {
           logger.info("[music] yt-dlp已更新到最新版本");
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.info("[music] 无法自动更新yt-dlp，请手动更新: yt-dlp -U");
       }
     }
@@ -2273,7 +2273,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
           ) {
             fs.unlinkSync(downloadResult.thumbnailPath);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger.info("[music] 清理临时文件失败:", error);
         }
       }
@@ -2319,7 +2319,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
           }`
         );
         return songInfo;
-      } catch (error) {
+      } catch (error: unknown) {
         logger.info("[music] AI 解析失败，使用默认解析:", error);
       }
     } else {

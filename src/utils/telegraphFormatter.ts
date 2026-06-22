@@ -120,7 +120,7 @@ const sanitizeUrl = (url: string): string => {
     const u = new URL(url);
     if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
     /* ignored */
-  } catch (e) { logger.error("[quality] ignored error:", e); }
+  } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
   return "";
 };
 

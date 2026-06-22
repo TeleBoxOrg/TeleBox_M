@@ -133,7 +133,7 @@ class ManageAdminPlugin extends Plugin {
           let sender: unknown;
           try {
             sender = await (r as MessageContext).getCompleteSender?.();
-          } catch (e) { logger.warn('操作失败', e) }
+          } catch (e: unknown) { logger.warn('操作失败', e) }
           if (sender && !isUser(sender)) {
             // Fallback to senderId
             const uid = Number((r.sender as { id?: number })?.id);
@@ -141,7 +141,7 @@ class ManageAdminPlugin extends Plugin {
               try {
                 const input = client.resolvePeer(uid);
                 return { id: uid, entity: input };
-              } catch (e) { logger.warn('操作失败', e) }
+              } catch (e: unknown) { logger.warn('操作失败', e) }
             }
             return { id: undefined, entity: undefined };
           }
@@ -158,7 +158,7 @@ class ManageAdminPlugin extends Plugin {
             const fullUser = full as User;
             const input = client.resolvePeer(fullUser.id);
             return { id: Number(fullUser.id), entity: input };
-          } catch (e) {
+          } catch (e: unknown) {
             // Fallback: if arg is numeric and current chat is channel, scan participants to resolve access hash
             const numericId = Number(arg);
             if (msg.chat instanceof Chat && (msg.chat as Chat).isGroup && Number.isFinite(numericId)) {
@@ -192,7 +192,7 @@ class ManageAdminPlugin extends Plugin {
                   if (!participants.length) break;
                   offset += participants.length;
                 }
-              } catch (e) { logger.warn('操作失败', e) }
+              } catch (e: unknown) { logger.warn('操作失败', e) }
             }
             return { id: undefined, entity: undefined };
           }
@@ -208,7 +208,7 @@ class ManageAdminPlugin extends Plugin {
             participant: targetEntity as unknown as tl.TypeInputPeer,
           });
           return (info as { participant?: unknown })?.participant;
-        } catch (e) {
+        } catch (e: unknown) {
           return undefined;
         }
       }
@@ -224,7 +224,7 @@ class ManageAdminPlugin extends Plugin {
           });
           const part = (info as { participant?: unknown })?.participant;
           return hasRawType(part, 'channelParticipantCreator');
-        } catch (e) {
+        } catch (e: unknown) {
           return false;
         }
       }
@@ -315,7 +315,7 @@ class ManageAdminPlugin extends Plugin {
             ) {
               appliedRank = (refreshed as { rank?: string }).rank || "";
             }
-          } catch (e) { logger.warn('操作失败', e) }
+          } catch (e: unknown) { logger.warn('操作失败', e) }
 
           const u = await formatEntity(userId || userEntity, true);
           const rankOk = appliedRank === rankToUse;

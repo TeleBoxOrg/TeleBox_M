@@ -257,7 +257,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'hostname -I 2>/dev/null | awk "{print $1}"'`
         );
         ip = (stdout || "").trim();
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
 
       const lines: string[] = [];
       lines.push("安装完成");
@@ -670,7 +670,7 @@ class OpenListPlugin extends Plugin {
       const db = await this.getDb();
       dbUser = db.data.username;
       dbPass = db.data.password;
-    } catch (e) { logger.debug("openlist: DB credentials read failed, will try config file", e); }
+    } catch (e: unknown) { logger.debug("openlist: DB credentials read failed, will try config file", e); }
 
     // 2. Get Config credentials
     let configUser = "";
@@ -683,7 +683,7 @@ class OpenListPlugin extends Plugin {
         let configContent = "";
         try {
           configContent = await fs.readFile(configPath, "utf-8");
-        } catch (e) {
+        } catch (e: unknown) {
           const { stdout } = await execAsync(`cat "${configPath}" 2>/dev/null`);
           configContent = stdout;
         }
@@ -695,7 +695,7 @@ class OpenListPlugin extends Plugin {
             configPass = config.users[0].password;
           }
         }
-      } catch (e) {
+      } catch (e: unknown) {
         logger.error("Error reading config:", e);
       }
     }
@@ -727,7 +727,7 @@ class OpenListPlugin extends Plugin {
         return response.data.data.token;
       }
       throw new Error(response.data?.message || "Login failed");
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   }
@@ -758,7 +758,7 @@ class OpenListPlugin extends Plugin {
           );
           const m = verOut.match(/Version:\s*([^\s]+)/);
           version = m ? m[1] : "";
-        } catch (e) { logger.warn('操作失败', e) }
+        } catch (e: unknown) { logger.warn('操作失败', e) }
       }
 
       let publicIp = "";
@@ -767,7 +767,7 @@ class OpenListPlugin extends Plugin {
           `bash -lc 'curl -s4 --connect-timeout 5 ip.sb || curl -s4 --connect-timeout 5 ifconfig.me'`
         );
         publicIp = (ipOut || "").trim();
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
 
       const lines: string[] = [];
       lines.push(`<b>状态:</b> ${installed ? `已安装` : "未安装"}`);
@@ -791,7 +791,7 @@ class OpenListPlugin extends Plugin {
               lines.push(`${index + 1}. <b>用户:</b> ${htmlEscape(user.username)} | <b>密码:</b> ${htmlEscape(user.password)}`);
             });
           }
-        } catch (e) {
+        } catch (e: unknown) {
           lines.push("\n无法解析账户信息。");
         }
       }
@@ -825,7 +825,7 @@ class OpenListPlugin extends Plugin {
       );
       const p = (stdout || "").trim();
       if (p) return p;
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
     return "/opt/openlist";
   }
 
@@ -833,7 +833,7 @@ class OpenListPlugin extends Plugin {
     try {
       await execAsync(`bash -lc 'command -v ${cmd} >/dev/null 2>&1'`);
       return true;
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -844,7 +844,7 @@ class OpenListPlugin extends Plugin {
         `bash -lc '[ -d "${path}" ] && echo 1 || echo 0'`
       );
       return stdout.trim() === "1";
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }
@@ -863,7 +863,7 @@ class OpenListPlugin extends Plugin {
         `bash -lc '[ -f "${path}" ] && echo 1 || echo 0'`
       );
       return stdout.trim() === "1";
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
   }

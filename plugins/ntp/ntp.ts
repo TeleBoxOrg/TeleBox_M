@@ -85,7 +85,7 @@ async function queryOnce(host: string, timeoutMs = 2500): Promise<NtpResult> {
     function cleanup() {
       try {
         socket.close();
-      } catch (e) { logger.warn('[ntp] socket close failed:', e) }
+      } catch (e: unknown) { logger.warn('[ntp] socket close failed:', e) }
       if (timeoutTimer) clearTimeout(timeoutTimer);
     }
 
@@ -130,7 +130,7 @@ async function queryOnce(host: string, timeoutMs = 2500): Promise<NtpResult> {
           serverTimeMs,
           raw: msg,
         });
-      } catch (e) {
+      } catch (e: unknown) {
         cleanup();
         reject(e);
       }
@@ -250,7 +250,7 @@ class NtpPlugin extends Plugin {
       if (args.length === 0) {
         try {
           await msg.edit({ text: "⏳ 正在查询 NTP..." });
-        } catch (e) { logger.warn('[ntp] edit msg failed:', e) }
+        } catch (e: unknown) { logger.warn('[ntp] edit msg failed:', e) }
         try {
           const result = await queryBest();
           const now = Date.now();
@@ -278,7 +278,7 @@ class NtpPlugin extends Plugin {
       if (args[0].toLowerCase() === "s") {
         try {
           await msg.edit({ text: "🔧 正在对时（NTP 查询）..." });
-        } catch (e) { logger.warn('[ntp] edit sync msg failed:', e) }
+        } catch (e: unknown) { logger.warn('[ntp] edit sync msg failed:', e) }
         try {
           const result = await queryBest();
           if (!result.serverTimeMs) throw new Error("无法获取服务器时间");

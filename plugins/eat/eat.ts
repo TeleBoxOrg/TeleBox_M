@@ -206,7 +206,7 @@ async function downloadProfilePhotoForId(client: TelegramClient, userId: number)
     } as unknown as never;
     const buffer = await client.downloadAsBuffer(location as unknown as never);
     return Buffer.from(buffer);
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error("[eat] downloadProfilePhoto failed:", err);
     return null;
   }

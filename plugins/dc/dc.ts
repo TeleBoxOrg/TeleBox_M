@@ -86,7 +86,7 @@ const dc = async (msg: MessageContext) => {
           text: html`📍 <b>${htmlEscape(firstName)}</b> 所在数据中心为: <b>DC${photo.dcId}</b>`,
         });
         return;
-      } catch (error) {
+      } catch (error: unknown) {
         // 如果获取用户失败，尝试获取聊天信息
         try {
           const chat = await (replyMessage as MessageContext).getCompleteChat();
@@ -206,7 +206,7 @@ const dc = async (msg: MessageContext) => {
       await msg.edit({
         text: html`📍 <b>${htmlEscape(firstName)}</b> 所在数据中心为: <b>DC${photo.dcId}</b>`,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       const errorStr = String(error);
 
       if (errorStr.includes("Cannot find any entity corresponding to")) {
@@ -236,7 +236,7 @@ const dc = async (msg: MessageContext) => {
         });
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("DC插件执行失败:", error);
     await msg.edit({
       text: html`❌ <b>DC 查询失败:</b> ${htmlEscape(String(error))}`,

@@ -148,7 +148,7 @@ function sanitizeErrorMessage(error: string, server?: ServerConfig): string {
       try {
         const password = decrypt(server.credentials);
         sanitized = sanitized.replace(new RegExp(password, 'g'), '***');
-      } catch (e) { logger.warn(`[speedlink] Ignore decryption errors:`, e) }
+      } catch (e: unknown) { logger.warn(`[speedlink] Ignore decryption errors:`, e) }
     }
   }
   
@@ -245,7 +245,7 @@ function loadConfig(): { timeout?: number } {
     if (fs.existsSync(CONFIG_PATH)) {
       return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("Failed to load config:", e);
   }
   return {};
@@ -254,7 +254,7 @@ function loadConfig(): { timeout?: number } {
 function saveConfig(config: any): void {
   try {
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("Failed to save config:", e);
   }
 }
@@ -851,7 +851,7 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
     try {
       statusMsg = await msg.client.sendText(msg.chat.id, initialText);
       await msg.delete();
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("Failed to send/delete, falling back to editing original message:", e);
       try {
         await msg.edit({ text: initialText });

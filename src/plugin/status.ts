@@ -130,7 +130,7 @@ class TeleBoxSystemMonitor extends Plugin {
       this.db = await JSONFilePreset(this.DB_PATH, {
         template: DEFAULT_TEMPLATE,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[${this.PLUGIN_NAME}] 数据库初始化失败:`, error);
       throw new Error(`数据库初始化失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
@@ -167,7 +167,7 @@ class TeleBoxSystemMonitor extends Plugin {
         default:
           await this.showStatus(msg);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       await this.handleError(msg, error, "status");
     }
   }
@@ -182,7 +182,7 @@ class TeleBoxSystemMonitor extends Plugin {
       await msg.edit({
         text: html(sysInfo),
       });
-    } catch (error) {
+    } catch (error: unknown) {
       await this.handleError(msg, error, "sysinfo");
     }
   }
@@ -516,7 +516,7 @@ Scan Time: ${scanTime}ms
         diskInfo = await this.getMacDiskInfo();
         swapInfo = await this.getMacSwapInfo();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`[${this.PLUGIN_NAME}] 系统信息获取部分失败:`, error);
     }
 
@@ -538,7 +538,7 @@ Scan Time: ${scanTime}ms
       const osRelease = fs.readFileSync("/etc/os-release", "utf8");
       const prettyName = osRelease.match(/PRETTY_NAME="([^"]+)"/)?.[1] || "Debian GNU/Linux";
       return `${prettyName} ${arch}`;
-    } catch (e) {
+    } catch (e: unknown) {
       return `Debian GNU/Linux 13 (trixie) ${arch}`;
     }
   }
@@ -547,7 +547,7 @@ Scan Time: ${scanTime}ms
     try {
       const kernel = this.safeExec("uname -r").trim();
       return `Linux ${kernel}`;
-    } catch (e) {
+    } catch (e: unknown) {
       return "Linux 6.12.41+deb13-arm64";
     }
   }
@@ -556,7 +556,7 @@ Scan Time: ${scanTime}ms
     try {
       const count = this.safeExec("dpkg -l | grep '^ii' | wc -l").trim();
       return `${count} (dpkg)`;
-    } catch (e) {
+    } catch (e: unknown) {
       return "763 (dpkg)";
     }
   }
@@ -575,13 +575,13 @@ Scan Time: ${scanTime}ms
         try {
           const initInfo = this.safeExec("ps -p 1 -o comm=").trim();
           return initInfo;
-        } catch (e) {
+        } catch (e: unknown) {
           return "init";
         }
       }
 
       return "Unknown";
-    } catch (e) {
+    } catch (e: unknown) {
       return "systemd 257.7-1";
     }
   }
@@ -600,7 +600,7 @@ Scan Time: ${scanTime}ms
           return this.formatByteUsage(usedBytes, totalBytes);
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[status] operation failed:", e);
     }
     return "Unknown";
@@ -618,7 +618,7 @@ Scan Time: ${scanTime}ms
           return this.formatByteUsage(used, total);
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       try {
         const freeOutput = this.safeExec("free -h");
         const swapLine = freeOutput.split("\n").find((line) => line.startsWith("Swap:"));
@@ -630,7 +630,7 @@ Scan Time: ${scanTime}ms
             return this.formatByteUsage(used, total);
           }
         }
-      } catch (e) {
+      } catch (e: unknown) {
         return "Unknown";
       }
     }
@@ -653,7 +653,7 @@ Scan Time: ${scanTime}ms
           return this.formatByteUsage(usedBytes, totalBytes);
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[status] operation failed:", e);
     }
     return "Unknown";
@@ -665,7 +665,7 @@ Scan Time: ${scanTime}ms
       const swapUsage = this.safeExec(`${sysctlPath} vm.swapusage`).trim();
       const parsedSwap = this.parseMacSwapUsage(swapUsage);
       return parsedSwap || swapUsage;
-    } catch (e) {
+    } catch (e: unknown) {
       return "Unknown";
     }
   }
@@ -690,7 +690,7 @@ Scan Time: ${scanTime}ms
         const usage = Math.round((1 - totalIdle / totalTick) * 100 * 100) / 100;
         return usage.toFixed(2);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       return "0.00";
     }
   }
@@ -705,7 +705,7 @@ Scan Time: ${scanTime}ms
       const elapsed = (endTime - startTime) / 1000;
       const cpuPercent = (endUsage.user + endUsage.system) / (elapsed * 1000000) * 100;
       return (Math.round(cpuPercent * 100) / 100).toString();
-    } catch (e) {
+    } catch (e: unknown) {
       return "0.0";
     }
   }
@@ -714,7 +714,7 @@ Scan Time: ${scanTime}ms
     try {
       const count = this.safeExec("ps aux | wc -l").trim();
       return (parseInt(count) - 1).toString();
-    } catch (e) {
+    } catch (e: unknown) {
       return "Unknown";
     }
   }
@@ -730,7 +730,7 @@ Scan Time: ${scanTime}ms
         mtcute: packageJson.dependencies?.['@mtcute/node']?.replace('^', '') || 'unknown',
         telebox: readDisplayVersion()
       };
-    } catch (e) {
+    } catch (e: unknown) {
       return {
         nodejs: process.version,
         teleproto: 'unknown',
@@ -757,7 +757,7 @@ Scan Time: ${scanTime}ms
         }
       }
       return "enp0s6";
-    } catch (e) {
+    } catch (e: unknown) {
       return "enp0s6";
     }
   }

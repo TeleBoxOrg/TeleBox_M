@@ -289,7 +289,7 @@ async function migrateToLowdb(): Promise<boolean> {
       `[SHIFT] 成功迁移 ${rules.length} 条规则，备份至: ${backupPath}`
     );
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[SHIFT] 迁移失败:", error);
     return false;
   }
@@ -358,7 +358,7 @@ async function getShiftRule(sourceId: number): Promise<ShiftRule | null> {
       ruleCache.set(sourceId, { rule, timestamp: now });
     }
     return rule;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[SHIFT] Error getting rule for ${sourceId}:`, error);
     return null;
   }
@@ -395,7 +395,7 @@ function saveShiftRule(sourceId: number, rule: ShiftRule): boolean {
       return true;
     }
     return false;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[SHIFT] Error saving rule:`, error);
     return false;
   }
@@ -420,7 +420,7 @@ function deleteShiftRule(sourceId: number): boolean {
       return true;
     }
     return false;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[SHIFT] Error deleting rule:`, error);
     return false;
   }
@@ -453,7 +453,7 @@ function getAllShiftRules(): Array<{ sourceId: number; rule: ShiftRule }> {
       }));
     }
     return [];
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("[SHIFT] Error getting all rules:", error);
     return [];
   }
@@ -536,7 +536,7 @@ function parseIndices(
       } else {
         invalid.push(i.trim());
       }
-    } catch (error) {
+    } catch (error: unknown) {
       invalid.push(i.trim());
     }
   }
@@ -651,7 +651,7 @@ async function forwardGroupMessages(
         ","
       )}`
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(
       `[SHIFT] 组转发失败: ${fromChatId} -> ${toChatId}, msgs=${messageIds.join(
         ","
@@ -712,7 +712,7 @@ function enqueueGroupMessage(
       } else {
         logger.info("[SHIFT] 组未触发类型过滤，跳过转发");
       }
-    } catch (e) {
+    } catch (e: unknown) {
       if (!isAbortError(e)) {
         logger.error("[SHIFT] 组转发执行失败", e);
       }
@@ -758,7 +758,7 @@ async function resolveTarget(
     if (!isNaN(numericId)) {
       return await client.getChat(numericId);
     }
-  } catch (error) { logger.warn(`[shift] Fall through to username:`, error) }
+  } catch (error: unknown) { logger.warn(`[shift] Fall through to username:`, error) }
 
   return await client.getChat(targetInput);
 }
@@ -924,7 +924,7 @@ class BackupManager {
     const execute = async (signal?: AbortSignal) => {
       try {
         await this.executeBackup(taskId, options, signal);
-      } catch (error) {
+      } catch (error: unknown) {
         if (!isAbortError(error)) {
           logger.error(`[SHIFT] 备份任务 ${taskId} 失败:`, error);
           task.status = "failed";
@@ -1130,7 +1130,7 @@ class BackupManager {
           failedMessages: task.failedMessages,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (isAbortError(error)) {
         task.status = "failed";
         return;
@@ -1226,7 +1226,7 @@ async function importRules(jsonData: string, merge = false): Promise<void> {
   if (typeof parsed === "string") {
     try {
       parsed = JSON.parse(parsed);
-    } catch (e) { logger.warn('操作失败', e) }
+    } catch (e: unknown) { logger.warn('操作失败', e) }
   }
   const newRules = parsed as { [key: string]: ShiftRule };
 
@@ -1350,7 +1350,7 @@ class ShiftPlugin extends Plugin {
                 } else {
                   cleanedCount++;
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 cleanedCount++;
               }
             }
@@ -1382,7 +1382,7 @@ class ShiftPlugin extends Plugin {
               jsonData = Buffer.from(inputData, "base64").toString("utf-8");
               // 验证是否为有效JSON
               JSON.parse(jsonData);
-            } catch (e) {
+            } catch (e: unknown) {
               // 如果Base64解码失败，尝试直接作为JSON处理
               jsonData = inputData;
             }
@@ -1493,7 +1493,7 @@ class ShiftPlugin extends Plugin {
               ]);
               sourceDisplay = formattedSource.display;
               targetDisplay = formattedTarget.display;
-            } catch (error) {
+            } catch (error: unknown) {
               logger.warn("[SHIFT] 无法格式化实体显示名称:", error);
             }
           }
@@ -1597,7 +1597,7 @@ class ShiftPlugin extends Plugin {
                 output += `   🛡️ 过滤: ${rule.filters.length} 个关键词\n`;
               }
               output += "\n";
-            } catch (error) {
+            } catch (error: unknown) {
               output += `${i + 1}. ⚠️ 规则损坏 (${sourceId})\n\n`;
             }
           }
@@ -1709,7 +1709,7 @@ class ShiftPlugin extends Plugin {
                 const dailyTotal = dailyStats.total || 0;
                 channelStats[sourceId].total += dailyTotal;
                 channelStats[sourceId].dates[date] = dailyTotal;
-              } catch (error) {
+              } catch (error: unknown) {
                 continue;
               }
             }
@@ -1737,7 +1737,7 @@ class ShiftPlugin extends Plugin {
                   }
                 }
                 output += "\n";
-              } catch (error) {
+              } catch (error: unknown) {
                 output += `📤 源: ID ${htmlEscape(
                   String(sourceId)
                 )}\n📈 总转发: ${stats.total} 条\n\n`;
@@ -2118,7 +2118,7 @@ function updateStats(
 
       saveStmt.run(statsKey, JSON.stringify(stats));
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[SHIFT] Error updating stats:`, error);
   }
 }
@@ -2141,7 +2141,7 @@ async function isMessageFiltered(
       try {
         const regex = new RegExp(pattern, "i");
         return regex.test(text);
-      } catch (e) {
+      } catch (e: unknown) {
         logger.error(`[SHIFT] 无效的正则表达式: ${pattern}`, e);
         return false;
       }
@@ -2209,7 +2209,7 @@ async function shiftForwardMessage(
         options
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(
       `[SHIFT] 转发失败: ${fromChatId} -> ${toChatId}, msg=${messageId}`,
       error
@@ -2338,7 +2338,7 @@ async function handleIncomingMessage(
 
     // Update stats
     updateStats(sourceId, targetId, messageType);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[SHIFT] 处理消息时出错: ${error}`);
   }
 }

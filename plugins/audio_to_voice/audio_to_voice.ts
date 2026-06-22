@@ -104,7 +104,7 @@ class AudioToVoicePlugin extends Plugin {
       // 先检测 ffmpeg 是否可用
       try {
         await execAsync(`ffmpeg -version`);
-      } catch (e) {
+      } catch (e: unknown) {
         await msg.edit({ text: "❌ 未检测到 ffmpeg，请先在系统安装 ffmpeg 后重试。macOS 可使用：brew install ffmpeg" });
         return;
       }
@@ -126,7 +126,7 @@ class AudioToVoicePlugin extends Plugin {
         const cmd = `ffmpeg -y -i "${audioPath}" -vn -acodec libopus -b:a 64k -ar 48000 -ac 1 "${oggPath}"`;
         try {
           await execAsync(cmd, { timeout: 180000 });
-        } catch (e) {
+        } catch (e: unknown) {
           throw new Error(`FFmpeg 转码失败，请确认系统已安装 FFmpeg（macOS: brew install ffmpeg）。`);
         }
 
@@ -170,13 +170,13 @@ class AudioToVoicePlugin extends Plugin {
           }
         }
         
-      } catch (error) {
+      } catch (error: unknown) {
         this.safeRemove(audioPath);
         this.safeRemove(oggPath);
         await msg.edit({ text: `转换为语音消息失败：${error}` });
       }
       
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("AudioToVoice plugin error:", error);
       await msg.edit({ text: `转换为语音消息失败：${error}` });
     }
@@ -187,7 +187,7 @@ class AudioToVoicePlugin extends Plugin {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`删除文件失败 ${filePath}:`, error);
     }
   }

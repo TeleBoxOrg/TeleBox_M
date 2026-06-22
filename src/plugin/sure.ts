@@ -93,7 +93,7 @@ async function handleAddDel(
       }
       uid = Number(uid);
       display = buildDisplay(uid, entity, entity?.type === "user");
-    } catch (e) {
+    } catch (e: unknown) {
       await msg.edit({ text: "无法获取用户信息" });
       return;
     }
@@ -114,7 +114,7 @@ async function handleAddDel(
     }
     try {
       entity = await msg.client?.getChat(uid);
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[sure] operation failed:", e);
     }
     display = buildDisplay(uid, entity, reply.sender?.type === "user");
@@ -161,7 +161,7 @@ async function handleChatAddDel(
       }
       cid = Number(cid);
       display = buildDisplay(cid, entity, entity?.type === "user");
-    } catch (e) {
+    } catch (e: unknown) {
       await msg.edit({ text: "无法获取对话信息" });
       return;
     }
@@ -173,7 +173,7 @@ async function handleChatAddDel(
     }
     try {
       entity = await msg.client?.getChat(cid);
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error("[sure] operation failed:", e);
     }
     display = buildDisplay(cid, entity, msg.chat?.type === "user");

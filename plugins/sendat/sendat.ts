@@ -395,7 +395,7 @@ class SendTaskManager {
       } else {
         await this.saveToDB();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[sendat] 执行任务 ${task.task_id} 失败:`, error);
     }
   }

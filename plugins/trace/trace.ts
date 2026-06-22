@@ -262,7 +262,7 @@ class TracePlugin extends Plugin {
           }
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[trace] Listener failed to send reaction:", error);
     }
   }
@@ -636,7 +636,7 @@ class TracePlugin extends Plugin {
               // Don't use parseMode when using entities
               noWebpage: true
           });
-      } catch (error) {
+      } catch (error: unknown) {
           logger.error("[trace] Failed to edit with entities:", error);
           // Fallback to regular edit without custom emoji entities
           await msg.edit({ text: html(text) });

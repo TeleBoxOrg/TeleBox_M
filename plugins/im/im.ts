@@ -99,7 +99,7 @@ async function getPeerId(client: TelegramClient, msg: MessageContext, chatIdStr?
             return `${(resolved as { userId?: number }).userId}`;
         }
         return null;
-    } catch (e) {
+    } catch (e: unknown) {
         logger.error(`[${PLUGIN_NAME}] Could not resolve peer:`, e);
         return null;
     }
@@ -132,7 +132,7 @@ class MessageManager {
         }, deleteAfter * 1000);
         trackTimer(timer);
       }
-    } catch (e) { logger.warn(`[im] Ignore errors if message was deleted or something:`, e) }
+    } catch (e: unknown) { logger.warn(`[im] Ignore errors if message was deleted or something:`, e) }
   }
 }
 
@@ -351,7 +351,7 @@ class ImageMonitorPlugin extends Plugin {
             } else {
               await MessageManager.edit(msg, `ℹ️ 群组 <code>${htmlEscape(chatName)}</code> 已在监控列表中。`);
             }
-          } catch (e) {
+          } catch (e: unknown) {
             await MessageManager.edit(msg, "❌ 无法解析群组ID或用户名。");
           }
           break;
@@ -384,7 +384,7 @@ class ImageMonitorPlugin extends Plugin {
             } else {
               await MessageManager.edit(msg, `ℹ️ 群组 <code>${htmlEscape(chatName)}</code> 不在监控列表中。`);
             }
-          } catch (e) {
+          } catch (e: unknown) {
             await MessageManager.edit(msg, "❌ 无法解析群组ID或用户名。");
           }
           break;

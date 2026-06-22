@@ -627,7 +627,7 @@ async function collectAdminStat(
         await setCachedAvgEntry(target, userId, sortAvgPerDay);
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn(`[admin_board] 获取最近一周消息数失败: ${userId}`, error);
   }
 
@@ -664,7 +664,7 @@ async function collectAdminStat(
       sortLastMessageTs = lastMessageDate.getTime();
       lastMessageText = formatDaysAgo(lastMessageDate);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn(`[admin_board] 获取最后发言时间失败: ${userId}`, error);
   }
 
@@ -1222,7 +1222,7 @@ async function findUserInChannelParticipants(
         );
       });
       if (matched) return matched;
-    } catch (e) { logger.warn(`[admin_board] Ignore and continue to other fallbacks.:`, e) }
+    } catch (e: unknown) { logger.warn(`[admin_board] Ignore and continue to other fallbacks.:`, e) }
   }
 
   if (!isNumeric) return undefined;
@@ -1277,7 +1277,7 @@ async function resolveUserForSeatAction(
       if (hasRawType(entity, "user")) {
         return entity.raw as unknown as tl.RawUser;
       }
-    } catch (e) { logger.warn(`[admin_board] Ignore and continue to target-specific fallback.:`, e) }
+    } catch (e: unknown) { logger.warn(`[admin_board] Ignore and continue to target-specific fallback.:`, e) }
   }
 
   return target.isChannel

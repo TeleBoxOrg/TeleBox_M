@@ -24,7 +24,7 @@ function loadConfig(): TelegramAPI {
   try {
     const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
     return JSON.parse(raw);
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("❌ 无法读取 config.json:", e);
     return {};
   }

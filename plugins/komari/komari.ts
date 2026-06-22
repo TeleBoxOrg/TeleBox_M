@@ -44,7 +44,7 @@ class ConfigManager {
         )
       `);
       this.initialized = true;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("初始化Komari配置数据库失败:", error);
     }
   }
@@ -60,7 +60,7 @@ class ConfigManager {
       if (row) {
         return row.value;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("读取Komari配置失败:", error);
     }
 
@@ -77,7 +77,7 @@ class ConfigManager {
         VALUES (?, ?, CURRENT_TIMESTAMP)
       `);
       stmt.run(key, value);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("保存Komari配置失败:", error);
     }
   }
@@ -97,7 +97,7 @@ class ConfigManager {
       });
 
       return config;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("读取所有Komari配置失败:", error);
       return {};
     }
@@ -111,7 +111,7 @@ class ConfigManager {
     try {
       const stmt = this.db.prepare("DELETE FROM config WHERE key = ?");
       stmt.run(key);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("删除Komari配置失败:", error);
     }
   }
@@ -121,7 +121,7 @@ class ConfigManager {
     if (this.db) {
       try {
         this.db.close();
-      } catch (e) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
     }
     this.db = null;
     this.initialized = false;
@@ -213,7 +213,7 @@ function formatExpiredDate(dateStr: string): string {
     } else {
       return `${dateString} (已过期 ${Math.abs(diffDays)} 天)`;
     }
-  } catch (e) {
+  } catch (e: unknown) {
     return "未知";
   }
 }
@@ -330,7 +330,7 @@ async function getNodesOverview(baseUrl: string): Promise<string> {
               return { uuid: node.uuid, data: recentData.data[0] };
             }
             return null;
-          } catch (e) { logger.warn(`[komari] 节点可能离线，忽略错误:`, e); return null; }
+          } catch (e: unknown) { logger.warn(`[komari] 节点可能离线，忽略错误:`, e); return null; }
         })
       );
       for (const r of results) {
@@ -339,7 +339,7 @@ async function getNodesOverview(baseUrl: string): Promise<string> {
           realtimeData[r.uuid] = r.data;
         }
       }
-    } catch (e) { logger.warn(`[komari] 如果获取实时数据失败，使用节点列表数据:`, e) }
+    } catch (e: unknown) { logger.warn(`[komari] 如果获取实时数据失败，使用节点列表数据:`, e) }
 
     const totalNodes = nodes.length;
     const onlineCount = onlineNodes.length;

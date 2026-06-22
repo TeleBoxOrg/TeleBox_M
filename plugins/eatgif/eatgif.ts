@@ -271,7 +271,7 @@ class EatGifPlugin extends Plugin {
       }, {
         replyTo: replyMsg?.id,
       });
-    } catch (e) {
+    } catch (e: unknown) {
       logger.info("exec ffmpeg error", e);
       await msg.edit({ text: html`生成 webm 失败 ${String(e)}` });
 
@@ -403,7 +403,7 @@ class EatGifPlugin extends Plugin {
       } as never;
       const buffer = await client.downloadAsBuffer(location);
       return Buffer.from(buffer);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error("[eatgif] downloadProfilePhoto failed:", err);
       return undefined;
     }

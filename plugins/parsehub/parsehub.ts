@@ -90,7 +90,7 @@ function readState(): InitState {
         ? Number(parsed.ignoredUpToId)
         : undefined,
     };
-  } catch (e) {
+  } catch (e: unknown) {
     return { initialized: false };
   }
 }
@@ -98,7 +98,7 @@ function readState(): InitState {
 function writeState(state: InitState) {
   try {
     fs.writeFileSync(STATE_PATH, JSON.stringify(state), "utf-8");
-  } catch (e) { logger.warn('[parsehub] state write failed:', e) }
+  } catch (e: unknown) { logger.warn('[parsehub] state write failed:', e) }
 }
 
 let initState: InitState = readState();
@@ -134,11 +134,11 @@ async function ensureBotReady(msg: MessageContext) {
   try {
     botPeer = await client.resolvePeer(BOT_USERNAME);
     botUser = await client.resolveUser(BOT_USERNAME);
-  } catch (e) { logger.warn('[parsehub] resolve failed:', e); return; }
+  } catch (e: unknown) { logger.warn('[parsehub] resolve failed:', e); return; }
 
   try {
     await client.call({ _: "contacts.unblock", id: botPeer });
-  } catch (e) { logger.warn('[parsehub] unblock failed:', e) }
+  } catch (e: unknown) { logger.warn('[parsehub] unblock failed:', e) }
 
   try {
     const inputPeer = await client.resolvePeer(BOT_USERNAME);
@@ -151,7 +151,7 @@ async function ensureBotReady(msg: MessageContext) {
         muteUntil: 2147483647,
       },
     });
-  } catch (e) { logger.warn('[parsehub] notify settings update failed:', e) }
+  } catch (e: unknown) { logger.warn('[parsehub] notify settings update failed:', e) }
 
   if (hasStartedBot) {
     return;
@@ -163,7 +163,7 @@ async function ensureBotReady(msg: MessageContext) {
       hasStartedBot = true;
       return;
     }
-  } catch (e) { logger.warn('[parsehub] history fetch failed:', e) }
+  } catch (e: unknown) { logger.warn('[parsehub] history fetch failed:', e) }
 
   try {
     if (!initState.initialized) {
@@ -178,7 +178,7 @@ async function ensureBotReady(msg: MessageContext) {
       startParam: "",
     });
     hasStartedBot = true;
-  } catch (e) {
+  } catch (e: unknown) {
     try {
       if (!initState.initialized) {
         firstRunPreStartLastId = await getLatestBotMessageId(client);
@@ -186,7 +186,7 @@ async function ensureBotReady(msg: MessageContext) {
       }
       await client.sendText(BOT_USERNAME, "/start");
       hasStartedBot = true;
-    } catch (e) { logger.warn('[parsehub] send /start failed:', e) }
+    } catch (e: unknown) { logger.warn('[parsehub] send /start failed:', e) }
   }
 
   // Best-effort: capture welcome message id to avoid mis-forwarding
@@ -204,7 +204,7 @@ async function ensureBotReady(msg: MessageContext) {
           shouldIgnoreNextBotMessage = false;
           break;
         }
-      } catch (e) { logger.warn('[parsehub] latest id fetch failed:', e) }
+      } catch (e: unknown) { logger.warn('[parsehub] latest id fetch failed:', e) }
     }
   }
 }
@@ -216,7 +216,7 @@ async function getLatestBotMessageId(client: any): Promise<number> {
     if (history.length > 0) {
       return history[0].id;
     }
-  } catch (e) { logger.warn('获取历史记录失败', e) }
+  } catch (e: unknown) { logger.warn('获取历史记录失败', e) }
   return 0;
 }
 
@@ -354,7 +354,7 @@ async function relayParseResult(
     try {
       await forwardChunk(client, originMsg.chat.id, ids);
       forwarded = true;
-    } catch (e) {
+    } catch (e: unknown) {
       const snippet = chunk
         .map((m: any) => m.text?.trim())
         .filter(Boolean)
@@ -373,7 +373,7 @@ async function relayParseResult(
         replyTo: originMsg.id,
       });
       forwarded = true;
-    } catch (e) { logger.warn('[parsehub] send to origin failed:', e) }
+    } catch (e: unknown) { logger.warn('[parsehub] send to origin failed:', e) }
   }
 
   return {
@@ -404,7 +404,7 @@ class ParseHubPlugin extends Plugin {
           if (replyLinks.length) {
             links = replyLinks;
           }
-        } catch (e) { logger.warn('[parsehub] reply fetch failed:', e) }
+        } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
       }
 
       // 若命令和被回复消息都包含链接，合并去重，命令里的在前
@@ -418,7 +418,7 @@ class ParseHubPlugin extends Plugin {
             for (const l of replyLinks) set.add(l);
             links = Array.from(set);
           }
-        } catch (e) { logger.warn('[parsehub] reply fetch failed:', e) }
+        } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
       }
 
       if (!links.length) {
@@ -481,7 +481,7 @@ class ParseHubPlugin extends Plugin {
 
       try {
         await msg.delete();
-      } catch (e) { logger.warn('[parsehub] msg already deleted:', e) }
+      } catch (e: unknown) { logger.warn('[parsehub] msg already deleted:', e) }
     },
   };
 }

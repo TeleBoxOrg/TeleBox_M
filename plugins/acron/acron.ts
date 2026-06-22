@@ -464,7 +464,7 @@ async function bootstrapTasks() {
       if (t.disabled) continue;
       await scheduleTask(t);
     }
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("[acron] bootstrap 失败:", e);
   }
 }

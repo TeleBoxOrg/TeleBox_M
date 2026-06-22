@@ -107,7 +107,7 @@ async function ensureDirectories(): Promise<void> {
     if (!fs.existsSync(CACHE_DIR)) {
       fs.mkdirSync(CACHE_DIR, { recursive: true });
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to create cache directory:', error);
     throw error;
   }
@@ -148,7 +148,7 @@ async function generateReport(cacheData: CacheData): Promise<string> {
   try {
     fs.writeFileSync(reportFile, "\ufeff" + csvString, "utf8");
     logger.info(`Report generated: ${reportFile}`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to write report file:', error);
     await sleep(1000);
     fs.writeFileSync(reportFile, "\ufeff" + csvString, "utf8");
@@ -184,7 +184,7 @@ async function generateFailedReport(failedUsers: FailedUserInfo[], chatTitle: st
   try {
     fs.writeFileSync(reportFile, "\ufeff" + csvString, "utf8");
     logger.info(`Failed report generated: ${reportFile}`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to write failed report file:', error);
     await sleep(1000);
     fs.writeFileSync(reportFile, "\ufeff" + csvString, "utf8");
@@ -227,7 +227,7 @@ async function checkAdminPermissions(msg: MessageContext): Promise<boolean> {
       logger.info('GetParticipants admin list failed:', adminListError);
     }
     return false;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Permission check failed:', error);
     return false;
   }
@@ -402,7 +402,7 @@ async function streamProcessMembers(options: StreamProcessOptions): Promise<Stre
               if (cnt === 0) {
                 shouldProcess = true;
               }
-            } catch (error) {
+            } catch (error: unknown) {
               continue;
             }
           } else if (mode === "3") {
@@ -427,7 +427,7 @@ async function streamProcessMembers(options: StreamProcessOptions): Promise<Stre
               if (cnt < day) {
                 shouldProcess = true;
               }
-            } catch (error) {
+            } catch (error: unknown) {
               continue;
             }
           } else if (mode === "4") {
@@ -525,7 +525,7 @@ async function streamProcessMembers(options: StreamProcessOptions): Promise<Stre
       }
     }
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Stream process error:", error);
     if (statusCallback) {
       await statusCallback(`❌ 处理失败: ${error}`, true);
@@ -551,7 +551,7 @@ async function getAdminIds(client: TelegramClient, chatEntity: any): Promise<Set
         adminIds.add(Number(admin.id));
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to get admins:", error);
   }
   return adminIds;
@@ -709,7 +709,7 @@ const clean_member = async (msg: MessageContext) => {
         if (chatInfo) {
           chatTitle = getTitle(chatInfo) || "目标群组";
         }
-      } catch (e) { logger.warn('获取聊天信息失败', e) }
+      } catch (e: unknown) { logger.warn('获取聊天信息失败', e) }
       chatId = channelEntity;
     } catch (error: unknown) {
       await msg.edit({
@@ -762,7 +762,7 @@ const clean_member = async (msg: MessageContext) => {
         if (savedMessageId) {
           try {
             await msg.edit({ text: String(savedMessageId) });
-          } catch (error) {
+          } catch (error: unknown) {
             const newMsg = await client.sendText("me", progressMessage);
             if (newMsg && typeof newMsg.id === 'number') {
               savedMessageId = newMsg.id;
@@ -775,7 +775,7 @@ const clean_member = async (msg: MessageContext) => {
           }
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.info("Status update failed:", error);
     }
   };
@@ -789,7 +789,7 @@ const clean_member = async (msg: MessageContext) => {
     } else {
       numericChatId = Number(chatId);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("Failed to extract numeric chat ID:", error);
   }
   if (onlySearch && numericChatId) {
@@ -797,7 +797,7 @@ const clean_member = async (msg: MessageContext) => {
     if (cached) {
       try {
         await generateReport(cached);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error("Failed to generate report:", error);
       }
       await msg.edit({
@@ -871,7 +871,7 @@ const clean_member = async (msg: MessageContext) => {
         await client.sendText("me", html(finalMessage));
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error("显示最终结果失败:", error);
     await client.sendText("me", html(finalMessage));
   }
@@ -886,7 +886,7 @@ const clean_member = async (msg: MessageContext) => {
       
       await client.sendText("me", html(reportMessage));
       logger.info("完整报告已发送到收藏夹");
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("发送完整报告失败:", error);
     }
   }
@@ -905,7 +905,7 @@ const clean_member = async (msg: MessageContext) => {
         caption: html(failedCaption),
       });
       logger.info(`失败用户报告已发送到收藏夹: ${failedReportPath}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("生成或发送失败报告失败:", error);
     }
   }

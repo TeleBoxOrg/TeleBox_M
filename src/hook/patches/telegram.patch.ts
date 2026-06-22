@@ -25,7 +25,7 @@ MessageContext.prototype.deleteWithDelay = async function (
   await sleep(delay);
   try {
     await this.delete();
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error(e);
     if (shouldThrowError) {
       throw e;
@@ -39,7 +39,7 @@ MessageContext.prototype.safeDelete = async function (
 ): Promise<void> {
   try {
     await this.delete({ revoke });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.info("safeDelete catch error:", error);
   }
 };

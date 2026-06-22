@@ -198,7 +198,7 @@ async function initDb() {
     ]);
     dbReady = true;
     log(LogLevel.INFO, `Config DB ready | Data DB: ${path.join(dataDir, "pmcaptcha_data.json")}`);
-  } catch (e) {
+  } catch (e: unknown) {
     log(LogLevel.ERROR, "DB init failed", e);
   }
 }
@@ -331,7 +331,7 @@ async function fetchUserInfo(client: TelegramClient, userId: number): Promise<an
     const e = await client.getChat(userId);
     cacheUserFromSender(e);
     return e;
-  } catch (e) { log(LogLevel.WARN, `fetchUserInfo: getChat failed for ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.WARN, `fetchUserInfo: getChat failed for ${userId}`, e); }
 
   try {
     const input = await client.resolvePeer(userId);
@@ -347,7 +347,7 @@ async function fetchUserInfo(client: TelegramClient, userId: number): Promise<an
         return user;
       }
     }
-  } catch (error) {
+  } catch (error: unknown) {
     if (!(error instanceof Error) || !error.message.includes("AUTH_KEY_UNREGISTERED")) {
       throw error;
     }
@@ -388,7 +388,7 @@ async function archiveChat(client: TelegramClient, userId: number) {
       _: 'folders.editPeerFolders',
       folderPeers: [{ _: 'inputFolderPeer', peer, folderId: 1 }]
     });
-  } catch (e) { log(LogLevel.ERROR, `archive failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `archive failed ${userId}`, e); }
 }
 
 async function muteChat(client: TelegramClient, userId: number) {
@@ -399,7 +399,7 @@ async function muteChat(client: TelegramClient, userId: number) {
       peer: { _: 'inputNotifyPeer', peer },
       settings: { _: 'inputPeerNotifySettings', muteUntil: 2147483647, showPreviews: false, silent: true }
     });
-  } catch (e) { log(LogLevel.ERROR, `mute failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `mute failed ${userId}`, e); }
 }
 
 async function blockUser(client: TelegramClient, userId: number) {
@@ -407,7 +407,7 @@ async function blockUser(client: TelegramClient, userId: number) {
     const peer = await client.resolvePeer(userId);
     await client.call({ _: 'contacts.block', id: peer });
     log(LogLevel.INFO, `Blocked ${userId}`);
-  } catch (e) { log(LogLevel.ERROR, `block failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `block failed ${userId}`, e); }
 }
 
 async function deleteHistory(client: TelegramClient, userId: number) {
@@ -415,7 +415,7 @@ async function deleteHistory(client: TelegramClient, userId: number) {
     const peer = await client.resolvePeer(userId);
     await client.call({ _: 'messages.deleteHistory', peer, revoke: false, maxId: 0 });
     log(LogLevel.INFO, `Deleted history ${userId}`);
-  } catch (e) { log(LogLevel.ERROR, `delete history failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `delete history failed ${userId}`, e); }
 }
 
 async function reportSpam(client: TelegramClient, userId: number) {
@@ -426,7 +426,7 @@ async function reportSpam(client: TelegramClient, userId: number) {
       peer, reason: { _: 'inputReportReasonSpam' }, message: "spam"
     });
     log(LogLevel.INFO, `Reported ${userId}`);
-  } catch (e) { log(LogLevel.ERROR, `report failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `report failed ${userId}`, e); }
 }
 
 async function unmuteChat(client: TelegramClient, userId: number) {
@@ -437,7 +437,7 @@ async function unmuteChat(client: TelegramClient, userId: number) {
       peer: { _: 'inputNotifyPeer', peer },
       settings: { _: 'inputPeerNotifySettings', muteUntil: 0, showPreviews: true, silent: false }
     });
-  } catch (e) { log(LogLevel.ERROR, `unmute failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `unmute failed ${userId}`, e); }
 }
 
 async function unarchiveChat(client: TelegramClient, userId: number) {
@@ -447,7 +447,7 @@ async function unarchiveChat(client: TelegramClient, userId: number) {
       _: 'folders.editPeerFolders',
       folderPeers: [{ _: 'inputFolderPeer', peer, folderId: 0 }]
     });
-  } catch (e) { log(LogLevel.ERROR, `unarchive failed ${userId}`, e); }
+  } catch (e: unknown) { log(LogLevel.ERROR, `unarchive failed ${userId}`, e); }
 }
 
 async function runFailActions(client: TelegramClient, userId: number) {
@@ -464,7 +464,7 @@ async function runFailActions(client: TelegramClient, userId: number) {
           const peer = await client.resolvePeer(userId);
           await client.call({ _: 'messages.deleteHistory' as const, peer, revoke: true, maxId: 0 });
           log(LogLevel.INFO, `Deleted history (revoke both sides) ${userId}`);
-        } catch (e) { log(LogLevel.ERROR, `delete failed ${userId}`, e); }
+        } catch (e: unknown) { log(LogLevel.ERROR, `delete failed ${userId}`, e); }
       })());
     }
     if (a === FailAction.REPORT)  tasks.push(reportSpam(client, userId));
@@ -497,7 +497,7 @@ async function tryGetCanvas(): Promise<any> {
     _canvas = await import("canvas");
     log(LogLevel.INFO, "canvas module loaded");
     return _canvas;
-  } catch (e) { log(LogLevel.DEBUG, "canvas not available, will try install", e); }
+  } catch (e: unknown) { log(LogLevel.DEBUG, "canvas not available, will try install", e); }
 
   if (_canvasInstalling) {
     const deadline = Date.now() + 60_000;
@@ -513,7 +513,7 @@ async function tryGetCanvas(): Promise<any> {
   try {
     execSync("npm install canvas", { stdio: "pipe" });
     log(LogLevel.INFO, "canvas installed successfully");
-  } catch (e) {
+  } catch (e: unknown) {
     log(LogLevel.ERROR, "canvas install failed", e);
     _canvas = false;
     _canvasInstalling = false;
@@ -523,12 +523,12 @@ async function tryGetCanvas(): Promise<any> {
   try {
     const canvasId = require.resolve("canvas");
     if (require.cache[canvasId]) delete require.cache[canvasId];
-  } catch (e) { log(LogLevel.DEBUG, "canvas not in cache", e); }
+  } catch (e: unknown) { log(LogLevel.DEBUG, "canvas not in cache", e); }
 
   try {
     _canvas = await import("canvas");
     log(LogLevel.INFO, "canvas dynamically loaded after install");
-  } catch (e) {
+  } catch (e: unknown) {
     log(LogLevel.ERROR, "canvas load failed after install", e);
     _canvas = false;
   }
@@ -792,7 +792,7 @@ async function refreshActiveCaptchas(client: TelegramClient): Promise<void> {
           });
         }
       }
-    } catch (e) {
+    } catch (e: unknown) {
       log(LogLevel.WARN, `refreshActiveCaptchas: failed to update msg for ${userId}`, e);
     }
   }
@@ -941,7 +941,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
           log(LogLevel.WARN, `canvas unavailable for user ${userId}`);
           try {
             await client.sendText(userId, "❌ 验证服务暂时不可用，请稍后再试。");
-          } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
+          } catch (e: unknown) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
           return;
         }
 
@@ -997,7 +997,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
           if (!isStateCurrent(state)) return;
           try {
             await client.sendText(userId, html("⏰ 验证超时，对话已被限制。"));
-          } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
+          } catch (e: unknown) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
           if (!isStateCurrent(state)) return;
           await runFailActions(client, userId);
         }, { label: `pmcaptcha-timeout:${userId}` }).catch((error) => {
@@ -1009,7 +1009,7 @@ async function sendCaptcha(client: TelegramClient, userId: number): Promise<void
     states.set(userId, state);
     log(LogLevel.INFO, `Captcha sent (${mode}, timeout=${timeout}s) → user ${userId}`);
 
-  } catch (e) {
+  } catch (e: unknown) {
     log(LogLevel.ERROR, `Failed to send captcha to ${userId}`, e);
   }
 }
@@ -1042,7 +1042,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     log(LogLevel.WARN, `handleReply: empty answer for user ${userId}`);
     removeCaptchaState(userId);
     await cleanupCaptchaMessages(client, userId, state);
-    try { await client.sendText(userId, html("❌ 验证状态异常，请联系对方重置。")); } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
+    try { await client.sendText(userId, html("❌ 验证状态异常，请联系对方重置。")); } catch (e: unknown) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
     return;
   }
 
@@ -1066,7 +1066,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     if (!isStateCurrent(state)) return;
     try {
       await client.sendText(userId, html("✅ 验证通过！欢迎与我对话。"));
-    } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
+    } catch (e: unknown) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
     return;
   }
 
@@ -1084,7 +1084,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
     log(LogLevel.INFO, `User ${userId} failed captcha (max tries)`);
     try {
       await client.sendText(userId, html("❌ 验证失败次数过多，对话已被限制。"));
-    } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
+    } catch (e: unknown) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
     if (!isStateCurrent(state)) return;
     await runFailActions(client, userId);
   } else {
@@ -1093,7 +1093,7 @@ async function handleReply(client: TelegramClient, userId: number, input: string
       const hintMsg = await client.sendText(userId, html(`❌ 答案错误，${htmlEscape(hint)}`));
       if (!isStateCurrent(state)) return;
       state.msgIds.push(hintMsg.id);
-    } catch (e) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
+    } catch (e: unknown) { log(LogLevel.DEBUG, `pmcaptcha: user blocked bot, sendText failed for ${userId}`, e); }
   }
 }
 
@@ -1170,7 +1170,7 @@ async function messageListener(message: MessageContext) {
     if (cfg.captchaOn()) {
       await sendCaptcha(client, userId);
     }
-  } catch (e) {
+  } catch (e: unknown) {
     log(LogLevel.ERROR, "Listener error", e);
   }
 }
@@ -1192,7 +1192,7 @@ async function resolveUser(client: TelegramClient, arg: string): Promise<number 
       return Number((user as { id?: unknown }).id);
     }
     return null;
-  } catch (e) { return null; }
+  } catch (e: unknown) { return null; }
 }
 
 function fmtTime(iso: string): string {
@@ -1409,11 +1409,11 @@ const pmcaptcha = async (message: MessageContext) => {
       const tmp = await client.sendText(message.chat.id, html(enabling
         ? "✅ <b>PMCaptcha 已启用</b>"
         : `🚫 <b>PMCaptcha 已禁用</b><br>验证配置已保留，下次启用后自动恢复`));
-      try { await message.delete(); } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: message already deleted", e); }
+      try { await message.delete(); } catch (e: unknown) { log(LogLevel.DEBUG, "pmcaptcha: message already deleted", e); }
       getActiveLifecycle()?.setTimeout(() => {
         void (tmp as { delete?: () => Promise<unknown> }).delete?.().catch(() => undefined);
       }, 3000, { label: "pmcaptcha-command-cleanup" });
-    } catch (e) { log(LogLevel.ERROR, "pmc on/off error", e); }
+    } catch (e: unknown) { log(LogLevel.ERROR, "pmc on/off error", e); }
     return;
   }
 
@@ -1422,7 +1422,7 @@ const pmcaptcha = async (message: MessageContext) => {
       await message.edit({text});
     } catch (e: unknown) {
       if (String(e).includes("Could not find the input entity")) {
-        try { await message.replyText(html(text), { disableWebPreview: true } as { disableWebPreview?: boolean }); } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: user blocked bot, replyText failed", e); }
+        try { await message.replyText(html(text), { disableWebPreview: true } as { disableWebPreview?: boolean }); } catch (e: unknown) { log(LogLevel.DEBUG, "pmcaptcha: user blocked bot, replyText failed", e); }
       } else {
         throw e;
       }
@@ -1719,7 +1719,7 @@ const pmcaptcha = async (message: MessageContext) => {
           try {
             const r = await safeGetMessages(client, message.chat.id, { ids: [message.replyToMessage.id] });
             if (r[0]?.sender?.id) tid = Number(r[0].sender.id);
-          } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: reply fetch failed", e); }
+          } catch (e: unknown) { log(LogLevel.DEBUG, "pmcaptcha: reply fetch failed", e); }
         }
         if (!tid && args[1]) tid = await resolveUser(client, args[1]);
         if (!tid || tid <= 0) {
@@ -1779,7 +1779,7 @@ const pmcaptcha = async (message: MessageContext) => {
             try {
               const r = await safeGetMessages(client, message.chat.id, { ids: [message.replyToMessage.id] });
               if (r[0]?.sender?.id) tid = Number(r[0].sender.id);
-            } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: reply fetch failed", e); }
+            } catch (e: unknown) { log(LogLevel.DEBUG, "pmcaptcha: reply fetch failed", e); }
           }
           if (!tid && args[2]) tid = await resolveUser(client, args[2]);
           if (!tid || tid <= 0) { await edit("❌ 请提供有效的用户 ID / 用户名，或回复用户消息"); break; }
@@ -1952,9 +1952,9 @@ const pmcaptcha = async (message: MessageContext) => {
           `可用命令：<code>${mainPrefix}pmc</code> / <code>${mainPrefix}pmcaptcha</code>`
         );
     }
-  } catch (e) {
+  } catch (e: unknown) {
     log(LogLevel.ERROR, "Command error", e);
-    try { await edit(`❌ 命令执行失败: ${htmlEscape(e)}`); } catch (e) { log(LogLevel.DEBUG, "pmcaptcha: edit failed", e); }
+    try { await edit(`❌ 命令执行失败: ${htmlEscape(e)}`); } catch (e: unknown) { log(LogLevel.DEBUG, "pmcaptcha: edit failed", e); }
   }
 };
 

@@ -160,7 +160,7 @@ class REVPlugin extends Plugin {
 					entities: reversedEntities as unknown as tl.TypeMessageEntity[],
 				});
 				return;
-			} catch (err) {
+			} catch (err: unknown) {
 				logger.debug("rev: rich text reverse send failed, falling back to plain", err);
 			}
 		}
@@ -339,7 +339,7 @@ class REVPlugin extends Plugin {
 				if (fs.existsSync(filePath)) {
 					fs.unlinkSync(filePath);
 				}
-			} catch (err) {
+			} catch (err: unknown) {
 				logger.warn('清理临时文件失败', err);
 			}
 		}
@@ -535,7 +535,7 @@ class REVPlugin extends Plugin {
 		try {
 			await msg.edit({ text: html(text) });
 			return true;
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.warn('编辑消息失败', error);
 			return false;
 		}
@@ -545,7 +545,7 @@ class REVPlugin extends Plugin {
 		try {
 			await msg.delete();
 			return true;
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.warn('删除消息失败', error);
 			return false;
 		}

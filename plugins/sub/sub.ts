@@ -321,10 +321,10 @@ class SubStorePlugin extends Plugin {
                   } catch (e: unknown) {
                     infoResult += `❌ Docker连接失败\n`;
                   }
-                } catch (e) {
+                } catch (e: unknown) {
                   infoResult += "❌ Docker服务未启动\n";
                 }
-              } catch (e) {
+              } catch (e: unknown) {
                 infoResult += "❌ Docker未安装\n";
               }
 
@@ -364,7 +364,7 @@ class SubStorePlugin extends Plugin {
               try {
                 await sh("curl -s --max-time 3 ifconfig.me");
                 infoResult += `\n✅ 网络连接正常`;
-              } catch (e) {
+              } catch (e: unknown) {
                 infoResult += `\n❌ 网络连接异常`;
               }
             } catch (error: unknown) {

@@ -74,7 +74,7 @@ const getRepliedMessageText = async (msg: MessageContext): Promise<string> => {
   try {
     const replied = await safeGetReplyMessage(msg);
     return getMessageText(replied).trim();
-  } catch (e) { logger.warn('[deepwiki] get replied message text failed:', e) }
+  } catch (e: unknown) { logger.warn('[deepwiki] get replied message text failed:', e) }
 
   return "";
 };
@@ -87,7 +87,7 @@ const getRepliedMessageId = async (msg: MessageContext): Promise<number | undefi
     const replied = await safeGetReplyMessage(msg);
     const rid = (replied as { id?: number })?.id;
     if (typeof rid === "number") return rid;
-  } catch (e) { logger.warn('[deepwiki] get replied message id failed:', e) }
+  } catch (e: unknown) { logger.warn('[deepwiki] get replied message id failed:', e) }
 
   return undefined;
 };
@@ -107,7 +107,7 @@ class MessageSender {
   static async sendOrEdit(msg: MessageContext, text: string, parseMode: "markdown" | "html" = "html"): Promise<any | undefined> {
     try {
       return await msg.edit({ text: html(text), disableWebPreview: true });
-    } catch (e) {
+    } catch (e: unknown) {
       return await msg.replyText(html(text), { disableWebPreview: true });
     }
   }
@@ -375,7 +375,7 @@ class DeepWikiMcp {
       const client = new Client({ name: "telebox-deepwiki", version: "1.0.0" });
       try {
         await client.connect(transport);
-      } catch (error) {
+      } catch (error: unknown) {
         await client.close().catch(() => undefined);
         throw error;
       }
@@ -483,7 +483,7 @@ const parseRepoFromUrl = (raw: string): { repo: string; canonicalUrl: string } |
         };
       }
     }
-  } catch (e) {
+  } catch (e: unknown) {
     return null;
   }
   return null;
@@ -584,7 +584,7 @@ const toIdString = (v: any): string => {
       if (v.id !== undefined) return String(v.id);
     }
     return String(v);
-  } catch (e) {
+  } catch (e: unknown) {
     return "";
   }
 };
@@ -953,7 +953,7 @@ class DeepWikiPlugin extends Plugin {
 
         try {
           await original.delete();
-        } catch (e) { logger.warn('[deepwiki] delete original msg failed:', e) }
+        } catch (e: unknown) { logger.warn('[deepwiki] delete original msg failed:', e) }
       } catch (err: unknown) {
         await MessageSender.sendOrEdit(original, this.formatError(err), "html");
       }

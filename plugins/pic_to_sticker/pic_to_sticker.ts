@@ -106,7 +106,7 @@ class PicToStickerPlugin extends Plugin {
     try {
       const db = await JSONFilePreset<PicToStickerConfig>(this.configPath, this.config);
       this.config = db.data;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[pic_to_sticker] 加载配置失败:", error);
     }
   }
@@ -116,7 +116,7 @@ class PicToStickerPlugin extends Plugin {
       const db = await JSONFilePreset<PicToStickerConfig>(this.configPath, this.config);
       db.data = this.config;
       await db.write();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[pic_to_sticker] 保存配置失败:", error);
     }
   }
@@ -567,7 +567,7 @@ class PicToStickerPlugin extends Plugin {
         return null;
       }
 
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[pic_to_sticker] 处理图片失败:", error);
       return null;
     }

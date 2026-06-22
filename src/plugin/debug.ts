@@ -19,7 +19,7 @@ const mainPrefix = prefixes[0];
 async function resolvePeer(client: TelegramClient, input: any): Promise<Peer | null> {
   try {
     return await client.getPeer(input);
-  } catch (e) {
+  } catch (e: unknown) {
     return null;
   }
 }
@@ -164,7 +164,7 @@ class DebugPlugin extends Plugin {
       let entity: any;
       try {
         entity = await msg.client.getPeer(peerInput);
-      } catch (e) {
+      } catch (e: unknown) {
         entity = null;
       }
 
@@ -263,7 +263,7 @@ class DebugPlugin extends Plugin {
           // Text-only message: send with original entities
           await target.replyText(reply.textWithEntities || reply.text);
         }
-      } catch (e) {
+      } catch (e: unknown) {
         logger.warn("[debug.echo] 发送消息失败", e);
         // Fallback: just try plain text
         try {

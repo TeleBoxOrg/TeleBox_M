@@ -344,7 +344,7 @@ class CleanPlugin extends Plugin {
       totalUsers = initialBlocked._ === 'contacts.blockedSlice'
         ? (initialBlocked as { count?: number }).count || 0
         : (await client.call({ _: "contacts.getBlocked", offset: 0, limit: 1000 } as unknown as Parameters<typeof client.call>[0]))?.users?.length || 0;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("获取用户总数失败:", error);
     }
 
@@ -492,7 +492,7 @@ class CleanPlugin extends Plugin {
   private async editMessage(msg: MessageContext, text: string): Promise<void> {
     try {
       await msg.edit({ text: html(text) });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("编辑消息失败:", error);
     }
   }
@@ -527,7 +527,7 @@ class CleanPlugin extends Plugin {
   private async safeDelete(msg: MessageContext): Promise<void> {
     try {
       await msg.delete();
-    } catch (error) { logger.warn(`[clean] 忽略删除错误:`, error) }
+    } catch (error: unknown) { logger.warn(`[clean] 忽略删除错误:`, error) }
   }
 
   private getDynamicDelay(user: any, includeAll: boolean, consecutiveErrors: number): number {
@@ -563,7 +563,7 @@ ${progressBar}
 ⏱️ <b>剩余时间:</b> ${this.estimateRemainingTime(processed, total, Date.now() - this.blockedCleanupStartTime)}`;
 
       await this.editMessage(msg, progressText);
-    } catch (e) { logger.warn(`[clean] 忽略编辑错误:`, e) }
+    } catch (e: unknown) { logger.warn(`[clean] 忽略编辑错误:`, e) }
   }
 
   private estimateRemainingTime(processed: number, total: number, elapsedMs: number): string {

@@ -42,7 +42,7 @@ export function npm_install(pkg: string, version?: string) {
   try {
     require.resolve(pkg);
     logger.info(`Package "${pkg}" is already installed.`);
-  } catch (e) {
+  } catch (e: unknown) {
     logger.info(`Installing ${fullName}...`);
     try {
       runNpm(["install", fullName]);

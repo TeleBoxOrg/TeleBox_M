@@ -96,7 +96,7 @@ class LuBsPlugin extends Plugin {
       });
       
       logger.info(`[${this.PLUGIN_NAME}] 贴纸包加载成功`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[${this.PLUGIN_NAME}] 贴纸包加载失败:`, error);
       this.stickerSet = null;
     }
@@ -148,7 +148,7 @@ class LuBsPlugin extends Plugin {
         if (lastMsgId) {
           try {
             await client.deleteMessagesById(chatId, [lastMsgId], { revoke: true });
-          } catch (error) { logger.warn(`[lu_bs] 忽略删除失败的情况（消息可能已过期）:`, error) }
+          } catch (error: unknown) { logger.warn(`[lu_bs] 忽略删除失败的情况（消息可能已过期）:`, error) }
         }
 
         // 发送新贴纸
@@ -167,7 +167,7 @@ class LuBsPlugin extends Plugin {
         await this.db.write();
 
         logger.info(`[${this.PLUGIN_NAME}] 已发送整点报时到 ${chatId}`);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`[${this.PLUGIN_NAME}] 发送失败到 ${chatId}:`, error);
         
         // 如果发送失败，可能是聊天不存在或没有权限，移除订阅
@@ -221,7 +221,7 @@ class LuBsPlugin extends Plugin {
       }
       
       return false;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`[${this.PLUGIN_NAME}] 权限检查失败:`, error);
       return false;
     }

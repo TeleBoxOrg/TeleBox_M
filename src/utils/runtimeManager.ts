@@ -144,7 +144,7 @@ async function startFreshRuntime(): Promise<TeleBoxRuntime> {
     await loadPluginsForRuntime(runtime);
     runtime.state = "running";
     return runtime;
-  } catch (error) {
+  } catch (error: unknown) {
     runtime.state = "failed";
     currentRuntime = null;
     runtime.context.abort("Runtime startup failed");
@@ -207,7 +207,7 @@ async function disposeRuntime(
   const drainResult = await drainRuntime(runtime, reason);
   try {
     await destroyClient(runtime.client);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[RUNTIME] Failed to destroy generation ${runtime.generation} client:`, error);
     throw error;
   }
@@ -292,7 +292,7 @@ export async function reloadRuntime(): Promise<TeleBoxRuntime> {
     try {
       await unloadPluginsForRuntime(oldRuntime);
       await disposeRuntime(oldRuntime, "Runtime reload");
-    } catch (error) {
+    } catch (error: unknown) {
       oldRuntime.state = "failed";
       throw error;
     }
@@ -304,7 +304,7 @@ export async function reloadRuntime(): Promise<TeleBoxRuntime> {
       await loadPluginsForRuntime(newRuntime);
       newRuntime.state = "running";
       return newRuntime;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("[RUNTIME] Failed to load plugins after reload, keeping runtime alive:", error);
       // Keep the new runtime alive: it has a working client, only plugins failed.
       // Setting currentRuntime = null previously made the bot completely dead

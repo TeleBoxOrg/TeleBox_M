@@ -236,7 +236,7 @@ class HelpPlugin extends Plugin {
         try {
           const d = await plugin.description({ plugin: pluginEntry });
           description = typeof d === "string" ? d.replace(/\\n/g, "<br>").replace(/\n/g, "<br>") : "生成描述信息出错";
-        } catch (e) {
+        } catch (e: unknown) {
           description = "生成描述信息出错";
         }
       }

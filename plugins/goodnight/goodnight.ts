@@ -270,7 +270,7 @@ class GreetingPlugin extends Plugin {
                 const userSender = sender.type === 'user' ? sender as User : null;
                 senderName = userSender?.firstName || userSender?.username || "群友";
             }
-        } catch (e) {
+        } catch (e: unknown) {
             logger.error("获取用户信息失败", e);
         }
 
@@ -284,7 +284,7 @@ class GreetingPlugin extends Plugin {
         // 发送回复
         try {
             await msg.replyText(replyText);
-        } catch (e) {
+        } catch (e: unknown) {
             logger.error("回复消息失败", e);
         }
     }

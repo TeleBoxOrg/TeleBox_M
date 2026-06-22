@@ -224,7 +224,7 @@ export class GenerationContext {
       try {
         await entry.dispose();
         this.completeResource(resource, "completed");
-      } catch (error) {
+      } catch (error: unknown) {
         this.completeResource(resource, "completed");
         throw error;
       }
@@ -354,7 +354,7 @@ export class GenerationContext {
             } else {
               resolve(result);
             }
-          } catch (error) {
+          } catch (error: unknown) {
             reject(error);
           }
         });
@@ -430,7 +430,7 @@ export class GenerationContext {
         try {
           await entry.dispose();
           this.completeResource(entry.resource, "completed");
-        } catch (error) {
+        } catch (error: unknown) {
           this.completeResource(entry.resource, "completed");
           errors.push(error);
           logger.error(`[GENERATION ${this.generation}] Disposable "${entry.resource.label}" failed:`, error);

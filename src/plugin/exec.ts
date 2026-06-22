@@ -109,7 +109,7 @@ async function handleExec(params: { msg: MessageContext; shellCommand: string; l
     await msg.edit({
       text: md(truncate(text)),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     stopped = true;
     clearInterval(timer);
 

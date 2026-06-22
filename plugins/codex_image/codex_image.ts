@@ -211,7 +211,7 @@ async function callCodexImage(
           let payloadObj: any;
           try {
             payloadObj = JSON.parse(dataLine);
-          } catch (e) {
+          } catch (e: unknown) {
             continue;
           }
 
@@ -280,7 +280,7 @@ async function callCodexImage(
         status: typeof data.status === "string" ? data.status : null,
         responseId: typeof data.id === "string" ? data.id : responseId,
       };
-    } catch (e) {
+    } catch (e: unknown) {
       return null;
     }
   };
@@ -384,7 +384,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
       await msg.edit({
         text: `${phaseText}\n⏱️ 已耗时：${elapsed}`,
       });
-    } catch (e) { logger.warn('[codex_image] edit progress msg failed:', e) }
+    } catch (e: unknown) { logger.warn('[codex_image] edit progress msg failed:', e) }
   };
 
   const heartbeat = (async () => {
@@ -465,7 +465,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
 
   try {
     await msg.delete();
-  } catch (e) {
+  } catch (e: unknown) {
     await msg.edit({ text: "✅ 图片生成完成" });
   }
 }

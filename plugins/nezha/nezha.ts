@@ -108,7 +108,7 @@ function loadConfig(): NeZhaConfig | null {
       configCache = JSON.parse(content);
       return configCache;
     }
-  } catch (e) { logger.error('[nezha] loadConfig failed:', e); }
+  } catch (e: unknown) { logger.error('[nezha] loadConfig failed:', e); }
   return null;
 }
 
@@ -117,7 +117,7 @@ function saveConfig(config: NeZhaConfig): void {
     const file = getConfigPath();
     fs.writeFileSync(file, JSON.stringify(config, null, 2), "utf-8");
     configCache = config;
-  } catch (e) {
+  } catch (e: unknown) {
     logger.error("Failed to save nezha config:", e);
   }
 }
@@ -203,7 +203,7 @@ function readSecretFromConfig(configPath: string): string | null {
     const content = fs.readFileSync(configPath, "utf-8");
     const config = yaml.load(content) as NeZhaYamlConfig | null | undefined;
     return config?.jwt_secret_key || config?.jwtSecretKey || null;
-  } catch (e) {
+  } catch (e: unknown) {
     return null;
   }
 }

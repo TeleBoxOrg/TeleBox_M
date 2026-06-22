@@ -362,7 +362,7 @@ class MessageModePlugin extends Plugin {
       const styled = `||${escaped}||`;
       try {
         await msg.edit({ text: styled });
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error("消息编辑失败：", err);
       }
       return;
@@ -374,7 +374,7 @@ class MessageModePlugin extends Plugin {
     try {
       /* Userbot 对自己消息可直接编辑 */
       await msg.edit({ text: html(styled) });
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error("消息编辑失败：", err);
     }
   };
