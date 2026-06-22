@@ -226,7 +226,7 @@ class IdsPlugin extends Plugin {
     }
     const id = parseInt(target);
     if (!isNaN(id)) {
-      try { return { user: await client.getChat(id), id }; } catch (e: unknown) { return { user: null, id }; }
+      try { return { user: await client.getChat(id), id }; } catch (e: unknown) { logger.debug('[ids] getChat failed for id:', id, e); return { user: null, id }; }
     }
     throw new Error("无效格式");
   }
