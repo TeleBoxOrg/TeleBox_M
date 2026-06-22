@@ -10,6 +10,7 @@ const { execFile } = require("child_process");
 import { safeGetReplyMessage, safeGetMessages } from "@utils/safeGetMessages";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const DEFAULT_BACKGROUND = "#231d2b/#372e44";
 const DEFAULT_EMOJI_BRAND = "apple";
@@ -101,8 +102,8 @@ async function downloadFileIfMissingOrChanged(url: string, filePath: string): Pr
 function requireOrInstall(pkg: string): any {
   try {
     return require(pkg);
-  } catch (err: any) {
-    const code = err?.code;
+  } catch (err: unknown) {
+    const code = (err as any)?.code;
     if (code !== "MODULE_NOT_FOUND" && code !== "ERR_MODULE_NOT_FOUND") throw err;
     logger.warn("quote loader installing npm package", { pkg });
     npm_install(pkg);
@@ -518,8 +519,8 @@ async function normalizeAvatarBuffer(buffer: Buffer): Promise<Buffer | undefined
       .flatten({ background: { r: 0, g: 0, b: 0 } })
       .png()
       .toBuffer();
-  } catch (err: any) {
-    logger.warn("quote avatar normalize failed", err?.message || err);
+  } catch (err: unknown) {
+    logger.warn("quote avatar normalize failed", getErrorMessage(err));
     return buffer.length > 0 ? buffer : undefined;
   }
 }
@@ -544,8 +545,8 @@ async function downloadEntityAvatar(client: any, entity: any): Promise<Buffer | 
       };
       const buffer = await client.downloadAsBuffer(location).catch(() => null);
       return Buffer.isBuffer(buffer) && buffer.length > 0 ? buffer : undefined;
-    } catch (err: any) {
-      logger.warn(`quote avatar ${isBig ? "big" : "small"} download failed`, err?.message || err);
+    } catch (err: unknown) {
+      logger.warn(`quote avatar ${isBig ? "big" : "small"} download failed`, getErrorMessage(err));
       return undefined;
     }
   };
@@ -597,8 +598,8 @@ async function downloadMediaToBuffer(client: TelegramClient, target: { media?: u
     if (!media) return undefined;
     const buffer = await client.downloadAsBuffer(media as Parameters<typeof client.downloadAsBuffer>[0]);
     return buffer && buffer.length > 0 ? Buffer.from(buffer) : undefined;
-  } catch (err: any) {
-    logger.warn("quote media download failed", err?.message || err);
+  } catch (err: unknown) {
+    logger.warn("quote media download failed", getErrorMessage(err));
     return undefined;
   }
 }
@@ -628,8 +629,8 @@ async function mediaBufferToCanvas(buffer: Buffer | undefined, kind: string | un
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     return canvas;
-  } catch (err: any) {
-    logger.warn("quote media canvas failed", kind, err?.message || err);
+  } catch (err: unknown) {
+    logger.warn("quote media canvas failed", kind, getErrorMessage(err));
     return undefined;
   }
 }
@@ -714,8 +715,8 @@ async function probeAnimatedInfo(buffer: Buffer): Promise<{ fps: number; duratio
     const durationRaw = Number(data.get("duration") || data.get("TAG:DURATION") || data.get("format.duration"));
     const duration = Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : 2;
     return { fps, duration };
-  } catch (err: any) {
-    logger.warn("quote animated probe failed", err?.message || err);
+  } catch (err: unknown) {
+    logger.warn("quote animated probe failed", getErrorMessage(err));
     return { fps: 12, duration: 2 };
   } finally {
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
@@ -785,8 +786,8 @@ async function extractAnimatedFrames(buffer: Buffer, size: number, frameCount: n
     ], 20000);
     const files = fs.readdirSync(dir).filter((f) => f.endsWith(".png")).sort();
     return files.map((f) => fs.readFileSync(path.join(dir, f))).filter((b) => b.length > 0);
-  } catch (err: any) {
-    logger.warn("quote animated frame extract failed", err?.message || err);
+  } catch (err: unknown) {
+    logger.warn("quote animated frame extract failed", getErrorMessage(err));
     return [];
   } finally {
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
@@ -881,8 +882,8 @@ async function probeWebmAlpha(buffer: Buffer): Promise<string> {
       input,
     ], 10000);
     return out.trim().replace(/\s+/g, " ") || "empty-ffprobe";
-  } catch (err: any) {
-    return `probe-failed:${err?.message || err}`;
+  } catch (err: unknown) {
+    return `probe-failed:${getErrorMessage(err)}`;
   } finally {
     try { if (fs.existsSync(input)) fs.unlinkSync(input); } catch (_) { logger.debug("[quote] cleanup: input already removed", _); }
   }
@@ -1085,8 +1086,8 @@ async function getCustomEmojiDocuments(client: any, ids: string[]): Promise<any[
       _: 'messages.getCustomEmojiDocuments',
       documentId: unique.map((id) => BigInt(id)),
     });
-  } catch (err: any) {
-    logger.warn("quote custom emoji fetch failed", err?.message || err);
+  } catch (err: unknown) {
+    logger.warn("quote custom emoji fetch failed", getErrorMessage(err));
     return [];
   }
 }
@@ -1393,13 +1394,13 @@ export class QuotePlugin {
         try {
           await msg.delete();
           logger.warn("quote command source deleted", { id: msg.id });
-        } catch (deleteErr: any) {
-          logger.warn("quote command source delete failed", deleteErr?.message || deleteErr);
+        } catch (deleteErr: unknown) {
+          logger.warn("quote command source delete failed", getErrorMessage(deleteErr));
         }
         logger.warn("quote command finished", { ms: Date.now() - quoteStartedAt, bytes: result.image?.length, ext: result.ext, replyTo: replyTargetId });
-      } catch (err: any) {
-        logger.error("quote command failed", err?.stack || err?.message || err);
-        await editProgress(msg, `❌ quote 失败：${err?.message || err}`);
+      } catch (err: unknown) {
+        logger.error("quote command failed", (err as any)?.stack || getErrorMessage(err));
+        await editProgress(msg, `❌ quote 失败：${getErrorMessage(err)}`);
       }
   }
 }
