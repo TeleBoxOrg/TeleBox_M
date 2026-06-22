@@ -1,5 +1,6 @@
 // plugins/sendat.ts
 import { Plugin } from "@utils/pluginBase";
+import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
 import { cronManager } from "@utils/cronManager";
 import { JSONFilePreset } from "lowdb/node";
@@ -441,12 +442,12 @@ seconds, minutes, hours, date, times`;
   get description() { return this.helpText; }
 
   cmdHandlers = {
-    sendat: async (msg: any) => {
+    sendat: async (msg: MessageContext) => {
       await this.handleSendAtCommand(msg);
     }
   };
 
-  private async handleSendAtCommand(msg: any): Promise<void> {
+  private async handleSendAtCommand(msg: MessageContext): Promise<void> {
     const client = await getGlobalClient();
     if (!client) return;
 
@@ -496,14 +497,14 @@ seconds, minutes, hours, date, times`;
     }
   }
 
-  private async handleListTasks(msg: any, showAll: boolean): Promise<void> {
-    const chatId = msg.chatId?.toJSNumber() || 0;
+  private async handleListTasks(msg: MessageContext, showAll: boolean): Promise<void> {
+    const chatId = msg.chat?.id ?? 0;
     let tasks: SendTask[];
 
     if (showAll) {
       // 检查管理员权限
       const sudoDBInstance = new SudoDB();
-      const userId = msg.senderId?.toJSNumber();
+      const userId = msg.sender?.id;
       
       if (!userId || !sudoDBInstance.ls().some(u => u.uid === userId)) {
         sudoDBInstance.close();
@@ -532,7 +533,7 @@ seconds, minutes, hours, date, times`;
     await msg.edit({ text: response });
   }
 
-  private async handleRemoveTask(msg: any, taskIdStr: string): Promise<void> {
+  private async handleRemoveTask(msg: MessageContext, taskIdStr: string): Promise<void> {
     const taskId = parseInt(taskIdStr);
     if (isNaN(taskId)) {
       await msg.edit({ text: "❌ 请输入有效的任务ID" });
@@ -546,9 +547,9 @@ seconds, minutes, hours, date, times`;
     }
 
     // 权限检查：只能删除自己的任务或者是管理员
-    const chatId = msg.chatId?.toJSNumber() || 0;
+    const chatId = msg.chat?.id ?? 0;
     const sudoDBInstance = new SudoDB();
-    const userId = msg.senderId?.toJSNumber();
+    const userId = msg.sender?.id;
 
     if (task.cid !== chatId && (!userId || !sudoDBInstance.ls().some(u => u.uid === userId))) {
       sudoDBInstance.close();
@@ -565,7 +566,7 @@ seconds, minutes, hours, date, times`;
     }
   }
 
-  private async handlePauseTask(msg: any, taskIdStr: string): Promise<void> {
+  private async handlePauseTask(msg: MessageContext, taskIdStr: string): Promise<void> {
     const taskId = parseInt(taskIdStr);
     if (isNaN(taskId)) {
       await msg.edit({ text: "❌ 请输入有效的任务ID" });
@@ -580,7 +581,7 @@ seconds, minutes, hours, date, times`;
     }
   }
 
-  private async handleResumeTask(msg: any, taskIdStr: string): Promise<void> {
+  private async handleResumeTask(msg: MessageContext, taskIdStr: string): Promise<void> {
     const taskId = parseInt(taskIdStr);
     if (isNaN(taskId)) {
       await msg.edit({ text: "❌ 请输入有效的任务ID" });
@@ -595,7 +596,7 @@ seconds, minutes, hours, date, times`;
     }
   }
 
-  private async handleAddTask(msg: any): Promise<void> {
+  private async handleAddTask(msg: MessageContext): Promise<void> {
     const text = msg.text || "";
     const commandMatch = text.match(/^[.!。]sendat\s+(.+)/i);
     
@@ -605,7 +606,7 @@ seconds, minutes, hours, date, times`;
     }
 
     const taskContent = commandMatch[1].trim();
-    const chatId = msg.chatId?.toJSNumber() || 0;
+    const chatId = msg.chat?.id ?? 0;
 
     const task = new SendTask({
       task_id: this.taskManager.getNextTaskId(),

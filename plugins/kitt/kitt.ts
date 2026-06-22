@@ -36,7 +36,7 @@ const filePath = path.join(
   `${pluginName}_config.json`
 );
 
-function htmlEscape(value: any): string {
+function htmlEscape(value: unknown): string {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -44,11 +44,11 @@ function htmlEscape(value: any): string {
     .replace(/"/g, "&quot;");
 }
 
-function codeTag(value: any): string {
+function codeTag(value: unknown): string {
   return `<code>${htmlEscape(value)}</code>`;
 }
 
-function attrEscape(value: any): string {
+function attrEscape(value: unknown): string {
   return htmlEscape(value).replace(/'/g, "&#39;");
 }
 
@@ -58,26 +58,28 @@ function getRemarkFromMsg(msg: MessageContext | string, n: number): string {
     .trim();
 }
 
+interface KittTask {
+  id: string;
+  remark?: string;
+  match: string;
+  action: string;
+  status?: string;
+}
+
 async function getDB() {
   const db = await JSONFilePreset(filePath, {
-    tasks: [] as Array<{
-      id: string;
-      remark?: string;
-      match: string;
-      action: string;
-      status?: string;
-    }>,
+    tasks: [] as KittTask[],
     index: "0",
   });
   return db;
 }
 
-function toInt(value: any): number | undefined {
+function toInt(value: unknown): number | undefined {
   const n = Number(value);
   return Number.isFinite(n) ? Math.trunc(n) : undefined;
 }
 
-function toStrInt(value: any): string | undefined {
+function toStrInt(value: unknown): string | undefined {
   const n = Number(value);
   return Number.isFinite(n) ? String(Math.trunc(n)) : undefined;
 }
@@ -89,7 +91,7 @@ function formatDate(date: Date): string {
 }
 
 async function formatEntity(
-  target: any,
+  target: string | number | { id?: number } | User | Chat,
   mention?: boolean,
   throwErrorIfFailed?: boolean
 ) {
@@ -99,10 +101,12 @@ async function formatEntity(
   let id: number | undefined;
   let entity: User | Chat | null = null;
   try {
+    const isEntity = (t: typeof target): t is User | Chat =>
+      typeof t === 'object' && t !== null && 'id' in t && typeof (t as User | Chat).type === 'string';
     entity =
-      typeof target !== "string" && target?.id
-        ? target as User | Chat
-        : await client?.getChat(target) as User | Chat;
+      isEntity(target)
+        ? target
+        : await client?.getChat(target as string | number) as User | Chat;
     if (!entity) throw new Error("无法获取 entity");
     id = getUserId(entity) ?? undefined;
     if (!id) throw new Error("无法获取 entity id");
@@ -132,8 +136,8 @@ async function formatEntity(
         ? `<a href="tg://user?id=${attrEscape(id)}">${htmlEscape(id)}</a>`
         : `<a href="https://t.me/c/${attrEscape(id)}">${htmlEscape(id)}</a>`
     );
-  } else if (!target?._) {
-    displayParts.push(codeTag(target));
+  } else if (typeof target === 'string' || typeof target === 'number') {
+    displayParts.push(codeTag(String(target)));
   }
 
   return {
@@ -154,10 +158,10 @@ function tryParseRegex(input: string): RegExp {
   return new RegExp(trimmed);
 }
 
-function buildCopy(task: any): string {
+function buildCopy(task: KittTask): string {
   return `${commandName} add ${task.remark}\n${task.match}\n${task.action}`;
 }
-function buildCopyCommand(task: any): string {
+function buildCopyCommand(task: KittTask): string {
   const cmd = buildCopy(task);
   return cmd?.includes("\n") ? `<pre>${htmlEscape(cmd)}</pre>` : codeTag(cmd);
 }

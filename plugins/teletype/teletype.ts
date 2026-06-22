@@ -269,16 +269,17 @@ class TeletypePlugin extends Plugin {
     }
   }
   
-  private async handleError(msg: MessageContext, error: any): Promise<void> {
+  private async handleError(msg: MessageContext, error: unknown): Promise<void> {
     logger.error(`[${this.PLUGIN_NAME}] Error:`, error);
     
-    if (error.message?.includes("MESSAGE_NOT_MODIFIED")) {
+    const errMsg = error instanceof Error ? error.message : undefined;
+    if (errMsg?.includes("MESSAGE_NOT_MODIFIED")) {
       return;
     }
     
     let errorMessage = "❌ <b>操作失败:</b> ";
     
-    if (error.message?.includes("MESSAGE_TOO_LONG")) {
+    if (errMsg?.includes("MESSAGE_TOO_LONG")) {
       errorMessage += "消息过长";
     } else {
       errorMessage += htmlEscape(getErrorMessage(error) || "未知错误");

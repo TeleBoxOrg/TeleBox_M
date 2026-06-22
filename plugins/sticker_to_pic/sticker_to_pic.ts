@@ -1,9 +1,10 @@
 import { Plugin } from "@utils/pluginBase";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
-import type { MessageContext } from "@mtcute/dispatcher";
-import { html } from "@mtcute/html-parser";
 import type { Sticker, InputMediaDocument, InputMediaPhoto } from "@mtcute/core";
+import type { MessageContext } from "@mtcute/dispatcher";
+import type { TelegramClient } from "@mtcute/core/highlevel/client.js";
+import { html } from "@mtcute/html-parser";
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -299,8 +300,8 @@ class StickerToPicPlugin extends Plugin {
   }
 
   private async processStickerConversion(
-    msg: MessageContext, 
-    client: any, 
+    msg: MessageContext,
+    client: TelegramClient, 
     outputFormat: string, 
     keepTransparency: boolean, 
     sendAsDocument: boolean
