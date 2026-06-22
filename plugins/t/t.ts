@@ -10,6 +10,7 @@ import path from "path";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -179,8 +180,8 @@ async function generateMusic(
 
     await execPromise(cmd.join(" "));
     return finalFile;
-  } catch (e: any) {
-    logger.error("生成音乐失败:", e.message || e);
+  } catch (e: unknown) {
+    logger.error("生成音乐失败:", getErrorMessage(e) || String(e));
     return null;
   } finally {
     try { await fs.unlink(rawFile); } catch (e) { logger.error('[t] cleanup raw file failed:', e); }

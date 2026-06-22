@@ -393,7 +393,7 @@ async function saveSpeedtestImage(url: string): Promise<string | null> {
     try {
       await fillRoundedCorners(imagePath, filledImagePath, bgColor, borderPx);
       return filledImagePath;
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error("Failed to fill rounded corners:", err);
     }
 
@@ -545,9 +545,9 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
           await msg.edit({
             text: `✅ 服务器 <b>${htmlEscape(name)}</b> 添加成功！`,
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           await msg.edit({
-            text: `❌ 添加失败: <code>${htmlEscape(err.message)}</code>`,
+            text: `❌ 添加失败: <code>${htmlEscape(getErrorMessage(err))}</code>`,
           });
         }
       } else if (command === "list") {
@@ -606,9 +606,9 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
           await msg.edit({
             text: `✅ <b>重命名成功</b>\n\n原别名 <b>${htmlEscape(serverToRename.name)}</b> 已修改为 <b>${htmlEscape(newName)}</b>`,
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           await msg.edit({
-            text: `❌ 重命名失败: <code>${htmlEscape(err.message)}</code>`,
+            text: `❌ 重命名失败: <code>${htmlEscape(getErrorMessage(err))}</code>`,
           });
         }
       } else if (command === "backup") {

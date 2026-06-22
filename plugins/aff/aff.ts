@@ -159,7 +159,7 @@ class AffPlugin extends Plugin {
               `• <code>${mainPrefix}aff remove &lt;序号&gt;</code> - 删除条目`),
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       await this.handleError(msg, error);
     }
   }

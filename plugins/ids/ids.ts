@@ -8,6 +8,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { isChat, hasRawType } from "@utils/entityTypeGuards";
+import { getErrorMessage } from "@utils/errorHelpers";
 // HTML转义工具
 const htmlEscape = (text: string): string => 
   text.replace(/[&<>"']/g, m => ({ 
@@ -110,8 +111,8 @@ class IdsPlugin extends Plugin {
         const result = this.formatUserInfo(userInfo);
         await this.sendLongMessage(msg, result);
 
-      } catch (error: any) {
-        await msg.edit({ text: html(`❌ <b>查询失败:</b> ${htmlEscape(error.message || "未知错误")}`) });
+      } catch (error: unknown) {
+        await msg.edit({ text: html(`❌ <b>查询失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`) });
       }
     }
   };

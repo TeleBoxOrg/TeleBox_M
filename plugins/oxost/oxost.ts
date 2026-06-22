@@ -155,8 +155,8 @@ class Ox0Plugin extends Plugin {
             return;
           }
           await sendLongHtml(msg, `<code>${htmlEscape(url)}</code>`);
-        } catch (err: any) {
-          await sendLongHtml(msg, `❌ <b>错误:</b> 上传失败 — ${htmlEscape(err?.message || String(err))}`);
+        } catch (err: unknown) {
+          await sendLongHtml(msg, `❌ <b>错误:</b> 上传失败 — ${htmlEscape(getErrorMessage(err) || String(err))}`);
         }
       } catch (error: unknown) {
         const errMsg = getErrorMessage(error);

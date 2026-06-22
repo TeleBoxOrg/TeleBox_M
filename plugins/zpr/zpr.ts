@@ -177,7 +177,7 @@ class ZprConfigManager {
                 await this.db!.write();
                 logger.info("[zpr] 配置保存成功");
                 return true;
-            } catch (writeError: any) {
+            } catch (writeError: unknown) {
                 logger.error(`[zpr] 第${attempt}次写入失败:`, writeError);
                 if (attempt === 5) {
                     // 最后一次失败，尝试恢复备份

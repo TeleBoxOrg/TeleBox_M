@@ -556,7 +556,7 @@ class CommandHandlers {
               error: '❌ 这不是一个群组\n提示: 普通用户无法使用此命令'
             };
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
             const safeIdentifier = htmlEscape(identifier);
             return {
               success: false,
@@ -571,8 +571,8 @@ class CommandHandlers {
         error: '❌ 无效的群组标识符\n支持格式:\n• 群组ID: <code>-1001234567890</code>\n• 公开群组: <code>@groupname</code>\n• Telegram链接: <code>https://t.me/groupname</code>'
       };
 
-    } catch (e: any) {
-      const errorMessage = htmlEscape(e.message || '未知错误');
+    } catch (e: unknown) {
+      const errorMessage = htmlEscape(getErrorMessage(e) || '未知错误');
       return {
         success: false,
         error: `❌ 解析失败: ${errorMessage}`
@@ -716,8 +716,8 @@ class CommandHandlers {
         await MessageManager.smartEdit(message, HELP_TEXT);
       }
 
-    } catch (e: any) {
-      const errorMessage = htmlEscape(e.message || "未知错误");
+    } catch (e: unknown) {
+      const errorMessage = htmlEscape(getErrorMessage(e) || "未知错误");
       await MessageManager.smartEdit(message, `❌ 操作失败: ${errorMessage}`);
     }
   }

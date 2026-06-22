@@ -8,6 +8,7 @@ import * as path from "path";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import axios from "axios";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // GitHub API types
 interface GitHubRepoPermissions {
@@ -197,9 +198,9 @@ class GitManagerPlugin extends Plugin {
           default:
             await msg.edit({ text: html`❌ <b>未知子命令:</b> <code>${htmlEscape(sub)}</code><br><br>${help_text}` });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('[git] 插件执行失败:', error);
-        await msg.edit({ text: html`❌ <b>操作失败:</b> ${htmlEscape(error.message)}` });
+        await msg.edit({ text: html`❌ <b>操作失败:</b> ${htmlEscape(getErrorMessage(error))}` });
       }
     },
   };
@@ -307,8 +308,11 @@ class GitManagerPlugin extends Plugin {
     try {
       await api.put(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${prNumber}/merge`);
       await msg.edit({ text: `✅ 成功合并 PR #${prNumber}` });
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.message || error.message;
+    } catch (error: unknown) {
+      const errObj = error as Record<string, unknown>;
+      const resp = errObj.response as Record<string, unknown> | undefined;
+      const data = resp?.data as Record<string, unknown> | undefined;
+      const errorMsg = (typeof data?.message === "string" ? data.message : undefined) || getErrorMessage(error);
       throw new Error(`合并失败: ${errorMsg}`);
     }
   }
@@ -367,8 +371,11 @@ class GitManagerPlugin extends Plugin {
         await api.put(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${pr.number}/merge`);
         report += `✅ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>成功</b>\n`;
         successCount++;
-      } catch (error: any) {
-        const errorMsg = error.response?.data?.message || error.message;
+      } catch (error: unknown) {
+        const errObj = error as Record<string, unknown>;
+        const resp = errObj.response as Record<string, unknown> | undefined;
+        const data = resp?.data as Record<string, unknown> | undefined;
+        const errorMsg = (typeof data?.message === "string" ? data.message : undefined) || getErrorMessage(error);
         report += `❌ <b>#${pr.number}</b>: ${htmlEscape(pr.title)} - <b>失败:</b> ${htmlEscape(errorMsg)}\n`;
         failCount++;
       }

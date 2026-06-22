@@ -9,6 +9,7 @@ import * as cheerio from "cheerio";
 import dayjs from "dayjs";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -459,8 +460,8 @@ class SubinfoPlugin extends Plugin {
             ...result, success: true, status, statusEmoji, upload, download, total, used, remain, percent, expireTs, startTs
         };
 
-    } catch (err: any) {
-        result.errorMessage = err.message || '未知错误';
+    } catch (err: unknown) {
+        result.errorMessage = getErrorMessage(err) || '未知错误';
         return result;
     }
   }

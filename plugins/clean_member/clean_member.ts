@@ -750,7 +750,7 @@ const clean_member = async (msg: MessageContext) => {
           await msg.edit({
             text: progressMessage,
           });
-        } catch (editError: any) {
+        } catch (editError: unknown) {
           logger.info("原消息编辑失败，切换到收藏夹:", editError);
           useOriginalMessage = false;
           const savedMsg = await client.sendText("me", html`⚠️ <b>原消息已被删除，进度转移到收藏夹</b><br><br>${message}`);

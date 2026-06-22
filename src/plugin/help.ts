@@ -9,6 +9,7 @@ import { html } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { AliasDB } from "@utils/aliasDB";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 /* ============================================================
  * Entity Planner: 管理 Telegram 100 个 Entity 的限制
@@ -265,9 +266,10 @@ class HelpPlugin extends Plugin {
         ].join("<br>")),
         disableWebPreview: true,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       logger.error("Help plugin error:", e);
-      const errorMsg = e.message?.length > 100 ? e.message.substring(0, 100) + "..." : e.message;
+      const errMsg = getErrorMessage(e);
+      const errorMsg = errMsg?.length > 100 ? errMsg.substring(0, 100) + "..." : errMsg;
       await msg.edit({
         text: html([
           "⚠️ <b>系统错误</b>",

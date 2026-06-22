@@ -13,6 +13,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import type { tl } from "@mtcute/core";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // 获取命令前缀
 const prefixes = getPrefixes();
@@ -160,28 +161,29 @@ class HisPlugin extends Plugin {
         });
         return;
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error("[his] 插件执行失败:", error);
-        
+        const errMsg = getErrorMessage(error);
+
         // 处理特定错误类型
-        if (error.message?.includes("FLOOD_WAIT")) {
-          const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
+        if (errMsg.includes("FLOOD_WAIT")) {
+          const waitTime = parseInt(errMsg.match(/\d+/)?.[0] || "60");
           await msg.edit({
             text: html`⏳ <b>请求过于频繁</b><br><br>需要等待 ${waitTime} 秒后重试`,
           });
           return;
         }
-        
-        if (error.message?.includes("MESSAGE_TOO_LONG")) {
+
+        if (errMsg.includes("MESSAGE_TOO_LONG")) {
           await msg.edit({
             text: html`❌ <b>消息过长</b><br><br>请减少查询数量`,
           });
           return;
         }
-        
+
         // 通用错误处理
         await msg.edit({
-          text: html`❌ <b>操作失败:</b> ${htmlEscape(error.message || "未知错误")}`,
+          text: html`❌ <b>操作失败:</b> ${htmlEscape(errMsg || "未知错误")}`,
         });
       }
     }
@@ -337,10 +339,10 @@ class HisPlugin extends Plugin {
 
       logger.info(`[HIS] 查询完成 - 群组: ${chatId}, 目标: ${targetEntity.toString()}, 消息数: ${count}`);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("[HIS_ERROR]:", error);
       await msg.edit({
-        text: html`❌ 查询失败: ${htmlEscape(error.message || "未知错误")}`,
+        text: html`❌ 查询失败: ${htmlEscape(getErrorMessage(error) || "未知错误")}`,
       });
     }
   }

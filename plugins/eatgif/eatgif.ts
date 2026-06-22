@@ -16,6 +16,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const execAsync = promisify(exec);
 
@@ -170,9 +171,9 @@ class EatGifPlugin extends Plugin {
         text: html`⏳ 正在生成 <b>${htmlEscape(config[sub].desc)}</b>...`,
       });
       await this.generateGif(sub, { msg, trigger });
-    } catch (e: any) {
+    } catch (e: unknown) {
       await msg.edit({
-        text: html`❌ 失败：${htmlEscape(e?.message || String(e))}`,
+        text: html`❌ 失败：${htmlEscape(getErrorMessage(e) || String(e))}`,
       });
     }
   }

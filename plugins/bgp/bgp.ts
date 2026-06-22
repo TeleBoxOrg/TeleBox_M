@@ -10,6 +10,7 @@ import * as path from "path";
 import { createDirectoryInTemp } from "@utils/pathHelpers";
 import * as cheerio from "cheerio";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 // ─── helpers ─────────────────────────────────────────────────────────
 
@@ -145,8 +146,12 @@ async function fetchBgpSvgWithFallback(ip: string): Promise<BgpFetchResult> {
             }
 
             return { status: "ok", svgBuffer, usedPrefix: prefix };
-        } catch (err: any) {
-            if (err.response?.status === 404) continue;
+        } catch (err: unknown) {
+            const errObj = err as Record<string, unknown>;
+            if (errObj.response && typeof errObj.response === "object") {
+              const resp = errObj.response as Record<string, unknown>;
+              if (resp.status === 404) continue;
+            }
             continue;
         }
     }
@@ -183,8 +188,12 @@ async function fetchDnsWithFallback(ip: string): Promise<{ dnsLines: string[]; u
             if (dnsResult.dnsLines.length > 0) {
                 return { dnsLines: dnsResult.dnsLines, usedPrefix: prefix };
             }
-        } catch (err: any) {
-            if (err.response?.status === 404) continue;
+        } catch (err: unknown) {
+            const errObj = err as Record<string, unknown>;
+            if (errObj.response && typeof errObj.response === "object") {
+              const resp = errObj.response as Record<string, unknown>;
+              if (resp.status === 404) continue;
+            }
             continue;
         }
     }
@@ -337,8 +346,8 @@ class BGPPlugin extends Plugin {
 
                         await msg.edit({ text: html(formattedOutput) });
 
-                    } catch (err: any) {
-                        const message = err?.message || "";
+                    } catch (err: unknown) {
+                        const message = getErrorMessage(err);
 
                         if (message.includes("未找到DNS记录")) {
                             const prefixForLink =
@@ -454,8 +463,8 @@ class BGPPlugin extends Plugin {
                     } catch (e) { logger.warn('[bgp] cleanup temp files failed:', e) }
                 }
 
-            } catch (err: any) {
-                const errText = `❌ <b>BGP查询失败</b>\n\n${htmlEscape(err.message || "未知错误")}`;
+            } catch (err: unknown) {
+                const errText = `❌ <b>BGP查询失败</b>\n\n${htmlEscape(getErrorMessage(err) || "未知错误")}`;
                 try {
                     if (msgDeleted) {
                         await client.sendText(msg.chat.id, html(errText));

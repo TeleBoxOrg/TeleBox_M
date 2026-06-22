@@ -553,7 +553,7 @@ class PicToStickerPlugin extends Plugin {
 
         return { path: stickerPath };
 
-      } catch (sharpError: any) {
+      } catch (sharpError: unknown) {
         logger.error("[pic_to_sticker] Sharp 处理失败:", sharpError);
         
         // 清理文件

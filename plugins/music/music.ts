@@ -22,6 +22,7 @@ import * as https from "https";
 import * as http from "http";
 import { JSONFilePreset } from "lowdb/node";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const execAsync = promisify(exec);
 
@@ -637,12 +638,13 @@ class GeminiClient {
       const rawText =
         response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
       return HttpClient.cleanResponseText(rawText);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = getErrorMessage(error);
       // Retry mechanism for timeout and network errors
-      if (retryCount < CONFIG.DEFAULTS.MAX_RETRIES && 
-          (error.message.includes('超时') || error.message.includes('timeout') || 
-           error.message.includes('网络') || error.message.includes('ECONNRESET'))) {
-        logger.info(`[music] AI请求失败，重试 ${retryCount + 1}/${CONFIG.DEFAULTS.MAX_RETRIES}: ${error.message}`);
+      if (retryCount < CONFIG.DEFAULTS.MAX_RETRIES &&
+          (errMsg.includes('超时') || errMsg.includes('timeout') ||
+           errMsg.includes('网络') || errMsg.includes('ECONNRESET'))) {
+        logger.info(`[music] AI请求失败，重试 ${retryCount + 1}/${CONFIG.DEFAULTS.MAX_RETRIES}: ${errMsg}`);
         await lifecycleDelay(2000 * (retryCount + 1), "music:gemini-retry"); // Exponential backoff
         return this.searchMusic(query, retryCount + 1);
       }
@@ -1403,9 +1405,9 @@ class Downloader {
           logger.info(`[music] 下载成功`);
           success = true;
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           lastError = error;
-          logger.info(`[music] 下载失败: ${error.message}`);
+          logger.info(`[music] 下载失败: ${getErrorMessage(error)}`);
           continue;
         }
       }
@@ -2277,10 +2279,10 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
       }
       pendingCleanupTimers.add(timer);
       if (timer.unref) timer.unref();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (statusMsg) {
         await statusMsg.edit({
-          text: html`❌ <b>Error:</b> ${error.message || "Unknown error"}`,
+          text: html`❌ <b>Error:</b> ${getErrorMessage(error) || "Unknown error"}`,
         });
       }
     }

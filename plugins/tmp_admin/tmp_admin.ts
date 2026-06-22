@@ -12,6 +12,7 @@ import { html } from "@mtcute/html-parser";
 import { logger } from "@utils/logger";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
 import type { InputChannel, InputPeerChannel, InputUser, InputPeerUser } from "@utils/tlTypes";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -304,9 +305,9 @@ async function formatEntity(target: any, mention?: boolean, throwErrorIfFailed?:
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (throwErrorIfFailed) {
-      throw new Error(`无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`);
+      throw new Error(`无法获取 ${target} 的 entity: ${getErrorMessage(e) || "未知错误"}`);
     }
   }
 
@@ -445,9 +446,9 @@ class TmpAdminPlugin extends Plugin {
     let durationMinutes: number;
     try {
       durationMinutes = parseDurationMinutes(durationArg);
-    } catch (e: any) {
+    } catch (e: unknown) {
       await respondToCommand(msg, trigger, {
-        text: `设置临时管理员失败：${codeTag(e?.message || e)}`,
+        text: `设置临时管理员失败：${codeTag(getErrorMessage(e) || String(e))}`,
       });
       return;
     }
@@ -468,10 +469,10 @@ class TmpAdminPlugin extends Plugin {
     let participant: any;
     try {
       participant = await this.getCurrentParticipantOrThrow(channel, userEntity);
-    } catch (e: any) {
+    } catch (e: unknown) {
       await respondToCommand(msg, trigger, {
         text:
-          `查询当前管理员状态失败：${codeTag(e?.message || e)}\n` +
+          `查询当前管理员状态失败：${codeTag(getErrorMessage(e) || String(e))}\n` +
           "为避免覆盖现有管理员权限, 已取消设置。",
       });
       return;
@@ -529,8 +530,8 @@ class TmpAdminPlugin extends Plugin {
       let persistenceWarning = "";
       try {
         await this.persistJob(key, job);
-      } catch (e: any) {
-        persistenceWarning = `\n持久化失败: ${codeTag(e?.message || e)}`;
+      } catch (e: unknown) {
+        persistenceWarning = `\n持久化失败: ${codeTag(getErrorMessage(e) || String(e))}`;
       }
 
       await sleep(1200);
@@ -541,9 +542,9 @@ class TmpAdminPlugin extends Plugin {
           verificationWarning =
             "\n状态校验未确认, 已保留到期解除任务。若服务端稍后同步, 到期仍会尝试解除。";
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         verificationWarning =
-          `\n状态校验失败, 已保留到期解除任务: ${codeTag(e?.message || e)}`;
+          `\n状态校验失败, 已保留到期解除任务: ${codeTag(getErrorMessage(e) || String(e))}`;
       }
 
       await respondToCommand(msg, trigger, {
@@ -553,9 +554,9 @@ class TmpAdminPlugin extends Plugin {
           `时长: ${codeTag(formatDuration(durationMinutes))}` +
           `${persistenceWarning}${verificationWarning}`,
       }, true);
-    } catch (e: any) {
+    } catch (e: unknown) {
       await respondToCommand(msg, trigger, {
-        text: `设置临时管理员失败：${codeTag(e?.message || e)}`,
+        text: `设置临时管理员失败：${codeTag(getErrorMessage(e) || String(e))}`,
       }, true);
     }
   }
@@ -588,10 +589,10 @@ class TmpAdminPlugin extends Plugin {
     let participant: any;
     try {
       participant = await this.getCurrentParticipantOrThrow(channel, userEntity);
-    } catch (e: any) {
+    } catch (e: unknown) {
       await respondToCommand(msg, trigger, {
         text:
-          `查询当前管理员状态失败：${codeTag(e?.message || e)}\n` +
+          `查询当前管理员状态失败：${codeTag(getErrorMessage(e) || String(e))}\n` +
           "已保留临时管理员记录, 未执行解除。",
       });
       return;
@@ -625,9 +626,9 @@ class TmpAdminPlugin extends Plugin {
       await respondToCommand(msg, trigger, {
         text: `${manual ? "已提前解除" : "已解除"}临时管理员: ${user.display}`,
       }, true);
-    } catch (e: any) {
+    } catch (e: unknown) {
       await respondToCommand(msg, trigger, {
-        text: `解除临时管理员失败：${codeTag(e?.message || e)}`,
+        text: `解除临时管理员失败：${codeTag(getErrorMessage(e) || String(e))}`,
       }, true);
     }
   }

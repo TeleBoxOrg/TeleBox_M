@@ -303,10 +303,10 @@ class KkpPlugin extends Plugin {
       } else {
         await msg.edit({ text: html`❌ 获取视频超时` });
       }
-    } catch (botError: any) {
+    } catch (botError: unknown) {
       logger.error("[kkp] 错误:", botError);
       await msg.edit({
-        text: html`❌ 错误: ${htmlEscape(botError.message || "未知")}`,
+        text: html`❌ 错误: ${htmlEscape(getErrorMessage(botError) || "未知")}`,
       });
     }
   }

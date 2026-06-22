@@ -10,6 +10,7 @@ import type { Low } from "lowdb";
 import * as path from "path";
 import _ from "lodash";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -538,10 +539,10 @@ class PanguPlugin extends Plugin {
           text: html`❌ 未知命令: <code>${htmlEscape(subCommand)}</code><br><br>${help_text}`
         });
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error(`[pangu] 命令处理错误:`, error);
         await msg.edit({
-          text: html`❌ <b>处理失败:</b> ${htmlEscape(error.message || "未知错误")}`
+          text: html`❌ <b>处理失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`
         });
       }
     }
@@ -595,12 +596,12 @@ class PanguPlugin extends Plugin {
         try {
           await msg.edit({ text: formatted });
           await this.recordFormattedMessage();
-        } catch (error: any) {
+        } catch (error: unknown) {
           // 可能是消息被删除、网络问题等，记录日志即可
-          logger.error(`[pangu] 消息编辑失败:`, error.message);
+          logger.error(`[pangu] 消息编辑失败:`, getErrorMessage(error));
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`[pangu] 监听器错误:`, error);
     }
   };

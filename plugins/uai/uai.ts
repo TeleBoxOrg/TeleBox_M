@@ -16,6 +16,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { TelegramFormatter } from "@utils/telegramFormatter";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -648,8 +649,8 @@ class UAIPlugin extends Plugin {
                 await msg.delete({ revoke: true });
                 await client.sendText(chatPeerId, html(resultText));
 
-            } catch (err: any) {
-                await msg.edit({ text: html`❌ 错误: ${htmlEscape(err.message || String(err))}` });
+            } catch (err: unknown) {
+                await msg.edit({ text: html`❌ 错误: ${htmlEscape(getErrorMessage(err) || String(err))}` });
             }
         }
     };

@@ -13,6 +13,7 @@ import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getUsername, getTitle } from "@utils/entityTypeGuards";
 import { User } from "@mtcute/node";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -276,18 +277,18 @@ async function formatEntity(target: any) {
             id = entity?.id;
           }
         }
-      } catch (inviteError: any) {
+      } catch (inviteError: unknown) {
         logger.error("处理邀请链接失败:", inviteError);
-        throw new Error(`无法处理邀请链接: ${inviteError.message || "未知错误"}`);
+        throw new Error(`无法处理邀请链接: ${getErrorMessage(inviteError) || "未知错误"}`);
       }
     } else {
       // 普通的 username 或 ID，直接获取 entity
       entity = await client.getChat(target);
       id = entity?.id;
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error(e);
-    throw new Error(`无法获取群组信息: ${e.message || "未知错误"}`);
+    throw new Error(`无法获取群组信息: ${getErrorMessage(e) || "未知错误"}`);
   }
 
   const displayParts: string[] = [];
@@ -717,8 +718,8 @@ async function summarizeMessages(
     }
 
     return { success: true, result: aiResponse };
-  } catch (aiErr: any) {
-    return { success: false, error: `AI 调用失败: ${aiErr?.message || aiErr}` };
+  } catch (aiErr: unknown) {
+    return { success: false, error: `AI 调用失败: ${getErrorMessage(aiErr) || String(aiErr)}` };
   }
 }
 
@@ -777,8 +778,8 @@ async function executeSummary(task: SummaryTask): Promise<{ success: boolean; me
     await client.sendText(pushTarget, needHtmlParse ? html(summaryText) : (summaryText));
 
     return { success: true, message: `总结完成，已推送到 ${pushTarget}` };
-  } catch (e: any) {
-    return { success: false, message: `总结失败: ${e?.message || e}` };
+  } catch (e: unknown) {
+    return { success: false, message: `总结失败: ${getErrorMessage(e) || String(e)}` };
   }
 }
 
@@ -810,11 +811,11 @@ async function scheduleTask(task: SummaryTask) {
         await db.write();
       }
       logger.info(`[sum] 任务 ${task.id} 执行完成: ${result.success ? '成功' : '失败'}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       logger.error(`[sum] 任务 ${task.id} 执行失败:`, e);
       if (idx >= 0) {
         db.data.tasks[idx].lastRunAt = String(now);
-        db.data.tasks[idx].lastError = String(e?.message || e);
+        db.data.tasks[idx].lastError = String(getErrorMessage(e) || e);
         await db.write();
       }
     }
@@ -1828,8 +1829,8 @@ class SummaryPlugin extends Plugin {
         }
 
         await msg.edit({ text: html(help_text)});
-      } catch (e: any) {
-        await msg.edit({ text: `❌ 错误: ${e?.message || e}` });
+      } catch (e: unknown) {
+        await msg.edit({ text: `❌ 错误: ${getErrorMessage(e) || String(e)}` });
       }
     }
   };

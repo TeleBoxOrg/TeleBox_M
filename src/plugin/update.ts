@@ -7,6 +7,7 @@ import { npm_install_project_dependencies } from "@utils/npm_install";
 import { getGlobalClient } from "@utils/globalClient";
 import { executeExit } from "./reload";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -97,13 +98,14 @@ async function update(force = false, msg: MessageContext) {
       pendingText: "🔄 正在重启进程...",
       successText: "✅ 更新完成，耗时 {elapsedMs}ms",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("❌ 更新失败:", error);
 
     // 构建安全的错误信息 —— exec 错误有 .cmd/.stderr，
     // 其他错误只有 .message
-    const errCmd = error.cmd || "";
-    const errDetail = error.stderr || error.message || String(error);
+    const errObj = error as Record<string, unknown>;
+    const errCmd = errObj.cmd as string || "";
+    const errDetail = (errObj.stderr as string) || getErrorMessage(error) || String(error);
 
     const errorText =
       `❌ 更新失败\n` +

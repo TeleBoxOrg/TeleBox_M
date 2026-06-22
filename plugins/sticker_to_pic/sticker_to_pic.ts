@@ -399,10 +399,10 @@ class StickerToPicPlugin extends Plugin {
             throw new Error('转换失败：输出文件未生成');
           }
           
-        } catch (convertError: any) {
+        } catch (convertError: unknown) {
           logger.error('[sticker_to_pic] ImageMagick转换失败:', convertError);
           await msg.edit({
-            text: html(`❌ <b>贴纸转换失败</b><br><br><b>错误详情:</b> ${htmlEscape(convertError.message)}<br><br>💡 请确保贴纸格式正确`)
+            text: html(`❌ <b>贴纸转换失败</b><br><br><b>错误详情:</b> ${htmlEscape(getErrorMessage(convertError))}<br><br>💡 请确保贴纸格式正确`)
           });
           return;
         }

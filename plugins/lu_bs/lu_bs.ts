@@ -9,6 +9,7 @@ import type { Low } from "lowdb";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -261,9 +262,9 @@ class LuBsPlugin extends Plugin {
             await msg.edit({ text: html(HELP_TEXT) });
             break;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         await msg.edit({
-          text: html`❌ <b>错误:</b> ${htmlEscape(error.message || "未知错误")}`,
+          text: html`❌ <b>错误:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`,
         });
       }
     }

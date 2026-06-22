@@ -1040,7 +1040,7 @@ const retryWithFixedDelay = async <T>(
     token?.throwIfAborted();
     try {
       return await operation();
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
       if (token?.aborted) throw error;
       if (!isRetryableError(error)) throw error;
@@ -1164,7 +1164,7 @@ class MessageSender {
     try {
       const edited = await msg.edit({ text, ...options });
       if (edited) return edited;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (isMessageNotModifiedError(error)) {
         return msg;
       }
@@ -5122,7 +5122,7 @@ class AIPlugin extends Plugin {
 
         if (handler) await handler.execute(msg, args, prefixes);
         else await this.questionFeature.execute(msg, args, prefixes);
-      } catch (error: any) {
+      } catch (error: unknown) {
         await sendErrorMessage(msg, error, trigger);
       }
     },

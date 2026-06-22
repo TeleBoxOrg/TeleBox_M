@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getRawType, getTitle, getUsername, getUserId } from "@utils/entityTypeGuards";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -105,11 +106,11 @@ async function formatEntity(
     if (!entity) throw new Error("无法获取 entity");
     id = getUserId(entity) ?? undefined;
     if (!id) throw new Error("无法获取 entity id");
-  } catch (e: any) {
+  } catch (e: unknown) {
     logger.error(e);
     if (throwErrorIfFailed)
       throw new Error(
-        `无法获取 ${target} 的 entity: ${e?.message || "未知错误"}`
+        `无法获取 ${target} 的 entity: ${getErrorMessage(e) || "未知错误"}`
       );
   }
   const displayParts: string[] = [];

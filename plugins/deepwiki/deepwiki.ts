@@ -954,7 +954,7 @@ class DeepWikiPlugin extends Plugin {
         try {
           await original.delete();
         } catch (e) { logger.warn('[deepwiki] delete original msg failed:', e) }
-      } catch (err: any) {
+      } catch (err: unknown) {
         await MessageSender.sendOrEdit(original, this.formatError(err), "html");
       }
     },

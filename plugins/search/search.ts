@@ -260,8 +260,8 @@ class SearchService {
               if (linkObj._ === 'chatInviteExported') {
                 return linkObj.link;
               }
-            } catch (linkError: any) {
-              logger.info(`获取邀请链接失败: ${linkError.message}`);
+            } catch (linkError: unknown) {
+              logger.info(`获取邀请链接失败: ${getErrorMessage(linkError)}`);
             }
             return undefined;
           }
@@ -329,8 +329,8 @@ class SearchService {
           videos.push(...pureVideos);
         }
       }
-    } catch (linkedGroupError: any) {
-      logger.error(`访问关联讨论组失败: ${linkedGroupError.message}`);
+    } catch (linkedGroupError: unknown) {
+      logger.error(`访问关联讨论组失败: ${getErrorMessage(linkedGroupError)}`);
     }
     return videos;
   }
@@ -783,8 +783,8 @@ class SearchService {
           messages: [video.id],
           toChatId: originalMsg.chat.id,
         });
-      } catch (forwardError: any) {
-        logger.info(`转发失败，自动转为下载上传: ${forwardError.message}`);
+      } catch (forwardError: unknown) {
+        logger.info(`转发失败，自动转为下载上传: ${getErrorMessage(forwardError)}`);
         await this.downloadAndUploadVideo(originalMsg, video, false, caption);
       }
     }

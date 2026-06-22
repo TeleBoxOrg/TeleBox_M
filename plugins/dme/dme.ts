@@ -450,8 +450,8 @@ async function resolveChatEntity(client: TelegramClient, chatId: string): Promis
     const entityType = typeof entity === 'object' && entity !== null ? (entity as Record<string, unknown>)._ as string : undefined;
     logger.info(`[DME] getEntityWithHash 解析成功:`, entityType || typeof entity);
     return entity;
-  } catch (hashError: any) {
-    logger.info(`[DME] getEntityWithHash 解析失败，继续多策略回退:`, hashError?.message || hashError);
+  } catch (hashError: unknown) {
+    logger.info(`[DME] getEntityWithHash 解析失败，继续多策略回退:`, getErrorMessage(hashError) || String(hashError));
   }
 
   // 策略2: 直接使用原始chatId尝试
@@ -460,8 +460,8 @@ async function resolveChatEntity(client: TelegramClient, chatId: string): Promis
     const entityType2 = typeof entity === 'object' && entity !== null ? (entity as Record<string, unknown>)._ as string : undefined;
     logger.info(`[DME] 直接解析成功:`, entityType2 || typeof entity);
     return entity;
-  } catch (directError: any) {
-    logger.info(`[DME] 直接解析失败:`, directError.message);
+  } catch (directError: unknown) {
+    logger.info(`[DME] 直接解析失败:`, getErrorMessage(directError));
   }
 
   // 策略2: 尝试标准化群组ID格式
@@ -489,8 +489,8 @@ async function resolveChatEntity(client: TelegramClient, chatId: string): Promis
       const entityType3 = typeof entity === 'object' && entity !== null ? (entity as Record<string, unknown>)._ as string : undefined;
       logger.info(`[DME] 标准化ID解析成功:`, entityType3 || typeof entity);
       return entity;
-    } catch (normalizedError: any) {
-      logger.info(`[DME] 标准化ID ${normalizedId} 解析失败:`, normalizedError.message);
+    } catch (normalizedError: unknown) {
+      logger.info(`[DME] 标准化ID ${normalizedId} 解析失败:`, getErrorMessage(normalizedError));
     }
   }
 
@@ -523,8 +523,8 @@ async function resolveChatEntity(client: TelegramClient, chatId: string): Promis
         return dialogPeer;
       }
     }
-  } catch (dialogsError: any) {
-    logger.info(`[DME] 对话列表查找失败:`, dialogsError.message);
+  } catch (dialogsError: unknown) {
+    logger.info(`[DME] 对话列表查找失败:`, getErrorMessage(dialogsError));
   }
 
   throw new Error(`无法解析聊天实体: ${chatId}`);
