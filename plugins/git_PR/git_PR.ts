@@ -259,22 +259,23 @@ class GitManagerPlugin extends Plugin {
       return;
     }
 
-    // 获取可合并状态（可能为 null），尽量标注
-    const details = [] as { number: number; title: string; user: string; mergeable?: boolean; state?: string }[];
-    for (const item of list) {
-      try {
-        const pr = await api.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${item.number}`);
-        details.push({
-          number: item.number,
-          title: item.title || "",
-          user: item?.user?.login || "",
-          mergeable: pr.data?.mergeable,
-          state: pr.data?.mergeable_state
-        });
-      } catch (e) {
-        details.push({ number: item.number, title: item.title || "", user: item?.user?.login || "" });
-      }
-    }
+    // 获取可合并状态（可能为 null），尽量标注（并行请求）
+    const details = (await Promise.all(
+      list.map(async (item) => {
+        try {
+          const pr = await api.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${item.number}`);
+          return {
+            number: item.number,
+            title: item.title || "",
+            user: item?.user?.login || "",
+            mergeable: pr.data?.mergeable,
+            state: pr.data?.mergeable_state
+          };
+        } catch (e) {
+          return { number: item.number, title: item.title || "", user: item?.user?.login || "" };
+        }
+      })
+    )) as { number: number; title: string; user: string; mergeable?: boolean; state?: string }[];
 
     const prList = details.map((pr) => {
       const flag = pr.mergeable === true ? "✅ 可合并" : pr.mergeable === false ? `⛔ 不可合并(${pr.state || "unknown"})` : "❓ 未知";
@@ -338,16 +339,15 @@ class GitManagerPlugin extends Plugin {
       return;
     }
 
-    // 2. 筛选可合并的PR
-    const mergeablePRs = [];
-    for (const item of prsList) {
+    // 2. 筛选可合并的PR（并行请求）
+    const mergeablePRs = (await Promise.all(
+      prsList.map(async (item) => {
         try {
-            const pr = await api.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${item.number}`);
-            if (pr.data?.mergeable) {
-                mergeablePRs.push(item);
-            }
-        } catch (e) { logger.warn(`[git_PR] 忽略获取详情失败的PR:`, e) }
-    }
+          const pr = await api.get(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${item.number}`);
+          return pr.data?.mergeable ? item : null;
+        } catch (e) { logger.warn(`[git_PR] 忽略获取详情失败的PR:`, e); return null; }
+      })
+    )).filter((item): item is NonNullable<typeof item> => item !== null);
 
     if (mergeablePRs.length === 0) {
       await msg.edit({ text: html`ℹ️ 仓库 <code>${htmlEscape(repoName)}</code> 中没有可自动合并的PR。` });
