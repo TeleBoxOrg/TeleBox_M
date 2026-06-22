@@ -153,11 +153,6 @@ class SubStorePlugin extends Plugin {
       const cmd = (parts[1] || "help").toLowerCase();
       const arg = parts[2];
 
-      // // 检查是否在收藏夹
-      // if (!(await isSavedMessages(msg))) {
-      //   await msg.edit({ text: "⚠️ 此插件仅限在「收藏夹」中使用" });
-      //   return;
-      // }
       const chat = msg.chat as Chat;
       if (chat.isGroup || getRawType(chat) === 'channel') {
         await msg.edit({

@@ -369,10 +369,6 @@ async function scheduleTask(task: AcronTask) {
         const fromMsgIdNum = toInt(t.fromMsgId);
         const fromEntityLike = fromChatIdNum ?? t.fromChatId;
 
-        // await client.forwardMessages(entityLike, {
-        //   messages: fromMsgIdNum!,
-        //   fromPeer: fromEntityLike,
-        // });
         await client.forwardMessagesById({
           fromChatId: fromEntityLike,
           messages: [fromMsgIdNum!],
@@ -933,7 +929,6 @@ class AcronPlugin extends Plugin {
             const entities: ReturnType<typeof JSON.parse> | undefined = (replied as unknown as { entities?: unknown })?.entities
               ? JSON.parse(JSON.stringify((replied as unknown as { entities: unknown }).entities))
               : undefined;
-            // const remark = rest.slice(1).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 8);
             const replyTo = restChatArg[0];
 
@@ -971,7 +966,6 @@ class AcronPlugin extends Plugin {
             return;
           } else if (sub === "cmd") {
             // 备注与回复ID
-            // const remark = rest.slice(1).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 8);
             const replyTo = restChatArg[0];
             const message = lines?.[1]?.trim(); // 第二行
@@ -1027,7 +1021,6 @@ class AcronPlugin extends Plugin {
             }
 
             // 备注与回复ID
-            // const remark = rest.slice(1).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 8);
             const replyTo = restChatArg[0];
 
@@ -1103,7 +1096,6 @@ class AcronPlugin extends Plugin {
               await msg.edit({ text: "请提供消息 ID" });
               return;
             }
-            // const remark = rest.slice(2).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 9);
 
             const task: DelTask = {
@@ -1153,7 +1145,6 @@ class AcronPlugin extends Plugin {
               v === "1" || v === "true" || v === "yes" || v === "y";
             const notify = parseBool(notifyRaw);
             const pmOneSide = parseBool(pmOneSideRaw);
-            // const remark = rest.slice(4).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 11);
 
             const task: PinTask = {
@@ -1196,7 +1187,6 @@ class AcronPlugin extends Plugin {
               await msg.edit({ text: "请提供消息 ID" });
               return;
             }
-            // const remark = rest.slice(2).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 9);
 
             const task: UnpinTask = {
@@ -1241,7 +1231,6 @@ class AcronPlugin extends Plugin {
             }
             // 新增备注支持：从第三段起第一个参数为正则，其余合并为备注
             const regexRaw = String(rest[2]).trim();
-            // const remark = rest.slice(3).join(" ").trim();
             const remark = getRemarkFromMsg(lines[0], 10);
             if (!regexRaw) {
               await msg.edit({ text: "请提供消息正则表达式" });

@@ -255,7 +255,6 @@ class sudoPlugin extends Plugin {
       if (cids.length > 0 && !cids.includes(cid)) return;
       const cmd = getCommandFromMessage(msg, envPrefixes);
       if (!cmd) return;
-      // await dealCommandPluginWithMessage({ cmd, msg });
       const replyInfo = msg.replyToMessage;
       const replyTo =
         replyInfo?.isForumTopic

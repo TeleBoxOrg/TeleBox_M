@@ -551,7 +551,6 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
           });
         }
       } else if (command === "list") {
-        // const servers: ServerConfig[] = db.prepare("SELECT * FROM servers ORDER BY id").all(); // Already fetched
         if (allServers.length === 0) {
           await msg.edit({
             text: "ℹ️ 未配置任何远程服务器。",
@@ -572,7 +571,6 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
           });
           return;
         }
-        // const servers: ServerConfig[] = db.prepare("SELECT * FROM servers ORDER BY id").all(); // Already fetched
         const serverToDelete = allServers[displayId - 1];
         if (!serverToDelete) {
           await msg.edit({
@@ -675,7 +673,6 @@ const speedtest = async (msg: MessageContext): Promise<void> => {
     }
 
     // --- Speed Test Execution Logic ---
-    // const allServers: ServerConfig[] = db.prepare("SELECT * FROM servers ORDER BY id").all(); // Already fetched
     let targetServers: (ServerConfig | null)[] = [];
 
     const isAllTest = command === "all" && args[1] !== "no";

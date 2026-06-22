@@ -450,38 +450,9 @@ async function generateQuote(
 
     logger.info("quote-api响应状态:", response.status);
 
-    // // 检查响应格式
-    // if (!response.data.ok || !response.data.result) {
-    //   throw new Error("API响应格式错误，缺少result字段");
-    // }
-
-    // if (!response.data.result.image) {
-    //   throw new Error("API响应中缺少image字段");
-    // }
-
-    // let imageBuffer: Buffer;
-
-    // // 如果image是base64字符串，需要解码
-    // if (typeof response.data.result.image === "string") {
-    //   // 移除可能的data URL前缀
-    //   const base64Data = response.data.result.image.replace(
-    //     /^data:image\/[a-z]+;base64,/,
-    //     ""
-    //   );
-    //   imageBuffer = Buffer.from(base64Data, "base64");
-    // } else if (Buffer.isBuffer(response.data.result.image)) {
-    //   imageBuffer = response.data.result.image;
-    // } else {
-    //   throw new Error("不支持的图片数据格式");
-    // }
-
-    // console.log("解码后图片数据长度:", imageBuffer.length);
-
     // 推断返回图片格式：
     // - 当 type === 'quote' 且 format === 'webp' 时，后端会生成 webp 贴纸（但 JSON 下没有 ext 字段）
     // - 当 type === 'image' 时，后端最终输出的是 png（带背景的图片）
-    // const outExt = quoteData?.type === "quote" ? "webp" : "png";
-    // return { buffer: imageBuffer, ext: outExt };
     return { buffer: response.data, ext: "webp" };
   } catch (error) {
     if (axios.isAxiosError(error)) {
