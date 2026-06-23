@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { TelegramClient } from "@mtcute/node";
+import type { Message } from "@mtcute/core";
 import { tl, Long } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
@@ -45,10 +46,10 @@ class KkpPlugin extends Plugin {
   private messageListeners: Map<
     string,
     {
-      resolve: (message: any | null) => void;
-      timeout: NodeJS.Timeout;
+      resolve: (message: Message | null) => void;
+      timeout: ReturnType<typeof setTimeout>;
       startTime: number;
-      handler: (event: any) => void;
+      handler: (message: Message) => void;
     }
   > = new Map();
 
@@ -88,19 +89,18 @@ class KkpPlugin extends Plugin {
     },
   };
 
-  private extractPlainText(message: any): string {
-    const fullText = message.text || message.message || "";
+  private extractPlainText(message: Message): string {
+    const fullText = message.text || "";
     if (!fullText) return "";
 
-    if (!message.entities || message.entities.length === 0) return fullText;
+    const entities = message.entities;
+    if (!entities || entities.length === 0) return fullText;
 
     const excludedRanges: Array<{ offset: number; length: number }> = [];
-    for (const entity of message.entities) {
-      const eType = entity._ || entity.className || "";
+    for (const entity of entities) {
+      const eType = entity.kind;
       if (
-        ["messageEntityHashtag", "MessageEntityHashtag",
-         "messageEntityTextUrl", "MessageEntityTextUrl",
-         "messageEntityUrl", "MessageEntityUrl"].includes(eType)
+        ["hashtag", "text_url", "url"].includes(eType)
       ) {
         excludedRanges.push({ offset: entity.offset, length: entity.length });
       }
@@ -121,59 +121,37 @@ class KkpPlugin extends Plugin {
     return result.trim();
   }
 
-  private isVideoMessage(message: any): boolean {
-    // mtcute: message.media is a typed object with ._ field
+  private isVideoMessage(message: Message): boolean {
+    // mtcute: message.media is a typed MessageMedia union; use type narrowing
     const media = message.media;
     if (!media) return false;
-    
-    const mediaType = media._ || media.type || "";
-    
-    // Check for video/document media
-    if (mediaType === "messageMediaDocument" || mediaType === "document") {
-      const doc = media.document || media;
-      if (doc) {
-        const mimeType = doc.mimeType || doc.mime_type || "";
-        if (mimeType.startsWith("video/")) return true;
-        
-        // Check file attributes for video
-        const attrs = doc.attributes || [];
-        for (const attr of attrs) {
-          const attrType = attr._ || attr.className || "";
-          if (attrType === "documentAttributeVideo") return true;
-        }
-        
-        // Check file extension
-        let fileName = "";
-        for (const attr of attrs) {
-          if (attr.fileName) {
-            fileName = attr.fileName;
-            break;
-          }
-        }
-        if (fileName) {
-          return [".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".m4v"]
-            .some((ext) => fileName.toLowerCase().endsWith(ext));
-        }
+
+    // Check for video/document media using mtcute's type discriminator
+    if (media.type === 'video' || media.type === 'document') {
+      const doc = media;
+      if (doc.mimeType && doc.mimeType.startsWith("video/")) return true;
+
+      // Check file name for video extension
+      if (doc.fileName) {
+        return [".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".m4v"]
+          .some((ext) => doc.fileName!.toLowerCase().endsWith(ext));
       }
     }
-    
-    // Also check direct video property
-    if (message.video) return true;
-    
+
     return false;
   }
 
   private async waitForBotReply(
     client: TelegramClient,
-    botEntity: any,
+    botEntity:tl.TypeInputPeer,
     timeoutMs: number = 15000,
-  ): Promise<any | null> {
+  ): Promise<Message | null> {
     return new Promise((resolve) => {
       const startTime = Date.now();
-      const listenerId = `${botEntity.id}_${startTime}_${Math.random()}`;
+      const listenerId = `${(botEntity as { id?: unknown }).id}_${startTime}_${Math.random()}`;
       let isResolved = false;
 
-      const cleanup = (result: any | null) => {
+      const cleanup = (result: Message | null) => {
         if (isResolved) return;
         isResolved = true;
 
@@ -192,17 +170,16 @@ class KkpPlugin extends Plugin {
 
       const timeout = setTimeout(() => cleanup(null), timeoutMs);
 
-      const messageHandler = (event: any) => {
+      const messageHandler = (message: Message) => {
         try {
-          const message = event.message;
           if (!message) return;
-          const senderId = String(message.sender?.id || message.senderId || "");
-          const botId = String(botEntity.id);
+          const senderId = String(message.sender?.id || "");
+          const botId = String((botEntity as { id?: unknown }).id);
 
-          // mtcute: message.date is Date object, need to compare correctly
-          const messageDate = message.date instanceof Date 
-            ? message.date.getTime() 
-            : (message.date || 0) * 1000;
+          // mtcute: message.date is Date object
+          const messageDate = message.date instanceof Date
+            ? message.date.getTime()
+            : 0;
 
           if (senderId === botId && messageDate >= startTime - 1000) {
             if (this.isVideoMessage(message)) cleanup(message);
@@ -256,12 +233,12 @@ class KkpPlugin extends Plugin {
           // 构造带剧透的媒体发送
           // 使用 client.sendMedia 发送带 spoiler 的视频
           const mediaDoc = mediaToSend.type === 'video' || mediaToSend.type === 'document'
-            ? mediaToSend.raw
-            : mediaToSend;
-          
-          if (mediaDoc && mediaDoc.id) {
+            ? (mediaToSend as { raw: tl.RawDocument }).raw
+            : null;
+
+          if (mediaDoc) {
             // 使用 InputMediaDocument with spoiler
-            const fileInput: any = {
+            const fileInput: tl.RawInputMediaDocument = {
               _: 'inputMediaDocument',
               id: {
                 _: 'inputDocument',
