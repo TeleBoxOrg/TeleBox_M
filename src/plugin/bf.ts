@@ -566,30 +566,37 @@ class BfPlugin extends Plugin {
             : savedTargets.length > 0
             ? savedTargets
             : ["me"];
-        const destDisplays = [];
+        const destDisplays: string[] = [];
 
-        for (const dest of destinations) {
-          const { display } = await formatEntity(dest);
-          destDisplays.push(display);
-          try {
-            await client.sendMedia(dest, {
-              type: "document",
-              file: backupPath,
-              caption: html(caption),
-              fileName: backupName,
-            });
-          } catch (err: unknown) {
-            logger.error(`发送到 ${dest} 失败:`, err);
-            if (dest !== "me") {
-              await client.sendMedia("me", {
+        // 并行发送到所有目标，减少总等待时间
+        await Promise.all(
+          destinations.map(async (dest) => {
+            const { display } = await formatEntity(dest);
+            destDisplays.push(display);
+            try {
+              await client.sendMedia(dest, {
                 type: "document",
                 file: backupPath,
-                caption: html(`⚠️ 发送到 ${dest} 失败<br><br>${caption}`),
+                caption: html(caption),
                 fileName: backupName,
               });
+            } catch (err: unknown) {
+              logger.error(`发送到 ${dest} 失败:`, err);
+              if (dest !== "me") {
+                try {
+                  await client.sendMedia("me", {
+                    type: "document",
+                    file: backupPath,
+                    caption: html(`⚠️ 发送到 ${dest} 失败<br><br>${caption}`),
+                    fileName: backupName,
+                  });
+                } catch (fallbackErr: unknown) {
+                  logger.error(`备份文件发送到 "me" 也失败:`, fallbackErr);
+                }
+              }
             }
-          }
-        }
+          })
+        );
 
         const backupTypeDisplay = cmd === "all" ? "全量备份" : "备份";
         const contentDisplay = cmd === "all" 

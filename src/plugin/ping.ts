@@ -201,45 +201,35 @@ async function systemPing(
  * 测试所有数据中心延迟 (Linux)
  */
 async function pingDataCenters(): Promise<string[]> {
-  const results: string[] = [];
+  const dcLocations: Record<number, string> = {
+    1: "Miami",
+    2: "Amsterdam",
+    3: "Miami",
+    4: "Amsterdam",
+    5: "Singapore",
+  };
 
-  for (let dc = 1; dc <= 5; dc++) {
+  const pingOne = async (dc: number): Promise<string> => {
     const ip = DCs[dc as keyof typeof DCs];
+    const location = dcLocations[dc];
     try {
-      // Linux: 使用awk提取时间
       const { stdout } = await execAsync(
         `ping -c 1 ${ip} | awk -F 'time=' '/time=/ {print $2}' | awk '{print $1}'`
       );
-
       let pingTime = "0";
       try {
         pingTime = String(Math.round(parseFloat(stdout.trim())));
-      } catch (e: unknown) {
+      } catch {
         pingTime = "0";
       }
-
-      const dcLocation =
-        dc === 1 || dc === 3
-          ? "Miami"
-          : dc === 2 || dc === 4
-          ? "Amsterdam"
-          : "Singapore";
-
-      results.push(
-        `🌐 <b>DC${dc} (${dcLocation}):</b> <code>${pingTime}ms</code>`
-      );
-    } catch (error: unknown) {
-      const dcLocation =
-        dc === 1 || dc === 3
-          ? "Miami"
-          : dc === 2 || dc === 4
-          ? "Amsterdam"
-          : "Singapore";
-      results.push(`🌐 <b>DC${dc} (${dcLocation}):</b> <code>超时</code>`);
+      return `🌐 <b>DC${dc} (${location}):</b> <code>${pingTime}ms</code>`;
+    } catch {
+      return `🌐 <b>DC${dc} (${location}):</b> <code>超时</code>`;
     }
-  }
+  };
 
-  return results;
+  // 并行 ping 所有数据中心，减少总等待时间
+  return Promise.all([1, 2, 3, 4, 5].map(pingOne));
 }
 
 /**
