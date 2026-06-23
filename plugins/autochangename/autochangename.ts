@@ -419,7 +419,7 @@ class NameManager {
       if (!abbreviation) return null;
       if (/^GMT[+-]/.test(abbreviation)) return null;
       return abbreviation;
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -441,7 +441,7 @@ class NameManager {
       const hours = parseInt(match[2], 10);
       const minutes = parseInt(match[3], 10);
       return sign * (hours * 60 + minutes);
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -492,7 +492,7 @@ class NameManager {
       
       this.profileCache = { data: profile, timestamp: Date.now() };
       return profile;
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -546,7 +546,7 @@ class NameManager {
         return "00:" + timeStr.slice(3);
       }
       return timeStr;
-    } catch (e: unknown) {
+    } catch {
       const now = new Date();
       return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     }
@@ -647,7 +647,7 @@ class NameManager {
       const result = await translate(normalized, { to: "en" });
       const translated = typeof result === "string" ? result : result?.text;
       return typeof translated === "string" && translated.trim() ? translated.trim() : normalized;
-    } catch (e: unknown) {
+    } catch {
       return normalized;
     }
   }
@@ -1315,7 +1315,7 @@ America/New_York
     if (sub === "format") return this.handleTimezoneFormat(msg, userId, args.slice(1));
 
     const newTimezone = (sub === "set" ? args.slice(1) : args).join(" ").trim();
-    try { new Date().toLocaleString("en-US", { timeZone: newTimezone }); } catch (e: unknown) {
+    try { new Date().toLocaleString("en-US", { timeZone: newTimezone }); } catch {
       return void await msg.edit({ text: html(`❌ <b>无效的时区标识符</b>`) });
     }
 
@@ -1506,7 +1506,7 @@ America/New_York
       settings.is_enabled = false;
       await DataManager.saveUserSettings(settings);
       await msg.edit({ text: html("✅ <b>已恢复原始昵称并禁用自动更新</b>") });
-    } catch (e: unknown) {
+    } catch {
       await msg.edit({ text: html("❌ 重置失败") });
     }
   }

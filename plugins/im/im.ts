@@ -352,7 +352,7 @@ class ImageMonitorPlugin extends Plugin {
             } else {
               await MessageManager.edit(msg, `ℹ️ 群组 <code>${htmlEscape(chatName)}</code> 已在监控列表中。`);
             }
-          } catch (e: unknown) {
+          } catch {
             await MessageManager.edit(msg, "❌ 无法解析群组ID或用户名。");
           }
           break;
@@ -385,7 +385,7 @@ class ImageMonitorPlugin extends Plugin {
             } else {
               await MessageManager.edit(msg, `ℹ️ 群组 <code>${htmlEscape(chatName)}</code> 不在监控列表中。`);
             }
-          } catch (e: unknown) {
+          } catch {
             await MessageManager.edit(msg, "❌ 无法解析群组ID或用户名。");
           }
           break;

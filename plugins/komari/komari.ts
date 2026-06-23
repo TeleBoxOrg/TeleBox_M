@@ -213,7 +213,7 @@ function formatExpiredDate(dateStr: string): string {
     } else {
       return `${dateString} (已过期 ${Math.abs(diffDays)} 天)`;
     }
-  } catch (e: unknown) {
+  } catch {
     return "未知";
   }
 }

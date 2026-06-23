@@ -212,7 +212,7 @@ async function callCodexImage(
           let payloadObj: unknown;
           try {
             payloadObj = JSON.parse(dataLine);
-          } catch (e: unknown) {
+          } catch {
             continue;
           }
 
@@ -471,7 +471,7 @@ async function handleCximg(msg: MessageContext): Promise<void> {
 
   try {
     await msg.delete();
-  } catch (e: unknown) {
+  } catch {
     await msg.edit({ text: "✅ 图片生成完成" });
   }
 }

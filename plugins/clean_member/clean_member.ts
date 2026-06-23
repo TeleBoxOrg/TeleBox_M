@@ -403,7 +403,7 @@ async function streamProcessMembers(options: StreamProcessOptions): Promise<Stre
               if (cnt === 0) {
                 shouldProcess = true;
               }
-            } catch (error: unknown) {
+            } catch {
               continue;
             }
           } else if (mode === "3") {
@@ -428,7 +428,7 @@ async function streamProcessMembers(options: StreamProcessOptions): Promise<Stre
               if (cnt < day) {
                 shouldProcess = true;
               }
-            } catch (error: unknown) {
+            } catch {
               continue;
             }
           } else if (mode === "4") {
@@ -763,7 +763,7 @@ const clean_member = async (msg: MessageContext) => {
         if (savedMessageId) {
           try {
             await msg.edit({ text: String(savedMessageId) });
-          } catch (error: unknown) {
+          } catch {
             const newMsg = await client.sendText("me", progressMessage);
             if (newMsg && typeof newMsg.id === 'number') {
               savedMessageId = newMsg.id;

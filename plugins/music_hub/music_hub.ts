@@ -221,7 +221,7 @@ function idToString(value: any): string {
     return JSON.stringify(value, (_key, item) =>
       typeof item === "bigint" ? item.toString() : item
     );
-  } catch (e: unknown) {
+  } catch {
     return String(value);
   }
 }

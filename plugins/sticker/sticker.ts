@@ -327,7 +327,7 @@ class StickerPlugin extends Plugin {
             });
             await ConfigManager.set(CONFIG_KEYS.DEFAULT_PACK, packName);
             await msg.edit({ text: `✅ <b>默认贴纸包已设置为:</b> <code>${htmlEscape(packName)}</code>` });
-        } catch (error: unknown) {
+        } catch {
             throw new StickerError(`无法访问贴纸包 <code>${htmlEscape(packName)}</code>。请确保它存在且您有权访问。`);
         }
       }

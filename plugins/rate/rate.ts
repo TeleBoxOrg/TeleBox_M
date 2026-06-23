@@ -375,7 +375,7 @@ class RatePlugin extends Plugin {
       try {
         const cryptoToFiat = await this.getCryptoFiatPrice(s2, s1);
         return { price: 1 / cryptoToFiat.price, lastUpdated: cryptoToFiat.lastUpdated };
-      } catch (error: unknown) {
+      } catch {
         throw new Error(`无法获取 ${s2} 对 ${s1} 的价格来计算反向汇率`);
       }
     }

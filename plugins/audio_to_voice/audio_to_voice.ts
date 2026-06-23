@@ -105,7 +105,7 @@ class AudioToVoicePlugin extends Plugin {
       // 先检测 ffmpeg 是否可用
       try {
         await execAsync(`ffmpeg -version`);
-      } catch (e: unknown) {
+      } catch {
         await msg.edit({ text: "❌ 未检测到 ffmpeg，请先在系统安装 ffmpeg 后重试。macOS 可使用：brew install ffmpeg" });
         return;
       }
@@ -127,7 +127,7 @@ class AudioToVoicePlugin extends Plugin {
         const cmd = `ffmpeg -y -i "${audioPath}" -vn -acodec libopus -b:a 64k -ar 48000 -ac 1 "${oggPath}"`;
         try {
           await execAsync(cmd, { timeout: 180000 });
-        } catch (e: unknown) {
+        } catch {
           throw new Error(`FFmpeg 转码失败，请确认系统已安装 FFmpeg（macOS: brew install ffmpeg）。`);
         }
 

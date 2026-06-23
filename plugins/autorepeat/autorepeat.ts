@@ -222,7 +222,7 @@ class PermissionManager {
         return true;
       }
       return false;
-    } catch (error: unknown) {
+    } catch {
       return false;
     }
   }
@@ -464,7 +464,7 @@ class CommandHandlers {
         }
       }
       return null;
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -512,7 +512,7 @@ class CommandHandlers {
               chatId: chatId,
               title: getPeerTitle(entity) || `群组 ${chatId}`
             };
-          } catch (e: unknown) {
+          } catch {
             return {
               success: true,
               chatId: chatId,
@@ -538,7 +538,7 @@ class CommandHandlers {
               chatId: chatId,
               title: getPeerTitle(entity) || `群组 ${chatId}`
             };
-          } catch (e: unknown) {
+          } catch {
               const safeIdentifier = htmlEscape(identifier);
               return {
                 success: false,
@@ -570,7 +570,7 @@ class CommandHandlers {
               error: '❌ 这不是一个群组\n提示: 普通用户无法使用此命令'
             };
           }
-        } catch (e: unknown) {
+        } catch {
             const safeIdentifier = htmlEscape(identifier);
             return {
               success: false,
@@ -642,7 +642,7 @@ class CommandHandlers {
               const entity: Peer | Chat | User | null = await client.getPeer(gid);
               const title = htmlEscape(getPeerTitle(entity) || "Unknown Group");
               return `• <b>${title}</b> (<code>${gid}</code>)`;
-            } catch (e: unknown) {
+            } catch {
               return `• <code>${gid}</code> (无法获取信息)`;
             }
           })

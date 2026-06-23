@@ -353,7 +353,7 @@ const DEFAULT_PROVIDER_PROFILE: ProviderProfile =
 const getProviderHost = (url: string): string | null => {
   try {
     return new URL(url).hostname;
-  } catch (e: unknown) {
+  } catch {
     return null;
   }
 };
@@ -362,7 +362,7 @@ const isHttpUrl = (url: string): boolean => {
   try {
     const u = new URL(url);
     return u.protocol === "http:" || u.protocol === "https:";
-  } catch (e: unknown) {
+  } catch {
     return false;
   }
 };
@@ -421,7 +421,7 @@ const matchModelRule = (model: string, rule: ModelMatchRule): boolean => {
   if (rule.type === "regex") {
     try {
       return new RegExp(rule.value).test(model);
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -637,7 +637,7 @@ const normalizeDownloadedMedia = async (
       const stat = await fs.promises.stat(downloaded);
       if (!stat.isFile()) return null;
       return await fs.promises.readFile(downloaded);
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -654,7 +654,7 @@ const getImageExtensionForMime = (mimeType: string): string => {
 const extractFirstFrame = async (buffer: Buffer): Promise<Buffer | null> => {
   try {
     return await sharp(buffer, { animated: true }).png().toBuffer();
-  } catch (e: unknown) {
+  } catch {
     return null;
   }
 };
@@ -758,7 +758,7 @@ const collectImagePartsFromSingleMessage = async (
       if (buffer) {
         try {
           frameBuffer = await sharp(buffer).png().toBuffer();
-        } catch (e: unknown) {
+        } catch {
           frameBuffer = buffer;
         }
       }
@@ -770,7 +770,7 @@ const collectImagePartsFromSingleMessage = async (
       if (buffer) {
         try {
           frameBuffer = await extractFirstFrame(buffer);
-        } catch (e: unknown) {
+        } catch {
           frameBuffer = null;
         }
       }
@@ -940,7 +940,7 @@ const videoHasAudioTrack = async (filePath: string): Promise<boolean> => {
     const info = JSON.parse(stdout);
     const streams = info.streams || [];
     return streams.length > 0;
-  } catch (e: unknown) {
+  } catch {
     return false;
   }
 };
@@ -974,7 +974,7 @@ const ensureVideoHasAudio = async (
     ]);
 
     return outputPath;
-  } catch (e: unknown) {
+  } catch {
     return inputPath;
   }
 };
@@ -1726,7 +1726,7 @@ const applyAuthConfig = (
       const u = new URL(url);
       if (!u.searchParams.has("key")) u.searchParams.set("key", config.key);
       return { url: u.toString(), headers };
-    } catch (e: unknown) {
+    } catch {
       return { url, headers };
     }
   }
@@ -1783,7 +1783,7 @@ const normalizeOpenAIBaseUrl = (url: string): string => {
     u.pathname = "/v1";
     u.search = "";
     return u.toString();
-  } catch (e: unknown) {
+  } catch {
     return url;
   }
 };
@@ -1801,7 +1801,7 @@ const normalizeGeminiBaseUrl = (url: string): string => {
     u.search = "";
     u.hash = "";
     return u.toString();
-  } catch (e: unknown) {
+  } catch {
     return url;
   }
 };
@@ -2196,7 +2196,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
   try {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [parsed];
-  } catch (e: unknown) {
+  } catch {
     return [];
   }
 };

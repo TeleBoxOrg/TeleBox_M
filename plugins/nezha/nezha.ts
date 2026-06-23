@@ -203,7 +203,7 @@ function readSecretFromConfig(configPath: string): string | null {
     const content = fs.readFileSync(configPath, "utf-8");
     const config = yaml.load(content) as NeZhaYamlConfig | null | undefined;
     return config?.jwt_secret_key || config?.jwtSecretKey || null;
-  } catch (e: unknown) {
+  } catch {
     return null;
   }
 }

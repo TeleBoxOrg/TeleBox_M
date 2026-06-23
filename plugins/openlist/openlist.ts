@@ -688,7 +688,7 @@ class OpenListPlugin extends Plugin {
         let configContent = "";
         try {
           configContent = await fs.readFile(configPath, "utf-8");
-        } catch (e: unknown) {
+        } catch {
           const { stdout } = await execAsync(`cat "${configPath}" 2>/dev/null`);
           configContent = stdout;
         }
@@ -796,7 +796,7 @@ class OpenListPlugin extends Plugin {
               lines.push(`${index + 1}. <b>用户:</b> ${htmlEscape(user.username)} | <b>密码:</b> ${htmlEscape(user.password)}`);
             });
           }
-        } catch (e: unknown) {
+        } catch {
           lines.push("\n无法解析账户信息。");
         }
       }
@@ -838,7 +838,7 @@ class OpenListPlugin extends Plugin {
     try {
       await execAsync(`bash -lc 'command -v ${cmd} >/dev/null 2>&1'`);
       return true;
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -849,7 +849,7 @@ class OpenListPlugin extends Plugin {
         `bash -lc '[ -d "${path}" ] && echo 1 || echo 0'`
       );
       return stdout.trim() === "1";
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -868,7 +868,7 @@ class OpenListPlugin extends Plugin {
         `bash -lc '[ -f "${path}" ] && echo 1 || echo 0'`
       );
       return stdout.trim() === "1";
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }

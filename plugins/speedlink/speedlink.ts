@@ -184,7 +184,7 @@ try {
   require.resolve("better-sqlite3");
   execSync("command -v sshpass");
   dependenciesInstalled = true;
-} catch (e: unknown) {
+} catch {
   dependenciesInstalled = false;
 }
 
@@ -331,7 +331,7 @@ function decrypt(text: string): string {
     const encryptedText = Buffer.from(textParts.join(":"), "hex");
     const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(ENCRYPTION_KEY), iv);
     return Buffer.concat([decipher.update(encryptedText), decipher.final()]).toString();
-  } catch (error: unknown) {
+  } catch {
     throw new Error("Failed to decrypt credentials. The key file may have been changed/deleted.");
   }
 }
@@ -374,7 +374,7 @@ async function getIpApi(ip: string) {
         )
       : "";
     return { asInfo, ccFlag };
-  } catch (error: unknown) {
+  } catch {
     return { asInfo: "", ccFlag: "" };
   }
 }

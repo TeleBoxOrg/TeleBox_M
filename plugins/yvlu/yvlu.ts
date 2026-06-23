@@ -78,7 +78,7 @@ async function checkTgsDependencies(): Promise<{
       "-c",
       "from rlottie_python import LottieAnimation",
     ]);
-  } catch (e: unknown) {
+  } catch {
     return {
       ok: false,
       message:
@@ -87,7 +87,7 @@ async function checkTgsDependencies(): Promise<{
   }
   try {
     await execFileAsync("ffmpeg", ["-version"]);
-  } catch (e: unknown) {
+  } catch {
     return {
       ok: false,
       message: "缺少 ffmpeg，请安装: apt-get install -y ffmpeg",

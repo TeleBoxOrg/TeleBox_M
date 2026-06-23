@@ -193,7 +193,7 @@ class PaoluPlugin extends Plugin {
             try {
               await client.deleteMessagesById(chatId, messagesToDelete.map((m) => m.id), { revoke: true });
               deletedCount += messagesToDelete.length;
-            } catch (delErr: unknown) {
+            } catch {
               // 逐个删除
               for (const m of messagesToDelete) {
                 try {

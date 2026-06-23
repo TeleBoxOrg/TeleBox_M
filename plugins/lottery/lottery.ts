@@ -578,7 +578,7 @@ async function validateUserConditions(client: TelegramClient, user: LotteryUser,
         if (!participant) {
           return { valid: false, reason: `需要关注频道 ${lottery.required_channel} 才能参与抽奖` };
         }
-      } catch (error: unknown) {
+      } catch {
         return { valid: false, reason: `需要关注指定频道才能参与抽奖` };
       }
     }
@@ -890,7 +890,7 @@ async function handleEnhancedLotteryJoin(msg: any): Promise<void> {
     } else {
       return;
     }
-  } catch (e: unknown) {
+  } catch {
     return;
   }
 

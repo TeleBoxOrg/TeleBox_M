@@ -541,7 +541,7 @@ function parseIndices(
       } else {
         invalid.push(i.trim());
       }
-    } catch (error: unknown) {
+    } catch {
       invalid.push(i.trim());
     }
   }
@@ -1357,7 +1357,7 @@ class ShiftPlugin extends Plugin {
                 } else {
                   cleanedCount++;
                 }
-              } catch (e: unknown) {
+              } catch {
                 cleanedCount++;
               }
             }
@@ -1389,7 +1389,7 @@ class ShiftPlugin extends Plugin {
               jsonData = Buffer.from(inputData, "base64").toString("utf-8");
               // 验证是否为有效JSON
               JSON.parse(jsonData);
-            } catch (e: unknown) {
+            } catch {
               // 如果Base64解码失败，尝试直接作为JSON处理
               jsonData = inputData;
             }
@@ -1398,7 +1398,7 @@ class ShiftPlugin extends Plugin {
             await msg.edit({
               text: `✅ <b>成功导入规则配置</b>`,
             });
-          } catch (error: unknown) {
+          } catch {
             await msg.edit({
               text: `❌ <b>导入失败</b>\n\n请检查配置数据格式是否正确`,
             });
@@ -1455,7 +1455,7 @@ class ShiftPlugin extends Plugin {
               const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
               source = await resolveTarget(client, sourceInput, chatId);
             }
-          } catch (error: unknown) {
+          } catch {
             await msg.edit({
               text: `❌ <b>源对话无效</b>\n\n请检查频道/群组ID或用户名格式`,
             });
@@ -1467,7 +1467,7 @@ class ShiftPlugin extends Plugin {
           try {
             const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
             target = await resolveTarget(client, targetInput, chatId);
-          } catch (error: unknown) {
+          } catch {
             await msg.edit({
               text: `❌ <b>目标对话无效</b>\n\n请检查频道/群组ID或用户名格式`,
             });
@@ -1604,7 +1604,7 @@ class ShiftPlugin extends Plugin {
                 output += `   🛡️ 过滤: ${rule.filters.length} 个关键词\n`;
               }
               output += "\n";
-            } catch (error: unknown) {
+            } catch {
               output += `${i + 1}. ⚠️ 规则损坏 (${sourceId})\n\n`;
             }
           }
@@ -1716,7 +1716,7 @@ class ShiftPlugin extends Plugin {
                 const dailyTotal = dailyStats.total || 0;
                 channelStats[sourceId].total += dailyTotal;
                 channelStats[sourceId].dates[date] = dailyTotal;
-              } catch (error: unknown) {
+              } catch {
                 continue;
               }
             }
@@ -1757,7 +1757,7 @@ class ShiftPlugin extends Plugin {
             }
 
             await msg.edit({ text: output });
-          } catch (error: unknown) {
+          } catch {
             await msg.edit({
               text: `❌ <b>获取统计数据失败</b>\n\n请稍后重试或联系管理员`,
             });
@@ -2014,7 +2014,7 @@ class ShiftPlugin extends Plugin {
             // so the type matches resolveTarget's ClientAdapter parameter.
             source = await resolveTarget(client, sourceInput, chatId);
             target = await resolveTarget(client, targetInput, chatId);
-          } catch (error: unknown) {
+          } catch {
             await msg.edit({
               text: `❌ <b>解析对话失败</b>\n\n请检查频道/群组ID格式是否正确`,
             });

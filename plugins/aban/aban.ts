@@ -283,7 +283,7 @@ class UserResolver {
         };
       }
       return null;
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -300,7 +300,7 @@ class UserResolver {
   ): Promise<{ id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null> {
     try {
       return await (client as unknown as ClientInternals).resolvePeer(target) as { id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null;
-    } catch (e: unknown) {
+    } catch {
       return null;
     }
   }
@@ -311,7 +311,7 @@ class UserResolver {
   ): Promise<tl.TypeInputPeer | undefined> {
     try {
       return await (client as unknown as ClientInternals).getInputEntity(target) as tl.TypeInputPeer | undefined;
-    } catch (e: unknown) {
+    } catch {
       return undefined;
     }
   }
@@ -357,7 +357,7 @@ class UserResolver {
           if (!participants.length) break;
           offset += participants.length;
         }
-      } catch (e: unknown) {
+      } catch {
         return undefined;
       }
     }
@@ -385,7 +385,7 @@ class UserResolver {
         if (matchedUser) {
           return await this.safeGetInputEntity(client, matchedUser);
         }
-      } catch (e: unknown) {
+      } catch {
         return undefined;
       }
     }
@@ -559,7 +559,7 @@ class PermissionManager {
         return !!(rights?.banUsers || rights?.deleteMessages);
       }
       return false;
-    } catch (error: unknown) {
+    } catch {
       return false;
     }
   }
@@ -591,7 +591,7 @@ class PermissionManager {
         p?._ === 'channelParticipantCreator' ||
         p?._ === 'channelParticipantAdmin'
       );
-    } catch (error: unknown) {
+    } catch {
       return false;
     }
   }
@@ -625,7 +625,7 @@ class PermissionManager {
         return !!p.adminRights?.deleteMessages;
       }
       return false;
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -657,7 +657,7 @@ class GroupManager {
     client: TelegramClient
   ): Promise<ManagedGroup[]> {
     const cached = await this.cache.get("managed_groups_v3");
-    if (cached) return cached;
+    if (cached) return cached as ManagedGroup[];
 
     const groups: ManagedGroup[] = [];
     
@@ -698,7 +698,7 @@ class GroupManager {
       }
       
       try {
-        await this.cache.set("managed_groups_v3", groups);
+        await this.cache.set("managed_groups_v3", groups as unknown as CacheEntry);
       } catch (cacheError: unknown) {
         logger.error(`[GroupManager] 缓存群组失败: ${cacheError}`);
       }
@@ -1307,7 +1307,7 @@ class CommandHandlers {
             try {
               const target = await resolvePermissionTarget(client, group);
               return await PermissionManager.isTargetAdmin(client, target, uid);
-            } catch (e: unknown) {
+            } catch {
               return false;
             }
           })
@@ -1456,7 +1456,7 @@ class CommandHandlers {
             try {
               const target = await resolvePermissionTarget(client, group);
               return await PermissionManager.isTargetAdmin(client, target, uid);
-            } catch (e: unknown) {
+            } catch {
               return false;
             }
           })
@@ -1624,7 +1624,7 @@ class AbanPlugin extends Plugin {
         GroupManager.clearCache();
         const groups = await GroupManager.getManagedGroups(client);
         await MessageManager.smartEdit(status, `✅ 已刷新 ${groups.length}个群组`);
-      } catch (error: unknown) {
+      } catch {
         await MessageManager.smartEdit(status, `❌ 刷新失败`);
       }
     }

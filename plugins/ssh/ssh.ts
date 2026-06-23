@@ -83,7 +83,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
               try {
                 const { stdout: nameOutput } = await execAsync(`ps -p ${pid} -o comm= 2>/dev/null || echo "未知"`);
                 processName = nameOutput.trim() || '未知进程';
-              } catch (e: unknown) {
+              } catch {
                 processName = '未知进程';
               }
             }
@@ -100,7 +100,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
     }
     
     return { inUse: false };
-  } catch (error: unknown) {
+  } catch {
     // 如果netstat失败，尝试使用ss命令
     try {
       const { stdout } = await execAsync(`ss -tlnp 2>/dev/null | grep ":${port} "`);
@@ -111,7 +111,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
         };
       }
       return { inUse: false };
-    } catch (e: unknown) {
+    } catch {
       // 如果两个命令都失败，尝试简单的端口连接测试
       try {
         await execAsync(`timeout 2 bash -c "</dev/tcp/localhost/${port}" 2>/dev/null`);
@@ -119,7 +119,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
           inUse: true,
           processInfo: '端口被占用 (无法获取进程信息)'
         };
-      } catch (e: unknown) {
+      } catch {
         return { inUse: false };
       }
     }
@@ -226,7 +226,7 @@ const restartSSHService = async (): Promise<{ success: boolean; command?: string
     try {
       await execAsync(cmd);
       return { success: true, command: cmd };
-    } catch (e: unknown) {
+    } catch {
       continue;
     }
   }
@@ -478,12 +478,12 @@ class SSHPlugin extends Plugin {
         // 首先检查 puttygen 是否可用
         try {
           await execAsync('puttygen --version');
-        } catch (e: unknown) {
+        } catch {
           // puttygen 不可用，尝试安装 putty-tools
           logger.info("[ssh] puttygen 未找到，正在安装 putty-tools...");
           try {
             await execAsync('apt-get update && apt-get install -y putty-tools');
-          } catch (e: unknown) {
+          } catch {
             throw new Error("无法安装 putty-tools");
           }
         }
@@ -589,7 +589,7 @@ class SSHPlugin extends Plugin {
       } else {
         try {
           peer = await client.resolvePeer(targetChat);
-        } catch (e: unknown) {
+        } catch {
           peer = "me";
           await msg.replyText(html(`⚠️ 无法找到指定会话 ${targetChat}，已发送到收藏夹`));
         }
@@ -644,7 +644,7 @@ class SSHPlugin extends Plugin {
       // 检查文件是否存在
       try {
         await execAsync(`test -f ${authorizedKeysPath}`);
-      } catch (e: unknown) {
+      } catch {
         await msg.edit({
           text: html`❌ <b>未找到授权密钥文件</b><br><br>文件路径: <code>/root/.ssh/authorized_keys</code><br>状态: 不存在`
         });
@@ -774,7 +774,7 @@ class SSHPlugin extends Plugin {
       // 检查文件是否存在
       try {
         await execAsync(`test -f ${authorizedKeysPath}`);
-      } catch (e: unknown) {
+      } catch {
         await msg.edit({
           text: html`❌ <b>未找到授权密钥文件</b><br><br>文件路径: <code>/root/.ssh/authorized_keys</code><br>状态: 不存在`
         });
@@ -850,7 +850,7 @@ ${keysContent}`;
       } else {
         try {
           peer = await client.resolvePeer(targetChat);
-        } catch (e: unknown) {
+        } catch {
           peer = "me";
         }
       }
@@ -1123,7 +1123,7 @@ ${keysContent}`;
             });
             return;
           }
-        } catch (e: unknown) {
+        } catch {
           // 检查失败时给出警告
           await msg.edit({
             text: `⚠️ <b>无法检测用户账户</b>\n\n建议使用 <code>${mainPrefix}ssh rootlogin keyonly</code> 而不是完全禁用\n\n如需继续禁用root登录:\n<code>${mainPrefix}ssh rootlogin off</code>`,
@@ -1231,11 +1231,11 @@ ${keysContent}`;
       try {
         await execAsync("systemctl is-active --quiet sshd || systemctl is-active --quiet ssh");
         sshStatus = "✅ 运行中";
-      } catch (e: unknown) {
+      } catch {
         try {
           await execAsync("pgrep sshd");
           sshStatus = "✅ 运行中";
-        } catch (e: unknown) {
+        } catch {
           sshStatus = "❌ 未运行";
         }
       }
@@ -1345,7 +1345,7 @@ ${keysContent}`;
         if (client) {
           try {
             await client.resolvePeer(target);
-          } catch (e: unknown) {
+          } catch {
             await msg.edit({
               text: `⚠️ <b>无法验证目标有效性</b>\n\n目标 <code>${htmlEscape(target)}</code> 可能无效，但配置已保存。\n\n发送时如果失败将自动使用收藏夹。`,
             });
@@ -1382,11 +1382,11 @@ ${keysContent}`;
       try {
         await execAsync("systemctl is-active --quiet sshd || systemctl is-active --quiet ssh");
         sshStatus = "✅ 运行中";
-      } catch (e: unknown) {
+      } catch {
         try {
           await execAsync("pgrep sshd");
           sshStatus = "✅ 运行中";
-        } catch (e: unknown) {
+        } catch {
           sshStatus = "❌ 未运行";
         }
       }
@@ -1445,7 +1445,7 @@ ${keysContent}`;
       try {
         const keysContent = (await execAsync("wc -l /root/.ssh/authorized_keys 2>/dev/null || echo '0'")).stdout;
         keyCount = parseInt(keysContent.trim()) || 0;
-      } catch (e: unknown) {
+      } catch {
         keyCount = 0;
       }
 
@@ -1455,7 +1455,7 @@ ${keysContent}`;
         const result = await execAsync("iptables -L INPUT -n | wc -l");
         const ruleCount = parseInt(result.stdout.trim()) - 2; // 减去标题行
         iptablesInfo = `\n防火墙规则: ${ruleCount > 0 ? ruleCount + " 条" : "无限制"}`;
-      } catch (e: unknown) {
+      } catch {
         iptablesInfo = "";
       }
 
@@ -1466,7 +1466,7 @@ ${keysContent}`;
         const hostname = (await execAsync("hostname")).stdout.trim();
         const uptime = (await execAsync("uptime -p 2>/dev/null || echo '未知'")).stdout.trim();
         systemInfo = `\n\n<b>系统信息：</b>\n主机名: <code>${htmlEscape(hostname)}</code>\n运行时间: ${htmlEscape(uptime)}`;
-      } catch (e: unknown) {
+      } catch {
         systemInfo = "";
       }
 

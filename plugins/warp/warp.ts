@@ -174,7 +174,7 @@ class WireproxyManager {
                 if (config.proxy && config.proxy.port === port) {
                   tgProxyStatus = `✅ 已配置 (端口: ${port})`;
                 }
-              } catch (e: unknown) {
+              } catch {
                 tgProxyStatus = "❓ 配置文件解析失败";
               }
             }
@@ -192,7 +192,7 @@ class WireproxyManager {
                 if (musicProxy && musicProxy.includes(`:${port}`)) {
                   musicProxyStatus = `✅ 已配置 (端口: ${port})`;
                 }
-              } catch (e: unknown) {
+              } catch {
                 musicProxyStatus = "❓ 配置文件解析失败";
               }
             }
@@ -594,7 +594,7 @@ class WarpPlugin extends Plugin {
       let config;
       try {
         config = JSON.parse(readResult.output);
-      } catch (e: unknown) {
+      } catch {
         return "❌ config.json 文件格式错误。";
       }
 
@@ -647,7 +647,7 @@ class WarpPlugin extends Plugin {
       let config;
       try {
         config = JSON.parse(readResult.output);
-      } catch (e: unknown) {
+      } catch {
         return "❌ config.json 文件格式错误。";
       }
 
@@ -727,7 +727,7 @@ class WarpPlugin extends Plugin {
         let config;
         try {
           config = JSON.parse(readResult.output);
-        } catch (e: unknown) {
+        } catch {
           return "❌ Music 配置文件格式错误。";
         }
 
@@ -777,7 +777,7 @@ class WarpPlugin extends Plugin {
       let config;
       try {
         config = JSON.parse(readResult.output);
-      } catch (e: unknown) {
+      } catch {
         return "❌ Music 配置文件格式错误。";
       }
 

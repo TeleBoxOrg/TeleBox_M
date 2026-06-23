@@ -209,7 +209,7 @@ class ManageAdminPlugin extends Plugin {
             participant: targetEntity as unknown as MtcuteInputPeer,
           });
           return (info as { participant?: unknown })?.participant;
-        } catch (e: unknown) {
+        } catch {
           return undefined;
         }
       }
@@ -225,7 +225,7 @@ class ManageAdminPlugin extends Plugin {
           });
           const part = (info as { participant?: unknown })?.participant;
           return hasRawType(part, 'channelParticipantCreator');
-        } catch (e: unknown) {
+        } catch {
           return false;
         }
       }

@@ -163,7 +163,7 @@ class HttpClient {
                         try {
                             const parsedJson = JSON.parse(cleaned);
                             resolve({ status: res.statusCode || 0, data: parsedJson });
-                        } catch (err: unknown) {
+                        } catch {
                             resolve({ status: res.statusCode || 0, data: cleaned });
                         }
                     });
@@ -313,7 +313,7 @@ async function handleUpdateCommand(msg: MessageContext): Promise<void> {
             const { stdout } = await execPromise(`${YTDLP_PATH} --version`);
             const version = stdout.trim();
             await msg.edit({ text: toSimplified(`✅ yt-dlp 已更新至最新版本！\n\n当前版本: ${version}`) });
-        } catch (e: unknown) {
+        } catch {
             await msg.edit({ text: toSimplified("✅ yt-dlp 已更新至最新版本！") });
         }
         

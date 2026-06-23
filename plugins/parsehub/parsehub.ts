@@ -90,7 +90,7 @@ function readState(): InitState {
         ? Number(parsed.ignoredUpToId)
         : undefined,
     };
-  } catch (e: unknown) {
+  } catch {
     return { initialized: false };
   }
 }
@@ -354,7 +354,7 @@ async function relayParseResult(
     try {
       await forwardChunk(client, originMsg.chat.id, ids);
       forwarded = true;
-    } catch (e: unknown) {
+    } catch {
       const snippet = chunk
         .map((m: any) => m.text?.trim())
         .filter(Boolean)
