@@ -42,6 +42,24 @@ const help_text = `🆔 <b>用户信息查询插件</b>
 <b>支持格式：</b>
 • @用户名、用户ID、频道ID、回复消息`;
 
+type UserInfo = {
+  id: number;
+  user: unknown;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  isBot: boolean;
+  isVerified: boolean;
+  isPremium: boolean;
+  isScam: boolean;
+  isFake: boolean;
+  dc: string;
+  bio: string | null;
+  commonChats: number;
+  regDate: string;
+  joinedDate: string | null;
+};
+
 class IdsPlugin extends Plugin {
 
   description: string = `用户信息查询插件<br><br>${help_text}`;
@@ -76,7 +94,7 @@ class IdsPlugin extends Plugin {
 
         await msg.edit({ text: html("🔍 <b>正在查询用户信息...</b>") });
 
-        let targetUser: any = null;
+        let targetUser: unknown = null;
         let targetId: number | null = null;
 
         if (target) {
@@ -130,22 +148,22 @@ class IdsPlugin extends Plugin {
     return `${d.getFullYear()}年${d.getMonth() + 1}月`;
   }
 
-  private async getUserInfo(client: any, user: any, userId: number, msg: MessageContext): Promise<any> {
-    const info: any = {
-      id: userId, user, username: user?.username || null,
-      firstName: user?.firstName || user?.first_name || null,
-      lastName: user?.lastName || user?.last_name || null,
-      isBot: user?.bot || false, isVerified: user?.verified || false,
-      isPremium: user?.premium || false, isScam: user?.scam || false,
-      isFake: user?.fake || false, dc: "未知", bio: null, commonChats: 0,
+  private async getUserInfo(client: any, user: unknown, userId: number, msg: MessageContext): Promise<UserInfo> {
+    const info: UserInfo = {
+      id: userId, user, username: (user as { username?: string })?.username || null,
+      firstName: (user as { firstName?: string })?.firstName || (user as { first_name?: string })?.first_name || null,
+      lastName: (user as { lastName?: string })?.lastName || (user as { last_name?: string })?.last_name || null,
+      isBot: (user as { bot?: boolean })?.bot || false, isVerified: (user as { verified?: boolean })?.verified || false,
+      isPremium: (user as { premium?: boolean })?.premium || false, isScam: (user as { scam?: boolean })?.scam || false,
+      isFake: (user as { fake?: boolean })?.fake || false, dc: "未知", bio: null, commonChats: 0,
       regDate: this.getPreciseRegDate(userId), joinedDate: null
     };
 
     try {
-      const full: any = await client.call({
+      const full = await client.call({
         _: "users.getFullUser",
         id: await client.resolvePeer(userId),
-      });
+      }) as { fullUser?: { about?: string; commonChatsCount?: number } };
       if (full.fullUser) {
         info.bio = full.fullUser.about || null;
         info.commonChats = full.fullUser.commonChatsCount || 0;
@@ -155,11 +173,11 @@ class IdsPlugin extends Plugin {
     const chat = await msg.getCompleteChat();
     if (chat && (hasRawType(chat, 'channel') || hasRawType(chat, 'chat'))) {
       try {
-        const p: any = await client.call({
+        const p = await client.call({
           _: "channels.getParticipant",
           channel: await client.resolvePeer(msg.chat.id),
           participant: await client.resolvePeer(userId),
-        });
+        }) as { participant?: { date?: number } };
         if (p.participant?.date) {
           const jd = new Date(p.participant.date * 1000);
           info.joinedDate = `${jd.getFullYear()}-${(jd.getMonth()+1).toString().padStart(2,'0')}-${jd.getDate().toString().padStart(2,'0')} ${jd.getHours().toString().padStart(2,'0')}:${jd.getMinutes().toString().padStart(2,'0')}`;
@@ -171,19 +189,19 @@ class IdsPlugin extends Plugin {
     return info;
   }
 
-  private async getUserDC(client: any, userId: number, user: any): Promise<string> {
+  private async getUserDC(client: any, userId: number, user: unknown): Promise<string> {
     try {
-      const full: any = await client.call({
+      const full = await client.call({
         _: "users.getFullUser",
         id: await client.resolvePeer(userId),
-      });
-      const u = full.users[0];
-      if (u?.photo?._ !== "userProfilePhotoEmpty") return `DC${u.photo.dcId}`;
+      }) as { users?: Array<{ photo?: { _?: string; dcId?: number } }> };
+      const u = full.users?.[0];
+      if (u?.photo?._ !== "userProfilePhotoEmpty" && u?.photo) return `DC${u.photo.dcId}`;
       return "无头像";
     } catch (e: unknown) { logger.warn('ids: getDcId failed', e); return "未知"; }
   }
 
-  private formatUserInfo(info: any): string {
+  private formatUserInfo(info: UserInfo): string {
     const userId = info.id;
     let displayName = info.firstName ? `${info.firstName}${info.lastName ? ' ' + info.lastName : ''}` : (info.username ? `@${info.username}` : `用户 ${userId}`);
     let usernameInfo = info.username ? `@${info.username}` : "无用户名";
