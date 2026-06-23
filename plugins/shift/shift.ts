@@ -1723,14 +1723,15 @@ class ShiftPlugin extends Plugin {
 
             // 并行获取所有源频道信息，加速统计报告生成
             const entries = Object.entries(channelStats);
-            const clientRef = (msg as { client?: unknown }).client;
+            const clientRef = msg.client;
             const resolvedNames = await Promise.all(
               entries.map(async ([sourceId, stats]): Promise<{ sourceId: string; stats: typeof stats; name: string }> => {
                 try {
                   if (!clientRef) return { sourceId, stats, name: '' };
-                  const sourceEntity = await (clientRef as any).getChat(parseInt(sourceId));
+                  const sourceEntity = await clientRef.getChat(parseInt(sourceId));
                   return { sourceId, stats, name: getDisplayName(sourceEntity) };
-                } catch {
+                } catch (e) {
+                  console.warn('[shift] 获取源频道名称失败:', sourceId, e);
                   return { sourceId, stats, name: '' };
                 }
               }),
