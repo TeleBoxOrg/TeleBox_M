@@ -1731,7 +1731,7 @@ class ShiftPlugin extends Plugin {
                   const sourceEntity = await clientRef.getChat(parseInt(sourceId));
                   return { sourceId, stats, name: getDisplayName(sourceEntity) };
                 } catch (e) {
-                  console.warn('[shift] 获取源频道名称失败:', sourceId, e);
+                  logger.warn('[shift] 获取源频道名称失败:', sourceId, e);
                   return { sourceId, stats, name: '' };
                 }
               }),
