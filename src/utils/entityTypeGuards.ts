@@ -138,13 +138,13 @@ export function isUserDeleted(user: unknown): boolean {
  * Get media object from a message.
  * Replaces: `(msg as any).media` or `(message as any).media`
  */
-export function getMessageMedia(msg: unknown): any {
+export function getMessageMedia(msg: unknown): unknown {
   if (!msg || typeof msg !== 'object') return undefined;
   // Try .media property first (mtcute Message)
-  const media = (msg as { media?: any }).media;
+  const media = (msg as { media?: unknown }).media;
   if (media) return media;
   // Try .raw.media (TL Message)
-  const raw = (msg as { raw?: { media?: any } }).raw;
+  const raw = (msg as { raw?: { media?: unknown } }).raw;
   return raw?.media;
 }
 
@@ -152,13 +152,13 @@ export function getMessageMedia(msg: unknown): any {
  * Get document from a message.
  * Replaces: `(msg as any).document` or `(msg as any).media?.document`
  */
-export function getMessageDocument(msg: unknown): any {
+export function getMessageDocument(msg: unknown): unknown {
   if (!msg || typeof msg !== 'object') return undefined;
   // Direct .document property
-  const doc = (msg as { document?: any }).document;
+  const doc = (msg as { document?: unknown }).document;
   if (doc) return doc;
   // Via .media.document
-  const media = getMessageMedia(msg);
+  const media = getMessageMedia(msg) as { document?: unknown } | undefined;
   return media?.document;
 }
 

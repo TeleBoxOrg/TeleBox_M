@@ -291,7 +291,7 @@ class PicToStickerPlugin extends Plugin {
       let failedCount = 0;
 
       // 处理消息中的所有媒体
-      const media = getMessageMedia(targetMsg);
+      const media = getMessageMedia(targetMsg) as { _?: string; photo?: unknown } | undefined;
       if (media) {
         if (media._ === 'messageMediaPhoto' || media.photo) {
           // 单张图片
@@ -312,7 +312,7 @@ class PicToStickerPlugin extends Plugin {
           // 注意: mtcute 的 getHistory 返回的是旧消息在前，新消息在后
 
           for (const groupMsg of history) {
-            const groupMedia = getMessageMedia(groupMsg);
+            const groupMedia = getMessageMedia(groupMsg) as { _?: string; photo?: unknown } | undefined;
             if (getMessageGroupedId(groupMsg) === getMessageGroupedId(targetMsg) &&
                 (groupMedia?._ === 'messageMediaPhoto' || groupMedia?.photo)) {
               const result = await this.processImage(groupMsg, this.config.defaultEmoji);
@@ -365,7 +365,7 @@ class PicToStickerPlugin extends Plugin {
       }
 
       // 检查是否有图片
-      const media = getMessageMedia(targetMsg);
+      const media = getMessageMedia(targetMsg) as { _?: string; photo?: unknown } | undefined;
       if (!media || !(media._ === 'messageMediaPhoto' || media.photo)) {
         await msg.edit({
           text: html`❌ <b>请回复包含图片的消息</b><br><br>使用方法：<br>1. 回复包含图片的消息<br>2. 发送 <code>${mainPrefix}pts</code> 或 <code>${mainPrefix}pts [表情]</code>`
@@ -447,7 +447,8 @@ class PicToStickerPlugin extends Plugin {
 
   private async processImage(msg: Message | MessageContext, emoji: string): Promise<{ path: string } | null> {
     const client = await getGlobalClient();
-    if (!client || !getMessageMedia(msg)) return null;
+    const media = getMessageMedia(msg) as { _?: string; photo?: unknown } | undefined;
+    if (!client || !media) return null;
 
     try {
       const timestamp = Date.now();
@@ -455,7 +456,7 @@ class PicToStickerPlugin extends Plugin {
       const stickerPath = path.join(this.tempDir, `sticker_${timestamp}_${Math.random().toString(36).substring(7)}.webp`);
 
       // 下载图片
-      const media = getMessageMedia(msg);
+      const media = getMessageMedia(msg) as Parameters<typeof client.downloadAsBuffer>[0];
       const buffer = await client.downloadAsBuffer(media);
       
       if (!buffer) {

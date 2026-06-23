@@ -11,21 +11,18 @@ function isBufferLike(v: unknown): v is { type: "Buffer"; data: number[] } {
   );
 }
 
-export function reviveTl<T = any>(input: JsonLike): T {
+export function reviveTl<T = unknown>(input: JsonLike): T {
   // Arrays
   if (Array.isArray(input)) {
-    // @ts-ignore
-    return input.map((i) => reviveTl(i));
+    return input.map((i) => reviveTl(i)) as T;
   }
   // Buffers serialized by JSON
   if (isBufferLike(input)) {
-    // @ts-ignore
-    return Buffer.from(input.data);
+    return Buffer.from(input.data) as T;
   }
   // Primitive
   if (!input || typeof input !== "object") {
-    // @ts-ignore
-    return input;
+    return input as T;
   }
 
   // mtcute TL objects are plain objects with _ field.
@@ -35,7 +32,6 @@ export function reviveTl<T = any>(input: JsonLike): T {
     revived[k] = reviveTl(v);
   }
 
-  // @ts-ignore
   return revived as T;
 }
 
