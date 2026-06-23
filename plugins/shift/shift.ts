@@ -641,8 +641,10 @@ async function forwardGroupMessages(
   options?: { silent?: boolean; replyTo?: number }
 ): Promise<void> {
   try {
-    const fromEntity = await getEntityWithHash(client, fromChatId);
-    const toEntity = await getEntityWithHash(client, toChatId);
+    const [fromEntity, toEntity] = await Promise.all([
+      getEntityWithHash(client, fromChatId),
+      getEntityWithHash(client, toChatId),
+    ]);
     await client.call({
       _: "messages.forwardMessages",
       fromPeer: fromEntity,

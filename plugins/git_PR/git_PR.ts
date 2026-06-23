@@ -168,8 +168,10 @@ class ConfigManager {
 
 // 统一创建 GitHub API 客户端
 async function getApi() {
-  const baseURL = await ConfigManager.get(CONFIG_KEYS.API_BASE_URL);
-  const token = await ConfigManager.get(CONFIG_KEYS.TOKEN);
+  const [baseURL, token] = await Promise.all([
+    ConfigManager.get(CONFIG_KEYS.API_BASE_URL),
+    ConfigManager.get(CONFIG_KEYS.TOKEN),
+  ]);
   if (!token) throw new Error("请先使用 `login` 命令登录");
 
   return axios.create({

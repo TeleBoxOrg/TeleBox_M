@@ -217,8 +217,10 @@ class DeepWikiStore {
 
   async getChatState(chatKey: string): Promise<ChatState> {
     this.ensureReady();
-    const main = await this.ensureMainChat(chatKey);
-    const ctx = await this.ensureCtxChat(chatKey);
+    const [main, ctx] = await Promise.all([
+      this.ensureMainChat(chatKey),
+      this.ensureCtxChat(chatKey),
+    ]);
     await this.dbMain.read();
     return {
       currentTag: main.currentTag || "",

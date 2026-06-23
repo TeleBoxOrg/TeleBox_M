@@ -170,9 +170,11 @@ class OpenListPlugin extends Plugin {
         return;
       }
 
-      const hasSystemd = await this.hasCmd("systemctl");
-      const hasCurl = await this.hasCmd("curl");
-      const hasTar = await this.hasCmd("tar");
+      const [hasSystemd, hasCurl, hasTar] = await Promise.all([
+        this.hasCmd("systemctl"),
+        this.hasCmd("curl"),
+        this.hasCmd("tar"),
+      ]);
       if (!hasSystemd || !hasCurl || !hasTar) {
         const missing = [
           !hasSystemd ? "systemctl" : "",
@@ -282,9 +284,11 @@ class OpenListPlugin extends Plugin {
         return;
       }
 
-      const hasSystemd = await this.hasCmd("systemctl");
-      const hasCurl = await this.hasCmd("curl");
-      const hasTar = await this.hasCmd("tar");
+      const [hasSystemd, hasCurl, hasTar] = await Promise.all([
+        this.hasCmd("systemctl"),
+        this.hasCmd("curl"),
+        this.hasCmd("tar"),
+      ]);
       if (!hasSystemd || !hasCurl || !hasTar) {
         const missing = [
           !hasSystemd ? "systemctl" : "",
