@@ -114,8 +114,7 @@ class ZprConfigManager {
 
     private static async validateAndRestore(): Promise<void> {
         try {
-            const configExists = await fs.access(this.configPath).then(() => true).catch(() => false);
-            if (!configExists) return;
+            try { await fs.access(this.configPath); } catch { return; }
 
             const configContent = await fs.readFile(this.configPath, 'utf8');
             JSON.parse(configContent); // 验证JSON格式
@@ -127,11 +126,9 @@ class ZprConfigManager {
 
     private static async restoreFromBackup(): Promise<void> {
         try {
-            const backupExists = await fs.access(this.backupPath).then(() => true).catch(() => false);
-            if (backupExists) {
-                await fs.copyFile(this.backupPath, this.configPath);
-                logger.info("[zpr] 从备份恢复配置成功");
-            }
+            try { await fs.access(this.backupPath); } catch { return; }
+            await fs.copyFile(this.backupPath, this.configPath);
+            logger.info("[zpr] 从备份恢复配置成功");
         } catch (error: unknown) {
             logger.error("[zpr] 备份恢复失败:", error);
             await this.createDefaultConfig();
@@ -165,11 +162,9 @@ class ZprConfigManager {
 
     private static async createBackup(): Promise<void> {
         try {
-            const configExists = await fs.access(this.configPath).then(() => true).catch(() => false);
-            if (configExists) {
-                await fs.copyFile(this.configPath, this.backupPath);
-                logger.info("[zpr] 配置备份创建成功");
-            }
+            try { await fs.access(this.configPath); } catch { return; }
+            await fs.copyFile(this.configPath, this.backupPath);
+            logger.info("[zpr] 配置备份创建成功");
         } catch (error: unknown) {
             logger.warn("[zpr] 创建备份失败:", error);
         }

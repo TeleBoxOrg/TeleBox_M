@@ -1772,14 +1772,18 @@ class Downloader {
 
     try {
       const files = await fs.promises.readdir(this.tempDir);
-      for (const file of files) {
+      const toDelete: string[] = [];
+      await Promise.all(files.map(async (file) => {
         const filePath = path.join(this.tempDir, file);
         const stats = await fs.promises.stat(filePath);
         if (now - stats.mtimeMs > maxAge) {
-          await fs.promises.unlink(filePath);
-          logger.info(`[music] Cleaned old temp file: ${file}`);
+          toDelete.push(filePath);
         }
-      }
+      }));
+      await Promise.all(toDelete.map(async (filePath) => {
+        await fs.promises.unlink(filePath);
+        logger.info(`[music] Cleaned old temp file: ${path.basename(filePath)}`);
+      }));
     } catch (error: unknown) {
       logger.error("[music] Clean temp files error:", error);
     }
