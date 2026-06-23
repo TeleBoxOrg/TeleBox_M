@@ -220,10 +220,12 @@ async function pingDataCenters(): Promise<string[]> {
       try {
         pingTime = String(Math.round(parseFloat(stdout.trim())));
       } catch {
+        // ping 输出解析失败时回退到 "0"
         pingTime = "0";
       }
       return `🌐 <b>DC${dc} (${location}):</b> <code>${pingTime}ms</code>`;
     } catch {
+      // ping 命令执行失败（超时/不可达）时返回超时提示
       return `🌐 <b>DC${dc} (${location}):</b> <code>超时</code>`;
     }
   };
