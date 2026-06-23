@@ -221,11 +221,13 @@ async function pingDataCenters(): Promise<string[]> {
         pingTime = String(Math.round(parseFloat(stdout.trim())));
       } catch {
         // ping 输出解析失败时回退到 "0"
+        logger.debug(`[ping] 解析 ping 输出失败: ${stdout.trim()}`);
         pingTime = "0";
       }
       return `🌐 <b>DC${dc} (${location}):</b> <code>${pingTime}ms</code>`;
     } catch {
       // ping 命令执行失败（超时/不可达）时返回超时提示
+      logger.debug(`[ping] DC${dc} (${location}) ping 命令执行失败`);
       return `🌐 <b>DC${dc} (${location}):</b> <code>超时</code>`;
     }
   };

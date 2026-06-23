@@ -114,7 +114,7 @@ class ZprConfigManager {
 
     private static async validateAndRestore(): Promise<void> {
         try {
-            try { await fs.access(this.configPath); } catch { return; }
+            try { await fs.access(this.configPath); } catch { logger.debug("[zpr] 配置文件不存在，跳过验证"); return; }
 
             const configContent = await fs.readFile(this.configPath, 'utf8');
             JSON.parse(configContent); // 验证JSON格式
@@ -126,7 +126,7 @@ class ZprConfigManager {
 
     private static async restoreFromBackup(): Promise<void> {
         try {
-            try { await fs.access(this.backupPath); } catch { return; }
+            try { await fs.access(this.backupPath); } catch { logger.debug("[zpr] 备份文件不存在，跳过恢复"); return; }
             await fs.copyFile(this.backupPath, this.configPath);
             logger.info("[zpr] 从备份恢复配置成功");
         } catch (error: unknown) {
@@ -162,7 +162,7 @@ class ZprConfigManager {
 
     private static async createBackup(): Promise<void> {
         try {
-            try { await fs.access(this.configPath); } catch { return; }
+            try { await fs.access(this.configPath); } catch { logger.debug("[zpr] 配置文件不存在，跳过备份创建"); return; }
             await fs.copyFile(this.configPath, this.backupPath);
             logger.info("[zpr] 配置备份创建成功");
         } catch (error: unknown) {
