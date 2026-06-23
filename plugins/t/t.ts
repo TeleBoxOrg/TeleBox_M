@@ -299,7 +299,7 @@ async function tts(msg: MessageContext) {
     }, {
       replyTo: replyToId,
     });
-    try { await fs.unlink(r.oggFile); await fs.unlink(r.mp3File); } catch (e: unknown) { logger.error('[t] cleanup audio files failed:', e); }
+    try { await Promise.all([fs.unlink(r.oggFile), fs.unlink(r.mp3File)]); } catch (e: unknown) { logger.error('[t] cleanup audio files failed:', e); }
     await deleteCommandMessage(msg); // 发送后删命令
   } else {
     await msg.edit({ text: "❌ 生成失败" });

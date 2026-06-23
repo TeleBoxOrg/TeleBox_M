@@ -80,8 +80,8 @@ class GreetingPlugin extends Plugin {
 
     // 统一处理指令逻辑
     private async handleCommand(msg: MessageContext) {
-        if (!this.db) await this.initDB();
-        
+        if (!this.db) { await this.initDB(); }
+
         const chatId = msg.chat.id.toString();
         if (!chatId) return;
 
@@ -189,7 +189,7 @@ class GreetingPlugin extends Plugin {
         if (!chatId || !userId) return;
 
         // 3. 检查功能开关
-        if (!this.db) await this.initDB();
+        if (!this.db) { await this.initDB(); }
         const groupData = this.db.data.groups[chatId];
         
         // 关键逻辑：如果数据不存在（从未设置过），或者 enabled 为 false，直接忽略
@@ -223,7 +223,7 @@ class GreetingPlugin extends Plugin {
     // 核心处理逻辑
     private async processGreeting(msg: MessageContext, chatId: string, userId: string, type: "sleep" | "wake") {
         // 确保数据库已加载
-        if (!this.db) await this.initDB();
+        if (!this.db) { await this.initDB(); }
 
         // 获取群组数据（listener 已确保数据存在且 enabled=true）
         let groupData = this.db.data.groups[chatId];

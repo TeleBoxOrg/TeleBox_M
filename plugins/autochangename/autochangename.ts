@@ -1260,13 +1260,22 @@ class AutoChangeNamePlugin extends Plugin {
         texts.splice(index, 1);
         if (await DataManager.saveRandomTexts(texts)) {
           await msg.edit({ text: html(`✅ <b>文本已删除</b><br>📊 剩余数量: ${texts.length}`) });
-        } else await msg.edit({ text: html("❌ 删除失败") });
-      } else await msg.edit({ text: html("❌ 无效的索引号") });
+        } else {
+          await msg.edit({ text: html("❌ 删除失败") });
+        }
+      } else {
+        await msg.edit({ text: html("❌ 无效的索引号") });
+      }
     } else if (action === "list") {
-      if (texts.length === 0) await msg.edit({ text: html(`📝 <b>无随机文本</b><br>使用 <code>${mainPrefix}acn text add 文本</code> 添加`) });
-      else await msg.edit({ text: html(`📝 <b>随机文本列表</b><br><br>${texts.map((t, i) => `)${i + 1}. ${htmlEscape(t)}`).join("<br>")}<br><br>📊 总数量: ${texts.length}`) });
+      if (texts.length === 0) {
+        await msg.edit({ text: html(`📝 <b>无随机文本</b><br>使用 <code>${mainPrefix}acn text add 文本</code> 添加`) });
+      } else {
+        await msg.edit({ text: html(`📝 <b>随机文本列表</b><br><br>${texts.map((t, i) => `)${i + 1}. ${htmlEscape(t)}`).join("<br>")}<br><br>📊 总数量: ${texts.length}`) });
+      }
     } else if (action === "clear") {
-      if (await DataManager.saveRandomTexts([])) await msg.edit({ text: html("✅ 所有文本已清空") });
+      if (await DataManager.saveRandomTexts([])) {
+        await msg.edit({ text: html("✅ 所有文本已清空") });
+      }
     } else {
       await msg.edit({ text: html(`❌ <b>命令格式错误</b><br>请使用 add, del, list, clear`) });
     }
