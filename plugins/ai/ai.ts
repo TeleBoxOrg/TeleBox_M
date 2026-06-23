@@ -2420,7 +2420,7 @@ class TimeoutMiddleware implements Middleware {
 
     if (timeoutController.signal.aborted)
       controller.abort(timeoutController.signal.reason);
-    else
+    else {
       timeoutController.signal.addEventListener(
         "abort",
         () => controller.abort(timeoutController.signal.reason),
@@ -2428,10 +2428,11 @@ class TimeoutMiddleware implements Middleware {
           once: true,
         },
       );
+    }
 
     if (externalToken) {
       if (externalToken.aborted) controller.abort(externalToken.reason);
-      else
+      else {
         externalToken.signal.addEventListener(
           "abort",
           () => controller.abort(externalToken.reason),
@@ -2439,6 +2440,7 @@ class TimeoutMiddleware implements Middleware {
             once: true,
           },
         );
+      }
     }
 
     return {
