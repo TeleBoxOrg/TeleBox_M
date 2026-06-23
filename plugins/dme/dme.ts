@@ -178,7 +178,7 @@ async function editMediaMessageToAntiRecall(
       media: buffer as unknown as MtcuteInputMediaLike,
     });
     return true;
-  } catch (e: unknown) {
+  } catch {
     // 任意编辑失败(含 MESSAGE_EDIT_TIME_EXPIRED)静默跳过
     return false;
   }
@@ -210,7 +210,7 @@ async function editTextMessageToPlaceholder(
       text: TEXT_PLACEHOLDER,
     });
     return true;
-  } catch (e: unknown) {
+  } catch {
     return false;
   }
 }

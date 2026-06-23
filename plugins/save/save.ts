@@ -171,7 +171,7 @@ class PrometheusPlugin extends Plugin {
   private async moveFile(sourcePath: string, destinationPath: string): Promise<void> {
     try {
       await fs.rename(sourcePath, destinationPath);
-    } catch (e: unknown) {
+    } catch {
       await fs.copyFile(sourcePath, destinationPath);
       await fs.unlink(sourcePath);
     }
@@ -276,7 +276,7 @@ class PrometheusPlugin extends Plugin {
       const resolvedName = title ? String(title) : chatId;
       this.chatDisplayNameCache.set(chatId, resolvedName);
       return resolvedName;
-    } catch (e: unknown) {
+    } catch {
       this.chatDisplayNameCache.set(chatId, chatId);
       return chatId;
     }
@@ -1232,7 +1232,7 @@ class PrometheusPlugin extends Plugin {
       if (!localTarget) {
         try {
           targetPeer = await client.resolvePeer(target);
-        } catch (error: unknown) {
+        } catch {
           await this.safeEditMessage(msg, `❌ 无法访问目标对话: <code>${htmlEscape(target)}</code>`, true);
           return;
         }

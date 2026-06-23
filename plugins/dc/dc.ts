@@ -86,7 +86,7 @@ const dc = async (msg: MessageContext) => {
           text: html`📍 <b>${htmlEscape(firstName)}</b> 所在数据中心为: <b>DC${photo.dcId}</b>`,
         });
         return;
-      } catch (error: unknown) {
+      } catch {
         // 如果获取用户失败，尝试获取聊天信息
         try {
           const chat = await (replyMessage as MessageContext).getCompleteChat();
@@ -107,7 +107,7 @@ const dc = async (msg: MessageContext) => {
             text: html`📍 <b>${htmlEscape(title)}</b> 所在数据中心为: <b>DC${photo.dcId}</b>`,
           });
           return;
-        } catch (chatError: unknown) {
+        } catch {
           await msg.edit({
             text: html`❌ 无法获取该对象的 DC 信息`,
           });

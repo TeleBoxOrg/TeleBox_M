@@ -175,7 +175,7 @@ async function respondToCommand(
     await client.sendText(peer, sendContent, {
       replyTo: trigger.id,
     });
-  } catch (e: unknown) {
+  } catch {
     await client.sendText(peer, sendContent);
   }
 
@@ -898,7 +898,7 @@ class TmpAdminPlugin extends Plugin {
       let sender: any;
       try {
         sender = await (reply as { getCompleteSender?: () => Promise<unknown> }).getCompleteSender?.();
-      } catch (e: unknown) {
+      } catch {
         sender = undefined;
       }
 
@@ -916,7 +916,7 @@ class TmpAdminPlugin extends Plugin {
         if (hasRawType(full, "user")) {
           return { id: Number((full as { id?: number }).id), entity: input };
         }
-      } catch (e: unknown) {
+      } catch {
         return {};
       }
     }
@@ -930,7 +930,7 @@ class TmpAdminPlugin extends Plugin {
       if (fullId === undefined) return {};
       const input = client.resolvePeer(fullId);
       return { id: Number(fullId), entity: input };
-    } catch (e: unknown) {
+    } catch {
       const numericId = Number(arg);
       if (!Number.isFinite(numericId)) return {};
 
@@ -959,7 +959,7 @@ class TmpAdminPlugin extends Plugin {
           if (!participants.length) break;
           offset += participants.length;
         }
-      } catch (e: unknown) {
+      } catch {
         return {};
       }
     }

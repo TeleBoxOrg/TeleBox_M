@@ -148,7 +148,7 @@ async function getIpLocation(ip: string): Promise<string> {
 
         return "未知";
       }
-    } catch (fallbackError: unknown) {
+    } catch {
       logger.error(
         "Both ip.sb and ipinfo.io APIs failed for IP location lookup"
       );

@@ -118,7 +118,7 @@ class ZprConfigManager {
 
             const configContent = await fs.readFile(this.configPath, 'utf8');
             JSON.parse(configContent); // 验证JSON格式
-        } catch (error: unknown) {
+        } catch {
             logger.warn("[zpr] 配置文件损坏，尝试从备份恢复");
             await this.restoreFromBackup();
         }

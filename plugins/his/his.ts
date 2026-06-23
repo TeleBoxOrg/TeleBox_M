@@ -211,7 +211,7 @@ class HisPlugin extends Plugin {
       } else {
         targetDisplay = targetEntity.toString();
       }
-    } catch (error: unknown) {
+    } catch {
       targetDisplay = targetEntity.toString();
     }
 

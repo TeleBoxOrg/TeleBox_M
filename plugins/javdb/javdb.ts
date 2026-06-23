@@ -64,7 +64,7 @@ async function sendLongMessage(client: any, msg: MessageContext, htmlContent: st
   const first = parts[0] + (parts.length > 1 ? `\n\n📄 (1/${parts.length})` : "");
   try {
     await msg.edit({ text: html(first) });
-  } catch (e: unknown) {
+  } catch {
     await client.sendText(msg.chat.id, html(first), { replyTo: msg.id });
   }
   // 注意：消息必须按顺序逐条发送，不能并行（每条消息依赖前一条发送完成以保持顺序）
@@ -349,7 +349,7 @@ class JavDBPlugin extends Plugin {
           // 清理临时文件
           try { await fs.promises.unlink(tmpPath); } catch (e: unknown) { logger.warn('操作失败', e) }
         }
-      } catch (e: unknown) {
+      } catch {
         // 封面下载失败，仅发送文本
         await sendLongMessage(client, msg, caption);
       }

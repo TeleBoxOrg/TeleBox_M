@@ -90,7 +90,7 @@ async function quoteMsgs(msg: MessageContext): Promise<void> {
     
     await client.sendText(msg.chat.id, response.text || "");
     await msg.delete();
-  } catch (error: unknown) {
+  } catch {
     const settled = await Promise.allSettled(botPromises);
     const errors = settled
       .filter((r): r is PromiseRejectedResult => r.status === 'rejected')

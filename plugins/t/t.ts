@@ -54,7 +54,7 @@ async function loadUserData(): Promise<AllUserData> {
     }
     if (changed) await saveUserData(parsed);
     return parsed;
-  } catch (e: unknown) {
+  } catch {
     const initial: AllUserData = {
       users: {},
       roles: getInitialRoles(),
@@ -152,7 +152,7 @@ async function generateMusic(
     if (meta.cover) {
       const coverPath = path.join(cacheDir, `${meta.album}.jpg`);
       try { await fs.access(coverPath); }
-      catch (e: unknown) {
+      catch {
         const coverRes = await axios.get(meta.cover, { responseType: "arraybuffer" });
         await fs.writeFile(coverPath, coverRes.data);
       }
@@ -204,7 +204,7 @@ async function generateSpeechSimple(
     await fs.writeFile(mp3File, res.data);
     await execPromise(`ffmpeg -y -i "${mp3File}" -c:a libopus -b:a 64k -vbr on "${oggFile}"`);
     return { oggFile, mp3File };
-  } catch (e: unknown) {
+  } catch {
     return null;
   }
 }

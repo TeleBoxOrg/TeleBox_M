@@ -222,7 +222,7 @@ class SearchService {
       await fs.access(CONFIG_FILE_PATH);
       const data = await fs.readFile(CONFIG_FILE_PATH, "utf-8");
       this.config = { ...this.config, ...JSON.parse(data) };
-    } catch (error: unknown) {
+    } catch {
       logger.info("未找到搜索配置，使用默认配置。");
     }
   }

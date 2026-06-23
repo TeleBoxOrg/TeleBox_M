@@ -192,7 +192,7 @@ class DependencyManager {
       const packagePath = path.join(process.cwd(), "node_modules", packageName);
       await fs.promises.access(packagePath, fs.constants.F_OK);
       return true;
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -208,7 +208,7 @@ class DependencyManager {
         await execAsync(cmd);
         logger.info(`[music] yt-dlp found: ${cmd}`);
         return true;
-      } catch (e: unknown) {
+      } catch {
         continue;
       }
     }
@@ -254,7 +254,7 @@ class Utils {
     try {
       await fs.promises.access(path);
       return true;
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -522,7 +522,7 @@ class HttpClient {
                 data: parsedData,
                 headers: res.headers,
               });
-            } catch (error: unknown) {
+            } catch {
               resolve({
                 status: res.statusCode || 0,
                 data: HttpClient.cleanResponseText(body),
@@ -712,7 +712,7 @@ class CookieConverter {
         parsed[0].hasOwnProperty("name") &&
         parsed[0].hasOwnProperty("value")
       );
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -798,7 +798,7 @@ class CookieConverter {
         (parsed[0].hasOwnProperty("storeId") ||
           parsed[0].hasOwnProperty("sameSite"))
       );
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -1199,13 +1199,13 @@ class Downloader {
             logger.info(`[Music] 已从API获取专辑封面: ${source}`);
             return true;
           }
-        } catch (e: unknown) {
+        } catch {
           // 尝试下一个源
           continue;
         }
       }
       return false;
-    } catch (e: unknown) {
+    } catch {
       return false;
     }
   }
@@ -1231,14 +1231,14 @@ class Downloader {
               if (!buf || buf.length === 0) return resolve(false);
               await fs.promises.writeFile(destPath, buf);
               resolve(true);
-            } catch (e: unknown) {
+            } catch {
               resolve(false);
             }
           });
         });
         req.on("error", () => resolve(false));
         req.end();
-      } catch (e: unknown) {
+      } catch {
         resolve(false);
       }
     });
@@ -1323,7 +1323,7 @@ class Downloader {
             }`
           );
         }
-      } catch (error: unknown) {
+      } catch {
         logger.info("[music] 无法获取视频信息，使用已有元数据");
       }
 
@@ -1359,7 +1359,7 @@ class Downloader {
               break;
             }
           }
-        } catch (error: unknown) {
+        } catch {
           logger.info("[music] 缩略图下载失败，继续下载音频");
         }
       }
@@ -1833,7 +1833,7 @@ class MusicPlugin extends Plugin {
         } else if (stdout.includes("Updated")) {
           logger.info("[music] yt-dlp已更新到最新版本");
         }
-      } catch (error: unknown) {
+      } catch {
         logger.info("[music] 无法自动更新yt-dlp，请手动更新: yt-dlp -U");
       }
     }

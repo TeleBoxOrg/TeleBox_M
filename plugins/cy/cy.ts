@@ -111,7 +111,7 @@ function readScheduleConfig(): CyScheduleConfig {
       times: Array.isArray(raw.times) ? raw.times.map(String).filter(isValidTime).slice(0, 12) : [],
       limit: normalizeLimit(raw.limit),
     };
-  } catch (e: unknown) {
+  } catch {
     return { ...DEFAULT_SCHEDULE };
   }
 }
@@ -496,7 +496,7 @@ class CyPlugin extends Plugin {
       try {
         const client = await getGlobalClient();
         await sendCloudToTarget(client, msg.chat.id, limit, msg.replyToMessage?.id || msg.id);
-      } catch (error: unknown) {
+      } catch {
         await msg.edit({ text: "没有统计到足够的热词。" });
         return;
       }

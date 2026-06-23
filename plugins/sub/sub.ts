@@ -83,7 +83,7 @@ async function getSubStoreVersion(): Promise<string> {
     
     const versionMatch = logOutput.match(/Sub-Store -- (v[\d.]+)/);
     return versionMatch ? versionMatch[1] : "未知版本";
-  } catch (error: unknown) {
+  } catch {
     return "获取失败";
   }
 }
@@ -96,7 +96,7 @@ async function getRemoteVersion(): Promise<string> {
     );
     const releaseData = JSON.parse(response);
     return releaseData.tag_name || "获取失败";
-  } catch (error: unknown) {
+  } catch {
     return "获取失败";
   }
 }
@@ -319,13 +319,13 @@ class SubStorePlugin extends Plugin {
                   try {
                     await sh("docker info");
                     infoResult += "✅ Docker可正常连接\n";
-                  } catch (e: unknown) {
+                  } catch {
                     infoResult += `❌ Docker连接失败\n`;
                   }
-                } catch (e: unknown) {
+                } catch {
                   infoResult += "❌ Docker服务未启动\n";
                 }
-              } catch (e: unknown) {
+              } catch {
                 infoResult += "❌ Docker未安装\n";
               }
 
@@ -365,7 +365,7 @@ class SubStorePlugin extends Plugin {
               try {
                 await sh("curl -s --max-time 3 ifconfig.me");
                 infoResult += `\n✅ 网络连接正常`;
-              } catch (e: unknown) {
+              } catch {
                 infoResult += `\n❌ 网络连接异常`;
               }
             } catch (error: unknown) {

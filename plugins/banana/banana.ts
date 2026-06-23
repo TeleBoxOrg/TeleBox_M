@@ -459,7 +459,7 @@ async function handleImageEdit(
   if (sent) {
     try {
       await msg.delete();
-    } catch (error: unknown) {
+    } catch {
       await msg.edit({ text: captionHtml });
     }
   } else {

@@ -256,7 +256,7 @@ function extractDNSData(html: string): {
             totalRecords: domainRecords.length,
             filteredRecords: domainRecords.length - dnsLines.length,
         };
-    } catch (e: unknown) {
+    } catch {
         return { dnsLines: [], totalRecords: 0, filteredRecords: 0 };
     }
 }

@@ -109,7 +109,7 @@ class MessageSender {
   static async sendOrEdit(msg: MessageContext, text: string, parseMode: "markdown" | "html" = "html"): Promise<Message | undefined> {
     try {
       return await msg.edit({ text: html(text), disableWebPreview: true });
-    } catch (e: unknown) {
+    } catch {
       return await msg.replyText(html(text), { disableWebPreview: true });
     }
   }
@@ -487,7 +487,7 @@ const parseRepoFromUrl = (raw: string): { repo: string; canonicalUrl: string } |
         };
       }
     }
-  } catch (e: unknown) {
+  } catch {
     return null;
   }
   return null;
@@ -589,7 +589,7 @@ const toIdString = (v: unknown): string => {
       if (obj.id !== undefined) return String(obj.id);
     }
     return String(v);
-  } catch (e: unknown) {
+  } catch {
     return "";
   }
 };
