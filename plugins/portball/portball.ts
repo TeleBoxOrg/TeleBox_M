@@ -197,7 +197,7 @@ class PortballPlugin extends Plugin {
         });
 
         // 构建成功消息
-        let resultText = `🔇 <b>禁言成功</b>\n\n`;
+        let resultText = `🔇 <b>禁言成功</b><br><br>`;
         
         // 获取用户名
         let userName = "";
@@ -215,14 +215,14 @@ class PortballPlugin extends Plugin {
           userName = `用户 ${String(senderRaw.id)}`;
         }
 
-        resultText += `• <b>用户：</b>${htmlEscape(userName)}\n`;
-        resultText += `• <b>时长：</b>${seconds}秒\n`;
+        resultText += `• <b>用户：</b>${htmlEscape(userName)}<br>`;
+        resultText += `• <b>时长：</b>${seconds}秒<br>`;
         
         if (reason) {
-          resultText += `• <b>理由：</b>${htmlEscape(reason)}\n`;
+          resultText += `• <b>理由：</b>${htmlEscape(reason)}<br>`;
         }
         
-        resultText += `\n⏰ 到期自动解除`;
+        resultText += `<br>⏰ 到期自动解除`;
 
         // 发送成功消息
         await client.sendText(msg.chat.id, html(resultText));

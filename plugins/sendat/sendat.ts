@@ -525,13 +525,13 @@ seconds, minutes, hours, date, times`;
       return;
     }
 
-    let response = showAll ? "📋 <b>所有任务：</b>\n\n" : "📋 <b>我的任务：</b>\n\n";
+    let response = showAll ? "📋 <b>所有任务：</b><br><br>" : "📋 <b>我的任务：</b><br><br>";
     
     tasks.forEach(task => {
-      response += `• ${task.getDescription()}\n\n`;
+      response += `• ${task.getDescription()}<br><br>`;
     });
 
-    await msg.edit({ text: response });
+    await msg.edit({ text: html(response) });
   }
 
   private async handleRemoveTask(msg: MessageContext, taskIdStr: string): Promise<void> {

@@ -450,7 +450,7 @@ function formatServerInfo(
       const delayMs = delay.toFixed(1);
       monitors.push(`${htmlEscape(name)}:${delayMs}ms`);
     });
-    title += `\n📶 ${monitors.join(" | ")}`;
+    title += `<br>📶 ${monitors.join(" | ")}`;
   }
 
   if (!online) {
@@ -469,22 +469,22 @@ function formatServerInfo(
         ? ((state.disk_used / host.disk_total) * 100).toFixed(1)
         : "0";
 
-    let details = `├ CPU: ${getUsageBar(parseFloat(cpuPercent))} ${cpuPercent}%\n`;
+    let details = `├ CPU: ${getUsageBar(parseFloat(cpuPercent))} ${cpuPercent}%<br>`;
     details += `├ 内存: ${getUsageBar(parseFloat(memPercent))} ${memPercent}%`;
     if (state.mem_used && host?.mem_total) {
       details += ` (${formatBytes(state.mem_used)}/${formatBytes(host.mem_total)})`;
     }
-    details += `\n`;
+    details += `<br>`;
     details += `├ 硬盘: ${getUsageBar(parseFloat(diskPercent))} ${diskPercent}%`;
     if (state.disk_used && host?.disk_total) {
       details += ` (${formatBytes(state.disk_used)}/${formatBytes(host.disk_total)})`;
     }
-    details += `\n`;
-    details += `├ 网络: ↑${formatSpeed(state.net_out_speed || 0)} ↓${formatSpeed(state.net_in_speed || 0)}\n`;
-    details += `├ 流量: ↑${formatBytes(state.net_out_transfer || 0)} ↓${formatBytes(state.net_in_transfer || 0)}\n`;
+    details += `<br>`;
+    details += `├ 网络: ↑${formatSpeed(state.net_out_speed || 0)} ↓${formatSpeed(state.net_in_speed || 0)}<br>`;
+    details += `├ 流量: ↑${formatBytes(state.net_out_transfer || 0)} ↓${formatBytes(state.net_in_transfer || 0)}<br>`;
     details += `└ 运行: ${formatUptime(state.uptime || 0)}`;
 
-    return `${title}\n<blockquote expandable>${details}</blockquote>`;
+    return `${title}<br><blockquote expandable>${details}</blockquote>`;
   }
 
   return title;
@@ -747,20 +747,20 @@ const nezha = async (msg: MessageContext) => {
     const onlineCount = servers.filter(isServerOnline).length;
     const totalCount = servers.length;
 
-    let resultText = `📊 <b>哪吒监控</b> (${onlineCount}/${totalCount} 在线)\n\n`;
+    let resultText = `📊 <b>哪吒监控</b> (${onlineCount}/${totalCount} 在线)<br><br>`;
     resultText += servers
       .map((s) => formatServerInfo(s, serviceDataMap.get(s.id)))
-      .join("\n\n");
+      .join("<br><br>");
 
     if (resultText.length > 4000) {
       const onlineOnly = servers.filter(isServerOnline);
-      resultText = `📊 <b>哪吒监控</b> (${onlineCount}/${totalCount} 在线)\n\n`;
+      resultText = `📊 <b>哪吒监控</b> (${onlineCount}/${totalCount} 在线)<br><br>`;
       resultText += onlineOnly
         .map((s) => formatServerInfo(s, serviceDataMap.get(s.id)))
-        .join("\n\n");
+        .join("<br><br>");
 
       if (totalCount - onlineCount > 0) {
-        resultText += `\n\n🔴 还有 ${totalCount - onlineCount} 台服务器离线`;
+        resultText += `<br><br>🔴 还有 ${totalCount - onlineCount} 台服务器离线`;
       }
     }
 

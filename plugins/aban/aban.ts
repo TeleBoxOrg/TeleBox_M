@@ -1357,17 +1357,17 @@ class CommandHandlers {
         };
 
         const failureSummary = unresolved
-          ? `\n⚠️ 目标实体无法解析：${htmlEscape(unresolvedReason || 'UNKNOWN_ERROR')}`
+          ? `<br>⚠️ 目标实体无法解析：${htmlEscape(unresolvedReason || 'UNKNOWN_ERROR')}`
           : failed > 0
-            ? `\n⚠️ 失败 ${failed} 个频道/群组（${summarizeReasons(failureDetails)}）`
+            ? `<br>⚠️ 失败 ${failed} 个频道/群组（${summarizeReasons(failureDetails)}）`
             : '';
         const capabilityNote = hasBasicGroups
-          ? `\nℹ️ 基础群仅支持移出现有成员，不支持对未入群目标提前封禁`
+          ? `<br>ℹ️ 基础群仅支持移出现有成员，不支持对未入群目标提前封禁`
           : '';
 
         // 更新最终结果
         const finalActionText = (message as { isGroup?: boolean; isChannel?: boolean }).isGroup && !(message as { isChannel?: boolean }).isChannel ? '移出' : '封禁';
-        const result = `✅ 在${success}个频道/群组中${finalActionText}该用户 ${htmlEscape(display)}${failureSummary}${capabilityNote}\n🗑️当前群组消息: ${deleteSuccess ? '✓已清理' : '✗'} | ⏱️${elapsed.toFixed(1)}s`;
+        const result = `✅ 在${success}个频道/群组中${finalActionText}该用户 ${htmlEscape(display)}${failureSummary}${capabilityNote}<br>🗑️当前群组消息: ${deleteSuccess ? '✓已清理' : '✗'} | ⏱️${elapsed.toFixed(1)}s`;
         
         // 更新为最终结果
         const lc1 = getCurrentGenerationContext();

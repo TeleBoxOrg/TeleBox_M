@@ -148,14 +148,14 @@ class RestorePinPlugin extends Plugin {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    let resultText = `📊 <b>恢复完成</b>\n\n`;
-    resultText += `✅ 成功恢复: ${successCount} 条\n`;
+    let resultText = `📊 <b>恢复完成</b><br><br>`;
+    resultText += `✅ 成功恢复: ${successCount} 条<br>`;
     resultText += `❌ 恢复失败: ${errorCount} 条`;
 
     if (errors.length > 0) {
-      resultText += `\n\n<b>失败详情：</b>\n`;
+      resultText += `<br><br><b>失败详情：</b><br>`;
       errors.slice(0, 3).forEach(error => {
-        resultText += `• ${htmlEscape(error)}\n`;
+        resultText += `• ${htmlEscape(error)}<br>`;
       });
       if (errors.length > 3) {
         resultText += `• ... 还有 ${errors.length - 3} 个错误`;
