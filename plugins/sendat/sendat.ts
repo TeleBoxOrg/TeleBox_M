@@ -1,4 +1,5 @@
 // plugins/sendat.ts
+import { html } from "@mtcute/html-parser";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
@@ -626,7 +627,7 @@ seconds, minutes, hours, date, times`;
       await this.taskManager.addTask(task);
       
       await msg.edit({ 
-        text: `✅ <b>已添加任务 #${task.task_id}</b>\n\n${task.getDescription()}` 
+        text: html(`✅ <b>已添加任务 #${task.task_id}</b><br><br>${task.getDescription()}`)
       });
     } catch (error: unknown) {
       throw new Error(`添加任务失败: ${getErrorMessage(error)}`);

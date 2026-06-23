@@ -576,7 +576,7 @@ const nezha = async (msg: MessageContext) => {
 
       try {
         const client = await getGlobalClient();
-        const caption = `📊 <b>${htmlEscape(targetServer.name)}</b> 服务监控\n\n监控项: ${monitorData.map((m) => htmlEscape(m.monitor_name)).join(", ")}`;
+        const caption = `📊 <b>${htmlEscape(targetServer.name)}</b> 服务监控<br><br>监控项: ${monitorData.map((m) => htmlEscape(m.monitor_name)).join(", ")}`;
 
         await client.sendMedia(msg.chat.id, {
           type: "photo",

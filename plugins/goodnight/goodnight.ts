@@ -29,11 +29,11 @@ interface DBData {
 class GreetingPlugin extends Plugin {
     // 动态生成描述，包含帮助信息
     description = () => {
-        const help = `🌙 <b>早晚安统计插件</b>\n\n` +
-                     `自动回复早晚安并统计排名。默认关闭，需手动开启。\n\n` +
-                     `<b>指令:</b>\n` +
-                     `• <code>${mainPrefix}goodnight on/off</code> - 开启或关闭统计\n` +
-                     `• <code>${mainPrefix}goodnight utc+8</code> - 设置时区 (支持 utc+8, utc-5 格式)\n` +
+        const help = `🌙 <b>早晚安统计插件</b><br><br>` +
+                     `自动回复早晚安并统计排名。默认关闭，需手动开启。<br><br>` +
+                     `<b>指令:</b><br>` +
+                     `• <code>${mainPrefix}goodnight on/off</code> - 开启或关闭统计<br>` +
+                     `• <code>${mainPrefix}goodnight utc+8</code> - 设置时区 (支持 utc+8, utc-5 格式)<br>` +
                      `• <code>${mainPrefix}goodnight</code> - 查看状态`;
         return help;
     };

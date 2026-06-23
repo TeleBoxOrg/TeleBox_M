@@ -375,7 +375,7 @@ async function downloadSingleImage(
                         mediaGroup: {
                             type: 'photo',
                             media: filePath,
-                            caption: `<b>🎨 ${htmlEscape(title)}</b>\n\n🆔 <b>作品ID:</b> <a href="https://www.pixiv.net/artworks/${pid}">${pid}</a>\n🔗 <b>原图:</b> <a href="${htmlEscape(urls.original)}">高清查看</a>\n📐 <b>尺寸:</b> <code>${width}×${height}</code>\n\n<i>📡 来源: Pixiv</i>`,
+                            caption: `<b>🎨 ${htmlEscape(title)}</b><br><br>🆔 <b>作品ID:</b> <a href="https://www.pixiv.net/artworks/${pid}">${pid}</a><br>🔗 <b>原图:</b> <a href="${htmlEscape(urls.original)}">高清查看</a><br>📐 <b>尺寸:</b> <code>${width}×${height}</code><br><br><i>📡 来源: Pixiv</i>`,
                             hasSpoiler: r18 === 1
                         },
                         usedProxy: proxyHost,

@@ -54,7 +54,7 @@ const mainPrefix = prefixes[0];
 const pluginName = "0x0";
 const commandName = `${mainPrefix}${pluginName}`;
 
-const help_text = `🗂️ <b>0x0.st 文件上传插件</b>\n\n<b>命令格式：</b>\n<code>${commandName} [expires=小时] [secret]</code>\n\n<b>用法：</b>\n• 回复一条带文件/视频/语音的消息，自动上传到 <a href='https://0x0.st/'>0x0.st</a> 并返回下载链接\n• <code>${commandName} expires=72 secret</code> 设置72小时有效期并启用难猜链接\n• <code>${commandName} help</code> 显示帮助\n\n<b>参数说明：</b>\n• <code>expires=xx</code> 设置有效期（小时）\n• <code>secret</code> 生成更难猜的链接\n`;
+const help_text = `🗂️ <b>0x0.st 文件上传插件</b><br><br><b>命令格式：</b><br><code>${commandName} [expires=小时] [secret]</code><br><br><b>用法：</b><br>• 回复一条带文件/视频/语音的消息，自动上传到 <a href='https://0x0.st/'>0x0.st</a> 并返回下载链接<br>• <code>${commandName} expires=72 secret</code> 设置72小时有效期并启用难猜链接<br>• <code>${commandName} help</code> 显示帮助<br><br><b>参数说明：</b><br>• <code>expires=xx</code> 设置有效期（小时）<br>• <code>secret</code> 生成更难猜的链接<br>`;
 
 class Ox0Plugin extends Plugin {
 
