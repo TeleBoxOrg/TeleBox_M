@@ -196,7 +196,7 @@ async function sendLongResult(msg: MessageContext, text: string): Promise<void> 
   // 注意：消息必须按顺序逐条发送，不能并行（每条续消息依赖前一条发送完成以保持顺序）
   for (let index = 1; index < chunks.length; index++) {
     await msg.replyText(
-      `📋 <b>续 ${index}/${chunks.length - 1}</b>\n\n${chunks[index]}`,
+      html(`📋 <b>续 ${index}/${chunks.length - 1}</b><br><br>${chunks[index]}`),
     );
   }
 }
