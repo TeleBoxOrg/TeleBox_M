@@ -806,8 +806,8 @@ class DeepWikiPlugin extends Plugin {
               const marker = e.tag === cur ? "✅" : "•";
               return `${marker} <code>${escapeHtml(e.tag)}</code> → <code>${escapeHtml(e.repo)}</code>`;
             })
-            .join("\n");
-          await MessageSender.sendOrEdit(original, `<b>📌 已添加项目</b>\n\n${lines}`, "html");
+            .join("<br>");
+          await MessageSender.sendOrEdit(original, `<b>📌 已添加项目</b><br><br>${lines}`, "html");
           return;
         }
         if (sub === "use") {
@@ -891,14 +891,14 @@ class DeepWikiPlugin extends Plugin {
           const curTag = state.currentTag || "";
           const entries = Object.values(state.repos || {}).sort((a, b) => a.tag.localeCompare(b.tag));
           const lines: string[] = [];
-          lines.push(`<b>📜 上下文状态</b>\n`);
+          lines.push(`<b>📜 上下文状态</b><br>`);
           lines.push(`• 上下文已${enabled ? "开启" : "关闭"}`);
           for (const e of entries) {
             const turns = state.contextTurns?.[e.tag] || [];
             const marker = e.tag === curTag ? "✅" : "•";
             lines.push(`${marker} <code>${escapeHtml(e.tag)}</code>（缓存轮数：<b>${turns.length}</b>）`);
           }
-          await MessageSender.sendOrEdit(original, lines.join("\n"), "html");
+          await MessageSender.sendOrEdit(original, lines.join("<br>"), "html");
           return;
         }
 
