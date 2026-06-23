@@ -1385,7 +1385,7 @@ class TpmPlugin extends Plugin {
         await installPlugin(args, msg);
       } else if (
         cmd === "uninstall" ||
-        cmd == "un" ||
+        cmd === "un" ||
         cmd === "remove" ||
         cmd === "rm"
       ) {
@@ -1402,7 +1402,7 @@ class TpmPlugin extends Plugin {
         } else {
           await uninstallMultiplePlugins(pluginNames, msg);
         }
-      } else if (cmd == "upload" || cmd == "ul") {
+      } else if (cmd === "upload" || cmd === "ul") {
         await uploadPlugin(args, msg);
       } else if (cmd === "search" || cmd === "s") {
         await search(msg);
