@@ -6,7 +6,7 @@ function checkIfSenderIdFromSudoUser(uid: number): boolean {
   const sudoDB = new SudoDB();
   const list = sudoDB.ls();
   sudoDB.close();
-  return !!list.find((a) => a.uid == uid);
+  return !!list.find((a) => a.uid === uid);
 }
 
 /**

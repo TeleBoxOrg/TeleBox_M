@@ -112,7 +112,7 @@ function hasWebPageMedia(msg: Message): boolean {
  */
 function getGroupedIdString(msg: Message): string | null {
   const gid = msg.groupedId;
-  if (gid == null) return null;
+  if (gid === null) return null;
   return String(gid);
 }
 

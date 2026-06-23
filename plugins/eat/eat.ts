@@ -445,7 +445,7 @@ const fn = async (
   const [, ...args] = (msg.text || "").split(" ");
 
   if (!msg.replyToMessage) {
-    if (args[0] == "set") {
+    if (args[0] === "set") {
       let url = args[1] || baseConfigURL;
       await handleSetCommand({ msg, url });
       return;
@@ -458,7 +458,7 @@ const fn = async (
 
   await ensureConfigLoaded(msg);
 
-  if (args.length == 0) {
+  if (args.length === 0) {
     const entry = getRandomEntry();
     await sendSticker({ entry, msg, trigger, isEat2 });
   } else {

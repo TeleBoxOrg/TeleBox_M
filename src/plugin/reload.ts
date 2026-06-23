@@ -82,7 +82,7 @@ async function initConfig() {
 }
 
 function formatMb(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(value)) return "未记录";
+  if (value === null || value === undefined || Number.isNaN(value)) return "未记录";
   return `${value.toFixed(2)} MB`;
 }
 
@@ -127,9 +127,9 @@ function applyMemoryPreset(config: ReloadConfig, preset: "safe" | "normal" | "ag
 
 function getGrowthStatus(config: ReloadConfig, memory: ReturnType<typeof getMemoryUsage>) {
   const heapGrowth =
-    config.baselineHeapUsed == null ? null : memory.heapUsed - config.baselineHeapUsed;
+    config.baselineHeapUsed === null || config.baselineHeapUsed === undefined ? null : memory.heapUsed - config.baselineHeapUsed;
   const rssGrowth =
-    config.baselineRss == null ? null : memory.rss - config.baselineRss;
+    config.baselineRss === null || config.baselineRss === undefined ? null : memory.rss - config.baselineRss;
   const growthThreshold = config.runtimeGrowthThreshold;
   const heapGrowthExceeded = heapGrowth != null && heapGrowth > growthThreshold;
   const rssGrowthExceeded = rssGrowth != null && rssGrowth > growthThreshold;
@@ -268,7 +268,7 @@ async function memoryMonitorTask() {
     if (!config.leakfixEnabled) return;
 
     const memory = getMemoryUsage();
-    if (config.baselineHeapUsed == null || config.baselineRss == null) {
+    if (config.baselineHeapUsed === null || config.baselineHeapUsed === undefined || config.baselineRss === null || config.baselineRss === undefined) {
       updateMemoryBaseline(config, memory);
       await configDB.write();
     }
@@ -432,7 +432,7 @@ class ReloadPlugin extends Plugin {
         }
 
         const output = `✅ 重载完成，耗时 ${timeText}`;
-        const memoryDelta = lastReloadMemoryMb == null
+        const memoryDelta = lastReloadMemoryMb === null || lastReloadMemoryMb === undefined
           ? null
           : afterMemory.heapUsed - lastReloadMemoryMb;
         if (memoryDelta != null) {
