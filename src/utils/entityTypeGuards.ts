@@ -33,7 +33,7 @@ export function isChannel(entity: unknown): boolean {
   if (!isChat(entity)) return false;
   // In mtcute, channels are Chat objects where raw._ is 'channel' and not a megagroup
   const raw = entity.raw as { _?: string; megagroup?: boolean; broadcast?: boolean };
-  return raw?._ === 'channel' && !raw?.megagroup && !raw?.broadcast;
+  return raw?._ === 'channel' && !raw?.megagroup;
 }
 
 /**
