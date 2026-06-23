@@ -100,8 +100,17 @@ function parseTimeString(timeStr?: string): number {
 }
 
 // ==================== 缓存管理器 ====================
+type CacheEntry = {
+  id: number;
+  title?: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  type: "user" | "chat" | "channel";
+};
+
 type CacheData = {
-  cache: Record<string, any>;
+  cache: Record<string, CacheEntry>;
 };
 
 class CacheManager {
@@ -156,10 +165,20 @@ class CacheManager {
 }
 
 // ==================== 用户解析器 ====================
+type ResolvedUser = {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  title?: string;
+  type: "user" | "chat" | "channel";
+  raw?: unknown;
+};
+
 type ResolvedTarget = {
-  user: any;
+  user: ResolvedUser | null;
   uid: number | null;
-  participant?: any;
+  participant?: tl.TypeInputPeer;
   source: "reply" | "username" | "numeric" | "unknown";
   resolutionError?: string;
   chatType?: "channel" | "chat" | "unknown";
@@ -179,16 +198,16 @@ class UserResolver {
     
     // 从回复消息解析
     const reply = await safeGetReplyMessage(message);
-    if ((reply as { senderId?: number | string })?.senderId) {
+    if (reply && (reply as { senderId?: number | string })?.senderId) {
       const uid = Number((reply as { senderId?: number | string }).senderId);
-      const sender = await this.getReplySender(reply);
-      const participant = sender?._ === 'user'
-        ? await this.safeGetInputEntity(client, sender)
+      const sender = await this.getReplySender(reply as { getSender?: () => Promise<unknown>; sender?: unknown });
+      const participant = sender?.type === 'user'
+        ? await this.safeGetInputEntity(client, sender!.raw)
         : await this.safeGetInputEntity(client, uid);
-      const fallbackParticipant = participant || await this.resolveParticipantFromContext(client, message, uid, sender);
+      const fallbackParticipant = participant || await this.resolveParticipantFromContext(client, message, uid, sender?.raw);
 
       return {
-        user: sender || reply!.sender,
+        user: sender,
         uid,
         participant: fallbackParticipant,
         source: "reply",
@@ -215,7 +234,7 @@ class UserResolver {
           ? participant || await this.resolveParticipantFromContext(client, message, uid, entity)
           : undefined;
         return {
-          user: entity,
+          user: entity ? { id: Number(entity.id), firstName: entity.firstName ?? entity.first_name, lastName: entity.lastName ?? entity.last_name, username: entity.username, title: entity.title, type: (entity._ === "user" ? "user" : entity._ === "chat" ? "chat" : "channel") as "user" | "chat" | "channel" } : null,
           uid,
           participant: fallbackParticipant,
           source: "username",
@@ -233,7 +252,7 @@ class UserResolver {
           : await this.resolveParticipantFromContext(client, message, userId);
 
         return {
-          user: entity,
+          user: entity ? { id: Number(entity.id), firstName: entity.firstName ?? entity.first_name, lastName: entity.lastName ?? entity.last_name, username: entity.username, title: entity.title, type: (entity._ === "user" ? "user" : entity._ === "chat" ? "chat" : "channel") as "user" | "chat" | "channel" } : null,
           uid: userId,
           participant,
           source: "numeric",
@@ -248,11 +267,24 @@ class UserResolver {
     return { user: null, uid: null, source: "unknown", resolutionError: "INVALID_TARGET", chatType: this.getChatType(message) };
   }
 
-  private static async getReplySender(reply: any): Promise<any> {
+  private static async getReplySender(reply: { getSender?: () => Promise<unknown>; sender?: unknown }): Promise<ResolvedUser | null> {
     try {
-      return await (reply as { getSender?: () => Promise<unknown> }).getSender?.();
+      const sender = await reply.getSender?.();
+      if (sender && typeof sender === "object") {
+        const raw = sender as { _?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string; username?: string; title?: string; id?: number | string };
+        return {
+          id: Number(raw.id ?? 0),
+          firstName: raw.firstName ?? raw.first_name,
+          lastName: raw.lastName ?? raw.last_name,
+          username: raw.username,
+          title: raw.title,
+          type: (raw._ === "user" ? "user" : raw._ === "chat" ? "chat" : "channel") as "user" | "chat" | "channel",
+          raw: sender,
+        };
+      }
+      return null;
     } catch (e: unknown) {
-      return reply.sender;
+      return null;
     }
   }
 
@@ -264,10 +296,10 @@ class UserResolver {
 
   private static async safeGetEntity(
     client: TelegramClient,
-    target: any
-  ): Promise<any | null> {
+    target: string | number
+  ): Promise<{ id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null> {
     try {
-      return await (client as unknown as ClientInternals).resolvePeer(target);
+      return await (client as unknown as ClientInternals).resolvePeer(target) as { id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null;
     } catch (e: unknown) {
       return null;
     }
@@ -275,10 +307,10 @@ class UserResolver {
 
   private static async safeGetInputEntity(
     client: TelegramClient,
-    target: any
-  ): Promise<any | undefined> {
+    target: unknown
+  ): Promise<tl.TypeInputPeer | undefined> {
     try {
-      return await (client as unknown as ClientInternals).getInputEntity(target);
+      return await (client as unknown as ClientInternals).getInputEntity(target) as tl.TypeInputPeer | undefined;
     } catch (e: unknown) {
       return undefined;
     }
@@ -332,7 +364,7 @@ class UserResolver {
 
     if ((message as { isGroup?: boolean }).isGroup) {
       try {
-        const peer: any = knownEntity || await this.safeGetEntity(client, chat);
+        const peer = knownEntity || await this.safeGetEntity(client, chat as unknown as string | number);
         const chatId = Number(peer?.chatId ?? peer?.id ?? (chat as { chatId?: number })?.chatId);
         if (!Number.isFinite(chatId)) {
           return undefined;
