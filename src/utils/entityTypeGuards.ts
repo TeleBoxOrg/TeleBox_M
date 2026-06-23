@@ -182,9 +182,9 @@ export function isDocumentAttribute(attr: unknown, attrType: string): boolean {
  * Get the raw TL object from a message or entity.
  * Replaces: `(msg as any).raw`
  */
-export function getRawObject(obj: unknown): any {
+export function getRawObject(obj: unknown): unknown {
   if (!obj || typeof obj !== 'object') return undefined;
-  return (obj as { raw?: any }).raw;
+  return (obj as { raw?: unknown }).raw;
 }
 
 /**
