@@ -12,6 +12,7 @@ import { statSync, existsSync } from "fs";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { MessageMedia, Photo, Video, Audio, Voice, Sticker, Document, User, Chat, Peer, Message } from "@mtcute/core";
+import type { TelegramClient } from "@mtcute/node";
 import type { InputPeerLike } from "@mtcute/core";
 
 
@@ -282,7 +283,7 @@ class PrometheusPlugin extends Plugin {
   }
 
   private async sendSingleSourceMessage(
-    targetPeer: any,
+    targetPeer: InputPeerLike,
     sourceChatId: string,
     sourceMessageId: number,
     forwardedMsg: MessageContext,
@@ -292,7 +293,7 @@ class PrometheusPlugin extends Plugin {
       const client = await getGlobalClient();
       const sourceLink = this.generateMessageLink(sourceChatId, sourceMessageId);
       const displayName = await this.getChatDisplayName(sourceChatId);
-      const sourceText = `🔗 <b>消息来源</b>\n\n` +
+      const sourceText = `📎 <b>消息来源</b>\n\n` +
         `📝 <a href="${htmlEscape(sourceLink)}">查看原消息</a>\n` +
         `👤 来源对话: <b>${htmlEscape(displayName)}</b>\n` +
         `#️⃣ 消息ID: <code>${sourceMessageId}</code>`;
@@ -357,7 +358,7 @@ class PrometheusPlugin extends Plugin {
   }
 
   private async sendRangeSourceSummary(
-    targetPeer: any,
+    targetPeer: InputPeerLike,
     forwardedMsg: MessageContext,
     startSource: { chatId: string; messageId: number } | null,
     endSource: { chatId: string; messageId: number } | null
@@ -758,8 +759,8 @@ class PrometheusPlugin extends Plugin {
   }
   
   private async sendSingleMedia(
-    client: any,
-    targetPeer: any,
+    client: TelegramClient,
+    targetPeer: InputPeerLike,
     mediaInfo: { 
       path: string; 
       type: string; 
@@ -774,7 +775,12 @@ class PrometheusPlugin extends Plugin {
       throw new Error(`文件不存在: ${filePath}`);
     }
     
-    const sendOptions: any = {
+    const sendOptions: {
+      file: string;
+      forceDocument: boolean;
+      caption?: string;
+      parseMode?: string;
+    } = {
       file: filePath,
       forceDocument: false
     };
@@ -796,15 +802,20 @@ class PrometheusPlugin extends Plugin {
   }
   
   private async processMessage(
-    sourceMsg: MessageContext, 
-    targetPeer: any, 
+    sourceMsg: MessageContext,
+    targetPeer: InputPeerLike,
     replyMsg: MessageContext,
     sourceChatId: string,
     sourceMessageId: number,
     progress: string = ""
   ): Promise<ProcessMessageResult> {
     const client = await getGlobalClient();
-    let tempFileInfo: any = null;
+    let tempFileInfo: {
+      path: string;
+      type: string;
+      caption?: string;
+      fileName?: string;
+    } | null = null;
     let forwardedMessage: MessageContext | undefined;
     
     try {

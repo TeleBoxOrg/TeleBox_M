@@ -203,11 +203,10 @@ async function installDependencies(msg: MessageContext): Promise<void> {
       execSync("command -v sshpass");
     } catch (e: unknown) {
       logger.info("[INSTALLING] 'sshpass' not found. Installing via system package manager...", e);
-      if (fs.existsSync("/usr/bin/apt-get"))
-        await execFileAsync("sudo", ["apt-get", "update"], { timeout: 120000 }).then(() =>
-          execFileAsync("sudo", ["apt-get", "install", "-y", "sshpass"], { timeout: 120000 })
-        );
-      else if (fs.existsSync("/usr/bin/yum"))
+      if (fs.existsSync("/usr/bin/apt-get")) {
+        await execFileAsync("sudo", ["apt-get", "update"], { timeout: 120000 });
+        await execFileAsync("sudo", ["apt-get", "install", "-y", "sshpass"], { timeout: 120000 });
+      } else if (fs.existsSync("/usr/bin/yum"))
         await execFileAsync("sudo", ["yum", "install", "-y", "sshpass"], { timeout: 120000 });
       else throw new Error("Unsupported package manager.");
       logger.info("[SUCCESS] Installed 'sshpass'.");
