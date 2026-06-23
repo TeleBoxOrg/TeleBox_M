@@ -650,10 +650,10 @@ class CommandHandlers {
 
         await MessageManager.smartEdit(
           message,
-          `📝 <b>已开启自动复读群组 (${groups.length}):</b>\n` +  // 修改标题
-          `<b>第 ${page}/${totalPages} 页</b>\n\n` +
-          lines.join("\n") +
-          (totalPages > 1 ? `\n\n使用 <code>.autorepeat list ${page + 1}</code> 查看下一页` : '')  // 修改命令提示
+          `📝 <b>已开启自动复读群组 (${groups.length}):</b><br>` +  // 修改标题
+          `<b>第 ${page}/${totalPages} 页</b><br><br>` +
+          lines.join("<br>") +
+          (totalPages > 1 ? `<br><br>使用 <code>.autorepeat list ${page + 1}</code> 查看下一页` : '')  // 修改命令提示
         );
         return;
       }

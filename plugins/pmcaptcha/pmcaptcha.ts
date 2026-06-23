@@ -1729,6 +1729,7 @@ const pmcaptcha = async (message: MessageContext) => {
           );
           break;
         }
+        // 顺序执行：先检查是否为机器人，再获取名称并添加
         if (await isBot(client, tid)) { await edit("❌ 无法将机器人加入白名单"); break; }
         wl.add(tid);
         const name = await getDisplayName(client, tid);
@@ -1783,6 +1784,7 @@ const pmcaptcha = async (message: MessageContext) => {
           }
           if (!tid && args[2]) tid = await resolveUser(client, args[2]);
           if (!tid || tid <= 0) { await edit("❌ 请提供有效的用户 ID / 用户名，或回复用户消息"); break; }
+          // 顺序执行：先检查是否为机器人，再获取名称并添加
           if (await isBot(client, tid)) { await edit("❌ 无法将机器人加入白名单"); break; }
           wl.add(tid);
           const name = await getDisplayName(client, tid);

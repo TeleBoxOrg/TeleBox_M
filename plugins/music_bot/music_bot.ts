@@ -80,12 +80,12 @@ async function searchAndSendMusic(
   } catch (e: unknown) { logger.warn('[music_bot] edit msg failed:', e) }
 
   // Ensure bot is unblocked and muted
+  const inputPeer = await client.resolvePeer(bot);
   try {
-    await client.call({ _: "contacts.unblock", id: await client.resolvePeer(bot) });
+    await client.call({ _: "contacts.unblock", id: inputPeer });
   } catch (e: unknown) { logger.warn('[music_bot] unblock bot failed:', e) }
 
   try {
-    const inputPeer = await client.resolvePeer(bot);
     await client.call({ _: "account.updateNotifySettings", peer: { _: "inputNotifyPeer", peer: inputPeer }, settings: { _: "inputPeerNotifySettings", silent: true, muteUntil: 2147483647 } });
   } catch (e: unknown) { logger.warn('[music_bot] mute bot failed:', e) }
 

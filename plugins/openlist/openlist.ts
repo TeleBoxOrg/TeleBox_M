@@ -271,7 +271,7 @@ class OpenListPlugin extends Plugin {
         lines.push(`账号: ${username}`);
         lines.push(`密码: ${password}`);
       }
-      await msg.edit({ text: lines.join("\n") });
+      await msg.edit({ text: lines.join("<br>") });
     } catch (error: unknown) {
       await msg.edit({ text: `安装失败: ${htmlEscape(getErrorMessage(error))}` });
     }
@@ -801,7 +801,7 @@ class OpenListPlugin extends Plugin {
         }
       }
 
-      await msg.edit({ text: lines.join("\n") });
+      await msg.edit({ text: lines.join("<br>") });
     } catch (error: unknown) {
       await msg.edit({ text: `状态获取失败: ${htmlEscape(getErrorMessage(error))}` });
     }
