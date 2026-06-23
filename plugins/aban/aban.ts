@@ -143,13 +143,13 @@ class CacheManager {
     }
   }
 
-  async get(key: string): Promise<any> {
+  async get(key: string): Promise<unknown> {
     await this.initPromise;
     if (!this.db) return null;
     return this.db.data.cache[key] || null;
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: CacheEntry): Promise<void> {
     await this.initPromise;
     if (!this.db) return;
     this.db.data.cache[key] = value;
@@ -969,7 +969,7 @@ class BanManager {
       | { success: true; group: ManagedGroup }
       | { success: false; group: ManagedGroup; reason: string }
     > => {
-      const buildRequest = async (): Promise<any> => {
+      const buildRequest = async (): Promise<unknown> => {
         if (group.kind === 'chat') {
           return client.call({
               _: 'messages.deleteChatUser',
@@ -1091,7 +1091,7 @@ class BanManager {
         return { success: false, group };
       }
 
-      const buildRequest = async (): Promise<any> => {
+      const buildRequest = async (): Promise<unknown> => {
         const channelInput = await resolveChannelInput(client, group);
         return client.call({
               _: 'channels.editBanned',
