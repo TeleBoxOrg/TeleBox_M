@@ -253,7 +253,7 @@ class NameManager {
   private readonly TASK_NAME = "autochangename_update";
   private static instance: NameManager;
   private isUpdating = false;
-  private profileCache: { data: any; timestamp: number } | null = null;
+  private profileCache: { data: { firstName: string; lastName: string }; timestamp: number } | null = null;
   private readonly CACHE_TTL = 60000;
   private readonly timezoneAbbreviationMap: Record<string, string> = {
     'Africa/Abidjan': 'GMT', 'Africa/Accra': 'GMT', 'Africa/Addis_Ababa': 'EAT', 'Africa/Algiers': 'CET',
