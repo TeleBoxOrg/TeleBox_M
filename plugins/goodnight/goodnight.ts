@@ -165,13 +165,13 @@ class GreetingPlugin extends Plugin {
             const tzSign = groupData.timezone >= 0 ? "+" : "";
             const currentTzTime = dayjs(this.getDateByTimezone(groupData.timezone)).format("YYYY-MM-DD HH:mm:ss");
             
-            const help = `🌙 <b>早晚安统计插件</b>\n\n` +
-                         `当前状态: ${status}\n` +
-                         `当前时区: UTC${tzSign}${groupData.timezone}\n` +
-                         `当前时间: ${currentTzTime}\n\n` +
-                         `<b>指令:</b>\n` +
-                         `• <code>${mainPrefix}goodnight on/off</code> - 开启或关闭统计\n` +
-                         `• <code>${mainPrefix}goodnight utc+8</code> - 设置时区\n` +
+            const help = `🌙 <b>早晚安统计插件</b><br><br>` +
+                         `当前状态: ${status}<br>` +
+                         `当前时区: UTC${tzSign}${groupData.timezone}<br>` +
+                         `当前时间: ${currentTzTime}<br><br>` +
+                         `<b>指令:</b><br>` +
+                         `• <code>${mainPrefix}goodnight on/off</code> - 开启或关闭统计<br>` +
+                         `• <code>${mainPrefix}goodnight utc+8</code> - 设置时区<br>` +
                          `• <code>${mainPrefix}goodnight</code> - 查看状态`;
             await msg.edit({ text: html(help) });
         }
