@@ -1720,33 +1720,37 @@ class ShiftPlugin extends Plugin {
             }
 
             let output = "📊 转发统计报告\n\n";
-            for (const [sourceId, stats] of Object.entries(channelStats)) {
-              try {
-                if (!(msg as { client?: unknown }).client) continue;
-                const sourceEntity = await msg.client.getChat(
-                  parseInt(sourceId)
-                );
-                output += `📤 源: ${htmlEscape(
-                  getDisplayName(sourceEntity)
-                )}\n`;
-                output += `📈 总转发: ${stats.total} 条\n`;
 
-                const recentDates = Object.keys(stats.dates)
-                  .sort()
-                  .reverse()
-                  .slice(0, 7);
-                if (recentDates.length > 0) {
-                  output += "📅 最近7天:\n";
-                  for (const date of recentDates) {
-                    output += `  - ${date}: ${stats.dates[date]} 条\n`;
-                  }
+            // 并行获取所有源频道信息，加速统计报告生成
+            const entries = Object.entries(channelStats);
+            const clientRef = (msg as { client?: unknown }).client;
+            const resolvedNames = await Promise.all(
+              entries.map(async ([sourceId, stats]): Promise<{ sourceId: string; stats: typeof stats; name: string }> => {
+                try {
+                  if (!clientRef) return { sourceId, stats, name: '' };
+                  const sourceEntity = await (clientRef as any).getChat(parseInt(sourceId));
+                  return { sourceId, stats, name: getDisplayName(sourceEntity) };
+                } catch {
+                  return { sourceId, stats, name: '' };
                 }
-                output += "\n";
-              } catch (error: unknown) {
-                output += `📤 源: ID ${htmlEscape(
-                  String(sourceId)
-                )}\n📈 总转发: ${stats.total} 条\n\n`;
+              }),
+            );
+
+            for (const { sourceId, stats, name } of resolvedNames) {
+              output += `📤 源: ${htmlEscape(name || `ID ${sourceId}`)}\n`;
+              output += `📈 总转发: ${stats.total} 条\n`;
+
+              const recentDates = Object.keys(stats.dates)
+                .sort()
+                .reverse()
+                .slice(0, 7);
+              if (recentDates.length > 0) {
+                output += "📅 最近7天:\n";
+                for (const date of recentDates) {
+                  output += `  - ${date}: ${stats.dates[date]} 条\n`;
+                }
               }
+              output += "\n";
             }
 
             await msg.edit({ text: output });

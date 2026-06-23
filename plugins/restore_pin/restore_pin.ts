@@ -125,6 +125,7 @@ class RestorePinPlugin extends Plugin {
     let errorCount = 0;
     const errors: string[] = [];
 
+    // 注意：必须按顺序逐条恢复置顶消息，每次操作之间有1秒延迟以避免触发Telegram速率限制
     for (let i = 0; i < messageIds.length; i++) {
       const messageId = messageIds[i];
       

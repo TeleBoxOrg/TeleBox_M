@@ -437,9 +437,9 @@ class ConfigManager {
       CONFIG.KEYS.COOKIE_BROWSER,
     ];
     const result: Record<string, any> = {};
-    for (const k of keys) {
-      result[k] = await this.get(k, DEFAULT_CONFIG[k] ?? "");
-    }
+    // 并行读取所有配置项，提升性能
+    const values = await Promise.all(keys.map((k) => this.get(k, DEFAULT_CONFIG[k] ?? "")));
+    keys.forEach((k, i) => { result[k] = values[i]; });
     return result;
   }
 
