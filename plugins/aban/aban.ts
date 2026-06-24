@@ -45,7 +45,7 @@ type PartialEntity = {
 /**
  * Raw chat full response type for getFullChat.
  */
-type RawChatFull = {
+type _RawChatFull = {
   fullChat?: {
     participants?: {
       _?: string;
@@ -846,7 +846,7 @@ class BanManager {
     client: TelegramClient,
     chatId: any,
     userId: number,
-    until: number = 0,
+    _until: number = 0,
     participant?: any
   ): Promise<boolean> {
     try {

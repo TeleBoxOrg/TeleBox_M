@@ -1,7 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { ClientWithDownload, ClientWithGetMessages, ClientWithSendFile } from "@utils/clientInternals";
-import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import type { Low } from "lowdb";
 import { JSONFilePreset } from "lowdb/node";
@@ -347,9 +346,6 @@ const PROVIDER_HOST_TYPES: Record<string, ProviderType> = {
   ...mapHostsToProviderType(["127.0.0.1", "api.abjj.de"], "local-cliproxy"),
 };
 
-const DEFAULT_PROVIDER_PROFILE: ProviderProfile =
-  PROVIDER_PROFILES[DEFAULT_PROVIDER_TYPE];
-
 const getProviderHost = (url: string): string | null => {
   try {
     return new URL(url).hostname;
@@ -501,17 +497,6 @@ const getMessageText = (m?: { message?: string; text?: string } | null): string 
 
 const htmlEscape = (text: string): string =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-const buildUserContent = (
-  text: string,
-  images: AIContentPart[],
-): string | AIContentPart[] => {
-  if (images.length === 0) return text;
-  const parts: AIContentPart[] = [];
-  if (text.trim()) parts.push({ type: "text", text });
-  parts.push(...images);
-  return parts;
-};
 
 const buildResponsesInputContent = (
   text: string,
@@ -3159,7 +3144,7 @@ class AIService implements ConfigChangeListener {
     model: string,
     prompt: string,
     images: AIContentPart[],
-    imageMode: VideoImageMode,
+    _imageMode: VideoImageMode,
     modeConfig: ProviderModeConfig,
     token?: AbortToken,
   ): Promise<AIVideo[]> {
@@ -4430,7 +4415,7 @@ class QuestionFeature extends BaseFeatureHandler {
   async handleQuestion(
     msg: MessageContext,
     question: string,
-    trigger?: MessageContext,
+    _trigger?: MessageContext,
     token?: AbortToken,
   ): Promise<void> {
     const config = await this.getConfig();

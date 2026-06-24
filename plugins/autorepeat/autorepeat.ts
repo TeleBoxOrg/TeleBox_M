@@ -3,10 +3,8 @@ import { getPrefixes } from "@utils/pluginManager";
 import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
-import { html } from "@mtcute/html-parser";
 import { TelegramClient } from "@mtcute/node";
 import type { Peer, Chat, User, Dialog } from "@mtcute/node";
-import type { tl } from "@mtcute/core";
 import type { MtcuteInputChannel } from "@utils/mtcuteTypes";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
@@ -15,8 +13,6 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { isMegagroup, getMessageFwdFrom, hasRawType, getRawType } from "@utils/entityTypeGuards";
-
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -197,33 +193,6 @@ class MessageManager {
     } catch (error: unknown) {
       logger.error(`编辑消息失败: ${getErrorMessage(error)}`);
       return message;
-    }
-  }
-}
-
-// ==================== 权限管理器 ====================
-class PermissionManager {
-  static async checkAdminPermission(
-    client: TelegramClient,
-    chatId: number | string
-  ): Promise<boolean> {
-    try {
-      const me = await client.getMe();
-      const participant = await client.call({
-        _: 'channels.getParticipant',
-        channel: await client.resolvePeer(chatId) as unknown as MtcuteInputChannel,
-        participant: await client.resolvePeer(me.id),
-      });
-
-      const p = (participant as { participant?: unknown }).participant;
-      if (hasRawType(p, 'channelParticipantCreator')) return true;
-      if (hasRawType(p, 'channelParticipantAdmin')) {
-        // 只要是管理员就行，或者检查具体权限
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
     }
   }
 }
