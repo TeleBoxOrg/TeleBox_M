@@ -7,7 +7,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { banUser, getBannedUsers, unbanUser } from "@utils/banUtils";
 import { logger } from "@utils/logger";
-import { isUser, isUserDeleted, getRawType, hasRawType, isMegagroup, getParticipant } from "@utils/entityTypeGuards";
+import { isUser, isUserDeleted, getRawType, hasRawType, getParticipant } from "@utils/entityTypeGuards";
 import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();

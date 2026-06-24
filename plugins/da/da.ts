@@ -6,7 +6,6 @@ import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import * as path from "path";
 import * as fs from "fs";
-import bigInt from "big-integer";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 

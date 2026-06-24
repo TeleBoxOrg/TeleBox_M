@@ -12,7 +12,6 @@ import * as cron from "cron";
 import { JSONFilePreset } from "lowdb/node";
 import * as path from "path";
 import { getGlobalClient } from "@utils/globalClient";
-import { reviveEntities } from "@utils/tlRevive";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,

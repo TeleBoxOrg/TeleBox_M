@@ -9,7 +9,6 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { isUser, hasRawType } from "@utils/entityTypeGuards";
 import { User, Chat } from "@mtcute/node";
-import { Long } from "@mtcute/core";
 import type { tl } from "@mtcute/core";
 import type { MtcuteInputChannel, MtcuteInputPeer, MtcuteLong, MtcuteInputUser } from "@utils/mtcuteTypes";
 

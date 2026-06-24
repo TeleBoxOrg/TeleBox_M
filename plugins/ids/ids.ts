@@ -7,7 +7,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
-import { isChat, hasRawType } from "@utils/entityTypeGuards";
+import { hasRawType } from "@utils/entityTypeGuards";
 import { getErrorMessage } from "@utils/errorHelpers";
 // HTML转义工具
 const htmlEscape = (text: string): string => 

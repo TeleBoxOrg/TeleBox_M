@@ -8,7 +8,6 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import type { TelegramClient } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
-import bigInt from "big-integer";
 import { logger } from "@utils/logger";
 
 // Track pending setTimeout handles for safe cleanup on reload

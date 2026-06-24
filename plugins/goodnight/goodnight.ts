@@ -10,7 +10,6 @@ import dayjs from "dayjs";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
-import { getGlobalClient } from "@utils/globalClient";
 import { logger } from "@utils/logger";
 
 // 定义数据库结构

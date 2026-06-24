@@ -243,7 +243,7 @@ async function collectMessages(
         }
     }
 
-    const msgs = await client.getMessages(chatPeerId, iterParams);
+    const msgs = await client.searchMessages({ ...iterParams, chatId: chatPeerId });
     const normalizedFilterId = filterSenderId ? normalizeId(filterSenderId) : null;
     const needManualFilter = filterSenderId && !iterParams.fromUser;
 

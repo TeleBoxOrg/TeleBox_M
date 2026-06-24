@@ -6,7 +6,6 @@ import {
   getGlobalClient,
   tryGetCurrentGenerationContext,
 } from "@utils/globalClient";
-import { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { TelegramClient } from "@mtcute/node";
 import type { Chat, Peer } from "@mtcute/core";
@@ -14,8 +13,6 @@ import { safeGetMessages } from "@utils/safeGetMessages";
 import type { ClientWithGetMessages } from "@utils/clientInternals";
 import {
   safeForwardMessage,
-  parseEntityId,
-  withEntityAccess,
   getEntityWithHash,
 } from "@utils/entityHelpers";
 import { getPrefixes } from "@utils/pluginManager";

@@ -13,7 +13,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { safeGetMessages } from "@utils/safeGetMessages";
 
 import { safeGetMe } from "@utils/authGuards";
-import { hasRawType, getRawType } from "@utils/entityTypeGuards";
+import { hasRawType } from "@utils/entityTypeGuards";
 import { logger } from "@utils/logger";
 // ClientAdapter removed – use TelegramClient directly
 const PLUGIN_VERSION = "5.0.6";
