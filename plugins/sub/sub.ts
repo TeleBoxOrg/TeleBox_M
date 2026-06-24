@@ -83,7 +83,8 @@ async function getSubStoreVersion(): Promise<string> {
     
     const versionMatch = logOutput.match(/Sub-Store -- (v[\d.]+)/);
     return versionMatch ? versionMatch[1] : "未知版本";
-  } catch {
+  } catch (e) {
+    console.warn('[sub] 解析Sub-Store版本失败:', e);
     return "获取失败";
   }
 }
@@ -96,7 +97,8 @@ async function getRemoteVersion(): Promise<string> {
     );
     const releaseData = JSON.parse(response);
     return releaseData.tag_name || "获取失败";
-  } catch {
+  } catch (e) {
+    console.warn('[sub] 获取远程Sub-Store版本失败:', e);
     return "获取失败";
   }
 }
@@ -319,13 +321,16 @@ class SubStorePlugin extends Plugin {
                   try {
                     await sh("docker info");
                     infoResult += "✅ Docker可正常连接\n";
-                  } catch {
+                  } catch (e) {
+                    console.warn('[sub] Docker连接检测失败:', e);
                     infoResult += `❌ Docker连接失败\n`;
                   }
-                } catch {
+                } catch (e) {
+                  console.warn('[sub] Docker服务检测失败:', e);
                   infoResult += "❌ Docker服务未启动\n";
                 }
-              } catch {
+              } catch (e) {
+                console.warn('[sub] Docker安装检测失败:', e);
                 infoResult += "❌ Docker未安装\n";
               }
 
@@ -365,7 +370,8 @@ class SubStorePlugin extends Plugin {
               try {
                 await sh("curl -s --max-time 3 ifconfig.me");
                 infoResult += `\n✅ 网络连接正常`;
-              } catch {
+              } catch (e) {
+                console.warn('[sub] 网络连接检测失败:', e);
                 infoResult += `\n❌ 网络连接异常`;
               }
             } catch (error: unknown) {
