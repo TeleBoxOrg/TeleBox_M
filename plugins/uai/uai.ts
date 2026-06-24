@@ -186,7 +186,7 @@ async function callGemini(
     );
 
     const parts = response.data?.candidates?.[0]?.content?.parts || [];
-    return parts.map((p: any) => p.text || "").join("");
+    return parts.map((p: { text?: string }) => p.text || "").join("");
 }
 
 async function callAI(provider: Provider, prompt: string, content: string, timeout: number): Promise<string> {
@@ -200,7 +200,7 @@ async function callAI(provider: Provider, prompt: string, content: string, timeo
 type MessageData = { time: string; sender: string; text: string };
 
 // 将各种 ID 类型统一转换为字符串进行比较
-function normalizeId(id: any): string {
+function normalizeId(id: string | number | bigint | { userId?: unknown; channelId?: unknown; chatId?: unknown; value?: unknown } | null | undefined): string {
     if (id === null || id === undefined) return "";
     // 处理 BigInt
     if (typeof id === "bigint") return id.toString();
@@ -214,7 +214,7 @@ function normalizeId(id: any): string {
 }
 
 async function collectMessages(
-    chatPeerId: any,  // msg.chat.id
+    chatPeerId: string | number,
     filterSenderId: string | null,  // senderId 用于过滤（数字形式的 userId）
     limit: { type: "count"; value: number } | { type: "time"; seconds: number } | { type: "today" }
 ): Promise<MessageData[]> {
@@ -227,7 +227,7 @@ async function collectMessages(
     const maxCount = limit.type === "count" ? limit.value : 10000;
 
     // 构建迭代器参数
-    const iterParams: any = { limit: maxCount };
+    const iterParams: Record<string, unknown> = { limit: maxCount };
 
     // 如果需要按用户过滤，使用 fromUser 参数（直接让 API 过滤，避免 flood wait）
     if (filterSenderId) {

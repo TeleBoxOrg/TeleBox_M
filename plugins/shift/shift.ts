@@ -464,7 +464,7 @@ function getAllShiftRules(): Array<{ sourceId: number; rule: ShiftRule }> {
 }
 
 // Utility functions
-function getDisplayName(entity: any): string {
+function getDisplayName(entity: { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined): string {
   if (!entity) return "未知实体";
   if (entity.username) return `@${htmlEscape(entity.username)}`;
   if (entity.firstName) return entity.firstName;
@@ -472,7 +472,7 @@ function getDisplayName(entity: any): string {
   return `ID: ${entity.id}`;
 }
 
-function extractIdString(id: any): string {
+function extractIdString(id: string | number | bigint | { value?: unknown } | null | undefined): string {
   if (id === undefined || id === null) return "";
   if (typeof id === "object") {
     if ("value" in id && id.value !== undefined && id.value !== null) {
@@ -488,7 +488,7 @@ function extractIdString(id: any): string {
   return String(id);
 }
 
-function ensureChannelId(id: any): number {
+function ensureChannelId(id: string | number | bigint | { value?: unknown } | null | undefined): number {
   const idStr = extractIdString(id).trim();
   if (!idStr) return Number.NaN;
   if (idStr.startsWith("-100")) return Number(idStr);
@@ -517,7 +517,7 @@ function normalizeChatId(entityOrId: any): number {
   }
 }
 
-function getTargetTypeEmoji(entity: any): string {
+function getTargetTypeEmoji(entity: { className?: string; bot?: boolean; broadcast?: boolean } | null | undefined): string {
   if (!entity) return "❓";
   if (entity.className === "User") return entity.bot ? "🤖" : "👤";
   if (entity.className === "Channel") return entity.broadcast ? "📢" : "👥";
@@ -548,7 +548,7 @@ function parseIndices(
   return { indices, invalid };
 }
 
-function getMediaType(message: any): string {
+function getMediaType(message: { photo?: unknown; document?: unknown; video?: unknown; sticker?: unknown; animation?: unknown; voice?: unknown; audio?: unknown }): string {
   if (message.photo) return "photo";
   if (message.document) return "document";
   if (message.video) return "video";
