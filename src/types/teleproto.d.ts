@@ -3,11 +3,15 @@
 // while the codebase is gradually migrated from teleproto to mtcute
 
 declare module "teleproto" {
+    import type { MessageContext } from "@mtcute/dispatcher";
+
     export class TelegramClient {
         getEntity: (id: string | number) => Promise<unknown>;
         sendMessage: (peer: unknown, text: string, opts?: unknown) => Promise<unknown>;
         sendFile: (peer: unknown, file: unknown, opts?: unknown) => Promise<unknown>;
         sendText: (peer: unknown, text: string, opts?: unknown) => Promise<unknown>;
+        editMessage: (peer: unknown, opts?: unknown) => Promise<unknown>;
+        resolvePeer: (peerId: unknown, force?: boolean) => Promise<unknown>;
         [key: string]: any;
     }
 
