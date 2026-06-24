@@ -806,7 +806,7 @@ async function traditionalStreamProcessing(
 
         if (mediaMessages.length > 0 && trollImagePath) {
           logger.info(`[DME] 传统模式编辑 ${mediaMessages.length} 条媒体消息`);
-          const editPromises = mediaMessages.map((msg: any) => 
+          const editPromises = mediaMessages.map((msg: RawMessageWithMedia) => 
             editMediaMessageToAntiRecall(client, msg, trollImagePath, chatPeer)
               .catch(() => false)
           );
@@ -1168,11 +1168,11 @@ async function searchEditAndDeleteMyMessages(
         return true;
       });
       const textMessages = batchMessages.filter(
-        (m: any) => !m.media && typeof m.message === "string"
+        (m: RawMessageWithMedia) => !m.media && typeof m.message === "string"
       );
 
       if (mediaMessages.length > 0 && trollImagePath) {
-        const editPromises = mediaMessages.map((msg: any) => 
+        const editPromises = mediaMessages.map((msg: RawMessageWithMedia) => 
           editMediaMessageToAntiRecall(client, msg, trollImagePath, chatPeer)
             .catch(() => false)
         );
@@ -1183,7 +1183,7 @@ async function searchEditAndDeleteMyMessages(
       }
 
       if (textMessages.length > 0) {
-        const textEditPromises = textMessages.map((msg: any) =>
+        const textEditPromises = textMessages.map((msg: RawMessageWithMedia) =>
           editTextMessageToPlaceholder(client, msg, chatPeer).catch(() => false)
         );
         const textEditResults = await Promise.allSettled(textEditPromises);

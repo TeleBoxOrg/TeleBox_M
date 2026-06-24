@@ -21,6 +21,7 @@ import type { Low } from "lowdb";
 import * as fs from "fs";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import type { MessageContext } from "@mtcute/dispatcher";
 
 // SQLite row types for better-sqlite3 (returns unknown by default)
 interface ShiftRuleRow {
@@ -1277,7 +1278,7 @@ class ShiftPlugin extends Plugin {
   }
 
   description: string = `智能转发助手 - 自动转发消息到指定目标<br><br>${help_text}`;
-  cmdHandlers: Record<string, (msg: any) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     shift: async (msg) => {
       const client = await getGlobalClient();
       if (!client) {
@@ -2020,7 +2021,7 @@ class ShiftPlugin extends Plugin {
           // 使用新的 BackupManager
           const orderLabel = hasAsc ? "正序（旧→新）" : "倒序（新→旧）";
           const progressMsg = await msg.edit({
-            text: `🔄 <b>开始备份</b>（${orderLabel}）\n\n从 ${htmlEscape(
+            text: `🔄 <b>开始备份</b>（${orderLabel}）\\n\\n从 ${htmlEscape(
               getDisplayName(source)
             )} 到 ${htmlEscape(getDisplayName(target))} 的历史消息...`,
           });
@@ -2035,9 +2036,11 @@ class ShiftPlugin extends Plugin {
             reverse: hasAsc,
             onProgress: async (current, total) => {
               if (current % 50 === 0 && progressMsg) {
-                await progressMsg.edit({
+                await client.editMessage({
+                  chatId: progressMsg.chat.id,
+                  message: progressMsg.id,
                   text:
-                    `🔄 <b>备份进行中...</b>\n\n` +
+                    `🔄 <b>备份进行中...</b>\\n\\n` +
                     `进度: ${Math.round(
                       (current / total) * 100
                     )}% (${current}/${total})`,
@@ -2046,10 +2049,12 @@ class ShiftPlugin extends Plugin {
             },
             onComplete: async (stats) => {
               if (progressMsg) {
-                await progressMsg.edit({
+                await client.editMessage({
+                  chatId: progressMsg.chat.id,
+                  message: progressMsg.id,
                   text:
-                    `✅ <b>备份完成！</b>\n\n` +
-                    `共处理 ${stats.processedMessages} 条消息，失败 ${stats.failedMessages} 条\n` +
+                    `✅ <b>备份完成！</b>\\n\\n` +
+                    `共处理 ${stats.processedMessages} 条消息，失败 ${stats.failedMessages} 条\\n` +
                     `任务ID: <code>${taskId}</code>`,
                 });
               }
@@ -2057,8 +2062,10 @@ class ShiftPlugin extends Plugin {
           });
 
           if (progressMsg) {
-            await progressMsg.edit({
-              text: `✅ <b>备份任务已启动</b>\n\n任务ID: <code>${taskId}</code>\n使用 <code>${mainPrefix}shift backup status ${taskId}</code> 查看进度`,
+            await client.editMessage({
+              chatId: progressMsg.chat.id,
+              message: progressMsg.id,
+              text: `✅ <b>备份任务已启动</b>\\n\\n任务ID: <code>${taskId}</code>\\n使用 <code>${mainPrefix}shift backup status ${taskId}</code> 查看进度`,
             });
           }
           return;

@@ -875,7 +875,7 @@ async function performLotteryDraw(client: TelegramClient, lottery: LotteryConfig
 
 
 // Enhanced message listener for lottery participation
-async function handleEnhancedLotteryJoin(msg: any): Promise<void> {
+async function handleEnhancedLotteryJoin(msg: MessageContext & { peerId?: number; chatId?: number; getSender: () => Promise<any>; reply: (params: any) => Promise<any> }): Promise<void> {
   if (!msg.text || !msg.sender?.id || !msg.client) return;
   
   let chatId: string;
@@ -1767,7 +1767,7 @@ class LotteryPlugin extends Plugin {
   };
   
   listenMessageHandler?: ((msg: MessageContext) => Promise<void>) | undefined =
-    handleEnhancedLotteryJoin;
+    handleEnhancedLotteryJoin as unknown as (msg: MessageContext) => Promise<void>;
 }
 
 export default new LotteryPlugin();

@@ -1587,7 +1587,7 @@ class AbanPlugin extends Plugin {
     // and cleaned up automatically on reload. No manual cleanup needed.
   }
 
-  cmdHandlers: Record<string, (msg: any) => Promise<void>> = {
+  cmdHandlers: Record<string, (msg: MtcuteMessageContext) => Promise<void>> = {
     // 帮助命令
     aban: async (msg) => {
       await MessageManager.smartEdit(msg, HELP_TEXT);
