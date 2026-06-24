@@ -1460,7 +1460,7 @@ class ShiftPlugin extends Plugin {
           }
 
           // Resolve target
-          let target: any;
+          let target: Chat | Peer | undefined;
           try {
             const chatId = msg.chat?.id ? Number(msg.chat.id) : 0;
             target = await resolveTarget(client, targetInput, chatId);
@@ -1666,7 +1666,7 @@ class ShiftPlugin extends Plugin {
         // Stats command
         if (sub === "stats") {
           try {
-            let rows: any[] = [];
+            let rows: Array<{ stats_key: string; stats_data: string }> = [];
 
             if (useLowdb && lowdb) {
               // 从 lowdb 读取统计
@@ -2118,9 +2118,9 @@ function updateStats(
       );
       const row = stmt.get(statsKey) as ShiftStatsRow | undefined;
 
-      let stats: any = { total: 0 };
+      let stats: Record<string, number> = { total: 0 };
       if (row) {
-        stats = JSON.parse(row.stats_data);
+        stats = JSON.parse(row.stats_data) as Record<string, number>;
       }
 
       stats.total = (stats.total || 0) + 1;
