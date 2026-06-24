@@ -21,16 +21,18 @@ import { tryGetCurrentRuntime } from "@/utils/runtimeManager";
 const mockTryGetCurrentRuntime = vi.mocked(tryGetCurrentRuntime);
 
 // ── Helper: build a fake msg with the properties the logic reads ────────────
-function fakeMsg(chatId: number | bigint, isOutgoing: boolean) {
-  return {
-    chat: { id: chatId },
-    isOutgoing,
-  } as any;
+interface FakeMsg {
+  chat: { id: number | bigint };
+  isOutgoing: boolean;
+}
+
+function fakeMsg(chatId: number | bigint, isOutgoing: boolean): FakeMsg {
+  return { chat: { id: chatId }, isOutgoing };
 }
 
 // ── The predicate under test, extracted verbatim from pluginManager ────────
-function isSavedMessage(msg: any): boolean {
-  const meId = (tryGetCurrentRuntime() as any)?.meId;
+function isSavedMessage(msg: FakeMsg): boolean {
+  const meId = tryGetCurrentRuntime()?.meId;
   return meId != null && String(msg.chat.id) === meId;
 }
 
@@ -70,7 +72,7 @@ describe("saved-messages detection (meId + chat.id)", () => {
     mockTryGetCurrentRuntime.mockReturnValue({ meId: "123456789" });
     const msg = fakeMsg(123456789, false);
     // Explicitly set savedPeerId to undefined (as it would be in mtcute)
-    (msg as any).savedPeerId = undefined;
+    (msg as unknown as { savedPeerId?: undefined }).savedPeerId = undefined;
     // The logic should still correctly detect saved messages via chat.id
     expect(isSavedMessage(msg)).toBe(true);
   });
