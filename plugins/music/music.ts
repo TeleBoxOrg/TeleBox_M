@@ -467,6 +467,21 @@ class ConfigManager {
 }
 
 // ==================== HTTP Client ====================
+
+interface HttpRequestOptions {
+  method?: string;
+  headers?: Record<string, string>;
+  data?: string | Record<string, unknown>;
+  timeout?: number;
+}
+
+interface HttpResponse {
+  status: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any;
+  headers: Record<string, string | string[] | undefined>;
+}
+
 class HttpClient {
   static cleanResponseText(text: string): string {
     if (!text) return text;
@@ -480,7 +495,7 @@ class HttpClient {
       .normalize("NFKC");
   }
 
-  static async makeRequest(url: string, options: any = {}): Promise<any> {
+  static async makeRequest(url: string, options: HttpRequestOptions = {}): Promise<HttpResponse> {
     return new Promise((resolve, reject) => {
       const { method = "GET", headers = {}, data, timeout = 60000 } = options;  // Increased default timeout
       const isHttps = url.startsWith("https:");
@@ -497,7 +512,7 @@ class HttpClient {
           },
           timeout,
         },
-        (res: any) => {
+        (res: http.IncomingMessage) => {
           res.setEncoding("utf8");
           let body = "";
           let dataLength = 0;
@@ -533,7 +548,7 @@ class HttpClient {
         }
       );
 
-      req.on("error", (error: any) => {
+      req.on("error", (error: Error) => {
         reject(new Error(`网络请求失败: ${error.message}`));
       });
 
