@@ -492,7 +492,8 @@ class NameManager {
       
       this.profileCache = { data: profile, timestamp: Date.now() };
       return profile;
-    } catch {
+    } catch (error: unknown) {
+      logger.warn('[autochangename] 获取当前用户资料失败，使用缓存或跳过:', error);
       return null;
     }
   }

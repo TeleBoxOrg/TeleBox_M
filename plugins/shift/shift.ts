@@ -494,8 +494,8 @@ function ensureChannelId(id: string | number | bigint | { value?: unknown } | nu
   return Number(`-100${normalized}`);
 }
 
-function normalizeChatId(entityOrId: any): number {
-  if (typeof entityOrId === "object" && entityOrId.id) {
+function normalizeChatId(entityOrId: { id?: string | number; className?: string; value?: unknown } | string | number | bigint | null | undefined): number {
+  if (typeof entityOrId === "object" && entityOrId !== null && entityOrId.id) {
     if (entityOrId.className === "Channel") {
       return ensureChannelId(entityOrId.id);
     }
@@ -1440,7 +1440,7 @@ class ShiftPlugin extends Plugin {
           }
 
           // Resolve source
-          let source: any;
+          let source: Chat | Peer | undefined;
           try {
             if (
               sourceInput.toLowerCase() === "here" ||
@@ -1505,7 +1505,7 @@ class ShiftPlugin extends Plugin {
           const rule: ShiftRule = {
             target_id: targetId,
             options: Array.from(options),
-            target_type: source.className === "User" ? "user" : "chat",
+            target_type: (source as { className?: string }).className === "User" ? "user" : "chat",
             paused: false,
             created_at: new Date().toISOString(),
             filters: [],
@@ -1513,16 +1513,16 @@ class ShiftPlugin extends Plugin {
 
           if (useLowdb) {
             rule.source_display =
-              sourceDisplay || htmlEscape(getDisplayName(source));
+              sourceDisplay || htmlEscape(getDisplayName(source as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined));
             rule.target_display =
-              targetDisplay || htmlEscape(getDisplayName(target));
+              targetDisplay || htmlEscape(getDisplayName(target as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined));
           }
 
           if (saveShiftRule(sourceId, rule)) {
             await msg.edit({
               text: `成功设置转发: ${
-                sourceDisplay || htmlEscape(getDisplayName(source))
-              } -> ${targetDisplay || htmlEscape(getDisplayName(target))}`,
+                sourceDisplay || htmlEscape(getDisplayName(source as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined))
+              } -> ${targetDisplay || htmlEscape(getDisplayName(target as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined))}`,
             });
           } else {
             await msg.edit({
