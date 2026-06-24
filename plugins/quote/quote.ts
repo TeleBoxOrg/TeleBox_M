@@ -100,7 +100,7 @@ async function downloadFileIfMissingOrChanged(url: string, filePath: string): Pr
   fs.writeFileSync(filePath, data);
 }
 
-function requireOrInstall(pkg: string): any {
+function requireOrInstall(pkg: string): unknown {
   try {
     return require(pkg);
   } catch (err: unknown) {

@@ -17,6 +17,7 @@ import * as path from "path";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { Long } from "@mtcute/core";
+import type { tl } from "@mtcute/core";
 
 // 常量配置
 const CONFIG = {
@@ -95,7 +96,7 @@ async function getTrollImage(): Promise<string | null> {
  */
 async function deleteMessagesWithRetry(
   client: TelegramClient,
-  chatPeer: any,
+  chatPeer: tl.TypeInputPeer,
   messageIds: number[],
   retryCount: number = 0
 ): Promise<number> {
@@ -126,7 +127,7 @@ async function deleteMessagesWithRetry(
  */
 async function deleteMessagesUniversal(
   client: TelegramClient,
-  chatPeer: any,
+  chatPeer: tl.TypeInputPeer,
   messageIds: number[]
 ): Promise<number> {
   return deleteMessagesWithRetry(client, chatPeer, messageIds);
@@ -135,11 +136,23 @@ async function deleteMessagesUniversal(
 /**
  * 媒体消息防撤回处理
  */
+/** Raw message from API with media/date fields accessed by DME */
+interface RawMessageWithMedia {
+  _: string;
+  media?: { _?: string; document?: { _?: string; attributes?: Array<{ _?: string }> } };
+  date?: number;
+  id: number;
+  fromId?: { userId?: number; channelId?: number };
+  senderId?: { toString(): string };
+  out?: boolean;
+  message?: string;
+}
+
 async function editMediaMessageToAntiRecall(
   client: TelegramClient,
-  message: any,
+  message: RawMessageWithMedia,
   trollImagePath: string | null,
-  chatPeer: any
+  chatPeer: tl.TypeInputPeer
 ): Promise<boolean> {
   // 排除网页预览
   if (!message.media || message.media?._ === "messageMediaWebPage") {
@@ -186,8 +199,8 @@ async function editMediaMessageToAntiRecall(
 
 async function editTextMessageToPlaceholder(
   client: TelegramClient,
-  message: any,
-  chatPeer: any
+  message: RawMessageWithMedia,
+  chatPeer: tl.TypeInputPeer
 ): Promise<boolean> {
   if (message.media) {
     return false;
@@ -215,7 +228,7 @@ async function editTextMessageToPlaceholder(
   }
 }
 
-function isSavedMessagesPeer(chatPeer: any, myId: number): boolean {
+function isSavedMessagesPeer(chatPeer: tl.TypeInputPeer | null, myId: number): boolean {
   return (
     chatPeer?._ === "inputPeerSelf" ||
     (chatPeer?._ === "inputPeerUser" && chatPeer.userId === myId)
@@ -265,7 +278,7 @@ function getPeerRawId(peer: any): string | null {
 
 async function getSendAsIdentitySet(
   client: TelegramClient,
-  chatPeer: any
+  chatPeer: tl.TypeInputPeer
 ): Promise<{ typedKeys: Set<string>; rawIds: Set<string> }> {
   const typedKeys = new Set<string>();
   const rawIds = new Set<string>();
@@ -297,7 +310,7 @@ async function getSendAsIdentitySet(
 }
 
 function isMyMessageByIdentity(
-  message: any,
+  message: RawMessageWithMedia,
   myId: number,
   sendAsTypedKeySet: Set<string>,
   sendAsRawIdSet: Set<string>
@@ -335,12 +348,12 @@ function isMyMessageByIdentity(
  */
 async function searchMyMessagesOptimized(
   client: TelegramClient,
-  chatPeer: any,
+  chatPeer: tl.TypeInputPeer,
   myId: number,
   userRequestedCount: number
-): Promise<any[]> {
+): Promise<RawMessageWithMedia[]> {
   // 使用多种策略搜索用户消息，提高成功率
-  let allMessages: any[] = [];
+  let allMessages: RawMessageWithMedia[] = [];
   const maxSearchCount = Math.max(
     userRequestedCount * CONFIG.MAX_SEARCH_MULTIPLIER,
     CONFIG.MIN_MAX_SEARCH
