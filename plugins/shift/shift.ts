@@ -6,7 +6,6 @@ import {
   getGlobalClient,
   tryGetCurrentGenerationContext,
 } from "@utils/globalClient";
-// TelegramClient type removed - using any for client references
 import { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { TelegramClient } from "@mtcute/node";
@@ -749,10 +748,10 @@ function enqueueGroupMessage(
 }
 
 async function resolveTarget(
-  client: any,
+  client: TelegramClient,
   targetInput: string,
   currentChatId: number
-): Promise<any> {
+): Promise<Chat | Peer> {
   if (
     targetInput.toLowerCase() === "me" ||
     targetInput.toLowerCase() === "here"
