@@ -16,6 +16,44 @@ import { npm_install } from "@utils/npm_install";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { tl } from "@mtcute/core";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
+import type { MtcuteInputPeer } from "@utils/mtcuteTypes";
+
+/**
+ * Chat identifier type used across PermissionManager and BanManager.
+ * Can be an InputPeer (from resolvePeer), a PeerChat/Chat-like object,
+ * or a ManagedGroup-like object with kind/className.
+ */
+type ChatIdArg = MtcuteInputPeer | { chatId?: number; id?: number; kind?: string; className?: string; [key: string]: unknown };
+
+/**
+ * Entity type returned by safeGetEntity - partial Telegram entity.
+ */
+type PartialEntity = {
+  id?: number | string;
+  _?: string;
+  chatId?: number | string;
+  username?: string;
+  title?: string;
+  firstName?: string;
+  first_name?: string;
+  lastName?: string;
+  last_name?: string;
+  accessHash?: string | number;
+};
+
+/**
+ * Raw chat full response type for getFullChat.
+ */
+type RawChatFull = {
+  fullChat?: {
+    participants?: {
+      _?: string;
+      participants?: Array<{ _?: string; userId?: number }>;
+    };
+  };
+  users?: Array<{ id?: number | string; _?: string; [key: string]: unknown }>;
+};
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -187,7 +225,7 @@ type ResolvedTarget = {
 class UserResolver {
   static async resolveTarget(
     client: TelegramClient,
-    message: any,
+    message: MtcuteMessageContext,
     args: string[]
   ): Promise<ResolvedTarget> {
     // 从参数解析
@@ -202,9 +240,9 @@ class UserResolver {
       const uid = Number((reply as { senderId?: number | string }).senderId);
       const sender = await this.getReplySender(reply as { getSender?: () => Promise<unknown>; sender?: unknown });
       const participant = sender?.type === 'user'
-        ? await this.safeGetInputEntity(client, sender!.raw)
+        ? await this.safeGetInputEntity(client, sender!.raw as unknown as number | string)
         : await this.safeGetInputEntity(client, uid);
-      const fallbackParticipant = participant || await this.resolveParticipantFromContext(client, message, uid, sender?.raw);
+      const fallbackParticipant = participant || await this.resolveParticipantFromContext(client, message, uid, sender?.raw as PartialEntity | undefined);
 
       return {
         user: sender,
@@ -221,17 +259,17 @@ class UserResolver {
 
   private static async resolveFromString(
     client: TelegramClient,
-    message: any,
+    message: MtcuteMessageContext,
     target: string
   ): Promise<ResolvedTarget> {
     try {
       // @username 格式
       if (target.startsWith("@")) {
         const entity = await this.safeGetEntity(client, target);
-        const participant = entity ? await this.safeGetInputEntity(client, entity) : undefined;
+        const participant = entity ? await this.safeGetInputEntity(client, entity as unknown as number | string) : undefined;
         const uid = entity?.id ? Number(entity.id) : null;
         const fallbackParticipant = uid
-          ? participant || await this.resolveParticipantFromContext(client, message, uid, entity)
+          ? participant || await this.resolveParticipantFromContext(client, message, uid, entity as PartialEntity | undefined)
           : undefined;
         return {
           user: entity ? { id: Number(entity.id), firstName: entity.firstName ?? entity.first_name, lastName: entity.lastName ?? entity.last_name, username: entity.username, title: entity.title, type: (entity._ === "user" ? "user" : entity._ === "chat" ? "chat" : "channel") as "user" | "chat" | "channel" } : null,
@@ -288,7 +326,7 @@ class UserResolver {
     }
   }
 
-  private static getChatType(message: any): "channel" | "chat" | "unknown" {
+  private static getChatType(message: MtcuteMessageContext): "channel" | "chat" | "unknown" {
     if ((message as { isChannel?: boolean }).isChannel) return "channel";
     if ((message as { isGroup?: boolean }).isGroup) return "chat";
     return "unknown";
@@ -297,7 +335,7 @@ class UserResolver {
   private static async safeGetEntity(
     client: TelegramClient,
     target: string | number
-  ): Promise<{ id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null> {
+  ): Promise<{ id?: number | string; _?: string; chatId?: number | string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null> {
     try {
       return await (client as unknown as ClientInternals).resolvePeer(target) as { id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null;
     } catch {
@@ -318,10 +356,10 @@ class UserResolver {
 
   private static async resolveParticipantFromContext(
     client: TelegramClient,
-    message: any,
+    message: MtcuteMessageContext,
     userId: number,
-    knownEntity?: any
-  ): Promise<any | undefined> {
+    knownEntity?: PartialEntity
+  ): Promise<tl.TypeInputPeer | undefined> {
     const chat = (message as { peerId?: unknown }).peerId;
     if (!chat) {
       return undefined;
@@ -413,10 +451,10 @@ class UserResolver {
 // ==================== 消息管理器 ====================
 class MessageManager {
   static async smartEdit(
-    message: any,
+    message: MtcuteMessageContext,
     text: string,
     deleteAfter: number = CONFIG.MESSAGE_AUTO_DELETE
-  ): Promise<any> {
+  ): Promise<MtcuteMessageContext> {
     try {
       const client = await getGlobalClient();
       if (!client) return message;
@@ -428,7 +466,8 @@ class MessageManager {
         if (lifecycle) {
           lifecycle.setTimeout(async () => {
             try {
-              await client.deleteMessagesById(message.peerId, [message.id], {
+              const peerId = (message as unknown as { peerId?: number }).peerId;
+              await client.deleteMessagesById(peerId as unknown as number, [message.id], {
                 revoke: true,
               });
             } catch (e: unknown) {
@@ -472,19 +511,19 @@ type ManagedGroup = {
 async function resolveChannelInput(
   client: TelegramClient,
   group: ManagedGroup
-): Promise<any> {
+): Promise<tl.TypeInputChannel | number> {
   if (group.kind !== 'channel') {
     return group.id;
   }
   if (group.accessHash) {
     return {
-        _: 'inputChannel',
-        channelId: bigInt(group.id),
-        accessHash: bigInt(group.accessHash),
-      };
+    _: 'inputChannel' as const,
+    channelId: bigInt(group.id) as unknown as number,
+    accessHash: bigInt(group.accessHash) as unknown as number,
+    };
   }
   // 兜底：让 teleproto 走自己的 entity cache / dialogs 解析
-  return await (client as unknown as ClientInternals).getInputEntity(group.id);
+  return await (client as unknown as ClientInternals).getInputEntity(group.id) as unknown as number | tl.TypeInputChannel;
 }
 
 /**
@@ -495,7 +534,7 @@ async function resolveChannelInput(
 async function resolvePermissionTarget(
   client: TelegramClient,
   group: ManagedGroup
-): Promise<any> {
+): Promise<MtcuteInputPeer | { className: string; chatId: bigInt.BigInteger }> {
   if (group.kind === 'chat') {
     return { className: 'PeerChat', chatId: bigInt(group.id) };
   }
@@ -503,7 +542,10 @@ async function resolvePermissionTarget(
 }
 
 class PermissionManager {
-  private static getChatKind(chatId: any): ChatKind {
+  private static getChatKind(chatId: ChatIdArg | { kind?: string }): ChatKind {
+    if (chatId?.kind === 'chat' || chatId?.kind === 'channel') {
+      return chatId.kind;
+    }
     const className = chatId?.className;
     if (className === 'PeerChat' || className === 'Chat') {
       return 'chat';
@@ -531,7 +573,7 @@ class PermissionManager {
 
   static async checkAdminPermission(
     client: TelegramClient,
-    chatId: any
+    chatId: ChatIdArg
   ): Promise<boolean> {
     try {
       const me = await safeGetMe(client);
@@ -566,7 +608,7 @@ class PermissionManager {
 
   static async isTargetAdmin(
     client: TelegramClient,
-    chatId: any,
+    chatId: ChatIdArg,
     userId: number
   ): Promise<boolean> {
     try {
@@ -598,7 +640,7 @@ class PermissionManager {
 
   static async canDeleteMessages(
     client: TelegramClient,
-    chatId: any
+    chatId: ChatIdArg
   ): Promise<boolean> {
     try {
       const me = await safeGetMe(client);
@@ -635,8 +677,8 @@ class PermissionManager {
 class GroupManager {
   private static cache = CacheManager.getInstance();
 
-  private static async getAllManageableDialogs(client: TelegramClient): Promise<any[]> {
-    const dialogMap = new Map<number, any>();
+  static async getAllManageableDialogs(client: TelegramClient): Promise<Array<{ id: number; isChannel: boolean; isGroup: boolean; title: string; entity?: { id?: number; accessHash?: string | number } }>> {
+    const dialogMap = new Map<number, { id: number; isChannel: boolean; isGroup: boolean; title: string; entity?: { id?: number; accessHash?: string | number } }>();
 
     const collectDialogs = async (params: Record<string, unknown>) => {
       const dialogs = await (client as unknown as ClientInternals).getDialogs(params);
@@ -735,12 +777,12 @@ class BanManager {
   static async resolveParticipant(
     client: TelegramClient,
     userId: number,
-    participant?: any
-  ): Promise<any> {
+    participant?: tl.TypeInputPeer
+  ): Promise<tl.TypeInputPeer> {
     if (participant) {
       return participant;
     }
-    return (client as unknown as ClientInternals).getInputEntity(userId);
+    return (client as unknown as ClientInternals).getInputEntity(userId) as Promise<tl.TypeInputPeer>;
   }
 
   private static getErrorReason(error: unknown): string {
@@ -767,9 +809,9 @@ class BanManager {
 
   private static async applyBanLikeAction(
     client: TelegramClient,
-    chatId: any,
-    resolvedParticipant: any,
-    bannedRights: any,
+    chatId: ChatIdArg,
+    resolvedParticipant: tl.TypeInputPeer,
+    bannedRights: { _: 'chatBannedRights'; untilDate: number; [key: string]: unknown },
     action: 'ban' | 'unban' | 'mute'
   ): Promise<void> {
     const chatKind = this.getChatKind(chatId);
@@ -780,8 +822,8 @@ class BanManager {
 
       await client.call({
           _: 'messages.deleteChatUser',
-          chatId: Number(bigInt(this.getBasicGroupChatId(chatId))),
-          userId: resolvedParticipant,
+          chatId: Number(bigInt(this.getBasicGroupChatId(chatId as { chatId?: number; id?: number }))),
+          userId: resolvedParticipant as unknown as tl.TypeInputUser,
         });
       return;
     }
@@ -803,8 +845,8 @@ class BanManager {
   ): Promise<boolean> {
     try {
       const resolvedParticipant = await this.resolveParticipant(client, userId, participant);
-      const rights = { _: 'chatBannedRights', 
-        untilDate: until,
+      const rights = { _: 'chatBannedRights' as const,
+        untilDate: 0,
         viewMessages: true,
         sendMessages: true,
         sendMedia: true,
@@ -831,7 +873,7 @@ class BanManager {
   ): Promise<boolean> {
     try {
       const resolvedParticipant = await this.resolveParticipant(client, userId, participant);
-      const rights = { _: 'chatBannedRights', 
+      const rights = { _: 'chatBannedRights' as const, 
         untilDate: 0,
       };
 
@@ -853,7 +895,7 @@ class BanManager {
     try {
       const resolvedParticipant = await this.resolveParticipant(client, userId, participant);
       const until = duration === 0 ? 0 : Math.floor(Date.now() / 1000) + duration;
-      const rights = { _: 'chatBannedRights', 
+      const rights = { _: 'chatBannedRights' as const, 
         untilDate: until,
         sendMessages: true,
         sendMedia: true,
@@ -980,7 +1022,7 @@ class BanManager {
         const channelInput = await resolveChannelInput(client, group);
         return client.call({
               _: 'channels.editBanned',
-              channel: channelInput,
+              channel: channelInput as unknown as tl.TypeInputChannel,
               participant: resolvedParticipant,
               bannedRights: rights,
             });
@@ -1095,7 +1137,7 @@ class BanManager {
         const channelInput = await resolveChannelInput(client, group);
         return client.call({
               _: 'channels.editBanned',
-              channel: channelInput,
+              channel: channelInput as unknown as tl.TypeInputChannel,
               participant: resolvedParticipant,
               bannedRights: rights,
             });
