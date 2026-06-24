@@ -455,7 +455,7 @@ class SubinfoPlugin extends Plugin {
 
         // 获取节点信息
         try { result.nodeInfo = await getNodeInfo(url); } catch (e) {
-          console.warn('[subinfo] 获取节点信息失败:', url, e);
+          logger.warn('[subinfo] 获取节点信息失败:', url, e);
           result.nodeInfo = null;
         }
 
