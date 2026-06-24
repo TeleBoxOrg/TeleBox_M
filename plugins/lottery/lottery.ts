@@ -933,7 +933,7 @@ async function handleEnhancedLotteryJoin(msg: MessageContext & { peerId?: number
   }
 
   // Validate user conditions
-  const validation = await validateUserConditions(msg.client, sender, activeLottery, chatId);
+  const validation = await validateUserConditions(msg.client as TelegramClient, sender, activeLottery, chatId);
   if (!validation.valid) {
     try {
       await msg.delete(); // Silently delete invalid participation
@@ -989,7 +989,7 @@ async function handleEnhancedLotteryJoin(msg: MessageContext & { peerId?: number
 
   // Auto-draw if max participants reached
   if (currentCount >= activeLottery.max_participants) {
-    await performLotteryDraw(msg.client, activeLottery);
+    await performLotteryDraw(msg.client as TelegramClient, activeLottery);
   }
 }
 

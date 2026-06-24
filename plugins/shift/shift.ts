@@ -1581,8 +1581,8 @@ class ShiftPlugin extends Plugin {
                 const targetEntity = await msg.client.getChat(
                   Number(rule.target_id)
                 );
-                sourceDisplayHtml = htmlEscape(getDisplayName(sourceEntity));
-                targetDisplayHtml = htmlEscape(getDisplayName(targetEntity));
+                sourceDisplayHtml = htmlEscape(getDisplayName(sourceEntity as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined));
+                targetDisplayHtml = htmlEscape(getDisplayName(targetEntity as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined));
               }
 
               output += `${i + 1}. ${status}\n`;
@@ -1728,7 +1728,7 @@ class ShiftPlugin extends Plugin {
                 try {
                   if (!clientRef) return { sourceId, stats, name: '' };
                   const sourceEntity = await clientRef.getChat(parseInt(sourceId));
-                  return { sourceId, stats, name: getDisplayName(sourceEntity) };
+                  return { sourceId, stats, name: getDisplayName(sourceEntity as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined) };
                 } catch (e) {
                   logger.warn('[shift] 获取源频道名称失败:', sourceId, e);
                   return { sourceId, stats, name: '' };
