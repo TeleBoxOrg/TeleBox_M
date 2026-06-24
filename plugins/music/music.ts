@@ -475,10 +475,21 @@ interface HttpRequestOptions {
   timeout?: number;
 }
 
+interface HttpResponseData {
+  result?: unknown[];
+  data?: unknown[];
+  url?: string;
+  pic?: string;
+  image?: string;
+  error?: { message?: string; [key: string]: unknown };
+  message?: string;
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  [key: string]: unknown;
+}
+
 interface HttpResponse {
   status: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
+  data: HttpResponseData | string;
   headers: Record<string, string | string[] | undefined>;
 }
 
@@ -642,16 +653,18 @@ class GeminiClient {
         timeout: CONFIG.DEFAULTS.TIMEOUT,
       });
 
-      if (response.status !== 200 || response.data?.error) {
+      if (response.status !== 200 || typeof response.data === 'string' || response.data?.error) {
         const errorMessage =
-          response.data?.error?.message ||
-          response.data?.error ||
-          `HTTP错误: ${response.status}`;
-        throw new Error(errorMessage);
+          typeof response.data === 'object' && response.data?.error
+            ? (response.data.error?.message || response.data.error || `HTTP错误: ${response.status}`)
+            : `HTTP错误: ${response.status}`;
+        throw new Error(String(errorMessage));
       }
 
       const rawText =
-        response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        typeof response.data === 'object'
+          ? (response.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "")
+          : "";
       return HttpClient.cleanResponseText(rawText);
     } catch (error: unknown) {
       const errMsg = getErrorMessage(error);
@@ -1168,10 +1181,11 @@ class Downloader {
           const res = await HttpClient.makeRequest(searchUrl, { method: "GET" });
           if (res.status !== 200 || !res.data) continue;
 
-          let list: any[] = [];
+          const dataObj = typeof res.data === 'object' && res.data !== null ? res.data : undefined;
+          let list: unknown[] = [];
           if (Array.isArray(res.data)) list = res.data;
-          else if (Array.isArray(res.data.result)) list = res.data.result;
-          else if (Array.isArray(res.data.data)) list = res.data.data;
+          else if (dataObj && Array.isArray(dataObj.result)) list = dataObj.result;
+          else if (dataObj && Array.isArray(dataObj.data)) list = dataObj.data;
           if (!list.length) continue;
 
           const lowerTitle = String(metadata.title).toLowerCase();
@@ -1205,7 +1219,7 @@ class Downloader {
             picRes.data &&
             (picRes.data.url || picRes.data.pic || picRes.data.image)
           ) {
-            picUrl = picRes.data.url || picRes.data.pic || picRes.data.image;
+            picUrl = picRes.data.url ?? picRes.data.pic ?? picRes.data.image ?? "";
           }
           if (!picUrl) continue;
 
