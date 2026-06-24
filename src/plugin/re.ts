@@ -76,9 +76,11 @@ class RePlugin extends Plugin {
         // 如果转发失败（群组禁止转发），使用复制方式
         if (forwardFailed && messages && messages.length > 0) {
           for (let i = 0; i < repeat; i++) {
-            for (const message of messages) {
-              await this.copyMessage(client, msg.chat.id, message, replied!.replyToMessage?.threadId ?? replied!.replyToMessage?.id ?? undefined);
-            }
+            await Promise.all(
+              messages.map((message) =>
+                this.copyMessage(client, msg.chat.id, message, replied!.replyToMessage?.threadId ?? replied!.replyToMessage?.id ?? undefined)
+              )
+            );
           }
         }
       } catch (error: unknown) {

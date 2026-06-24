@@ -2021,7 +2021,7 @@ class ShiftPlugin extends Plugin {
           // 使用新的 BackupManager
           const orderLabel = hasAsc ? "正序（旧→新）" : "倒序（新→旧）";
           const progressMsg = await msg.edit({
-            text: `🔄 <b>开始备份</b>（${orderLabel}）\\n\\n从 ${htmlEscape(
+            text: `🔄 <b>开始备份</b>（${orderLabel}）<br><br>从 ${htmlEscape(
               getDisplayName(source)
             )} 到 ${htmlEscape(getDisplayName(target))} 的历史消息...`,
           });
@@ -2040,7 +2040,7 @@ class ShiftPlugin extends Plugin {
                   chatId: progressMsg.chat.id,
                   message: progressMsg.id,
                   text:
-                    `🔄 <b>备份进行中...</b>\\n\\n` +
+                    `🔄 <b>备份进行中...</b><br><br>` +
                     `进度: ${Math.round(
                       (current / total) * 100
                     )}% (${current}/${total})`,
@@ -2053,8 +2053,8 @@ class ShiftPlugin extends Plugin {
                   chatId: progressMsg.chat.id,
                   message: progressMsg.id,
                   text:
-                    `✅ <b>备份完成！</b>\\n\\n` +
-                    `共处理 ${stats.processedMessages} 条消息，失败 ${stats.failedMessages} 条\\n` +
+                    `✅ <b>备份完成！</b><br><br>` +
+                    `共处理 ${stats.processedMessages} 条消息，失败 ${stats.failedMessages} 条<br>` +
                     `任务ID: <code>${taskId}</code>`,
                 });
               }
@@ -2065,7 +2065,7 @@ class ShiftPlugin extends Plugin {
             await client.editMessage({
               chatId: progressMsg.chat.id,
               message: progressMsg.id,
-              text: `✅ <b>备份任务已启动</b>\\n\\n任务ID: <code>${taskId}</code>\\n使用 <code>${mainPrefix}shift backup status ${taskId}</code> 查看进度`,
+              text: `✅ <b>备份任务已启动</b><br><br>任务ID: <code>${taskId}</code><br>使用 <code>${mainPrefix}shift backup status ${taskId}</code> 查看进度`,
             });
           }
           return;
