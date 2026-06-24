@@ -5,7 +5,6 @@ import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { JSONFilePreset } from "lowdb/node";
-import type { Low } from "lowdb";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import { logger } from "@utils/logger";

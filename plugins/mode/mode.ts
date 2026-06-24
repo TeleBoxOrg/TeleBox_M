@@ -11,11 +11,8 @@ import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { logger } from "@utils/logger";
-import {
-  createDirectoryInAssets,
-} from "@utils/pathHelpers";
+import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { JSONFilePreset } from "lowdb/node";
-import type { Low } from "lowdb";
 import * as path from "path";
 
 /* ===================== prefix ===================== */

@@ -3,7 +3,6 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { JSONFilePreset } from "lowdb/node";
-import type { Low } from "lowdb";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";

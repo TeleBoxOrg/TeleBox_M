@@ -1,6 +1,5 @@
 import { TelegramClient } from "@mtcute/node";
 import {
-  TcpTransport,
   SocksProxyTcpTransport,
   HttpProxyTcpTransport,
   MtProxyTcpTransport,

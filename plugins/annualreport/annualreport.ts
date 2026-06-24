@@ -5,7 +5,6 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { JSONFilePreset } from "lowdb/node";
-import type { Low } from "lowdb";
 import * as path from "path";
 import * as fs from "fs";
 import axios from "axios";
