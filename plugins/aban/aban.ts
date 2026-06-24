@@ -24,7 +24,7 @@ import type { MtcuteInputPeer } from "@utils/mtcuteTypes";
  * Can be an InputPeer (from resolvePeer), a PeerChat/Chat-like object,
  * or a ManagedGroup-like object with kind/className.
  */
-type ChatIdArg = MtcuteInputPeer | { chatId?: number; id?: number; kind?: string; className?: string; [key: string]: unknown };
+type ChatIdArg = MtcuteInputPeer | { chatId?: number | bigInt.BigInteger; id?: number; kind?: string; className?: string; [key: string]: unknown };
 
 /**
  * Entity type returned by safeGetEntity - partial Telegram entity.
@@ -519,7 +519,7 @@ async function resolveChannelInput(
     return {
     _: 'inputChannel' as const,
     channelId: bigInt(group.id) as unknown as number,
-    accessHash: bigInt(group.accessHash) as unknown as number,
+    accessHash: bigInt(group.accessHash) as unknown as tl.Long,
     };
   }
   // 兜底：让 teleproto 走自己的 entity cache / dialogs 解析
@@ -538,15 +538,21 @@ async function resolvePermissionTarget(
   if (group.kind === 'chat') {
     return { className: 'PeerChat', chatId: bigInt(group.id) };
   }
-  return await resolveChannelInput(client, group);
+  const channel = await resolveChannelInput(client, group);
+  if (typeof channel === 'number') {
+    // basic group without channel info — shouldn't happen if kind is correct
+    return { className: 'PeerChat', chatId: bigInt(channel) };
+  }
+  return channel as unknown as MtcuteInputPeer | { className: string; chatId: bigInt.BigInteger };
 }
 
 class PermissionManager {
   private static getChatKind(chatId: ChatIdArg | { kind?: string }): ChatKind {
-    if (chatId?.kind === 'chat' || chatId?.kind === 'channel') {
-      return chatId.kind;
+    const obj = chatId as { kind?: string; className?: string };
+    if (obj?.kind === 'chat' || obj?.kind === 'channel') {
+      return obj.kind;
     }
-    const className = chatId?.className;
+    const className = obj?.className;
     if (className === 'PeerChat' || className === 'Chat') {
       return 'chat';
     }
@@ -590,10 +596,10 @@ class PermissionManager {
 
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId,
+          channel: chatId as unknown as tl.TypeInputChannel,
           participant: await client.resolvePeer(me.id)
         });
-      
+
       const p = participant.participant;
       if (p?._ === 'channelParticipantCreator') return true;
       if (p?._ === 'channelParticipantAdmin') {
@@ -624,7 +630,7 @@ class PermissionManager {
 
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId,
+          channel: chatId as unknown as tl.TypeInputChannel,
           participant: await client.resolvePeer(userId)
         });
       
@@ -657,7 +663,7 @@ class PermissionManager {
 
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId,
+          channel: chatId as unknown as tl.TypeInputChannel,
           participant: await client.resolvePeer(me.id)
         });
       
@@ -684,7 +690,7 @@ class GroupManager {
       const dialogs = await (client as unknown as ClientInternals).getDialogs(params);
       for (const dialog of dialogs || []) {
         if (dialog.isChannel || dialog.isGroup) {
-          dialogMap.set(Number(dialog.id), dialog);
+          dialogMap.set(Number(dialog.id), dialog as { id: number; isChannel: boolean; isGroup: boolean; title: string; entity?: { id?: number; accessHash?: string | number } });
         }
       }
     };
@@ -830,7 +836,7 @@ class BanManager {
 
     await client.call({
         _: 'channels.editBanned',
-        channel: chatId,
+        channel: chatId as unknown as tl.TypeInputChannel,
         participant: resolvedParticipant,
         bannedRights,
       });
