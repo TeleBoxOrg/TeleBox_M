@@ -6,6 +6,7 @@ import { JSONFilePreset } from "lowdb/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import type { TelegramClient } from "@mtcute/node";
+import { User, Chat } from "@mtcute/node";
 import path from "path";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
@@ -32,7 +33,7 @@ const AVG_CACHE_PATH = path.join(
 );
 
 type TargetChat = {
-  entity: any;
+  entity: Chat;
   titleDisplay: string;
   username: string | null;
   isChannel: boolean;
@@ -40,7 +41,7 @@ type TargetChat = {
 };
 
 type AdminStat = {
-  user: any;
+  user: User;
   userId: string;
   username: string | null;
   name: string;
@@ -55,8 +56,8 @@ type AdminStat = {
 };
 
 type AdminCollection = {
-  allAdmins: any[];
-  visibleAdmins: any[];
+  allAdmins: User[];
+  visibleAdmins: User[];
   totalCount: number;
   botCount: number;
   nonBotCount: number;
@@ -210,16 +211,17 @@ function formatAvgPerDay(value: number): string {
   return value.toFixed(2).replace(/\.?0+$/, "");
 }
 
-function getLastOnlineDays(user: any): number | null {
-  if (!user.status) return null;
-  const statusType = user.status?._;
+function getLastOnlineDays(user: User): number | null {
+  const rawStatus = user.raw?.status as { _?: string; wasOnline?: number } | undefined;
+  if (!rawStatus) return null;
+  const statusType = rawStatus._;
   if (statusType === "userStatusOnline" || statusType === "userStatusRecently") {
     return 0;
   }
   if (statusType === "userStatusOffline") {
-    if (!user.status.wasOnline) return null;
+    if (!rawStatus.wasOnline) return null;
     const days = Math.floor(
-      (Date.now() - Number(user.status.wasOnline) * 1000) / DAY_MS,
+      (Date.now() - Number(rawStatus.wasOnline) * 1000) / DAY_MS,
     );
     return Math.max(0, days);
   }
@@ -228,11 +230,11 @@ function getLastOnlineDays(user: any): number | null {
   return null;
 }
 
-function getUserIdString(user: any): string {
+function getUserIdString(user: User): string {
   return String(user.id);
 }
 
-function getUserDisplayName(user: any): string {
+function getUserDisplayName(user: User): string {
   const parts = [user.firstName || "", user.lastName || ""]
     .map((part) => part.trim())
     .filter(Boolean);
@@ -247,7 +249,7 @@ function buildTargetDisplay(target: TargetChat): string {
   }`;
 }
 
-function buildUserDisplay(user: any): string {
+function buildUserDisplay(user: User): string {
   const parts: string[] = [];
   const userId = getUserIdString(user);
   const displayName = getUserDisplayName(user).trim();
@@ -327,7 +329,7 @@ function normalizeErrorMessage(detail: string): string {
   return detail;
 }
 
-function toTargetChat(entity: any): TargetChat {
+function toTargetChat(entity: Chat): TargetChat {
   return {
     entity,
     titleDisplay: entity.title || "未命名对话",
@@ -389,7 +391,7 @@ async function getAdminCollection(
   if (target.isChannel) {
     const res: any = await client.call({
       _: 'channels.getParticipants',
-      channel: target.entity,
+      channel: target.entity.raw as unknown as tl.TypeInputChannel,
       filter: { _: 'channelParticipantsAdmins' },
       offset: 0,
       limit: 200,
@@ -403,7 +405,7 @@ async function getAdminCollection(
   } else {
     const res: any = await client.call({
       _: 'channels.getParticipants',
-      channel: target.entity,
+      channel: target.entity.raw as unknown as tl.TypeInputChannel,
       filter: { _: 'channelParticipantsRecent' },
       offset: 0,
       limit: 200,
@@ -602,7 +604,7 @@ async function collectAdminStat(
       const fromEntity = await client.resolvePeer(user.id);
       const searchResult: any = await client.call({
         _: 'messages.search',
-        peer: target.entity,
+        peer: target.entity.raw as unknown as tl.TypeInputPeer,
         q: "",
         filter: { _: 'inputMessagesFilterEmpty' },
         minDate: Math.floor(Date.now() / 1000) - WEEK_SECONDS,
@@ -644,7 +646,7 @@ async function collectAdminStat(
     const fromEntity = await client.resolvePeer(user.id);
     const historyResult: any = await client.call({
       _: 'messages.search',
-      peer: target.entity,
+      peer: target.entity.raw as unknown as tl.TypeInputPeer,
       q: "",
       filter: { _: 'inputMessagesFilterEmpty' },
       minDate: 0,
@@ -1079,7 +1081,7 @@ function parseTrimArgs(remainder: string): {
   };
 }
 
-function isCreatorUser(user: any): boolean {
+function isCreatorUser(user: User): boolean {
   const participant = (user as { participant?: unknown }).participant;
   const pType = getRawType(participant);
   return (
@@ -1090,7 +1092,7 @@ function isCreatorUser(user: any): boolean {
 
 async function demoteAdminInTarget(
   target: TargetChat,
-  user: any,
+  user: User,
 ): Promise<void> {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
@@ -1173,7 +1175,7 @@ function parseSeatActionArgs(remainder: string): {
 async function findUserInChatParticipants(
   target: TargetChat,
   identifier: string,
-): Promise<any | undefined> {
+): Promise<User | undefined> {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
@@ -1182,7 +1184,7 @@ async function findUserInChatParticipants(
 
   const res: any = await client.call({
     _: 'channels.getParticipants',
-    channel: target.entity,
+    channel: target.entity.raw as unknown as tl.TypeInputChannel,
     filter: { _: 'channelParticipantsRecent' },
     offset: 0,
     limit: 200,
@@ -1190,17 +1192,21 @@ async function findUserInChatParticipants(
   });
 
   const users: any[] = res?.users || [];
-  return users.find((user: any) => {
+  const found = users.find((user: any) => {
     if (!hasRawType(user, "user")) return false;
     if (isNumeric) return String(user.id) === String(Number(identifier));
     return (user.username || "").toLowerCase() === username;
   });
+  if (found) {
+    return new User(found as tl.RawUser);
+  }
+  return undefined;
 }
 
 async function findUserInChannelParticipants(
   target: TargetChat,
   identifier: string,
-): Promise<tl.RawUser | undefined> {
+): Promise<User | undefined> {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
@@ -1211,7 +1217,7 @@ async function findUserInChannelParticipants(
     try {
       const res = await client.call({
         _: 'channels.getParticipants',
-        channel: target.entity,
+        channel: target.entity.raw as unknown as tl.TypeInputChannel,
         filter: { _: 'channelParticipantsSearch', q: username } as tl.TypeChannelParticipantsFilter,
         offset: 0,
         limit: 200,
@@ -1227,7 +1233,7 @@ async function findUserInChannelParticipants(
           (user.username ?? "").toLowerCase() === username
         );
       });
-      if (matched) return matched;
+      if (matched) return new User(matched);
     } catch (e: unknown) { logger.warn(`[admin_board] Ignore and continue to other fallbacks.:`, e) }
   }
 
@@ -1254,7 +1260,7 @@ async function findUserInChannelParticipants(
     const matched = users.find(
       (user) => String(user.id) === String(Number(identifier)),
     );
-    if (matched) return matched;
+    if (matched) return new User(matched);
 
     const participants = rawResult.participants ?? [];
     if (!participants.length) break;
@@ -1267,7 +1273,7 @@ async function findUserInChannelParticipants(
 async function resolveUserForSeatAction(
   target: TargetChat,
   identifier: string,
-): Promise<tl.RawUser | undefined> {
+): Promise<User | undefined> {
   const client = await getGlobalClient();
   if (!client) throw new Error("Telegram 客户端未初始化");
 
@@ -1281,7 +1287,7 @@ async function resolveUserForSeatAction(
     try {
       const entity = await client.getChat(candidate);
       if (hasRawType(entity, "user")) {
-        return entity.raw as unknown as tl.RawUser;
+        return entity as unknown as User;
       }
     } catch (e: unknown) { logger.warn(`[admin_board] Ignore and continue to target-specific fallback.:`, e) }
   }
@@ -1317,7 +1323,7 @@ async function handleSeatAction(
     disableWebPreview: true,
   });
 
-  const resolvedUsers = new Map<string, any>();
+  const resolvedUsers = new Map<string, User>();
   const rawResolvedIds = new Set<string>();
   const failures: string[] = [];
 
