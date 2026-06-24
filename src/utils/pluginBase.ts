@@ -67,6 +67,25 @@ abstract class Plugin {
   cleanup?(): Promise<void> | void;
 }
 
+/**
+ * Legacy plugin compatibility type.
+ *
+ * During the teleproto → mtcute migration, plugins written in the old
+ * teleproto style use `Api.Message` as their handler parameter type.
+ * Since `Api.Message` (from the teleproto type stub) is structurally
+ * compatible at runtime but not at the type level with mtcute's
+ * `MessageContext`, this type alias provides a bridge for plugin
+ * `cmdHandlers` declarations.
+ *
+ * Plugin handlers declared with this type are callable from
+ * pluginManager (which passes `MessageContext`) and from the
+ * legacy teleproto dispatcher (which passes `Api.Message`).
+ */
+export type LegacyPluginHandler = (
+  msg: import("teleproto").Api.Message,
+  trigger?: import("teleproto").Api.Message
+) => Promise<void>;
+
 function isValidPlugin(obj: unknown): obj is Plugin {
   if (!obj || typeof obj !== "object") return false;
   const candidate = obj as Partial<Plugin>;
