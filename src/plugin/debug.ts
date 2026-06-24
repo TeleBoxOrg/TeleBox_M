@@ -96,17 +96,26 @@ class DebugPlugin extends Plugin {
                 targetInfo += `🔗 ${parseResult.info}<br><br>`;
 
                 if (parsedMsg.sender) {
-                  targetInfo += await formatUserInfo(
-                    client,
-                    parsedMsg.sender.id,
-                    "LINK MESSAGE SENDER",
-                    true
-                  );
+                  const [userInfo, msgInfo, chatInfo] = await Promise.all([
+                    formatUserInfo(
+                      client,
+                      parsedMsg.sender.id,
+                      "LINK MESSAGE SENDER",
+                      true
+                    ),
+                    formatMessageInfo(parsedMsg),
+                    formatChatInfo(client, parsedMsg),
+                  ]);
+                  targetInfo += userInfo;
                   targetInfo += "<br>";
+                  targetInfo += msgInfo;
+                  targetInfo += "<br>";
+                  targetInfo += chatInfo;
+                } else {
+                  targetInfo += await formatMessageInfo(parsedMsg);
+                  targetInfo += "<br>";
+                  targetInfo += await formatChatInfo(client, parsedMsg);
                 }
-                targetInfo += await formatMessageInfo(parsedMsg);
-                targetInfo += "<br>";
-                targetInfo += await formatChatInfo(client, parsedMsg);
               } else if (parseResult.type === "entity") {
                 // 实体链接解析结果
                 const entity = parseResult.data as Peer;
@@ -132,18 +141,23 @@ class DebugPlugin extends Plugin {
             }
           }
 
-          // 显示消息详细信息
-          targetInfo += await formatMessageInfo(msg);
+          // 显示消息详细信息 — 并行获取消息信息、自身信息和聊天信息
+          const [msgInfo, selfInfo, chatInfo] = await Promise.all([
+            formatMessageInfo(msg),
+            !msg.replyToMessage ? formatSelfInfo(client) : Promise.resolve(""),
+            formatChatInfo(client, msg),
+          ]);
+          targetInfo += msgInfo;
           targetInfo += "<br>";
 
           if (!msg.replyToMessage) {
             // 没有回复消息时，显示自己的信息
-            targetInfo += await formatSelfInfo(client);
+            targetInfo += selfInfo;
             targetInfo += "<br>";
           }
 
           // 显示聊天信息
-          targetInfo += await formatChatInfo(client, msg);
+          targetInfo += chatInfo;
         }
 
         await msg.edit({

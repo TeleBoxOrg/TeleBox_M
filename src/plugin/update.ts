@@ -38,8 +38,7 @@ async function getBranches(): Promise<string[]> {
 }
 
 async function findMainBranch(): Promise<{ remote: string; branch: string } | null> {
-  const branches = await getBranches();
-  const allRemotes = await getRemotes();
+  const [branches, allRemotes] = await Promise.all([getBranches(), getRemotes()]);
   const mainBranchNames = ["main", "master"];
 
   const remotes = allRemotes.includes("origin")
