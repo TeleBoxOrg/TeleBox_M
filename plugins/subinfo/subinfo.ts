@@ -454,7 +454,10 @@ class SubinfoPlugin extends Plugin {
         if (expireTs && Date.now() > expireTs * 1000) { status = "过期"; statusEmoji = "❌"; }
 
         // 获取节点信息
-        try { result.nodeInfo = await getNodeInfo(url); } catch { result.nodeInfo = null; }
+        try { result.nodeInfo = await getNodeInfo(url); } catch (e) {
+          console.warn('[subinfo] 获取节点信息失败:', url, e);
+          result.nodeInfo = null;
+        }
 
         return {
             ...result, success: true, status, statusEmoji, upload, download, total, used, remain, percent, expireTs, startTs
