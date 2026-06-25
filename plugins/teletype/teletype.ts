@@ -11,6 +11,9 @@ import * as path from "path";
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+
+type TeletypeDbData = { autoMode: boolean; enabledUsers: string[] };
+
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -64,7 +67,7 @@ class TeletypePlugin extends Plugin {
       this.db = {
         data: { autoMode: false, enabledUsers: [] },
         write: async () => {}
-      } as unknown as Awaited<ReturnType<typeof JSONFilePreset<{ autoMode: boolean; enabledUsers: string[] }>>>;
+      } as unknown as Awaited<ReturnType<typeof JSONFilePreset<TeletypeDbData>>>;
     }
   }
   

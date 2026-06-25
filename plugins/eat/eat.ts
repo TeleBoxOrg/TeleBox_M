@@ -8,6 +8,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
 import { logger } from "@utils/logger";
+import type { UsersGetFullUserResult } from "@utils/clientInternals";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -195,7 +196,7 @@ async function downloadProfilePhotoForId(client: TelegramClient, userId: number)
     const fullUser = await client.call({
       _: 'users.getFullUser',
       id: peer as unknown as tl.TypeInputUser,
-    }) as unknown as { full_user?: { photo?: { _?: string; photo_id?: bigint } } };
+    }) as unknown as UsersGetFullUserResult;
     const photo = fullUser?.full_user?.photo;
     if (!photo || photo._ !== 'userProfilePhoto') return null;
     const location: Record<string, unknown> = {
