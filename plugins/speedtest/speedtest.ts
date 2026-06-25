@@ -584,7 +584,7 @@ async function runSystemSpeedtest(serverId?: number, retryCount: number = 0): Pr
               exe = stdout.split(/\r?\n/)[0].trim();
               break;
             }
-          } catch { }
+          } catch { /* sharp not available, skip output */ }
         }
       }
     }
@@ -1046,7 +1046,7 @@ async function convertImageToStickerWebp(
           .webp({ quality: 65, effort: 6 })
           .toFile(stickerPath);
       }
-    } catch { }
+    } catch { /* sharp output buffer unavailable, skip */ }
 
     return stickerPath;
   } catch (e) {
@@ -1414,10 +1414,10 @@ const speedtest = async (msg: Api.Message) => {
               });
               try {
                 await msg.delete();
-              } catch { }
+              } catch { /* msg may already be deleted */ }
               try {
                 fs.unlinkSync(imagePath);
-              } catch { }
+              } catch { /* temp file may already be cleaned up */ }
               return true;
             } else if (type === "file") {
               await msg.client?.sendFile(msg.peerId, {
@@ -1428,10 +1428,10 @@ const speedtest = async (msg: Api.Message) => {
               });
               try {
                 await msg.delete();
-              } catch { }
+              } catch { /* msg may already be deleted */ }
               try {
                 fs.unlinkSync(imagePath);
-              } catch { }
+              } catch { /* temp file may already be cleaned up */ }
               return true;
             } else if (type === "sticker") {
               // 转为贴纸发送
@@ -1451,10 +1451,10 @@ const speedtest = async (msg: Api.Message) => {
                 // 清理临时文件
                 try {
                   fs.unlinkSync(imagePath);
-                } catch { }
+                } catch { /* temp file may already be cleaned up */ }
                 try {
                   fs.unlinkSync(stickerPath);
-                } catch { }
+                } catch { /* temp file may already be cleaned up */ }
                 // 同时展示文字说明
                 await msg.edit({ text: finalDescription, parseMode: "html" });
                 return true;
