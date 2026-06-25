@@ -19,6 +19,7 @@ import axios from "axios";
 import sharp from "sharp";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import { getErrorMessage, getErrorCode } from "@utils/errorHelpers";
 import type { ClientInternals } from "@utils/clientInternals";
 
 const prefixes = getPrefixes();
@@ -190,7 +191,7 @@ function readConfig(): SpeedtestConfig {
       const data = JSON.parse(fs.readFileSync(SPEEDTEST_JSON, "utf8"));
       return data as SpeedtestConfig;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to read config:", error);
   }
   return {};
@@ -202,7 +203,7 @@ function writeConfig(patch: Partial<SpeedtestConfig>): void {
     const current = readConfig();
     const next = { ...current, ...patch };
     fs.writeFileSync(SPEEDTEST_JSON, JSON.stringify(next));
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to write config:", error);
   }
 }
@@ -222,7 +223,7 @@ function removeDefaultServer(): void {
     const cfg = readConfig();
     delete cfg.default_server_id;
     fs.writeFileSync(SPEEDTEST_JSON, JSON.stringify(cfg));
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to remove default server:", error);
   }
 }
@@ -337,7 +338,7 @@ async function downloadCli(): Promise<void> {
     }
 
     logger.info(`Speedtest CLI successfully installed at: ${SPEEDTEST_PATH}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to download speedtest CLI:", error);
 
     // 清理可能存在的损坏文件
@@ -411,7 +412,7 @@ async function getIpApi(ip: string): Promise<{
     }
 
     return { asInfo, ccName, ccCode, ccFlag, ccLink };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to get IP info:", error);
     return { asInfo: "", ccName: "", ccCode: "", ccFlag: "", ccLink: "" };
   }
@@ -441,7 +442,7 @@ async function getInterfaceTraffic(interfaceName: string): Promise<{
       );
       return { rxBytes, txBytes, mtu };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to get interface traffic:", error);
   }
   return { rxBytes: 0, txBytes: 0, mtu: 0 };
@@ -491,8 +492,8 @@ async function diagnoseSpeedtestExecutable(): Promise<{ canRun: boolean; error?:
     }
 
     return { canRun: false, error: "可执行文件无法运行，可能是架构不匹配或文件损坏", needsReinstall: true };
-  } catch (error: any) {
-    return { canRun: false, error: error.message || "诊断失败", needsReinstall: true };
+  } catch (error: unknown) {
+    return { canRun: false, error: getErrorMessage(error) || "诊断失败", needsReinstall: true };
   }
 }
 
@@ -626,10 +627,11 @@ async function runSystemSpeedtest(serverId?: number, retryCount: number = 0): Pr
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = getErrorMessage(error);
     logger.error('runSystemSpeedtest failed:', error);
     // 如果是可执行文件本身的问题，尝试回退到内置可执行文件一次
-    if (retryCount < MAX_RETRIES && (error.message?.includes('系统未安装') || error.message?.includes('Command failed'))) {
+    if (retryCount < MAX_RETRIES && (errMsg.includes('系统未安装') || errMsg.includes('Command failed'))) {
       logger.info('System speedtest failed, falling back to built-in speedtest...');
       return await runSpeedtest(serverId, retryCount + 1, false);
     }
@@ -730,17 +732,19 @@ async function runSpeedtest(serverId?: number, retryCount: number = 0, useSystem
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Speedtest failed:", error);
+    const errMsg = getErrorMessage(error);
+    const errCode = getErrorCode(error);
 
     // 检查是否是真正的可执行文件问题（排除网络问题）
-    const isNetworkError = error.message?.includes('Cannot read') ||
-      error.message?.includes('Upload: FAILED') ||
-      error.message?.includes('网络连接错误') ||
-      error.message?.includes('网络环境问题');
+    const isNetworkError = errMsg.includes('Cannot read') ||
+      errMsg.includes('Upload: FAILED') ||
+      errMsg.includes('网络连接错误') ||
+      errMsg.includes('网络环境问题');
 
-    const isExecutableIssue = error.message?.includes('Command failed') &&
-      error.message?.includes(SPEEDTEST_PATH) &&
+    const isExecutableIssue = errMsg.includes('Command failed') &&
+      errMsg.includes(SPEEDTEST_PATH) &&
       !isNetworkError &&
       retryCount < MAX_RETRIES;
 
@@ -750,20 +754,20 @@ async function runSpeedtest(serverId?: number, retryCount: number = 0, useSystem
         await autoFixSpeedtest();
         // 重试一次，增加重试计数
         return await runSpeedtest(serverId, retryCount + 1, useSystem);
-      } catch (fixError: any) {
-        throw new Error(`speedtest可执行文件问题，自动修复失败: ${fixError.message || String(fixError)}\n\n请尝试手动执行 'speedtest update' 命令`);
+      } catch (fixError: unknown) {
+        throw new Error(`speedtest可执行文件问题，自动修复失败: ${getErrorMessage(fixError)}\n\n请尝试手动执行 'speedtest update' 命令`);
       }
     }
 
     // 如果已达到最大重试次数，不再尝试修复
-    if (retryCount >= MAX_RETRIES && error.message?.includes('Command failed')) {
-      throw new Error(`speedtest执行失败，已达到最大重试次数 (${MAX_RETRIES})。\n\n错误信息: ${error.message}\n\n建议:\n1. 检查网络连接\n2. 手动执行 'speedtest update' 重新安装\n3. 检查系统权限和防火墙设置`);
+    if (retryCount >= MAX_RETRIES && errMsg.includes('Command failed')) {
+      throw new Error(`speedtest执行失败，已达到最大重试次数 (${MAX_RETRIES})。\n\n错误信息: ${errMsg}\n\n建议:\n1. 检查网络连接\n2. 手动执行 'speedtest update' 重新安装\n3. 检查系统权限和防火墙设置`);
     }
 
     // 如果是指定服务器失败，尝试自动选择
-    if (serverId && (error.message?.includes('NoServersException') ||
-      error.message?.includes('Server not found') ||
-      error.message?.includes('不可用'))) {
+    if (serverId && (errMsg.includes('NoServersException') ||
+      errMsg.includes('Server not found') ||
+      errMsg.includes('不可用'))) {
       logger.info(`Server ${serverId} failed, trying auto selection...`);
       try {
         return await runSpeedtest(undefined, retryCount, useSystem); // 递归调用，不指定服务器ID，保持重试计数
@@ -774,12 +778,12 @@ async function runSpeedtest(serverId?: number, retryCount: number = 0, useSystem
     }
 
     // 处理超时错误
-    if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+    if (errCode === 'ETIMEDOUT' || errMsg.includes('timeout')) {
       throw new Error("测试超时，可能网络较慢或服务器繁忙，建议：\n1. 检查网络连接\n2. 尝试其他测试服务器\n3. 稍后重试");
     }
 
     // 处理命令执行错误
-    if (error.code === 'ENOENT') {
+    if (errCode === 'ENOENT') {
       throw new Error("speedtest 程序未找到，请使用 'speedtest update' 重新下载");
     }
 
@@ -803,7 +807,7 @@ async function getAllServers(): Promise<ServerInfo[]> {
     const result = JSON.parse(stdout);
 
     return result.servers || [];
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to get servers:", error);
     return [];
   }
@@ -853,17 +857,19 @@ async function quickPingTest(serverId: number): Promise<{ available: boolean; pi
     }
 
     return { available: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(`Server ${serverId} ping test failed:`, error);
+    const errMsg = getErrorMessage(error);
+    const errCode = getErrorCode(error);
 
-    if (error.code === 'ETIMEDOUT') {
+    if (errCode === 'ETIMEDOUT') {
       return { available: false, error: "连接超时" };
     }
-    if (error.message?.includes('NoServersException')) {
+    if (errMsg.includes('NoServersException')) {
       return { available: false, error: "服务器不可用" };
     }
 
-    return { available: false, error: error.message || "未知错误" };
+    return { available: false, error: errMsg || "未知错误" };
   }
 }
 
@@ -882,9 +888,9 @@ async function testServerAvailability(serverId: number): Promise<{ available: bo
 
     // 服务器在列表中就认为可用
     return { available: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(`Server ${serverId} availability test failed:`, error);
-    return { available: false, error: error.message || "测试失败" };
+    return { available: false, error: getErrorMessage(error) || "测试失败" };
   }
 }
 
@@ -975,15 +981,17 @@ async function checkNetworkConnectivity(): Promise<{ connected: boolean; message
     // 测试基本网络连接
     await axios.get('https://www.speedtest.net', { timeout: 10000 });
     return { connected: true, message: "网络连接正常" };
-  } catch (error: any) {
-    if (error.code === 'ENOTFOUND') {
+  } catch (error: unknown) {
+    const errCode = getErrorCode(error);
+    const errMsg = getErrorMessage(error);
+    if (errCode === 'ENOTFOUND') {
       return { connected: false, message: "DNS解析失败，请检查DNS设置" };
-    } else if (error.code === 'ECONNREFUSED') {
+    } else if (errCode === 'ECONNREFUSED') {
       return { connected: false, message: "连接被拒绝，可能存在防火墙阻止" };
-    } else if (error.code === 'ETIMEDOUT') {
+    } else if (errCode === 'ETIMEDOUT') {
       return { connected: false, message: "连接超时，网络可能较慢或不稳定" };
     } else {
-      return { connected: false, message: `网络连接异常: ${error.message}` };
+      return { connected: false, message: `网络连接异常: ${errMsg}` };
     }
   }
 }
@@ -1006,7 +1014,7 @@ async function saveSpeedtestImage(url: string): Promise<string | null> {
     }
 
     return imagePath;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Failed to save speedtest image:", error);
     return null;
   }
@@ -1497,9 +1505,9 @@ const speedtest = async (msg: Api.Message) => {
         parseMode: "html",
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("SpeedNext plugin error:", error);
-    const errorMessage = error.message || String(error);
+    const errorMessage = getErrorMessage(error);
     const displayError =
       errorMessage.length > 100
         ? errorMessage.substring(0, 100) + "..."
