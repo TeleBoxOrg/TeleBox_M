@@ -102,3 +102,20 @@ export type MtcuteInputUser = tl.TypeInputUser;
  * Replaces: `as unknown as import("@mtcute/core").tl.TypeMessageEntity[]`
  */
 export type MtcuteMessageEntities = tl.TypeMessageEntity[];
+
+/**
+ * Entity-like object used for display name extraction.
+ * Matches the shape of common Telegram entity objects with username/firstName/title/id fields.
+ */
+export type DisplayableEntity = {
+    username?: string;
+    firstName?: string;
+    title?: string;
+    id?: number | string;
+};
+
+/** Entity with numeric id property (common for mtcute User/Peer objects) */
+export type EntityWithId = {
+    id?: number | bigint;
+    raw?: { id?: number | bigint };
+};
