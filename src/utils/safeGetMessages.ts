@@ -1,4 +1,5 @@
-import type { TelegramClient, Message, InputPeerLike } from "@mtcute/node";
+import type { Message, InputPeerLike } from "@mtcute/core";
+import type { TelegramClient } from "@mtcute/core/highlevel/client";
 import type { MessageContext } from "@mtcute/dispatcher";
 
 function isUndefinedDateCrash(error: unknown): boolean {
