@@ -770,32 +770,34 @@ function rebuildImgCaption(state: CaptchaState): string {
  * 图片模式更新 caption，文字模式更新消息正文。
  */
 async function refreshActiveCaptchas(client: TelegramClient): Promise<void> {
-  for (const [userId, state] of states.entries()) {
-    const promptMsgId = state.msgIds[0];
-    if (!promptMsgId) continue;
-    try {
-      const isImg = state.mode === CaptchaMode.IMG_DIGIT || state.mode === CaptchaMode.IMG_MIXED;
-      if (isImg) {
-        const newCaption = rebuildImgCaption(state);
-        await client.editMessage({
-          chatId: userId,
-          message: promptMsgId,
-          text: newCaption,
-        });
-      } else {
-        const newText = rebuildCaptchaText(state);
-        if (newText) {
+  const entries = Array.from(states.entries()).filter(([, state]) => state.msgIds[0]);
+  await Promise.all(
+    entries.map(async ([userId, state]) => {
+      try {
+        const promptMsgId = state.msgIds[0];
+        const isImg = state.mode === CaptchaMode.IMG_DIGIT || state.mode === CaptchaMode.IMG_MIXED;
+        if (isImg) {
+          const newCaption = rebuildImgCaption(state);
           await client.editMessage({
             chatId: userId,
             message: promptMsgId,
-            text: newText,
+            text: newCaption,
           });
+        } else {
+          const newText = rebuildCaptchaText(state);
+          if (newText) {
+            await client.editMessage({
+              chatId: userId,
+              message: promptMsgId,
+              text: newText,
+            });
+          }
         }
+      } catch (e: unknown) {
+        log(LogLevel.WARN, `refreshActiveCaptchas: failed to update msg for ${userId}`, e);
       }
-    } catch (e: unknown) {
-      log(LogLevel.WARN, `refreshActiveCaptchas: failed to update msg for ${userId}`, e);
-    }
-  }
+    })
+  );
 }
 
 // ─── 发送验证 ─────────────────────────────────────────────────────────────────

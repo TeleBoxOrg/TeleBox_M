@@ -156,13 +156,15 @@ async function ensureQuoteAssets(): Promise<void> {
     await Promise.all(missingAssets.map((rel) => downloadFileIfMissingOrChanged(`${QUOTE_ASSETS_BASE_URL}/${rel}`, path.join(QUOTE_ASSETS_DIR, rel))));
   }
 
-  for (const font of QUOTE_FONT_FILES) {
-    const filePath = path.join(QUOTE_ASSETS_DIR, font.name);
-    if (!fs.existsSync(filePath)) {
-      logger.warn("quote loader downloading CJK font", { name: font.name });
-      await downloadFileIfMissingOrChanged(font.url, filePath);
-    }
-  }
+  await Promise.all(
+    QUOTE_FONT_FILES.map(async (font) => {
+      const filePath = path.join(QUOTE_ASSETS_DIR, font.name);
+      if (!fs.existsSync(filePath)) {
+        logger.warn("quote loader downloading CJK font", { name: font.name });
+        await downloadFileIfMissingOrChanged(font.url, filePath);
+      }
+    })
+  );
 }
 
 async function getQuoteGen(): Promise<any> {
