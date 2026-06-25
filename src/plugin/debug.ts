@@ -112,9 +112,13 @@ class DebugPlugin extends Plugin {
                   targetInfo += "<br>";
                   targetInfo += chatInfo;
                 } else {
-                  targetInfo += await formatMessageInfo(parsedMsg);
+                  const [msgInfo, chatInfo] = await Promise.all([
+                    formatMessageInfo(parsedMsg),
+                    formatChatInfo(client, parsedMsg),
+                  ]);
+                  targetInfo += msgInfo;
                   targetInfo += "<br>";
-                  targetInfo += await formatChatInfo(client, parsedMsg);
+                  targetInfo += chatInfo;
                 }
               } else if (parseResult.type === "entity") {
                 // 实体链接解析结果
