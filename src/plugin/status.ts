@@ -302,8 +302,10 @@ class TeleBoxSystemMonitor extends Plugin {
     const processMemUsage = process.memoryUsage();
     const processMemPercent = Math.round((processMemUsage.rss / totalmem) * 1000) / 10;
 
-    const cpuUsage = await this.getCpuUsage();
-    const processCpuUsage = await this.getProcessCpuUsage();
+    const [cpuUsage, processCpuUsage] = await Promise.all([
+      this.getCpuUsage(),
+      this.getProcessCpuUsage(),
+    ]);
 
     const systemDetails = await this.gatherSysInfoDetails();
 
@@ -443,13 +445,17 @@ class TeleBoxSystemMonitor extends Plugin {
     const memoryUsage = this.formatByteUsage(usedMem, totalmem);
     const memPercent = Math.round((usedMem / totalmem) * 100);
 
-    const cpuUsage = await this.getCpuUsage();
-    const processCpuUsage = await this.getProcessCpuUsage();
+    const [cpuUsage, processCpuUsage] = await Promise.all([
+      this.getCpuUsage(),
+      this.getProcessCpuUsage(),
+    ]);
     const processMemUsage = process.memoryUsage();
     const processMemPercent = Math.round((processMemUsage.rss / totalmem) * 1000) / 10;
 
-    const systemDetails = await this.gatherSysInfoDetails();
-    const versions = await this.getVersionInfo();
+    const [systemDetails, versions] = await Promise.all([
+      this.gatherSysInfoDetails(),
+      this.getVersionInfo(),
+    ]);
 
     const loadavgStr = platform === "win32"
       ? "N/A"
