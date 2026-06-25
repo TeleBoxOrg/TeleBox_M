@@ -501,7 +501,7 @@ class CleanPlugin extends Plugin {
     await this.editMessage(msg, `❌ <b>错误:</b> ${htmlEscape(errorMsg)}`);
   }
 
-  private async handleError(msg: MessageContext, error: any): Promise<void> {
+  private async handleError(msg: MessageContext, error: unknown): Promise<void> {
     logger.error(`[CleanPlugin] 错误:`, error);
     
     let errorMsg = `❌ <b>操作失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`;
@@ -518,7 +518,7 @@ class CleanPlugin extends Plugin {
     await this.editMessage(msg, errorMsg);
   }
 
-  private async handleFloodWait(msg: MessageContext, error: any): Promise<void> {
+  private async handleFloodWait(msg: MessageContext, error: unknown): Promise<void> {
     const waitTime = parseInt(getErrorMessage(error).match(/\d+/)?.[0] || "60");
     await this.editMessage(msg, `⏳ 需要等待 ${waitTime} 秒后继续`);
     await sleep((waitTime + 1) * 1000);

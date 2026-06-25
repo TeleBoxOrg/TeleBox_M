@@ -297,10 +297,10 @@ class AffPlugin extends Plugin {
   }
 
   // 错误处理
-  private async handleError(msg: MessageContext, error: any): Promise<void> {
+  private async handleError(msg: MessageContext, error: unknown): Promise<void> {
     logger.error(`[${this.PLUGIN_NAME}] Error:`, error);
     
-    const errorMsg = this.htmlEscape(error?.message || String(error) || "未知错误");
+    const errorMsg = this.htmlEscape(error instanceof Error ? error.message : String(error) || "未知错误");
     
     await msg.edit({
       text: html`❌ <b>操作失败：</b>${errorMsg}`,

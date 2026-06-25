@@ -8,6 +8,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { hasRawType } from "@utils/entityTypeGuards";
+import type { TelegramClient } from "@mtcute/node";
 import { getErrorMessage } from "@utils/errorHelpers";
 // HTML转义工具
 const htmlEscape = (text: string): string => 
@@ -148,7 +149,7 @@ class IdsPlugin extends Plugin {
     return `${d.getFullYear()}年${d.getMonth() + 1}月`;
   }
 
-  private async getUserInfo(client: any, user: unknown, userId: number, msg: MessageContext): Promise<UserInfo> {
+  private async getUserInfo(client: TelegramClient, user: unknown, userId: number, msg: MessageContext): Promise<UserInfo> {
     const info: UserInfo = {
       id: userId, user, username: (user as { username?: string })?.username || null,
       firstName: (user as { firstName?: string })?.firstName || (user as { first_name?: string })?.first_name || null,
@@ -162,7 +163,7 @@ class IdsPlugin extends Plugin {
     try {
       const full = await client.call({
         _: "users.getFullUser",
-        id: await client.resolvePeer(userId),
+        id: await client.resolvePeer(userId) as unknown as any,
       }) as { fullUser?: { about?: string; commonChatsCount?: number } };
       if (full.fullUser) {
         info.bio = full.fullUser.about || null;
@@ -175,7 +176,7 @@ class IdsPlugin extends Plugin {
       try {
         const p = await client.call({
           _: "channels.getParticipant",
-          channel: await client.resolvePeer(msg.chat.id),
+          channel: await client.resolvePeer(msg.chat.id) as unknown as any,
           participant: await client.resolvePeer(userId),
         }) as { participant?: { date?: number } };
         if (p.participant?.date) {
@@ -189,11 +190,11 @@ class IdsPlugin extends Plugin {
     return info;
   }
 
-  private async getUserDC(client: any, userId: number, user: unknown): Promise<string> {
+  private async getUserDC(client: TelegramClient, userId: number, user: unknown): Promise<string> {
     try {
       const full = await client.call({
         _: "users.getFullUser",
-        id: await client.resolvePeer(userId),
+        id: await client.resolvePeer(userId) as unknown as any,
       }) as { users?: Array<{ photo?: { _?: string; dcId?: number } }> };
       const u = full.users?.[0];
       if (u?.photo?._ !== "userProfilePhotoEmpty" && u?.photo) return `DC${u.photo.dcId}`;
@@ -237,7 +238,7 @@ class IdsPlugin extends Plugin {
     return result;
   }
 
-  private async parseTarget(client: any, target: string) {
+  private async parseTarget(client: TelegramClient, target: string) {
     if (target.startsWith("@")) {
       const e = await client.getChat(target);
       return { user: e, id: Number(e.id) };

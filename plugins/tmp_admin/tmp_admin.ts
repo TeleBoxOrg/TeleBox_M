@@ -116,8 +116,8 @@ function codeTag(text: string | number): string {
   return `<code>${htmlEscape(String(text))}</code>`;
 }
 
-function isMessageNotModified(error: any): boolean {
-  return String(error?.message || error).includes("MESSAGE_NOT_MODIFIED");
+function isMessageNotModified(error: unknown): boolean {
+  return String(error instanceof Error ? error.message : error).includes("MESSAGE_NOT_MODIFIED");
 }
 
 async function editMessageIgnoringNotModified(
@@ -681,14 +681,14 @@ class TmpAdminPlugin extends Plugin {
       }, Math.min(Math.max(0, delay), maxTimerDelayMs));
     };
 
-    const scheduleRetry = (error: any) => {
+    const scheduleRetry = (error: unknown) => {
       if (job.retryCount >= maxExpiryRetries) {
         this.jobs.delete(key);
         void this.deleteStoredJobQuiet(key);
         void this.sendReplyQuiet(
           job,
           `临时管理员到期自动解除失败, 已重试 ${maxExpiryRetries} 次: ${codeTag(
-            error?.message || error
+            error instanceof Error ? error.message : String(error)
           )}`
         );
         return;

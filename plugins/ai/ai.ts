@@ -531,25 +531,26 @@ const buildResponsesInputContent = (
   return parts;
 };
 
-const extractErrorMessage = (error: any): string => {
-  const msgText = typeof error?.message === "string" ? error.message : "";
+const extractErrorMessage = (error: unknown): string => {
+  const err = error as { message?: string; cause?: unknown; config?: { signal?: { reason?: unknown } }; name?: string; code?: string; response?: { status?: number; data?: { error?: { message?: string }; message?: string } } };
+  const msgText = typeof err?.message === "string" ? err.message : "";
   const reasonText =
-    typeof error?.cause === "string"
-      ? error.cause
-      : error?.cause
-        ? String(error.cause)
-        : error?.config?.signal?.reason
-          ? String(error.config.signal.reason)
+    typeof err?.cause === "string"
+      ? err.cause
+      : err?.cause
+        ? String(err.cause)
+        : err?.config?.signal?.reason
+          ? String(err.config.signal.reason)
           : "";
 
   if ((msgText + reasonText).includes("请求超时")) return "请求超时";
-  if (error?.name === "AbortError" || msgText.toLowerCase().includes("aborted"))
+  if (err?.name === "AbortError" || msgText.toLowerCase().includes("aborted"))
     return "操作已取消";
-  if (error?.code === "ECONNABORTED") return "请求超时";
-  if (error?.response?.status === 429) return "请求过于频繁，请稍后重试";
+  if (err?.code === "ECONNABORTED") return "请求超时";
+  if (err?.response?.status === 429) return "请求过于频繁，请稍后重试";
   return (
-    error?.response?.data?.error?.message ||
-    error?.response?.data?.message ||
+    err?.response?.data?.error?.message ||
+    err?.response?.data?.message ||
     msgText ||
     "未知错误"
   );
@@ -575,11 +576,11 @@ const PROCESSING_TEXT: Record<ProcessingKind, string> = {
   video: "🎬 <b>正在处理 video 任务</b>",
 };
 
-const formatErrorForDisplay = (error: any): string => {
+const formatErrorForDisplay = (error: unknown): string => {
   if (
     error instanceof UserError ||
-    error?.name === "AbortError" ||
-    (typeof error?.message === "string" &&
+    (error instanceof Error && error.name === "AbortError") ||
+    (error instanceof Error &&
       error.message.toLowerCase().includes("aborted"))
   ) {
     const extracted = extractErrorMessage(error);
@@ -600,7 +601,7 @@ const sendProcessing = async (
 
 const sendErrorMessage = async (
   msg: MessageContext,
-  error: any,
+  error: unknown,
   trigger?: MessageContext,
 ): Promise<void> => {
   await MessageSender.sendOrEdit(trigger || msg, formatErrorForDisplay(error), {
@@ -1054,24 +1055,25 @@ const retryWithFixedDelay = async <T>(
   throw lastError;
 };
 
-const isRetryableError = (error: any): boolean => {
+const isRetryableError = (error: unknown): boolean => {
   if (!error) return false;
-  if (error.name === "AbortError") return false;
+  if (error instanceof Error && error.name === "AbortError") return false;
   if (
-    typeof error.message === "string" &&
+    error instanceof Error &&
     error.message.toLowerCase().includes("aborted")
   )
     return false;
 
-  const status = error.response?.status;
+  const err = error as { response?: { status?: number }; isAxiosError?: boolean; code?: string };
+  const status = err?.response?.status;
   if (typeof status === "number") {
     if (status === 429) return true;
     if (status >= 500 && status <= 599) return true;
     return false;
   }
 
-  if (error.isAxiosError && !error.response) return true;
-  if (typeof error.code === "string") return true;
+  if (err.isAxiosError && !err.response) return true;
+  if (typeof err.code === "string") return true;
 
   return false;
 };
@@ -1133,18 +1135,19 @@ interface MessageOptions {
   disableWebPreview?: boolean;
 }
 
-const getEditErrorText = (error: any): string => {
+const getEditErrorText = (error: unknown): string => {
+  const err = error as { errorMessage?: string; message?: string };
   const parts = [
-    typeof error?.errorMessage === "string" ? error.errorMessage : "",
-    typeof error?.message === "string" ? error.message : "",
+    typeof err?.errorMessage === "string" ? err.errorMessage : "",
+    typeof err?.message === "string" ? err.message : "",
   ].filter(Boolean);
   return parts.join(" ");
 };
 
-const isMessageNotModifiedError = (error: any): boolean =>
+const isMessageNotModifiedError = (error: unknown): boolean =>
   getEditErrorText(error).includes("MESSAGE_NOT_MODIFIED");
 
-const shouldFallbackToReplyOnEditError = (error: any): boolean => {
+const shouldFallbackToReplyOnEditError = (error: unknown): boolean => {
   const text = getEditErrorText(error);
   return (
     text.includes("MESSAGE_ID_INVALID") ||
