@@ -828,17 +828,21 @@ async function bootstrapTasks() {
     const db = await getDB();
     logger.info(`[sum] 启动加载，共 ${db.data.tasks.length} 个任务`);
 
-    for (const t of db.data.tasks) {
-      if (!cron.validateCronExpression(t.cron).valid) {
-        logger.error(`[sum] 任务 ${t.id} Cron 表达式无效: ${t.cron}`);
-        continue;
-      }
-      if (t.disabled) {
-        logger.info(`[sum] 任务 ${t.id} 已禁用，跳过`);
-        continue;
-      }
-      await scheduleTask(t);
-    }
+    await Promise.all(
+      db.data.tasks
+        .filter((t) => {
+          if (!cron.validateCronExpression(t.cron).valid) {
+            logger.error(`[sum] 任务 ${t.id} Cron 表达式无效: ${t.cron}`);
+            return false;
+          }
+          if (t.disabled) {
+            logger.info(`[sum] 任务 ${t.id} 已禁用，跳过`);
+            return false;
+          }
+          return true;
+        })
+        .map((t) => scheduleTask(t))
+    );
     logger.info(`[sum] 任务加载完成`);
   } catch (e: unknown) {
     logger.error("[sum] bootstrap 失败:", e);
@@ -1506,11 +1510,11 @@ class SummaryPlugin extends Plugin {
           db.data.seq = String(db.data.tasks.length);
 
           // 重新调度
-          for (const t of db.data.tasks) {
-            if (!t.disabled && cron.validateCronExpression(t.cron).valid) {
-              await scheduleTask(t);
-            }
-          }
+          await Promise.all(
+            db.data.tasks
+              .filter((t) => !t.disabled && cron.validateCronExpression(t.cron).valid)
+              .map((t) => scheduleTask(t))
+          );
 
           await db.write();
 

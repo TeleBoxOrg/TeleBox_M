@@ -213,21 +213,22 @@ export async function getBatchEntitiesWithHash(
   options?: EntityHelperCancellationContext
 ): Promise<InputPeerLike[]> {
   const cancellationContext = resolveCancellationContext(options);
-  const entities: InputPeerLike[] = [];
 
-  for (const entityId of entityIds) {
-    throwIfAborted(cancellationContext.signal);
-    assertCurrentGeneration(cancellationContext.lifecycle);
+  // 并行获取所有实体（保持顺序，失败项返回 null）
+  const results = await Promise.all(
+    entityIds.map(async (entityId) => {
+      throwIfAborted(cancellationContext.signal);
+      assertCurrentGeneration(cancellationContext.lifecycle);
+      try {
+        return await getEntityWithHash(client, entityId);
+      } catch (error: unknown) {
+        logger.warn(`[EntityHelper] 跳过无效实体: ${entityId}`, error);
+        return null;
+      }
+    })
+  );
 
-    try {
-      const entity = await getEntityWithHash(client, entityId);
-      entities.push(entity);
-    } catch (error: unknown) {
-      logger.warn(`[EntityHelper] 跳过无效实体: ${entityId}`, error);
-    }
-  }
-
-  return entities;
+  return results.filter((e): e is InputPeerLike => e !== null);
 }
 
 /**

@@ -1576,12 +1576,10 @@ class ShiftPlugin extends Plugin {
                 sourceDisplayHtml = rule.source_display;
                 targetDisplayHtml = rule.target_display;
               } else {
-                const sourceEntity = await msg.client.getChat(
-                  Number(sourceId)
-                );
-                const targetEntity = await msg.client.getChat(
-                  Number(rule.target_id)
-                );
+                const [sourceEntity, targetEntity] = await Promise.all([
+                  msg.client.getChat(Number(sourceId)),
+                  msg.client.getChat(Number(rule.target_id)),
+                ]);
                 sourceDisplayHtml = htmlEscape(getDisplayName(sourceEntity as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined));
                 targetDisplayHtml = htmlEscape(getDisplayName(targetEntity as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined));
               }
