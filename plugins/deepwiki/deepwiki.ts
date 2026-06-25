@@ -777,8 +777,10 @@ class DeepWikiPlugin extends Plugin {
       const args = raw.split(/\s+/).slice(1);
       const original = trigger || msg;
 
-      const repliedText = await getRepliedMessageText(msg);
-      const repliedMsgId = await getRepliedMessageId(msg);
+      const [repliedText, repliedMsgId] = await Promise.all([
+        getRepliedMessageText(msg),
+        getRepliedMessageId(msg),
+      ]);
 
       try {
         if (args.length === 0 && !repliedText) {
