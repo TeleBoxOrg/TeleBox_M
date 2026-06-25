@@ -224,7 +224,8 @@ class HisPlugin extends Plugin {
       } else {
         // Check if it's a megagroup/supergroup by trying to access channel info
         try {
-          const fullChat = await client.call({ _: 'channels.getFullChannel' as const, channel: await client.resolvePeer(chatId) });
+          const resolvedPeer = await client.resolvePeer(chatId);
+          const fullChat = await client.call({ _: 'channels.getFullChannel' as const, channel: resolvedPeer });
           if (fullChat?.full_chat?._ === 'channelFull') {
             const chatIdStr = String(chatId).replace("-100", "");
             baseLinkUrl = `https://t.me/c/${chatIdStr}/`;

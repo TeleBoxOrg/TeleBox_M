@@ -424,8 +424,10 @@ class SearchService {
             await editAdmin({ text: `添加频道 ${channelHandle.trim()} 时出错：${getErrorMessage(error)}` });
         }
     }
-    await this.saveConfig();
-    await editAdmin({ text: `✅ 成功添加 ${addedCount} 个频道。` });
+    await Promise.all([
+        this.saveConfig(),
+        editAdmin({ text: `✅ 成功添加 ${addedCount} 个频道。` }),
+    ]);
   }
 
   private async handleDelete(msg: MessageContext, editAdmin: (params: { text: string }) => Promise<void>, args: string) {
@@ -476,8 +478,10 @@ class SearchService {
         if (this.config.defaultChannel && handlesToRemove.has(this.config.defaultChannel)) {
             this.config.defaultChannel = this.config.channelList.length > 0 ? this.config.channelList[0].handle : null;
         }
-        await this.saveConfig();
-        await editAdmin({ text: `✅ 成功移除 ${removedCount} 个频道:\n- ${removedTitles.join('\n- ')}` });
+        await Promise.all([
+            this.saveConfig(),
+            editAdmin({ text: `✅ 成功移除 ${removedCount} 个频道:\n- ${removedTitles.join('\n- ')}` }),
+        ]);
     } else {
         await editAdmin({ text: `❓ 在列表中未找到指定的频道或序号。` });
     }
@@ -487,8 +491,10 @@ class SearchService {
     if (!args) throw new Error(`用法: ${mainPrefix}so default <频道链接> 或 ${mainPrefix}so default d。`);
     if (args === "d") {
         this.config.defaultChannel = null;
-        await this.saveConfig();
-        await editAdmin({ text: `✅ 默认频道已移除。` });
+        await Promise.all([
+            this.saveConfig(),
+            editAdmin({ text: `✅ 默认频道已移除。` }),
+        ]);
         return;
     }
     const normalizedHandle = args.trim();
@@ -496,8 +502,10 @@ class SearchService {
         throw new Error(`请先使用 \`${mainPrefix}so add\` 添加此频道。`);
     }
     this.config.defaultChannel = normalizedHandle;
-    await this.saveConfig();
-    await editAdmin({ text: `✅ 已将 "${normalizedHandle}" 设为默认频道。` });
+    await Promise.all([
+        this.saveConfig(),
+        editAdmin({ text: `✅ 已将 "${normalizedHandle}" 设为默认频道。` }),
+    ]);
   }
 
   private async handleList(msg: MessageContext, editAdmin: (params: { text: string }) => Promise<void>) {
@@ -616,8 +624,9 @@ class SearchService {
       let videosInCurrentChannel: Message[] = [];
 
       try {
+        const entityPromise = this.client.resolvePeer(channelInfo.handle);
         await msg.edit({ text: `- 正在搜索... (源: ${index + 1}/${searchOrder.length})` });
-        const entity = await this.client.resolvePeer(channelInfo.handle);
+        const entity = await entityPromise;
 
         if (type === "search" && query) {
           if (channelInfo.linkedGroup) {
@@ -792,10 +801,12 @@ class SearchService {
 
   private async downloadAndUploadVideo(originalMsg: MessageContext, video: Message, spoiler: boolean = false, caption?: string | null): Promise<void> {
     const tempDir = path.join(process.cwd(), "temp");
-    await fs.mkdir(tempDir, { recursive: true });
     const tempFilePath = path.join(tempDir, `video_${Date.now()}.mp4`);
 
-    const statusMsg = await this.client.sendText(originalMsg.chat.id, `🔥 正在下载视频...`, { replyTo: originalMsg.id });
+    const [statusMsg] = await Promise.all([
+      this.client.sendText(originalMsg.chat.id, `🔥 正在下载视频...`, { replyTo: originalMsg.id }),
+      fs.mkdir(tempDir, { recursive: true }),
+    ]);
 
     try {
       const buffer = await this.client.downloadAsBuffer(video.media as MtcuteFileLocation);
