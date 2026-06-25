@@ -321,7 +321,8 @@ class UserResolver {
         };
       }
       return null;
-    } catch (_e: unknown) {
+    } catch (e: unknown) {
+      logger.warn('aban: failed to extract sender entity', e);
       return null;
     }
   }
@@ -338,7 +339,8 @@ class UserResolver {
   ): Promise<PartialEntity | null> {
     try {
       return await (client as unknown as ClientInternals).resolvePeer(target) as PartialEntity | null;
-    } catch (_e: unknown) {
+    } catch (e: unknown) {
+      logger.warn(`aban: safeGetEntity failed for target ${target}`, e);
       return null;
     }
   }
@@ -349,7 +351,8 @@ class UserResolver {
   ): Promise<tl.TypeInputPeer | undefined> {
     try {
       return await (client as unknown as ClientInternals).getInputEntity(target) as tl.TypeInputPeer | undefined;
-    } catch (_e: unknown) {
+    } catch (e: unknown) {
+      logger.warn('aban: safeGetInputEntity failed', e);
       return undefined;
     }
   }
@@ -395,7 +398,8 @@ class UserResolver {
           if (!participants.length) break;
           offset += participants.length;
         }
-      } catch (_e: unknown) {
+      } catch (e: unknown) {
+        logger.warn('aban: findParticipantPage failed', e);
         return undefined;
       }
     }
@@ -408,22 +412,22 @@ class UserResolver {
           return undefined;
         }
 
-        const full: any = await client.call({
+        const full = await client.call({
             _: 'messages.getFullChat',
             chatId: Number(bigInt(chatId)),
-          });
+        }) as unknown as { fullChat?: { participants?: { _?: string }; users?: unknown[] } };
 
         const participants = full?.fullChat?.participants;
         if (!participants || participants?._ === 'chatParticipantsForbidden') {
           return undefined;
         }
-
-        const users: any[] = full?.users || [];
-        const matchedUser = users.find((u) => Number(u?.id) === userId);
+        const users: unknown[] = full?.fullChat?.users || [];
+        const matchedUser = users.find((u) => Number((u as { id?: number })?.id) === userId);
         if (matchedUser) {
           return await this.safeGetInputEntity(client, matchedUser);
         }
-      } catch (_e: unknown) {
+      } catch (e: unknown) {
+        logger.warn('aban: getFullChat participant lookup failed', e);
         return undefined;
       }
     }
@@ -607,7 +611,8 @@ class PermissionManager {
         return !!(rights?.banUsers || rights?.deleteMessages);
       }
       return false;
-    } catch (_e: unknown) {
+    } catch (e: unknown) {
+      logger.warn('aban: isMeAdmin check failed', e);
       return false;
     }
   }
@@ -639,7 +644,8 @@ class PermissionManager {
         p?._ === 'channelParticipantCreator' ||
         p?._ === 'channelParticipantAdmin'
       );
-    } catch (_e: unknown) {
+    } catch (e: unknown) {
+      logger.warn('aban: isOwnerOrAdmin check failed', e);
       return false;
     }
   }
@@ -673,7 +679,8 @@ class PermissionManager {
         return !!p.adminRights?.deleteMessages;
       }
       return false;
-    } catch (_e: unknown) {
+    } catch (e: unknown) {
+      logger.warn('aban: canDeleteMessages check failed', e);
       return false;
     }
   }
