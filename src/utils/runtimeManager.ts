@@ -148,12 +148,14 @@ async function startFreshRuntime(): Promise<TeleBoxRuntime> {
     runtime.state = "failed";
     currentRuntime = null;
     runtime.context.abort("Runtime startup failed");
-    await runtime.context.dispose(RUNTIME_DRAIN_TIMEOUT_MS).catch((disposeError) => {
-      logger.error("[RUNTIME] Failed to dispose runtime after startup error:", disposeError);
-    });
-    await destroyClient(runtime.client).catch((destroyError) => {
-      logger.error("[RUNTIME] Failed to destroy runtime after startup error:", destroyError);
-    });
+    await Promise.all([
+      runtime.context.dispose(RUNTIME_DRAIN_TIMEOUT_MS).catch((disposeError) => {
+        logger.error("[RUNTIME] Failed to dispose runtime after startup error:", disposeError);
+      }),
+      destroyClient(runtime.client).catch((destroyError) => {
+        logger.error("[RUNTIME] Failed to destroy runtime after startup error:", destroyError);
+      }),
+    ]);
     throw error;
   }
 }
