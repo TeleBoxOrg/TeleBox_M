@@ -54,11 +54,13 @@ abstract class Plugin {
   abstract description: PluginDescription;
   abstract cmdHandlers: Record<
     string,
-    (msg: MessageContext, trigger?: MessageContext) => Promise<void>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (msg: any, trigger?: any) => Promise<void>
   >;
   listenMessageHandlerIgnoreEdited?: boolean = true;
   listenMessageHandler?: (
-    msg: MessageContext,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    msg: any,
     options?: { isEdited?: boolean }
   ) => Promise<void>;
   eventHandlers?: PluginEventHandler[];
