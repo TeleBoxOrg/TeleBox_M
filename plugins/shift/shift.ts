@@ -1730,7 +1730,7 @@ class ShiftPlugin extends Plugin {
                   if (!clientRef) return { sourceId, stats, name: '' };
                   const sourceEntity = await clientRef.getChat(parseInt(sourceId));
                   return { sourceId, stats, name: getDisplayName(sourceEntity as unknown as { username?: string; firstName?: string; title?: string; id?: number | string } | null | undefined) };
-                } catch (e) {
+                } catch (e: unknown) {
                   logger.warn('[shift] 获取源频道名称失败:', sourceId, e);
                   return { sourceId, stats, name: '' };
                 }

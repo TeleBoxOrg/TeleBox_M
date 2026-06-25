@@ -1316,7 +1316,7 @@ America/New_York
     if (sub === "format") return this.handleTimezoneFormat(msg, userId, args.slice(1));
 
     const newTimezone = (sub === "set" ? args.slice(1) : args).join(" ").trim();
-    try { new Date().toLocaleString("en-US", { timeZone: newTimezone }); } catch (e) {
+    try { new Date().toLocaleString("en-US", { timeZone: newTimezone }); } catch (e: unknown) {
       logger.warn('[autochangename] 无效时区标识符:', newTimezone, e);
       return void await msg.edit({ text: html(`❌ <b>无效的时区标识符</b>`) });
     }

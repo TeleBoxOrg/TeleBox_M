@@ -349,7 +349,7 @@ const PROVIDER_HOST_TYPES: Record<string, ProviderType> = {
 const getProviderHost = (url: string): string | null => {
   try {
     return new URL(url).hostname;
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] 解析域名失败:', e);
     return null;
   }
@@ -359,7 +359,7 @@ const isHttpUrl = (url: string): boolean => {
   try {
     const u = new URL(url);
     return u.protocol === "http:" || u.protocol === "https:";
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] URL验证失败:', e);
     return false;
   }
@@ -419,7 +419,7 @@ const matchModelRule = (model: string, rule: ModelMatchRule): boolean => {
   if (rule.type === "regex") {
     try {
       return new RegExp(rule.value).test(model);
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('[ai] 正则表达式无效:', e);
       return false;
     }
@@ -625,7 +625,7 @@ const normalizeDownloadedMedia = async (
       const stat = await fs.promises.stat(downloaded);
       if (!stat.isFile()) return null;
       return await fs.promises.readFile(downloaded);
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('[ai] 读取媒体文件失败:', e);
       return null;
     }
@@ -643,7 +643,7 @@ const getImageExtensionForMime = (mimeType: string): string => {
 const extractFirstFrame = async (buffer: Buffer): Promise<Buffer | null> => {
   try {
     return await sharp(buffer, { animated: true }).png().toBuffer();
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] 提取动画首帧失败:', e);
     return null;
   }
@@ -751,7 +751,7 @@ const collectImagePartsFromSingleMessage = async (
       if (buffer) {
         try {
           frameBuffer = await sharp(buffer).png().toBuffer();
-        } catch (e) {
+        } catch (e: unknown) {
           logger.warn('[ai] 转换PNG失败，使用原始buffer:', e);
           frameBuffer = buffer;
         }
@@ -764,7 +764,7 @@ const collectImagePartsFromSingleMessage = async (
       if (buffer) {
         try {
           frameBuffer = await extractFirstFrame(buffer);
-        } catch (e) {
+        } catch (e: unknown) {
           logger.warn('[ai] 提取首帧失败:', e);
           frameBuffer = null;
         }
@@ -940,7 +940,7 @@ const videoHasAudioTrack = async (filePath: string): Promise<boolean> => {
     const info = JSON.parse(stdout);
     const streams = info.streams || [];
     return streams.length > 0;
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] 流检测失败:', e);
     return false;
   }
@@ -975,7 +975,7 @@ const ensureVideoHasAudio = async (
     ]);
 
     return outputPath;
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] 音频转码失败，返回原始路径:', e);
     return inputPath;
   }
@@ -1728,7 +1728,7 @@ const applyAuthConfig = (
       const u = new URL(url);
       if (!u.searchParams.has("key")) u.searchParams.set("key", config.key);
       return { url: u.toString(), headers };
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('[ai] URL解析失败，返回原始URL:', e);
       return { url, headers };
     }
@@ -1786,7 +1786,7 @@ const normalizeOpenAIBaseUrl = (url: string): string => {
     u.pathname = "/v1";
     u.search = "";
     return u.toString();
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] 规范化v1 API URL失败:', e);
     return url;
   }
@@ -1805,7 +1805,7 @@ const normalizeGeminiBaseUrl = (url: string): string => {
     u.search = "";
     u.hash = "";
     return u.toString();
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] 规范化Gemini Base URL失败:', e);
     return url;
   }
@@ -2201,7 +2201,7 @@ const parseOpenAIResponsePayloads = (raw: string): any[] => {
   try {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [parsed];
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('[ai] JSON解析失败:', e);
     return [];
   }

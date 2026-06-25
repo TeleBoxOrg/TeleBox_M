@@ -104,7 +104,7 @@ class DbdjPlugin extends Plugin {
         });
         try {
           await msg.delete();
-        } catch (e) {
+        } catch (e: unknown) {
           logger.warn('[dbdj] 消息已被删除，跳过');
         }
       };
