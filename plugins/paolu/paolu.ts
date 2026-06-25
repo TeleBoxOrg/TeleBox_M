@@ -7,6 +7,7 @@ import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { Message } from "@mtcute/core";
+import type { tl } from "@mtcute/core";
 import { getRawType } from "@utils/entityTypeGuards";
 import { Long } from "@mtcute/core";
 
@@ -133,7 +134,7 @@ class PaoluPlugin extends Plugin {
           _: 'channels.editBanned',
           channel: await client.resolveChannel(chatId),
           // TL-layer: channels.editBanned expects TypeInputPeer, cast from string
-          participant: "all" as unknown as never,
+          participant: "all" as unknown as tl.TypeInputPeer,
           bannedRights: {
             _: 'chatBannedRights',
             untilDate: 0,
