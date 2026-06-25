@@ -569,7 +569,7 @@ async function runSystemSpeedtest(serverId?: number, retryCount: number = 0): Pr
         }
       } catch (e) {
         // ignore - binary not found, try next path
-        console.debug('[speedtest] ping binary not found at this path:', e);
+        logger.debug('[speedtest] ping binary not found at this path:', e);
       }
     }
 
