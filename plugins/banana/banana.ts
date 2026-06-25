@@ -83,7 +83,7 @@ function estimateMediaSizeBytes(message: MessageContext | import("@mtcute/node")
   const media = message.media;
   if (!media) return 0;
   // mtcute FileLocation-derived types have optional fileSize on .raw
-  const raw = (media as unknown as { raw?: { fileSize?: number } }).raw;
+  const raw = (media as unknown as { raw?: { fileSize?: number } })?.raw;
   if (typeof raw?.fileSize === "number") {
     return raw.fileSize;
   }

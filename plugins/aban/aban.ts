@@ -335,9 +335,9 @@ class UserResolver {
   private static async safeGetEntity(
     client: TelegramClient,
     target: string | number
-  ): Promise<{ id?: number | string; _?: string; chatId?: number | string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null> {
+  ): Promise<PartialEntity | null> {
     try {
-      return await (client as unknown as ClientInternals).resolvePeer(target) as { id?: number | string; _?: string; username?: string; title?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string } | null;
+      return await (client as unknown as ClientInternals).resolvePeer(target) as PartialEntity | null;
     } catch {
       return null;
     }

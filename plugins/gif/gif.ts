@@ -264,7 +264,7 @@ class GifConverter {
     const media = msg.media;
     if (!media) return 0;
     // fileSize 在 raw 对象上，需要访问 raw.size
-    const rawSize = (media as unknown as { raw?: { size?: number } }).raw?.size;
+    const rawSize = (media as unknown as { raw?: { size?: number } })?.raw?.size;
     return Number(rawSize) || 0;
   }
 
