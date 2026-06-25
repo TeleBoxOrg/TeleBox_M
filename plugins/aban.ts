@@ -321,7 +321,7 @@ class UserResolver {
         };
       }
       return null;
-    } catch {
+    } catch (_e: unknown) {
       return null;
     }
   }
@@ -338,7 +338,7 @@ class UserResolver {
   ): Promise<PartialEntity | null> {
     try {
       return await (client as unknown as ClientInternals).resolvePeer(target) as PartialEntity | null;
-    } catch {
+    } catch (_e: unknown) {
       return null;
     }
   }
@@ -349,7 +349,7 @@ class UserResolver {
   ): Promise<tl.TypeInputPeer | undefined> {
     try {
       return await (client as unknown as ClientInternals).getInputEntity(target) as tl.TypeInputPeer | undefined;
-    } catch {
+    } catch (_e: unknown) {
       return undefined;
     }
   }
@@ -395,7 +395,7 @@ class UserResolver {
           if (!participants.length) break;
           offset += participants.length;
         }
-      } catch {
+      } catch (_e: unknown) {
         return undefined;
       }
     }
@@ -423,7 +423,7 @@ class UserResolver {
         if (matchedUser) {
           return await this.safeGetInputEntity(client, matchedUser);
         }
-      } catch {
+      } catch (_e: unknown) {
         return undefined;
       }
     }
@@ -607,7 +607,7 @@ class PermissionManager {
         return !!(rights?.banUsers || rights?.deleteMessages);
       }
       return false;
-    } catch {
+    } catch (_e: unknown) {
       return false;
     }
   }
@@ -639,7 +639,7 @@ class PermissionManager {
         p?._ === 'channelParticipantCreator' ||
         p?._ === 'channelParticipantAdmin'
       );
-    } catch {
+    } catch (_e: unknown) {
       return false;
     }
   }
@@ -673,7 +673,7 @@ class PermissionManager {
         return !!p.adminRights?.deleteMessages;
       }
       return false;
-    } catch {
+    } catch (_e: unknown) {
       return false;
     }
   }
@@ -1355,7 +1355,7 @@ class CommandHandlers {
             try {
               const target = await resolvePermissionTarget(client, group);
               return await PermissionManager.isTargetAdmin(client, target, uid);
-            } catch {
+            } catch (_e: unknown) {
               return false;
             }
           })
@@ -1504,7 +1504,7 @@ class CommandHandlers {
             try {
               const target = await resolvePermissionTarget(client, group);
               return await PermissionManager.isTargetAdmin(client, target, uid);
-            } catch {
+            } catch (_e: unknown) {
               return false;
             }
           })
@@ -1672,7 +1672,7 @@ class AbanPlugin extends Plugin {
         GroupManager.clearCache();
         const groups = await GroupManager.getManagedGroups(client);
         await MessageManager.smartEdit(status, `✅ 已刷新 ${groups.length}个群组`);
-      } catch {
+      } catch (_e: unknown) {
         await MessageManager.smartEdit(status, `❌ 刷新失败`);
       }
     }

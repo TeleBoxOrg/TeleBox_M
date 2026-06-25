@@ -92,7 +92,7 @@ function readState(): InitState {
         ? Number(parsed.ignoredUpToId)
         : undefined,
     };
-  } catch {
+  } catch (_e: unknown) {
     return { initialized: false };
   }
 }
@@ -349,6 +349,7 @@ async function relayParseResult(
   let forwarded = false;
   const fallbackTexts: string[] = [];
 
+  // Sequential forwarding: each chunk uses fallback text on failure, so order matters
   for (let i = 0; i < sortedMessages.length; i += 100) {
     const chunk = sortedMessages.slice(i, i + 100);
     const ids = chunk.map((m: Message) => m.id);
@@ -356,7 +357,7 @@ async function relayParseResult(
     try {
       await forwardChunk(client, originMsg.chat.id, ids);
       forwarded = true;
-    } catch {
+    } catch (_e: unknown) {
       const snippet = chunk
         .map((m: Message) => m.text?.trim())
         .filter(Boolean)

@@ -280,7 +280,7 @@ async function cleanup(files: string[]): Promise<void> {
     files.map(async (filePath) => {
       try {
         await fs.promises.unlink(filePath);
-      } catch {
+      } catch (_e: unknown) {
         logger.warn(`清理临时文件失败: ${filePath}`);
       }
     })
