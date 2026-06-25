@@ -624,14 +624,14 @@ model: <code>${this.config.model}</code><br>
 			// 检查token数量
 			const estimatedTokens = Math.ceil(answer.length / 4);
 			if (estimatedTokens > MAX_RESPONSE_TOKENS) {
-				answer = `⚠️ 回复过长(${estimatedTokens} tokens, 超过限制${MAX_RESPONSE_TOKENS})\n\n${answer.substring(
+				answer = `⚠️ 回复过长(${estimatedTokens} tokens, 超过限制${MAX_RESPONSE_TOKENS})<br><br>${answer.substring(
 					0,
 					1000
 				)}...`;
 			}
 
 			await msg.edit({
-				text: html(answer),
+				text: html(answer.replace(/\n/g, '<br>')),
 			});
 		} catch (error: unknown) {
 			logger.error('[xmsl] API Error:', error);

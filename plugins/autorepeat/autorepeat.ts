@@ -297,7 +297,7 @@ class AutoRepeatManager {
       const now = Math.floor(Date.now() / 1000);
 
       // 定期清理过期消息和重置每日记录
-      this.maintenance(now);
+      await this.maintenance(now);
 
       // 获取当前群组的消息记录
       let msgs = this.recentMessages.get(chatId) || [];
@@ -374,7 +374,7 @@ class AutoRepeatManager {
     });
   }
 
-  private static maintenance(now: number) {
+  private static async maintenance(now: number) {
     // 每分钟清理一次过期消息
     if (now - this.lastCleanup > 60) {
       for (const [gid, msgs] of this.recentMessages) {
@@ -393,7 +393,7 @@ class AutoRepeatManager {
     if (dayKey > this.lastDayCheck) {
       this.dailyHistory.clear();
       this.lastDayCheck = dayKey;
-      this.saveDailyHistory(); // 保存新的天数和空的记录
+      await this.saveDailyHistory(); // 保存新的天数和空的记录
     }
   }
 
