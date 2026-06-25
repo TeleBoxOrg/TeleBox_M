@@ -650,8 +650,7 @@ async function forwardGroupMessages(
       silent: options?.silent,
       ...(options?.replyTo ? { topMsgId: options.replyTo } : {}),
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await client.call(forwardParams as any);
+    await client.call(forwardParams as unknown as Parameters<typeof client.call>[0]);
     logger.info(
       `[SHIFT] 组转发成功: ${fromChatId} -> ${toChatId}, msgs=${messageIds.join(
         ","

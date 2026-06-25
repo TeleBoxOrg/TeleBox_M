@@ -84,6 +84,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
                 const { stdout: nameOutput } = await execAsync(`ps -p ${pid} -o comm= 2>/dev/null || echo "未知"`);
                 processName = nameOutput.trim() || '未知进程';
               } catch {
+                logger.debug(`[ssh] 无法获取进程 ${pid} 的名称`);
                 processName = '未知进程';
               }
             }
@@ -101,6 +102,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
     
     return { inUse: false };
   } catch {
+    logger.debug(`[ssh] netstat 检测端口 ${port} 失败，尝试 ss 命令`);
     // 如果netstat失败，尝试使用ss命令
     try {
       const { stdout } = await execAsync(`ss -tlnp 2>/dev/null | grep ":${port} "`);
@@ -112,6 +114,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
       }
       return { inUse: false };
     } catch {
+      logger.debug(`[ssh] ss 命令检测端口 ${port} 也失败，尝试连接测试`);
       // 如果两个命令都失败，尝试简单的端口连接测试
       try {
         await execAsync(`timeout 2 bash -c "</dev/tcp/localhost/${port}" 2>/dev/null`);
@@ -120,6 +123,7 @@ async function checkPortInUse(port: number): Promise<{ inUse: boolean; processIn
           processInfo: '端口被占用 (无法获取进程信息)'
         };
       } catch {
+        logger.debug(`[ssh] 端口 ${port} 检测: netstat/ss/connect 均失败，判定为未使用`);
         return { inUse: false };
       }
     }
