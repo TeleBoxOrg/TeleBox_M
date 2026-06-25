@@ -34,7 +34,7 @@ export interface ClientInternals {
   sendMessage(peer: unknown, options: Record<string, unknown>): Promise<unknown>;
   sendFile(peer: unknown, opts: Record<string, unknown>): Promise<void>;
   getDialogs(params: Record<string, unknown>): Promise<Array<Record<string, unknown>>>;
-  call(params: Record<string, unknown>): Promise<unknown>;
+  call(params: unknown): Promise<unknown>;
   startUpdatesLoop?: () => Promise<void>;
   log?: { level: number };
 }
