@@ -300,8 +300,10 @@ async function compositeWithEntryConfig(parmas: {
   const { entry, msg, isEat2, trigger } = parmas;
   const client = await getGlobalClient();
   if (!client) return;
-  const peer = await client.resolvePeer(msg.chat.id);
-  const repliedMsg = await safeGetReplyMessage(msg);
+  const [peer, repliedMsg] = await Promise.all([
+    client.resolvePeer(msg.chat.id),
+    safeGetReplyMessage(msg),
+  ]);
 
   const youAvatarBuffer = await downloadAvatar(msg, isEat2);
   if (!youAvatarBuffer) return;

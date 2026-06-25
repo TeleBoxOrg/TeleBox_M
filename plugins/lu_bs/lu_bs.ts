@@ -201,8 +201,10 @@ class LuBsPlugin extends Plugin {
       
       // 群组/频道需要检查管理员权限（chat.type is already narrowed to "chat"）
       {
-        const channelPeer = await client.resolvePeer(chat.id);
-        const senderPeer = await client.resolvePeer(sender.id);
+        const [channelPeer, senderPeer] = await Promise.all([
+          client.resolvePeer(chat.id),
+          client.resolvePeer(sender.id),
+        ]);
         const result = await client.call({
           _: 'channels.getParticipant',
           channel: channelPeer,

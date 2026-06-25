@@ -1375,11 +1375,13 @@ ${keysContent}`;
     await msg.edit({ text: "🔄 正在获取SSH状态信息..." });
 
     try {
-      // 获取插件配置
-      const targetChat = await ConfigManager.get(CONFIG_KEYS.TARGET_CHAT);
-      const sshPort = await ConfigManager.get(CONFIG_KEYS.SSH_PORT);
-      const passwordAuth = await ConfigManager.get(CONFIG_KEYS.PASSWORD_AUTH);
-      const pubkeyAuth = await ConfigManager.get(CONFIG_KEYS.PUBKEY_AUTH);
+      // 获取插件配置（并行读取）
+      const [targetChat, sshPort, passwordAuth, pubkeyAuth] = await Promise.all([
+        ConfigManager.get(CONFIG_KEYS.TARGET_CHAT),
+        ConfigManager.get(CONFIG_KEYS.SSH_PORT),
+        ConfigManager.get(CONFIG_KEYS.PASSWORD_AUTH),
+        ConfigManager.get(CONFIG_KEYS.PUBKEY_AUTH),
+      ]);
 
       // 获取当前SSH服务状态
       let sshStatus = "未知";

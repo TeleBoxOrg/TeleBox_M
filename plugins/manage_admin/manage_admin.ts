@@ -118,8 +118,10 @@ class ManageAdminPlugin extends Plugin {
 
       const client = await getGlobalClient();
       if (!client) return;
-      const channel = await client.resolvePeer(msg.chat.id);
-      const chatEntity = await msg.getCompleteChat();
+      const [channel, chatEntity] = await Promise.all([
+        client.resolvePeer(msg.chat.id),
+        msg.getCompleteChat(),
+      ]);
       if (!channel || !chatEntity) {
         await msg.edit({ text: "无法获取当前对话实体" });
         return;

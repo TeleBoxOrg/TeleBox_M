@@ -970,9 +970,11 @@ class Downloader {
 
   async search(query: string, minDurationSec?: number): Promise<string | null> {
     try {
-      const cookie = await ConfigManager.get(CONFIG.KEYS.COOKIE);
-      const proxy = await ConfigManager.get(CONFIG.KEYS.PROXY);
-      const cookieBrowser = await ConfigManager.get(CONFIG.KEYS.COOKIE_BROWSER);
+      const [cookie, proxy, cookieBrowser] = await Promise.all([
+        ConfigManager.get(CONFIG.KEYS.COOKIE),
+        ConfigManager.get(CONFIG.KEYS.PROXY),
+        ConfigManager.get(CONFIG.KEYS.COOKIE_BROWSER),
+      ]);
 
       // 使用AI识别歌手和歌曲名，构建最终搜索词
       let finalQuery = query;
