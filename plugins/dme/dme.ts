@@ -808,7 +808,7 @@ async function traditionalStreamProcessing(
           logger.info(`[DME] 传统模式编辑 ${mediaMessages.length} 条媒体消息`);
           const editPromises = mediaMessages.map((msg: RawMessageWithMedia) => 
             editMediaMessageToAntiRecall(client, msg, trollImagePath, chatPeer)
-              .catch(() => false)
+              .catch((e) => { logger.warn("[dme] editMediaMessageToAntiRecall failed", getErrorMessage(e)); return false; })
           );
           const editResults = await Promise.allSettled(editPromises);
           const edited = editResults.filter(r => r.status === "fulfilled" && r.value).length;
@@ -819,7 +819,7 @@ async function traditionalStreamProcessing(
         if (textMessages.length > 0) {
           logger.info(`[DME] 传统模式编辑 ${textMessages.length} 条文本消息`);
           const textEditPromises = textMessages.map((msg: any) =>
-            editTextMessageToPlaceholder(client, msg, chatPeer).catch(() => false)
+            editTextMessageToPlaceholder(client, msg, chatPeer).catch((e) => { logger.warn("[dme] editTextMessageToPlaceholder failed", getErrorMessage(e)); return false; })
           );
           const textEditResults = await Promise.allSettled(textEditPromises);
           const textEdited = textEditResults.filter(
@@ -1174,7 +1174,7 @@ async function searchEditAndDeleteMyMessages(
       if (mediaMessages.length > 0 && trollImagePath) {
         const editPromises = mediaMessages.map((msg: RawMessageWithMedia) => 
           editMediaMessageToAntiRecall(client, msg, trollImagePath, chatPeer)
-            .catch(() => false)
+            .catch((e) => { logger.warn("[dme] batch editMediaMessageToAntiRecall failed", getErrorMessage(e)); return false; })
         );
         const editResults = await Promise.allSettled(editPromises);
         const edited = editResults.filter(r => r.status === "fulfilled" && r.value).length;
@@ -1184,7 +1184,7 @@ async function searchEditAndDeleteMyMessages(
 
       if (textMessages.length > 0) {
         const textEditPromises = textMessages.map((msg: RawMessageWithMedia) =>
-          editTextMessageToPlaceholder(client, msg, chatPeer).catch(() => false)
+          editTextMessageToPlaceholder(client, msg, chatPeer).catch((e) => { logger.warn("[dme] batch editTextMessageToPlaceholder failed", getErrorMessage(e)); return false; })
         );
         const textEditResults = await Promise.allSettled(textEditPromises);
         const textEdited = textEditResults.filter(
