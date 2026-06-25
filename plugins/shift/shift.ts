@@ -45,7 +45,7 @@ interface ShiftStatsRow {
 // (now imported from @utils/clientInternals)
 
 async function formatEntity(
-  target: any,
+  target: Peer | string | number,
   mention?: boolean,
   throwErrorIfFailed?: boolean
 ) {
@@ -55,7 +55,7 @@ async function formatEntity(
   let id: number | undefined;
   let entity: Peer | null = null;
   try {
-    entity = target?.className
+    entity = typeof target === "object" && target && "className" in target
       ? (target as Peer)
       : await client?.getChat(target);
     if (!entity) throw new Error("无法获取 entity");
@@ -85,7 +85,7 @@ async function formatEntity(
         ? `<a href="tg://user?id=${id}">${id}</a>`
         : `<a href="https://t.me/c/${id}">${id}</a>`
     );
-  } else if (!target?.className) {
+  } else if (typeof target !== "object") {
     displayParts.push(`<code>${target}</code>`);
   }
 
@@ -631,7 +631,7 @@ function getGroupKey(message: any): string | null {
 }
 
 async function forwardGroupMessages(
-  client: any,
+  client: TelegramClient,
   fromChatId: number,
   toChatId: number,
   messageIds: number[],
@@ -642,14 +642,16 @@ async function forwardGroupMessages(
       getEntityWithHash(client, fromChatId),
       getEntityWithHash(client, toChatId),
     ]);
-    await client.call({
-      _: "messages.forwardMessages",
+    const forwardParams = {
+      _: "messages.forwardMessages" as const,
       fromPeer: fromEntity,
       id: messageIds,
       toPeer: toEntity,
       silent: options?.silent,
       ...(options?.replyTo ? { topMsgId: options.replyTo } : {}),
-    });
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await client.call(forwardParams as any);
     logger.info(
       `[SHIFT] 组转发成功: ${fromChatId} -> ${toChatId}, msgs=${messageIds.join(
         ","
@@ -2080,7 +2082,7 @@ class ShiftPlugin extends Plugin {
   };
   listenMessageHandlerIgnoreEdited: boolean = false;
   listenMessageHandler?:
-    | ((msg: any, options?: { isEdited?: boolean }) => Promise<void>)
+    | ((msg: MessageContext, options?: { isEdited?: boolean }) => Promise<void>)
     | undefined = shiftMessageListener;
 }
 
@@ -2184,12 +2186,12 @@ function getChatIdFromMessage(message: any, isEdited?: boolean): number | null {
 
 // Forward message using universal access hash handler
 async function shiftForwardMessage(
-  client: any,
+  client: TelegramClient,
   fromChatId: number,
   toChatId: number,
   messageId: number,
   depth: number = 0,
-  options?: any
+  options?: { silent?: boolean; replyTo?: number }
 ): Promise<void> {
   if (depth > 5) {
     logger.info(`[SHIFT] 转发深度超限: ${depth}`);
