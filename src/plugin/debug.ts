@@ -410,7 +410,7 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
         info += `· Members: ${entity.membersCount}<br>`;
     } else {
       info += `<b>ENTITY</b><br>`;
-      const genericEntity = entity as unknown as { type?: string; id?: number | string };
+      const genericEntity = entity as Peer;
       info += `· Type: ${genericEntity.type}<br>`;
       info += `· ID: <code>${genericEntity.id}</code><br>`;
     }

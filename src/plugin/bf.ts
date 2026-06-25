@@ -2,6 +2,7 @@ import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
+import type { Document, Video, Audio, Voice, Sticker } from "@mtcute/core";
 
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
@@ -662,7 +663,7 @@ class BfPlugin extends Plugin {
         });
 
         const backupMsg = messages[0];
-        const fileName = (backupMsg?.media as unknown as { fileName?: string })?.fileName ?? "";
+        const fileName = (backupMsg?.media as (Document | Video | Audio | Voice | Sticker | null))?.fileName ?? "";
         if (!fileName?.endsWith(".tar.gz")) {
           await msg.edit({
             text: "❌ 回复的消息不是有效的备份文件",
