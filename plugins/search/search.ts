@@ -391,42 +391,73 @@ class SearchService {
 
   private async handleAdd(msg: MessageContext, editAdmin: (params: { text: string }) => Promise<void>, args: string) {
     if (!args) throw new Error("请提供频道链接或 @username，使用 \\ 分隔。");
-    const channels = args.split("\\");
-    let addedCount = 0;
+    const channels = args.split("\\").filter(s => s.trim().length > 0);
+    if (channels.length === 0) throw new Error("请提供频道链接或 @username，使用 \\ 分隔。");
 
-    for (const channelHandle of channels) {
+    // 并行解析所有频道的 peerInfo，提高批量添加效率
+    const peerInfoResults = await Promise.all(
+      channels.map(async (channelHandle) => {
+        const normalizedHandle = channelHandle.trim();
         try {
-            const normalizedHandle = channelHandle.trim();
-            const peerInfo = await resolvePeerInfo(this.client, normalizedHandle);
-
-            if (peerInfo.rawType !== 'channel' && peerInfo.rawType !== 'chat') {
-                await editAdmin({ text: `错误：${normalizedHandle} 不是公开频道、群组或讨论组。` });
-                continue;
-            }
-            if (this.config.channelList.some((c) => c.handle === normalizedHandle)) {
-                await editAdmin({ text: `目标 "${peerInfo.title}" 已存在。` });
-                continue;
-            }
-
-            let linkedGroup: string | undefined;
-            if (peerInfo.isBroadcast && !peerInfo.isMegagroup) {
-                linkedGroup = await this.discoverLinkedGroup(peerInfo.peer as unknown as MtcuteInputChannel);
-            }
-
-            this.config.channelList.push({
-                title: peerInfo.title ?? normalizedHandle,
-                handle: normalizedHandle,
-                linkedGroup: linkedGroup,
-            });
-            if (!this.config.defaultChannel) this.config.defaultChannel = normalizedHandle;
-            addedCount++;
+          const peerInfo = await resolvePeerInfo(this.client, normalizedHandle);
+          return { normalizedHandle, peerInfo, error: null as string | null };
         } catch (error: unknown) {
-            await editAdmin({ text: `添加频道 ${channelHandle.trim()} 时出错：${getErrorMessage(error)}` });
+          return { normalizedHandle, peerInfo: null, error: getErrorMessage(error) };
         }
+      })
+    );
+
+    // 先报告解析错误
+    for (const { normalizedHandle, error } of peerInfoResults) {
+      if (error) {
+        await editAdmin({ text: `添加频道 ${normalizedHandle} 时出错：${error}` });
+      }
+    }
+
+    // 过滤出有效且非重复的频道
+    const validChannels: Array<{ normalizedHandle: string; peerInfo: NonNullable<typeof peerInfoResults[0]['peerInfo']> }> = [];
+    for (const { normalizedHandle, peerInfo, error } of peerInfoResults) {
+      if (error || !peerInfo) continue;
+      if (peerInfo.rawType !== 'channel' && peerInfo.rawType !== 'chat') {
+        await editAdmin({ text: `错误：${normalizedHandle} 不是公开频道、群组或讨论组。` });
+        continue;
+      }
+      if (this.config.channelList.some((c) => c.handle === normalizedHandle)) {
+        await editAdmin({ text: `目标 "${peerInfo.title}" 已存在。` });
+        continue;
+      }
+      validChannels.push({ normalizedHandle, peerInfo });
+    }
+
+    // 并行发现关联讨论组（仅对非超级群组频道）
+    const linkedGroupResults = await Promise.all(
+      validChannels.map(async ({ peerInfo }) => {
+        if (peerInfo.isBroadcast && !peerInfo.isMegagroup) {
+          return this.discoverLinkedGroup(peerInfo.peer as unknown as MtcuteInputChannel);
+        }
+        return undefined;
+      })
+    );
+
+    let addedCount = 0;
+    for (let i = 0; i < validChannels.length; i++) {
+      const { normalizedHandle, peerInfo } = validChannels[i];
+      const linkedGroup = linkedGroupResults[i];
+      try {
+        this.config.channelList.push({
+          title: peerInfo.title ?? normalizedHandle,
+          handle: normalizedHandle,
+          linkedGroup,
+        });
+        if (!this.config.defaultChannel) this.config.defaultChannel = normalizedHandle;
+        addedCount++;
+      } catch (err: unknown) {
+        await editAdmin({ text: `添加频道 ${normalizedHandle} 时出错：${getErrorMessage(err)}` });
+      }
     }
     await Promise.all([
-        this.saveConfig(),
-        editAdmin({ text: `✅ 成功添加 ${addedCount} 个频道。` }),
+      this.saveConfig(),
+      editAdmin({ text: `✅ 成功添加 ${addedCount} 个频道。` }),
     ]);
   }
 
@@ -436,8 +467,10 @@ class SearchService {
         const count = this.config.channelList.length;
         this.config.channelList = [];
         this.config.defaultChannel = null;
-        await this.saveConfig();
-        await editAdmin({ text: `✅ 已清空所有 ${count} 个频道。` });
+        await Promise.all([
+            this.saveConfig(),
+            editAdmin({ text: `✅ 已清空所有 ${count} 个频道。` }),
+        ]);
         return;
     }
 
