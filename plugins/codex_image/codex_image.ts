@@ -444,14 +444,14 @@ async function handleCximg(msg: MessageContext): Promise<void> {
   const imageBuffer = Buffer.from(result.imageBase64, "base64");
   const fileName = `codex_image_${Date.now()}.png`;
   const caption = [
-    `<b>提示词:</b>\n${expandableBlock(prompt)}`,
+    `<b>提示词:</b><br>${expandableBlock(prompt)}`,
     `<b>耗时:</b> ${htmlEscape(elapsed)}`,
     result.revisedPrompt
-      ? `<b>修订提示词:</b>\n${expandableBlock(result.revisedPrompt)}`
+      ? `<b>修订提示词:</b><br>${expandableBlock(result.revisedPrompt)}`
       : "",
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("<br>");
 
   const client = await getGlobalClient();
   if (!client) {
