@@ -459,9 +459,8 @@ async function unloadPluginsForRuntime(runtime: TeleBoxRuntime) {
     runtime.context.abort(`Unload generation ${runtime.generation}`);
   }
 
-  for (const plugin of oldPlugins) {
-    await runPluginCleanup(plugin, runtime);
-  }
+  // 并行清理所有旧插件
+  await Promise.all(oldPlugins.map((plugin) => runPluginCleanup(plugin, runtime)));
 
   const snapshot = runtime.context.snapshot();
   // mtcute has no listEventHandlers(); the dispatcher is torn down via its

@@ -459,12 +459,11 @@ async function scheduleTask(task: AcronTask) {
 async function bootstrapTasks() {
   try {
     const db = await getDB();
-    for (const t of db.data.tasks) {
-      // 跳过无效表达式
-      if (!cron.validateCronExpression(t.cron).valid) continue;
-      if (t.disabled) continue;
-      await scheduleTask(t);
-    }
+    // 并行调度所有有效任务
+    const validTasks = db.data.tasks.filter(
+      (t) => cron.validateCronExpression(t.cron).valid && !t.disabled,
+    );
+    await Promise.all(validTasks.map((t) => scheduleTask(t)));
   } catch (e: unknown) {
     logger.error("[acron] bootstrap 失败:", e);
   }

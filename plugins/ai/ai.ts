@@ -702,17 +702,20 @@ const resolveImagePart = async (
 
 const collectImagePartsFromSingleMessage = async (
   msg: MessageContext,
-  out: AIContentPart[],
-): Promise<void> => {
-  if (!msg.media || !msg.client) return;
+  out?: AIContentPart[],
+): Promise<AIContentPart[]> => {
+  const localParts: AIContentPart[] = [];
+  if (!msg.media || !msg.client) return localParts;
+
+  const target = out ?? localParts;
 
   if ((msg.media as unknown as { type?: string })?.type === 'photo') {
     const downloaded = await (msg.client as unknown as ClientWithDownload).downloadMedia(msg.media);
     const buffer = await normalizeDownloadedMedia(downloaded);
-    if (!buffer) return;
+    if (!buffer) return localParts;
     const dataUrl = `data:image/jpeg;base64,${buffer.toString("base64")}`;
-    out.push({ type: "image_url", image_url: { url: dataUrl } });
-    return;
+    target.push({ type: "image_url", image_url: { url: dataUrl } });
+    return localParts;
   }
 
   if (
@@ -734,10 +737,10 @@ const collectImagePartsFromSingleMessage = async (
     if (!isAnimated && docMime.startsWith("image/")) {
       const downloaded = await (msg.client as unknown as ClientWithDownload).downloadMedia(msg.media);
       const buffer = await normalizeDownloadedMedia(downloaded);
-      if (!buffer) return;
+      if (!buffer) return localParts;
       const dataUrl = `data:${docMime};base64,${buffer.toString("base64")}`;
-      out.push({ type: "image_url", image_url: { url: dataUrl } });
-      return;
+      target.push({ type: "image_url", image_url: { url: dataUrl } });
+      return localParts;
     }
 
     let frameBuffer: Buffer | null = null;
@@ -768,11 +771,12 @@ const collectImagePartsFromSingleMessage = async (
       }
     }
 
-    if (!frameBuffer) return;
+    if (!frameBuffer) return localParts;
 
     const dataUrl = `data:image/png;base64,${frameBuffer.toString("base64")}`;
-    out.push({ type: "image_url", image_url: { url: dataUrl } });
+    target.push({ type: "image_url", image_url: { url: dataUrl } });
   }
+  return localParts;
 };
 
 const getMessageImageParts = async (
@@ -807,8 +811,12 @@ const getMessageImageParts = async (
 
   sameGroupMessages.sort((a, b) => Number(a.id) - Number(b.id));
 
-  for (const m of sameGroupMessages) {
-    await collectImagePartsFromSingleMessage(m, parts);
+  // 并行收集各消息的图片部分
+  const partialResults = await Promise.all(
+    sameGroupMessages.map((m) => collectImagePartsFromSingleMessage(m)),
+  );
+  for (const partial of partialResults) {
+    parts.push(...partial);
   }
 
   return parts;
