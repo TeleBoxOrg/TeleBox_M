@@ -5,6 +5,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import type { ClientInternals } from "@utils/clientInternals";
 
 const prefixes = getPrefixes();
@@ -225,10 +226,10 @@ class DbdjPlugin extends Plugin {
         ].join("\n");
 
         await replyAndDeleteMsg(`${head}\n\n${stats}`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         await replyAndDeleteMsg(
           `执行失败: <code>${htmlEscape(
-            error?.message || String(error),
+            getErrorMessage(error),
           )}</code>`,
         );
       }
