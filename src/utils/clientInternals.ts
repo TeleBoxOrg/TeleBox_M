@@ -30,6 +30,9 @@ import type { MessageContext } from "@mtcute/dispatcher";
 export interface ClientInternals {
   resolvePeer(target: unknown): Promise<unknown>;
   getInputEntity(target: unknown): Promise<unknown>;
+  getEntity(target: unknown): Promise<unknown>;
+  sendMessage(peer: unknown, options: Record<string, unknown>): Promise<unknown>;
+  sendFile(peer: unknown, opts: Record<string, unknown>): Promise<void>;
   getDialogs(params: Record<string, unknown>): Promise<Array<Record<string, unknown>>>;
   call(params: Record<string, unknown>): Promise<unknown>;
   startUpdatesLoop?: () => Promise<void>;

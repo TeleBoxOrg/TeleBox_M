@@ -19,6 +19,7 @@ import axios from "axios";
 import sharp from "sharp";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
+import type { ClientInternals } from "@utils/clientInternals";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -1437,7 +1438,7 @@ const speedtest = async (msg: Api.Message) => {
               const stickerPath = await convertImageToStickerWebp(imagePath);
               if (stickerPath && fs.existsSync(stickerPath)) {
                 const client = await getGlobalClient();
-                await (client as any).sendFile(msg.peerId!, {
+                await (client as unknown as ClientInternals).sendFile(msg.peerId!, {
                   file: stickerPath,
                   forceDocument: false,
                   attributes: [
