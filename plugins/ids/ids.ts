@@ -9,6 +9,7 @@ import { safeGetMe } from "@utils/authGuards";
 import { logger } from "@utils/logger";
 import { hasRawType } from "@utils/entityTypeGuards";
 import type { TelegramClient } from "@mtcute/node";
+import type { tl } from "@mtcute/core";
 import { getErrorMessage } from "@utils/errorHelpers";
 // HTML转义工具
 const htmlEscape = (text: string): string => 
@@ -163,7 +164,7 @@ class IdsPlugin extends Plugin {
     try {
       const full = await client.call({
         _: "users.getFullUser",
-        id: await client.resolvePeer(userId) as unknown as any,
+        id: await client.resolvePeer(userId) as unknown as tl.TypeInputUser,
       }) as { fullUser?: { about?: string; commonChatsCount?: number } };
       if (full.fullUser) {
         info.bio = full.fullUser.about || null;
@@ -176,7 +177,7 @@ class IdsPlugin extends Plugin {
       try {
         const p = await client.call({
           _: "channels.getParticipant",
-          channel: await client.resolvePeer(msg.chat.id) as unknown as any,
+          channel: await client.resolvePeer(msg.chat.id) as unknown as tl.TypeInputChannel,
           participant: await client.resolvePeer(userId),
         }) as { participant?: { date?: number } };
         if (p.participant?.date) {
@@ -194,7 +195,7 @@ class IdsPlugin extends Plugin {
     try {
       const full = await client.call({
         _: "users.getFullUser",
-        id: await client.resolvePeer(userId) as unknown as any,
+        id: await client.resolvePeer(userId) as unknown as tl.TypeInputUser,
       }) as { users?: Array<{ photo?: { _?: string; dcId?: number } }> };
       const u = full.users?.[0];
       if (u?.photo?._ !== "userProfilePhotoEmpty" && u?.photo) return `DC${u.photo.dcId}`;
