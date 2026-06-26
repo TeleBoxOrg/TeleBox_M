@@ -18,7 +18,7 @@ const mainPrefix = prefixes[0];
 const execAsync = promisify(exec);
 
 const htmlEscape = (text: string): string =>
-  text.replace(/[&<"']/g, m => ({
+  text.replace(/[&<>"']/g, m => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
