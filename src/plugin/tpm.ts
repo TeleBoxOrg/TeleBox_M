@@ -8,7 +8,7 @@ import path from "path";
 import fs from "fs";
 import axios from "axios";
 import { logger } from "@utils/logger";
-import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
+import type { MtcuteMessageContext, MtcuteFileLocation } from "@utils/mtcuteTypes";
 
 import type { MessageContext } from "@mtcute/dispatcher";
 
@@ -251,7 +251,11 @@ async function getDatabase() {
 
 async function getMediaFileName(msg: MessageContext | Message): Promise<string> {
   const metadata = msg.media as unknown as { document?: { attributes?: Array<{ fileName?: string }> } };
-  return metadata.document!.attributes![0].fileName!;
+  const fileName = metadata.document?.attributes?.[0]?.fileName;
+  if (!fileName) {
+    throw new Error('[tpm] 无法获取媒体文件名: document.attributes[0].fileName 不存在');
+  }
+  return fileName;
 }
 
 function normalizeGithubUrl(input: string): string {
@@ -646,8 +650,14 @@ async function installPlugin(args: string[], msg: MessageContext) {
     if (!!msg.replyToMessage) {
       const replied = await safeGetReplyMessage(msg);
       if (replied?.media) {
-        const fileName = await getMediaFileName(replied);
-        
+        let fileName: string;
+        try {
+          fileName = await getMediaFileName(replied);
+        } catch (e: unknown) {
+          await sendOrEditMessage(msg, `❌ 无法获取文件名: ${e instanceof Error ? e.message : String(e)}`);
+          return;
+        }
+
         if (!fileName.endsWith(".ts")) {
           await sendOrEditMessage(msg, `❌ 文件格式错误\n文件不是有效插件`);
           return;
@@ -657,7 +667,9 @@ async function installPlugin(args: string[], msg: MessageContext) {
         const statusMsg = await sendOrEditMessage(msg, `🔍 正在验证插件 ${pluginName} ...`);
         const filePath = path.join(PLUGIN_PATH, fileName);
 
-        const _dlClient = await getGlobalClient(); const buf = await _dlClient.downloadAsBuffer(replied.media as unknown as Parameters<typeof _dlClient.downloadAsBuffer>[0]); fs.writeFileSync(filePath, buf as Buffer);
+        const _dlClient = await getGlobalClient();
+        const buf = await _dlClient.downloadAsBuffer(replied.media as MtcuteFileLocation);
+        fs.writeFileSync(filePath, buf as Buffer);
         
         try {
           const pluginModule = require(filePath);
