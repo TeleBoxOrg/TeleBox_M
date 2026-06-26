@@ -13,6 +13,9 @@ import { pipeline } from "stream/promises";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 
+const __htmlEscape = (s: string): string =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
 let cheerio: typeof import("cheerio");
 let pLimit: typeof import("p-limit").default;
 
@@ -307,7 +310,7 @@ async function sendSingleImage(
     type: "photo",
     file: filePath,
     spoiler: true,
-    caption: photoSetUrl ? html(`套图链接: ${photoSetUrl}`) : undefined,
+    caption: photoSetUrl ? html(`套图链接: ${__htmlEscape(photoSetUrl)}`) : undefined,
   });
 }
 
@@ -322,7 +325,7 @@ async function sendImageAlbum(
       type: "photo",
       file: filePath,
       spoiler: true,
-      caption: i === 0 && photoSetUrl ? html(`套图链接: ${photoSetUrl}`) : undefined,
+      caption: i === 0 && photoSetUrl ? html(`套图链接: ${__htmlEscape(photoSetUrl)}`) : undefined,
     }));
 
     if (!media.length) {
@@ -387,7 +390,7 @@ class CosplayPlugin extends Plugin {
         const result = await this.scraper.fetchImageUrls(count);
 
         await msg.edit({
-          text: html(`从套图"${result.photoSet.title}"中找到 ${result.imageUrls.length} 张图片，正在下载...`),
+          text: html(`从套图"${__htmlEscape(result.photoSet.title)}"中找到 ${result.imageUrls.length} 张图片，正在下载...`),
         });
 
         tempFiles = await this.scraper.downloadImages(result.imageUrls);
