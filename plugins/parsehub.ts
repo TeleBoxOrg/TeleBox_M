@@ -11,9 +11,8 @@ import { tl, Long } from "@mtcute/node";
 import { Message } from "@mtcute/core";
 import { TelegramClient } from "@mtcute/core/highlevel/client.js";
 import { logger } from "@utils/logger";
+import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const BOT_USERNAME = "ParseHubot";
 const POLL_INTERVAL_MS = 2000;

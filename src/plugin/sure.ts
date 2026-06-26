@@ -4,15 +4,12 @@ import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
+import { sleep } from "@utils/asyncHelpers";
 import { SureDB, type MsgRecord } from "@utils/sureDB";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,
 } from "@utils/pluginManager";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];

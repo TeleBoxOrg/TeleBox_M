@@ -4,15 +4,12 @@ import { SudoDB } from "@utils/sudoDB";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { html } from "@mtcute/html-parser";
 import { logger } from "@utils/logger";
+import { sleep } from "@utils/asyncHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,
 } from "@utils/pluginManager";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
