@@ -196,19 +196,27 @@ export async function batchUnbanUsers(
   const success: number[] = [];
   const failed: number[] = [];
 
-  for (const userId of userIds) {
-    const result = await unbanUser(client, channel, userId);
-    if (result) {
-      success.push(userId);
-    } else {
-      failed.push(userId);
-    }
+  // 使用 p-limit 控制并发（最多 3 个并发），避免 flood wait
+  const pLimit = (await import("p-limit")).default;
+  const limit = pLimit(3);
 
-    // 添加延迟避免频率限制
-    if (delayMs > 0) {
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    }
-  }
+  const tasks = userIds.map((userId) =>
+    limit(async () => {
+      const result = await unbanUser(client, channel, userId);
+      if (result) {
+        success.push(userId);
+      } else {
+        failed.push(userId);
+      }
+
+      // 每个操作之间添加少量延迟避免频率限制
+      if (delayMs > 0) {
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+    })
+  );
+
+  await Promise.all(tasks);
 
   return { success, failed };
 }
