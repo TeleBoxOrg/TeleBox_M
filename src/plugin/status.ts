@@ -302,20 +302,18 @@ class TeleBoxSystemMonitor extends Plugin {
     const processMemUsage = process.memoryUsage();
     const processMemPercent = Math.round((processMemUsage.rss / totalmem) * 1000) / 10;
 
-    const [cpuUsage, processCpuUsage] = await Promise.all([
+    const [cpuUsage, processCpuUsage, systemDetails, versions] = await Promise.all([
       this.getCpuUsage(),
       this.getProcessCpuUsage(),
+      this.gatherSysInfoDetails(),
+      this.getVersionInfo(),
     ]);
-
-    const systemDetails = await this.gatherSysInfoDetails();
 
     const loadavgStr = platform === "win32"
       ? "N/A"
       : loadavg.map((load) => load.toFixed(2)).join(", ");
 
     const locale = process.env.LANG || process.env.LC_ALL || "en_US.UTF-8";
-
-    const versions = await this.getVersionInfo();
 
     const cpuPercentNum = parseFloat(cpuUsage) || 0;
     const processCpuNum = parseFloat(processCpuUsage) || 0;
