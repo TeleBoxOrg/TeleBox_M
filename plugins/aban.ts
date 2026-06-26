@@ -434,7 +434,7 @@ class UserResolver {
     return undefined;
   }
 
-  static formatUser(user: any, userId: number): string {
+  static formatUser(user: { firstName?: string; first_name?: string; lastName?: string; last_name?: string; username?: string; title?: string } | null, userId: number): string {
     if (user?.firstName || user?.first_name) {
       let name = user.firstName || user.first_name || String(userId);
       if (user.lastName || user.last_name) {
@@ -628,7 +628,7 @@ class PermissionManager {
           return false;
         }
 
-        const targetParticipant = participants.find((p: any) => Number(p?.userId) === userId);
+        const targetParticipant = participants.find((p: { userId?: string | number; _?: string }) => Number(p?.userId) === userId);
         return targetParticipant?._ === 'chatParticipantCreator' || targetParticipant?._ === 'chatParticipantAdmin';
       }
 
@@ -718,11 +718,11 @@ class GroupManager {
     try {
       const dialogs = await this.getAllManageableDialogs(client);
       
-      const checkPromises = dialogs.map(async (dialog: any) => {
+      const checkPromises = dialogs.map(async (dialog: { isChannel?: boolean; isGroup?: boolean; entity?: { accessHash?: string | number; id?: string | number; [key: string]: unknown }; id?: number; title?: string }) => {
         if (dialog.isChannel || dialog.isGroup) {
           const hasPermission = await PermissionManager.checkAdminPermission(
             client,
-            dialog.entity
+            dialog.entity as ChatIdArg
           );
           
           if (hasPermission) {
