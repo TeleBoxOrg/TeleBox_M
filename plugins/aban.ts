@@ -14,6 +14,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { safeGetMe } from "@utils/authGuards";
 import { npm_install } from "@utils/npm_install";
 import { logger } from "@utils/logger";
+import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { tl } from "@mtcute/core";
 import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
@@ -87,8 +88,6 @@ function getFloodWaitSeconds(error: unknown): number | null {
   if (typeof seconds === "number" && Number.isFinite(seconds)) return seconds;
   return null;
 }
-
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 
 // ==================== 配置常量 ====================
