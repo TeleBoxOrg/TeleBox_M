@@ -1,6 +1,7 @@
 // plugins/lu_bs.ts
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
+import type { TelegramClient } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
@@ -49,7 +50,11 @@ class LuBsPlugin extends Plugin {
   }
 
   private db!: Awaited<ReturnType<typeof JSONFilePreset<{ subscriptions: string[]; lastMessages: Record<string, number> }>>>;
-  private stickerSet: any = null;
+  private stickerSet: { documents: { id: number | bigint }[] } | null = null;
+
+  /**
+   * TL RPC return type for messages.getStickerSet - { _: 'messages.stickerSet', set, packs, keywords, documents }
+   */
   private readonly PLUGIN_NAME = "lu_bs";
   
   description = HELP_TEXT;
@@ -59,7 +64,7 @@ class LuBsPlugin extends Plugin {
     hourlyReport: {
       cron: "0 * * * *", // 每小时整点
       description: "鲁小迅整点报时",
-      handler: async (client: any) => {
+      handler: async (client: TelegramClient) => {
         await this.sendHourlyStickers(client);
       }
     }
@@ -85,14 +90,14 @@ class LuBsPlugin extends Plugin {
       if (!client) return;
 
       // 使用mtcute raw API获取贴纸包
-      this.stickerSet = await client.call({
+      this.stickerSet = (await client.call({
         _: 'messages.getStickerSet',
         stickerset: {
           _: 'inputStickerSetShortName',
           shortName: "luxiaoxunbs"
         },
         hash: 0
-      });
+      })) as unknown as { documents: { id: number | bigint }[] };
       
       logger.info(`[${this.PLUGIN_NAME}] 贴纸包加载成功`);
     } catch (error: unknown) {
@@ -102,7 +107,7 @@ class LuBsPlugin extends Plugin {
   }
 
   // 获取当前小时对应的贴纸
-  private async getHourSticker(): Promise<any> {
+  private async getHourSticker(): Promise<{ id: bigint | number } | null> {
     if (!this.stickerSet) {
       await this.loadStickerSet();
     }
@@ -129,7 +134,7 @@ class LuBsPlugin extends Plugin {
   }
 
   // 发送整点贴纸
-  private async sendHourlyStickers(client: any) {
+  private async sendHourlyStickers(client: TelegramClient) {
     if (!this.db) await this.initDB();
     
     const sticker = await this.getHourSticker();
