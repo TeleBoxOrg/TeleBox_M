@@ -2,6 +2,7 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { TelegramClient } from "@mtcute/node";
+import type { InputFileLike } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
@@ -50,7 +51,7 @@ class LuBsPlugin extends Plugin {
   }
 
   private db!: Awaited<ReturnType<typeof JSONFilePreset<{ subscriptions: string[]; lastMessages: Record<string, number> }>>>;
-  private stickerSet: { documents: { id: number | bigint }[] } | null = null;
+  private stickerSet: { documents: { id: number | bigint; access_hash?: unknown; file_reference?: unknown }[] } | null = null;
 
   /**
    * TL RPC return type for messages.getStickerSet - { _: 'messages.stickerSet', set, packs, keywords, documents }
@@ -97,7 +98,7 @@ class LuBsPlugin extends Plugin {
           shortName: "luxiaoxunbs"
         },
         hash: 0
-      })) as unknown as { documents: { id: number | bigint }[] };
+      })) as unknown as { documents: { id: number | bigint; access_hash?: unknown; file_reference?: unknown }[] };
       
       logger.info(`[${this.PLUGIN_NAME}] 贴纸包加载成功`);
     } catch (error: unknown) {
@@ -107,7 +108,7 @@ class LuBsPlugin extends Plugin {
   }
 
   // 获取当前小时对应的贴纸
-  private async getHourSticker(): Promise<{ id: bigint | number } | null> {
+  private async getHourSticker(): Promise<{ id: bigint | number; access_hash?: unknown; file_reference?: unknown } | null> {
     if (!this.stickerSet) {
       await this.loadStickerSet();
     }
@@ -155,15 +156,19 @@ class LuBsPlugin extends Plugin {
           } catch (error: unknown) { logger.warn(`[lu_bs] 忽略删除失败的情况（消息可能已过期）:`, error) }
         }
 
-        // 发送新贴纸
+        // 发送新贴纸 - mtcute 风格：使用 type: 'document' + TL InputDocument 对象
+        // Note: API returns snake_case fields; mtcute TL types expect camelCase
+        const inputDoc = {
+          _: 'inputDocument' as const,
+          id: sticker.id,
+          accessHash: sticker.access_hash,
+          fileReference: sticker.file_reference,
+        };
+        // Cast needed: InputFileLike doesn't include TypeInputDocument in public types,
+        // but mtcute runtime does handle TL InputDocument objects for resending
         const message = await client.sendMedia(chatId, {
-          _: 'inputMediaDocument',
-          id: {
-            _: 'inputDocument',
-            id: sticker.id,
-            access_hash: sticker.access_hash,
-            file_reference: sticker.file_reference,
-          }
+          type: 'document',
+          file: inputDoc as unknown as InputFileLike,
         });
 
         // 记录新消息ID，用于下次删除
