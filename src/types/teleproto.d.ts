@@ -39,6 +39,7 @@ declare module "teleproto" {
             replyTo?: { replyToMsgId?: number; topMsgId?: number };
             isReply?: boolean;
             out?: boolean;
+            action?: MessageAction;
             getInputChat?: () => unknown;
             raw?: {
                 id?: number;
@@ -50,6 +51,23 @@ declare module "teleproto" {
             delete(opts?: unknown): Promise<unknown>;
             reply(text: string, opts?: unknown): Promise<unknown>;
         }
+
+        export interface MessageActionPinMessage {
+            className: "MessageActionPinMessage";
+            message?: Message;
+        }
+
+        export interface MessageActionChatEditTitle {
+            className: "MessageActionChatEditTitle";
+            title?: string;
+        }
+
+        export interface MessageActionGeneric {
+            className: string;
+            [key: string]: unknown;
+        }
+
+        export type MessageAction = MessageActionPinMessage | MessageActionChatEditTitle | MessageActionGeneric;
 
         export class InputReplyToMessage {
             constructor(opts: { replyToMsgId?: number; topMsgId?: number });
