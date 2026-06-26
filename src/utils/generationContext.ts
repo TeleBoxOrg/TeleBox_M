@@ -245,7 +245,9 @@ export class GenerationContext {
     task.finally(() => {
       this.tasks.delete(entry);
       this.completeResource(resource, "completed");
-    }).catch(() => undefined);
+    }).catch((e) => {
+      logger.debug(`[GENERATION ${this.generation}] task cleanup failed:`, e);
+    });
 
     return task;
   }
@@ -365,7 +367,9 @@ export class GenerationContext {
           this.tasks.delete(entry);
           this.completeResource(resource, "completed");
         })
-        .catch(() => undefined);
+        .catch((e) => {
+          logger.debug(`[GENERATION ${this.generation}] task cleanup failed:`, e);
+        });
       wrapped.catch((error) => {
         logger.error(`[GENERATION ${this.generation}] Listener task failed:`, error);
       });

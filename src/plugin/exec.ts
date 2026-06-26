@@ -4,6 +4,7 @@ import { md } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { GenerationContext } from "@utils/generationContext";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
+import { logger } from "@utils/logger";
 
 
 function truncate(text: string, max = 3500) {
@@ -87,7 +88,7 @@ async function handleExec(params: { msg: MessageContext; shellCommand: string; l
         `命令：\`${shellCommand}\`\n` +
         `状态：运行中 ${cost}s`
       ),
-    }).catch(() => undefined);
+    }).catch((e) => logger.debug('[exec] status edit failed:', e));
   }, 2000, { label: "exec:status-interval" });
 
   try {
