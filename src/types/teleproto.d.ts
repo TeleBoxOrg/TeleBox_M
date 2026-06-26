@@ -46,9 +46,9 @@ declare module "teleproto" {
                 message?: string;
             };
             className?: string;
-            edit(opts: any): Promise<any>;
-            delete(opts?: any): Promise<any>;
-            reply(text: string, opts?: any): Promise<any>;
+            edit(opts: unknown): Promise<unknown>;
+            delete(opts?: unknown): Promise<unknown>;
+            reply(text: string, opts?: unknown): Promise<unknown>;
         }
 
         export class InputReplyToMessage {
