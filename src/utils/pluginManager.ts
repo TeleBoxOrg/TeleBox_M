@@ -498,7 +498,7 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
   // load order keep their cmdHandlers registered (setPlugins already populated
   // the `plugins` map) but never receive their lifecycle, so invoking them
   // raises "lifecycle is not initialized" until the next reload.
-  for (const plugin of validPlugins) {
+  await Promise.all(validPlugins.map(async (plugin) => {
     try {
       await runPluginSetup(plugin, runtime);
     } catch (error: unknown) {
@@ -507,7 +507,7 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
         error
       );
     }
-  }
+  }));
 
   const { client } = runtime;
 
