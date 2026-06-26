@@ -474,7 +474,7 @@ class MessageManager {
                 revoke: true,
               });
             } catch (e: unknown) {
-              const msg = e instanceof Error ? e.message : String(e);
+              const msg = getErrorMessage(e);
               if (!msg.includes('MESSAGE_ID_INVALID')) {
                 logger.error(`删除消息失败: ${e}`);
               }

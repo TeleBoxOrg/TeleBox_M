@@ -122,7 +122,7 @@ class CosplayScraper {
         return { imageUrls: selected, photoSet };
       } catch (error: unknown) {
         lastError = error;
-        const errorMessage = error instanceof Error ? error.message : "";
+        const errorMessage = getErrorMessage(error);
         if (
           attempt < maxAttempts - 1 &&
           !errorMessage.includes("只有") &&
@@ -299,7 +299,7 @@ function parseImageCount(text: string | undefined): number {
 
 async function sendSingleImage(
   client: any,
-  chatId: any,
+  chatId: string | number,
   filePath: string,
   photoSetUrl?: string
 ): Promise<void> {
