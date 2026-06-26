@@ -18,7 +18,7 @@ import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { tl } from "@mtcute/core";
 import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
-import type { MtcuteInputPeer } from "@utils/mtcuteTypes";
+import type { MtcuteInputPeer, MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
 
 /**
  * Chat identifier type used across PermissionManager and BanManager.
@@ -599,7 +599,7 @@ class PermissionManager {
 
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId as unknown as tl.TypeInputChannel,
+          channel: chatId as unknown as MtcuteInputChannel,
           participant: await client.resolvePeer(me.id)
         });
 
@@ -634,7 +634,7 @@ class PermissionManager {
 
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId as unknown as tl.TypeInputChannel,
+          channel: chatId as unknown as MtcuteInputChannel,
           participant: await client.resolvePeer(userId)
         });
       
@@ -668,7 +668,7 @@ class PermissionManager {
 
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId as unknown as tl.TypeInputChannel,
+          channel: chatId as unknown as MtcuteInputChannel,
           participant: await client.resolvePeer(me.id)
         });
       
@@ -835,14 +835,14 @@ class BanManager {
       await client.call({
           _: 'messages.deleteChatUser',
           chatId: Number(bigInt(this.getBasicGroupChatId(chatId as { chatId?: number; id?: number }))),
-          userId: resolvedParticipant as unknown as tl.TypeInputUser,
+          userId: resolvedParticipant as unknown as MtcuteInputUser,
         });
       return;
     }
 
     await client.call({
         _: 'channels.editBanned',
-        channel: chatId as unknown as tl.TypeInputChannel,
+        channel: chatId as unknown as MtcuteInputChannel,
         participant: resolvedParticipant,
         bannedRights,
       });
@@ -967,7 +967,7 @@ class BanManager {
 
       await client.call({
           _: 'channels.deleteParticipantHistory',
-          channel: chatId as unknown as tl.TypeInputChannel,
+          channel: chatId as unknown as MtcuteInputChannel,
           participant: resolvedParticipant,
         });
       
@@ -1028,13 +1028,13 @@ class BanManager {
           return client.call({
               _: 'messages.deleteChatUser',
               chatId: Number(this.getBasicGroupChatId({ id: group.id })),
-              userId: resolvedParticipant as unknown as tl.TypeInputUser,
+              userId: resolvedParticipant as unknown as MtcuteInputUser,
             });
         }
         const channelInput = await resolveChannelInput(client, group);
         return client.call({
               _: 'channels.editBanned',
-              channel: channelInput as unknown as tl.TypeInputChannel,
+              channel: channelInput as unknown as MtcuteInputChannel,
               participant: resolvedParticipant,
               bannedRights: rights,
             });
@@ -1149,7 +1149,7 @@ class BanManager {
         const channelInput = await resolveChannelInput(client, group);
         return client.call({
               _: 'channels.editBanned',
-              channel: channelInput as unknown as tl.TypeInputChannel,
+              channel: channelInput as unknown as MtcuteInputChannel,
               participant: resolvedParticipant,
               bannedRights: rights,
             });

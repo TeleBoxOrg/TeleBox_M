@@ -80,8 +80,8 @@ class LogLevelPlugin extends Plugin {
     try {
         const client = await getGlobalClient();
         const lvl = logger.getGramJSLogLevel?.();
-        if (client && typeof lvl === "number" && (client as unknown as { log?: { level: number } }).log) {
-            (client as unknown as { log: { level: number } }).log.level = lvl;
+        if (client && typeof lvl === "string" && (client as unknown as { log?: { level: string } }).log) {
+            (client as unknown as { log: { level: string } }).log.level = lvl;
         }
     } catch (e: unknown) {
       logger.error("[loglevel] 忽略客户端尚未初始化的错误:", e);
