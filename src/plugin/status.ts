@@ -499,29 +499,42 @@ Scan Time: ${scanTime}ms
     let processes = "Unknown";
     let swapInfo = "Disabled";
 
-    try {
-      if (platform === "linux") {
-        osInfo = await this.getLinuxOsInfo(arch);
-        kernelInfo = await this.getLinuxKernelInfo();
-        packages = await this.getLinuxPackageCount();
-        initSystem = await this.getInitSystem();
-        diskInfo = await this.getLinuxDiskInfo();
-        processes = await this.getProcessCount();
-        swapInfo = await this.getLinuxSwapInfo();
-      } else if (platform === "win32") {
-        osInfo = `Windows ${arch}`;
-        kernelInfo = `Windows NT ${release}`;
-      } else if (platform === "darwin") {
-        osInfo = `macOS ${arch}`;
-        kernelInfo = `Darwin ${release}`;
-        packages = "Homebrew";
-        initSystem = "launchd";
-        processes = await this.getProcessCount();
-        diskInfo = await this.getMacDiskInfo();
-        swapInfo = await this.getMacSwapInfo();
-      }
-    } catch (error: unknown) {
-      logger.warn(`[${this.PLUGIN_NAME}] 系统信息获取部分失败:`, error);
+    if (platform === "linux") {
+      const [osInfoResult, kernelInfoResult, packagesResult, initSystemResult, diskInfoResult, processesResult, swapInfoResult] =
+        await Promise.allSettled([
+          this.getLinuxOsInfo(arch),
+          this.getLinuxKernelInfo(),
+          this.getLinuxPackageCount(),
+          this.getInitSystem(),
+          this.getLinuxDiskInfo(),
+          this.getProcessCount(),
+          this.getLinuxSwapInfo(),
+        ]);
+
+      osInfo = osInfoResult.status === "fulfilled" ? osInfoResult.value : osInfo;
+      kernelInfo = kernelInfoResult.status === "fulfilled" ? kernelInfoResult.value : kernelInfo;
+      packages = packagesResult.status === "fulfilled" ? packagesResult.value : packages;
+      initSystem = initSystemResult.status === "fulfilled" ? initSystemResult.value : initSystem;
+      diskInfo = diskInfoResult.status === "fulfilled" ? diskInfoResult.value : diskInfo;
+      processes = processesResult.status === "fulfilled" ? processesResult.value : processes;
+      swapInfo = swapInfoResult.status === "fulfilled" ? swapInfoResult.value : swapInfo;
+    } else if (platform === "win32") {
+      osInfo = `Windows ${arch}`;
+      kernelInfo = `Windows NT ${release}`;
+    } else if (platform === "darwin") {
+      osInfo = `macOS ${arch}`;
+      kernelInfo = `Darwin ${release}`;
+      packages = "Homebrew";
+      initSystem = "launchd";
+      const [processesResult, diskInfoResult, swapInfoResult] =
+        await Promise.allSettled([
+          this.getProcessCount(),
+          this.getMacDiskInfo(),
+          this.getMacSwapInfo(),
+        ]);
+      processes = processesResult.status === "fulfilled" ? processesResult.value : processes;
+      diskInfo = diskInfoResult.status === "fulfilled" ? diskInfoResult.value : diskInfo;
+      swapInfo = swapInfoResult.status === "fulfilled" ? swapInfoResult.value : swapInfo;
     }
 
     return {
