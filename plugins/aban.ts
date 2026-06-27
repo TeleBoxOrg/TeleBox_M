@@ -19,6 +19,7 @@ import { getErrorMessage } from "@utils/errorHelpers";
 import type { tl } from "@mtcute/core";
 import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
 import type { MtcuteInputPeer, MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
+import { htmlEscape } from "@utils/htmlEscape";
 
 /**
  * Chat identifier type used across PermissionManager and BanManager.
@@ -89,7 +90,6 @@ function getFloodWaitSeconds(error: unknown): number | null {
   return null;
 }
 
-
 // ==================== 配置常量 ====================
 const CONFIG = {
   BATCH_SIZE: 50, // 增加批次大小
@@ -113,13 +113,6 @@ const HELP_TEXT = `<b>封禁管理</b>
 <code>${mainPrefix}refresh</code> 刷新
 
 回复消息或@用户名`;
-
-// ==================== 工具函数 ====================
-const htmlEscape = (text: string): string =>
-  text.replace(/[&<>"']/g, m => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;',
-    '"': '&quot;', "'": '&#x27;'
-  }[m] || m));
 
 // 解析时间字符串
 function parseTimeString(timeStr?: string): number {
