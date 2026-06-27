@@ -8,6 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import { TelegramFormatter } from "@utils/telegramFormatter";
 
 /** Komari API 节点对象类型 */
 interface KomariNode {
@@ -638,20 +639,20 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
     // 处理不同的子命令
     if (args.length === 0 || args[0] === "status") {
       await msg.edit({ text: html`🔄 获取服务器信息中...` });
-     const result = await getServerInfo(baseUrl);
+     const result = TelegramFormatter.markdownToHtml(await getServerInfo(baseUrl));
       await msg.edit({
         text: html`${result}`,
       });
     } else if (args[0] === "total") {
       await msg.edit({ text: html`🔄 获取节点总览中...` });
-     const result = await getNodesOverview(baseUrl);
+     const result = TelegramFormatter.markdownToHtml(await getNodesOverview(baseUrl));
       await msg.edit({
         text: html`${result}`,
       });
     } else if (args[0] === "show" && args.length >= 2) {
       const nodeName = args.slice(1).join(" ");
       await msg.edit({ text: html`🔄 获取节点 "${htmlEscape(nodeName)}" 信息中...` });
-     const result = await getNodeDetails(baseUrl, nodeName);
+     const result = TelegramFormatter.markdownToHtml(await getNodeDetails(baseUrl, nodeName));
       await msg.edit({
         text: html`${result}`,
       });
