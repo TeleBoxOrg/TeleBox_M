@@ -33,8 +33,7 @@
     "node_modules",
     "dist",
     "temp",
-    "temp/**/*",
-    "plugins/save.ts"
+    "temp/**/*"
   ],
   "include": [
     "src/**/*",
