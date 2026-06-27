@@ -139,7 +139,15 @@ function dynamicRequireWithDeps(filePath: string) {
     delete require.cache[require.resolve(normalized)];
     return require(normalized);
   } catch (err: unknown) {
-    logger.error(`Failed to require ${filePath}:`, err);
+    // Downgrade to debug for known missing-module errors (e.g. teleproto-dependent
+    // plugins that haven't been migrated yet). Unexpected errors still log as errors.
+    const isMissingModule = err instanceof Error
+      && err.message?.startsWith("Cannot find module");
+    if (isMissingModule) {
+      logger.debug(`Skipped plugin ${filePath}: ${err.message}`);
+    } else {
+      logger.error(`Failed to require ${filePath}:`, err);
+    }
     return null;
   }
 }
