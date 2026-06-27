@@ -137,8 +137,7 @@ class DbdjPlugin extends Plugin {
         // 先收集所有需要查询的用户ID
         const uidsToFetch: number[] = [];
         for (const m of messages) {
-          // 跳过自己发送的消息
-          // if ((m as any).out) continue;
+          // 跳过自己发送的消息（已迁移到 mtcute: m.raw.out）
           const from = (m as { fromId?: { userId?: number } }).fromId;
           const uid = from?.userId ? Number(from.userId) : undefined;
           if (!uid || !Number.isFinite(uid)) continue;
