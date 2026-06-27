@@ -34,8 +34,7 @@
     "dist",
     "temp",
     "temp/**/*",
-    "plugins/save.ts",
-    "plugins/his.ts"
+    "plugins/save.ts"
   ],
   "include": [
     "src/**/*",
