@@ -13,6 +13,7 @@ import { TelegramClient } from "@mtcute/core/highlevel/client.js";
 import { logger } from "@utils/logger";
 import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
+import { htmlEscape } from "@utils/htmlEscape";
 
 const BOT_USERNAME = "ParseHubot";
 const POLL_INTERVAL_MS = 2000;
@@ -55,19 +56,6 @@ Instagram视频|图文
 <code>${commandName} https://twitter.com/user/status/123</code>
 <code>${commandName} https://www.instagram.com/p/xxxx/</code>
 `.trim();
-
-const htmlEscape = (text: string): string =>
-  text.replace(
-    /[&<>"']/g,
-    (ch) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#x27;",
-      })[ch] || ch,
-  );
 
 let hasStartedBot = false;
 let firstRunPreStartLastId = 0;

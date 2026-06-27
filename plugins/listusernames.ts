@@ -5,6 +5,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import { htmlEscape } from "@utils/htmlEscape";
 
 /** channels.getAdminedPublicChannels 返回的聊天实体 */
 interface PublicChannelEntity {
@@ -21,13 +22,6 @@ interface AdminedPublicChannelsResult {
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
-
-// HTML转义函数（必需）
-const htmlEscape = (text: string): string => 
-  text.replace(/[&<>"']/g, m => ({ 
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', 
-    '"': '&quot;', "'": '&#x27;' 
-  }[m] || m));
 
 const codeTag = (text: string | number): string => `<code>${htmlEscape(String(text))}</code>`;
 
