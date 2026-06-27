@@ -310,7 +310,7 @@ async function sendSingleImage(
     type: "photo",
     file: filePath,
     spoiler: true,
-    caption: photoSetUrl ? html(`套图链接: ${__htmlEscape(photoSetUrl)}`) : undefined,
+    caption: photoSetUrl ? html(`套图链接: ${photoSetUrl}`) : undefined,
   });
 }
 
@@ -325,7 +325,7 @@ async function sendImageAlbum(
       type: "photo",
       file: filePath,
       spoiler: true,
-      caption: i === 0 && photoSetUrl ? html(`套图链接: ${__htmlEscape(photoSetUrl)}`) : undefined,
+      caption: i === 0 && photoSetUrl ? html(`套图链接: ${photoSetUrl}`) : undefined,
     }));
 
     if (!media.length) {
@@ -390,7 +390,7 @@ class CosplayPlugin extends Plugin {
         const result = await this.scraper.fetchImageUrls(count);
 
         await msg.edit({
-          text: html(`从套图"${__htmlEscape(result.photoSet.title)}"中找到 ${result.imageUrls.length} 张图片，正在下载...`),
+          text: html(`从套图"${result.photoSet.title}"中找到 ${result.imageUrls.length} 张图片，正在下载...`),
         });
 
         tempFiles = await this.scraper.downloadImages(result.imageUrls);
@@ -403,7 +403,7 @@ class CosplayPlugin extends Plugin {
       } catch (err: unknown) {
         logger.error("cosplay插件错误:", err);
         await msg.edit({
-          text: html(`❌ 出错: ${__htmlEscape(getErrorMessage(err) || "未知错误")}`),
+          text: html(`❌ 出错: ${getErrorMessage(err) || "未知错误"}`),
         });
       } finally {
         if (tempFiles.length) {
