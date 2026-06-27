@@ -355,9 +355,9 @@ class LuBsPlugin extends Plugin {
     const isSubscribed = this.db.data.subscriptions.includes(chatId);
     const totalSubscriptions = this.db.data.subscriptions.length;
     
-    let text = `📊 <b>订阅状态</b>\n\n`;
-    text += `• 当前聊天: <code>${isSubscribed ? "✅ 已订阅" : "❌ 未订阅"}</code>\n`;
-    text += `• 总订阅数: <code>${totalSubscriptions}</code>\n\n`;
+    let text = `📊 <b>订阅状态</b><br><br>`;
+    text += `• 当前聊天: <code>${isSubscribed ? "✅ 已订阅" : "❌ 未订阅"}</code><br>`;
+    text += `• 总订阅数: <code>${totalSubscriptions}</code><br><br>`;
     
     if (isSubscribed) {
       text += `💡 使用 <code>${mainPrefix}lu_bs unsub</code> 退订`;
