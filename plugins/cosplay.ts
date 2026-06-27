@@ -403,7 +403,7 @@ class CosplayPlugin extends Plugin {
       } catch (err: unknown) {
         logger.error("cosplay插件错误:", err);
         await msg.edit({
-          text: html(`❌ 出错: ${getErrorMessage(err) || "未知错误"}`),
+          text: html(`❌ 出错: ${__htmlEscape(getErrorMessage(err) || "未知错误")}`),
         });
       } finally {
         if (tempFiles.length) {
