@@ -8,6 +8,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import { getGlobalClient } from "@utils/globalClient";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import { htmlEscape } from "@utils/htmlEscape";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -67,15 +68,6 @@ async function findLogFiles(): Promise<{
   }
 
   return { outLog, errLog };
-}
-
-function htmlEscape(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 const fn = async (msg: MessageContext) => {

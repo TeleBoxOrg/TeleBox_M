@@ -18,6 +18,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { tryGetCurrentGenerationContext, getGlobalClient } from "@utils/globalClient";
 import type { InputPeerLike } from "@mtcute/node";
 import type { Message } from "@mtcute/node";
+import { htmlEscape } from "@utils/htmlEscape";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -67,15 +68,6 @@ class EntityManager {
   hasReachedLimit(): boolean {
     return this.count >= this.LIMIT;
   }
-}
-
-function htmlEscape(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
 }
 
 function codeTag(value: string): string {
