@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
+import { htmlEscape } from "@utils/htmlEscape";
 import axios from "axios";
 import Database from "better-sqlite3";
 import * as fs from "fs";
@@ -649,7 +650,7 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
       });
     } else if (args[0] === "show" && args.length >= 2) {
       const nodeName = args.slice(1).join(" ");
-      await msg.edit({ text: html`🔄 获取节点 "${nodeName}" 信息中...` });
+      await msg.edit({ text: html`🔄 获取节点 "${htmlEscape(nodeName)}" 信息中...` });
      const result = await getNodeDetails(baseUrl, nodeName);
       await msg.edit({
         text: html`${result}`,
