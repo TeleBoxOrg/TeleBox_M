@@ -61,12 +61,12 @@ async function formatEntity(
   }
   const displayParts: string[] = [];
 
-  if (entity?.title) displayParts.push(entity.title);
-  if (entity?.firstName) displayParts.push(entity.firstName);
-  if (entity?.lastName) displayParts.push(entity.lastName);
+  if (entity?.title) displayParts.push(htmlEscape(entity.title));
+  if (entity?.firstName) displayParts.push(htmlEscape(entity.firstName));
+  if (entity?.lastName) displayParts.push(htmlEscape(entity.lastName));
   if (entity?.username)
     displayParts.push(
-      mention ? `@${entity.username}` : `<code>@${entity.username}</code>`
+      mention ? `@${htmlEscape(entity.username)}` : `<code>@${htmlEscape(entity.username)}</code>`
     );
 
   if (id) {

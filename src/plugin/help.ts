@@ -61,8 +61,8 @@ function formatCommandsSafely(
         text += ` (${aliasText})`;
       }
     } else {
-      text = `${prefix}${cmd}`;
-      if (alias.length) text += ` (${alias.join(", ")})`;
+      text = `${htmlEscape(prefix)}${htmlEscape(cmd)}`;
+      if (alias.length) text += ` (${alias.map(a => htmlEscape(a)).join(", ")})`;
     }
     result.push(text);
   }
