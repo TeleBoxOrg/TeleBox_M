@@ -412,7 +412,7 @@ class BfPlugin extends Plugin {
 
         const targets = await ConfigManager.addTargets(valid);
         await msg.edit({
-          text: html(`✅ 目标已更新: ${targets.join(", ") || "无"}`),
+          text: html(`✅ 目标已更新: ${targets.map(t => htmlEscape(t)).join(", ") || "无"}`),
         });
         return;
       }
