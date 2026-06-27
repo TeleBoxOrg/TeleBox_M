@@ -1,6 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
-import { Api } from "teleproto";
-import { sleep } from "teleproto/Helpers";
+import { sleep } from "@utils/asyncHelpers";
+import { htmlEscape } from "@utils/htmlEscape";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { safeGetMessages } from "@utils/safeGetMessages";
@@ -40,7 +40,7 @@ async function formatEntity(
   try {
     entity = typeof target === 'object' && target.className
       ? target as { id?: number; title?: string; firstName?: string; lastName?: string; username?: string; className?: string; bot?: boolean; deleted?: boolean; fake?: boolean; scam?: boolean; botBusiness?: boolean }
-      : (await (client as unknown as ClientInternals)?.getEntity(target as string | number)) as { id?: number; className?: string } | undefined;
+      : (await (client as unknown as ClientInternals)?.resolvePeer(target as string | number)) as { id?: number; className?: string } | undefined;
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
@@ -65,7 +65,7 @@ async function formatEntity(
 
   if (id) {
     displayParts.push(
-      entity instanceof Api.User
+      entity && 'firstName' in entity
         ? `<a href="tg://user?id=${id}">${id}</a>`
         : `<a href="https://t.me/c/${id}">${id}</a>`,
     );
@@ -79,22 +79,13 @@ async function formatEntity(
     display: displayParts.join(" ").trim(),
   };
 }
-function htmlEscape(text: string): string {
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
-
 class DbdjPlugin extends Plugin {
   description: string = `点兵点将\n<code>${mainPrefix}dbdj 消息数 人数 文案</code> - 从最近的消息中随机抽取指定人数的用户`;
   cmdHandlers: Record<
     string,
-    (msg: Api.Message, trigger?: Api.Message) => Promise<void>
+    (msg: any, trigger?: any) => Promise<void>
   > = {
-    dbdj: async (msg: Api.Message, trigger?: Api.Message) => {
+    dbdj: async (msg: any, trigger?: any) => {
       const startAt = Date.now();
       const replyAndDeleteMsg = async (message: string) => {
         const replyTarget = trigger || msg;
