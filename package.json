@@ -1,7 +1,7 @@
 {
   "name": "telebox",
   "version": "0.2.8",
-  "description": "",
+  "description": "TeleBox - A Telegram bot framework built on mtcute (TypeScript)",
   "scripts": {
     "start": "node scripts/run-tsx.cjs ./src/index.ts",
     "tpm": "node scripts/run-tsx.cjs ./src/plugin/tpm.ts",
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/TiaraBasori/TeleBox_mtcute.git"
   },
-  "keywords": [],
+  "keywords": ["telegram", "bot", "mtcute", "telebox", "typescript"],
   "author": "TiaraBasori <mintabyss233@gmail.com>",
   "license": "LGPL-2.1-only",
   "type": "commonjs",
@@ -32,15 +32,6 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@mtcute/dispatcher": "^0.30.1",
     "@mtcute/node": "^0.30.1",
-    "@types/archiver": "^6.0.3",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/cron": "^2.0.1",
-    "@types/js-yaml": "^4.0.9",
-    "@types/lodash": "^4.17.20",
-    "@types/lowdb": "^1.0.15",
-    "@types/node": "^24.3.0",
-    "@types/opencc-js": "^1.0.3",
-    "@types/qrcode-terminal": "^0.12.2",
     "@vitalets/google-translate-api": "^9.2.1",
     "archiver": "^7.0.1",
     "axios": "^1.18.1",
@@ -66,13 +57,21 @@
     "sharp": "^0.34.3",
     "smartcrop-sharp": "^2.0.8",
     "ssh2": "^1.15.0",
-    "telegraf": "^4.16.3",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.22.4",
     "typescript": "^5.9.2"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/big-integer": "^0.0.30",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cron": "^2.0.1",
+    "@types/js-yaml": "^4.0.9",
+    "@types/lodash": "^4.17.20",
+    "@types/lowdb": "^1.0.15",
+    "@types/node": "^24.3.0",
+    "@types/opencc-js": "^1.0.3",
+    "@types/qrcode-terminal": "^0.12.2",
     "vitest": "^4.1.8"
   }
 }
