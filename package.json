@@ -9,16 +9,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TeleBoxOrg/TeleBox.git"
+    "url": "git+https://github.com/TiaraBasori/TeleBox_mtcute.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "TiaraBasori <mintabyss233@gmail.com>",
   "license": "LGPL-2.1-only",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/TeleBoxOrg/TeleBox/issues"
+    "url": "https://github.com/TiaraBasori/TeleBox_mtcute/issues"
   },
-  "homepage": "https://github.com/TeleBoxOrg/TeleBox#readme",
+  "homepage": "https://github.com/TiaraBasori/TeleBox_mtcute#readme",
   "engines": {
     "node": "24.x"
   },
