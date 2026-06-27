@@ -461,7 +461,7 @@ class ParseHubPlugin extends Plugin {
             outcome.error && outcome.error !== "undefined"
               ? `\n\n错误信息：${htmlEscape(outcome.error)}`
               : "";
-          await client.sendText(msg.chat.id, html(`⚠️ 未能获取 <b>${link}</b> 的最终结果（${reasonText}）。请稍后重试或直接私聊 @${BOT_USERNAME}。${detail}`), {
+          await client.sendText(msg.chat.id, html(`⚠️ 未能获取 <b>${htmlEscape(link)}</b> 的最终结果（${reasonText}）。请稍后重试或直接私聊 @${BOT_USERNAME}。${detail}`), {
             replyTo: msg.id,
           });
         }
