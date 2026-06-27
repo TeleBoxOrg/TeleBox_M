@@ -51,7 +51,8 @@ export function isGroup(entity: unknown): boolean {
  */
 export function isSupergroup(entity: unknown): boolean {
   if (!isChat(entity)) return false;
-  return entity.isGroup;
+  const raw = entity.raw as { _?: string; megagroup?: boolean } | undefined;
+  return entity.isGroup && raw?._ === 'channel';
 }
 
 /**
@@ -60,6 +61,7 @@ export function isSupergroup(entity: unknown): boolean {
 export function getEntityType(entity: unknown): string {
   if (isUser(entity)) return 'user';
   if (isChat(entity)) {
+    if (isSupergroup(entity)) return 'supergroup';
     if (entity.isGroup) return 'group';
     const raw = entity.raw as { _?: string };
     if (raw?._ === 'channel') return 'channel';
