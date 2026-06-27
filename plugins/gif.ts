@@ -7,6 +7,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import type { Message, TelegramClient, MessageMedia, Video, Document, InputMediaSticker } from "@mtcute/node";
 import type { FileLocation } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
+import { htmlEscape } from "@utils/htmlEscape";
 import fs from "fs";
 import path from "path";
 import { execFile } from "child_process";
@@ -111,7 +112,7 @@ class GifConverter {
       const errorMessage = getErrorMessage(error);
       logger.error("GIF转贴纸失败:", error);
       await msg.edit({
-        text: html(`❌ 转换失败：${errorMessage}<br><br>💡 请检查支持的格式和限制。`)
+        text: html(`❌ 转换失败：${htmlEscape(errorMessage)}<br><br>💡 请检查支持的格式和限制。`)
       });
     }
   }
@@ -144,7 +145,7 @@ class GifConverter {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       await msg.edit({
-        text: html(`⚠️ 清理临时文件时出错：${errorMessage}`)
+        text: html(`⚠️ 清理临时文件时出错：${htmlEscape(errorMessage)}`)
       });
     }
   }
@@ -365,7 +366,7 @@ class GifConverter {
       const errorMessage = getErrorMessage(error);
       logger.error("自动添加贴纸包失败:", error);
       await statusMsg.edit({ 
-        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...<br><br>错误: ${errorMessage}`) 
+        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...<br><br>错误: ${htmlEscape(errorMessage)}`) 
       });
       
       // 失败后直接发送贴纸

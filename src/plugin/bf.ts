@@ -1,5 +1,6 @@
 import { Plugin, type PluginRuntimeContext } from "@utils/pluginBase";
 import { html } from "@mtcute/html-parser";
+import { htmlEscape } from "@utils/htmlEscape";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import type { Document, Video, Audio, Voice, Sticker } from "@mtcute/core";
@@ -588,7 +589,7 @@ class BfPlugin extends Plugin {
                   await client.sendMedia("me", {
                     type: "document",
                     file: backupPath,
-                    caption: html(`⚠️ 发送到 ${dest} 失败<br><br>${caption}`),
+                    caption: html(`⚠️ 发送到 ${dest} 失败<br><br>${htmlEscape(caption)}`),
                     fileName: backupName,
                   });
                 } catch (fallbackErr: unknown) {
