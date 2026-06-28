@@ -239,7 +239,7 @@ async function handleMsgAddDel(
     text:
       raw && !input
         ? `已清除 ${raw} 的重定向`
-        : html`已${action === "add" ? "添加" : "删除"}: <code>${raw ? `${raw} -> ${input}` : input}</code>`,
+        : html`已${action === "add" ? "添加" : "删除"}: <code>${raw ? `${htmlEscape(raw)} -> ${htmlEscape(input)}` : htmlEscape(input)}</code>`,
   });
   await msg.deleteWithDelay(5000);
 }

@@ -9,23 +9,14 @@ import type { TelegramClient } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
-
-// Track pending setTimeout handles for safe cleanup on reload
-const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+import { htmlEscape } from "@utils/htmlEscape";
 
 // Get command prefixes
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
-// HTML escape function
-function htmlEscape(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
+// Track pending setTimeout handles for safe cleanup on reload
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 
 function codeTag(text: string | number): string {
   return `<code>${htmlEscape(String(text))}</code>`;
