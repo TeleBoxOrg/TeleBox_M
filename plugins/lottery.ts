@@ -1312,14 +1312,14 @@ const lottery = async (msg: MessageContext) => {
       await msg.edit({ text: html("🔄 <b>发布抽奖活动...</b>") });
       
       const createText =
-        `🎉 <b>抽奖活动已创建</b>\n\n` +
-        `🏆 <b>活动名称:</b> ${htmlEscape(title)}\n` +
-        `🎁 <b>中奖名额:</b> <b>${winnerCount}</b> 个\n` +
-        `👥 <b>参与上限:</b> <b>${maxParticipants}</b> 人\n` +
-        `🔑 <b>参与关键词:</b> ${codeTag(keyword)}\n` +
-        `📦 <b>奖品仓库:</b> ${htmlEscape(selectedWarehouse)}\n` +
-        `🎁 <b>可用奖品:</b> ${warehousePrizes.length} 种\n` +
-        `🆔 <b>抽奖ID:</b> ${codeTag(uniqueId)}\n\n` +
+        `🎉 <b>抽奖活动已创建</b><br><br>` +
+        `🏆 <b>活动名称:</b> ${htmlEscape(title)}<br>` +
+        `🎁 <b>中奖名额:</b> <b>${winnerCount}</b> 个<br>` +
+        `👥 <b>参与上限:</b> <b>${maxParticipants}</b> 人<br>` +
+        `🔑 <b>参与关键词:</b> ${codeTag(keyword)}<br>` +
+        `📦 <b>奖品仓库:</b> ${htmlEscape(selectedWarehouse)}<br>` +
+        `🎁 <b>可用奖品:</b> ${warehousePrizes.length} 种<br>` +
+        `🆔 <b>抽奖ID:</b> ${codeTag(uniqueId)}<br><br>` +
         `💡 <b>提示:</b> 发送关键词即可参与抽奖`;
 
       const sentMsg = await msg.client?.sendText(chatId, html(createText));

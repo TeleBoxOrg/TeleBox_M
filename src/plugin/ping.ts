@@ -308,7 +308,7 @@ class PingPlugin extends Plugin {
           await msg.edit({
             text: html(`🌐 <b>Telegram数据中心延迟</b><br><br>${dcResults.join(
               "<br>"
-            )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
+            )}<br><br>⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
           });
           return;
         }
@@ -422,18 +422,18 @@ class PingPlugin extends Plugin {
 
         if (target === testTarget) {
           // 输入和目标相同时，只显示一次
-          displayText += `<code>${htmlEscape(target)}</code>\n\n`;
+          displayText += `<code>${htmlEscape(target)}</code><br><br>`;
         } else {
           // 输入和目标不同时（如dc1 → IP），显示映射关系
           displayText += `<code>${htmlEscape(
             target
-          )}</code> → <code>${htmlEscape(testTarget)}</code>\n\n`;
+          )}</code> → <code>${htmlEscape(testTarget)}</code><br><br>`;
         }
 
         await msg.edit({
           text: html(`${displayText}${results.join(
             "<br>"
-          )}\n\n⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
+          )}<br><br>⏰ <i>${new Date().toLocaleString("zh-CN")}</i>`),
         });
       } catch (error: unknown) {
         await msg.edit({
