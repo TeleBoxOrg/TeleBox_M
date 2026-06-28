@@ -313,7 +313,7 @@ class JavDBPlugin extends Plugin {
       // 步骤5：处理封面图
       const rawThumb = item.thumb || "";
       const photoUrl = rawThumb.startsWith("http") ? rawThumb : `https:${rawThumb}`;
-      let sent: any;
+      let sent: { id?: number } | undefined;
 
       try {
         // 下载封面图
