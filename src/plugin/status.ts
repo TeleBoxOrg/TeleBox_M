@@ -21,7 +21,7 @@ const mainPrefix = prefixes[0];
 const DEFAULT_TEMPLATE = `<b>📊 TeleBox 运行状态</b><br><b>🏠 主机信息</b><br>• <b>主机名:</b> <code>{hostname}</code><br>• <b>平台:</b> <code>{platform} {arch}</code><br>• <b>内核:</b> <code>{kernel}</code><br>• <b>语言环境:</b> <code>{locale}</code><br><br><b>📦 版本信息</b><br>• <b>Node.js版本:</b> <code>{nodejs}</code><br>• <b>mtcute版本:</b> <code>{mtcute}</code><br>• <b>TeleBox版本:</b> <code>{telebox}</code><br><br><b>📈 资源使用</b><br>• <b>CPU:</b> <code>{cpu}%</code> (系统) / <code>{processcpu}%</code> (进程)<br>• <b>内存:</b> <code>{mem}%</code> (系统) / <code>{processmem}%</code> (进程)<br>• <b>SWAP:</b> <code>{swap}</code><br>• <b>磁盘:</b> <code>{disk}</code><br>• <b>网络接口:</b> <code>{network}</code><br><br><b>⚙️ 系统详情</b><br>• <b>OS:</b> <code>{os}</code><br>• <b>负载平均:</b> <code>{loadaverage}</code><br>• <b>包数量:</b> <code>{packages}</code><br>• <b>Init:</b> <code>{init}</code><br>• <b>进程数:</b> <code>{process}</code><br><br><b>⏱️ 运行状态</b><br>• <b>运行时间:</b> <code>{uptime}</code><br>• <b>扫描耗时:</b> <code>{scantime}ms</code>`;
 
 // 帮助文本
-const HELP_TEXT = `<b>⚙️ Status 系统状态插件</b><br><br><b>🔧 使用方法:</b><br>• <code>${mainPrefix}sysinfo</code> - 显示当前系统状态<br>• <code>${mainPrefix}status</code> - 显示当前状态<br>• <code>${mainPrefix}status lifecycle</code> - 显示当前 generation 生命周期资源计数<br>• <code>${mainPrefix}status stress</code> - 输出 reload 压测观察项与当前计数<br>• <code>${mainPrefix}status show</code> - 显示当前模板内容<br>• <code>${mainPrefix}status set</code> - 回复模板消息，设置自定义格式<br>• <code>${mainPrefix}status reset</code> - 重置默认模板<br><br><b>💡 模板标签说明:</b><br>可用标签：<br><blockquote expandable><b>🏠 主机信息</b><br>• <code>{hostname}</code> - <b>主机名</b><br>• <code>{platform}</code> - <b>系统平台</b> (linux/win32/darwin)<br>• <code>{arch}</code> - <b>系统架构</b> (x64/arm64等)<br>• <code>{kernel}</code> - <b>内核版本</b><br>• <code>{locale}</code> - <b>语言环境</b><br><br><b>📦 版本信息</b><br>• <code>{nodejs}</code> - <b>Node.js版本</b><br>• <code>{teleproto}</code> - <b>Teleproto库版本</b><br>• <code>{mtcute}</code> - <b>mtcute库版本</b><br>• <code>{telebox}</code> - <b>TeleBox版本</b><br><br><b>📈 资源使用</b><br>• <code>{cpu}</code> - <b>系统CPU使用率</b> (%)<br>• <code>{processcpu}</code> - <b>进程CPU使用率</b> (%)<br>• <code>{mem}</code> - <b>系统内存使用率</b> (%)<br>• <code>{processmem}</code> - <b>进程内存使用率</b> (%)<br>• <code>{swap}</code> - <b>SWAP使用情况</b><br>• <code>{disk}</code> - <b>磁盘使用情况</b><br>• <code>{network}</code> - <b>主网络接口名称</b><br>• <b>进度条标签:</b><br>  <code>{cpubar}</code> - 系统CPU进度条<br>  <code>{processcpubar}</code> - 进程CPU进度条<br>  <code>{membar}</code> - 系统内存进度条<br>  <code>{processmembar}</code> - 进程内存进度条<br>  <code>{diskbar}</code> - 磁盘进度条<br><br><b>⚙️ 系统详情</b><br>• <code>{os}</code> - <b>操作系统信息</b><br>• <code>{loadaverage}</code> - <b>负载平均值</b><br>• <code>{packages}</code> - <b>已安装包数量</b><br>• <code>{init}</code> - <b>初始化系统</b> (systemd/pm2等)<br>• <code>{process}</code> - <b>进程数量</b><br><br><b>⏱️ 运行状态</b><br>• <code>{uptime}</code> - <b>运行时间</b> (Xd Yh Zm)<br>• <code>{scantime}</code> - <b>扫描耗时</b> (毫秒)</blockquote><br><br><b>📝 模板设置示例:</b><br>发送一条消息，内容为自定义模板：<br><code>&lt;b&gt;📊 系统状态&lt;/b&gt;<br>CPU: {cpu}% {cpubar}<br>内存: {mem}% {membar}<br>磁盘: {disk} {diskbar}<br>运行时间: {uptime}</code><br>回复该消息，发送 <code>${mainPrefix}status set</code><br><b>⚠️ 注意事项:</b><br>• 模板必须包含有效的HTML标签（如 <code>&lt;b&gt;</code>, <code>&lt;code&gt;</code>）<br>• 标签名称必须完全匹配`;
+const HELP_TEXT = `<b>⚙️ Status 系统状态插件</b><br><br><b>🔧 使用方法:</b><br>• <code>${mainPrefix}sysinfo</code> - 显示当前系统状态<br>• <code>${mainPrefix}status</code> - 显示当前状态<br>• <code>${mainPrefix}status lifecycle</code> - 显示当前 generation 生命周期资源计数<br>• <code>${mainPrefix}status stress</code> - 输出 reload 压测观察项与当前计数<br>• <code>${mainPrefix}status show</code> - 显示当前模板内容<br>• <code>${mainPrefix}status set</code> - 回复模板消息，设置自定义格式<br>• <code>${mainPrefix}status reset</code> - 重置默认模板<br><br><b>💡 模板标签说明:</b><br>可用标签：<br><blockquote expandable><b>🏠 主机信息</b><br>• <code>{hostname}</code> - <b>主机名</b><br>• <code>{platform}</code> - <b>系统平台</b> (linux/win32/darwin)<br>• <code>{arch}</code> - <b>系统架构</b> (x64/arm64等)<br>• <code>{kernel}</code> - <b>内核版本</b><br>• <code>{locale}</code> - <b>语言环境</b><br><br><b>📦 版本信息</b><br>• <code>{nodejs}</code> - <b>Node.js版本</b><br>• <code>{mtcute}</code> - <b>mtcute库版本</b><br>• <code>{telebox}</code> - <b>TeleBox版本</b><br><br><b>📈 资源使用</b><br>• <code>{cpu}</code> - <b>系统CPU使用率</b> (%)<br>• <code>{processcpu}</code> - <b>进程CPU使用率</b> (%)<br>• <code>{mem}</code> - <b>系统内存使用率</b> (%)<br>• <code>{processmem}</code> - <b>进程内存使用率</b> (%)<br>• <code>{swap}</code> - <b>SWAP使用情况</b><br>• <code>{disk}</code> - <b>磁盘使用情况</b><br>• <code>{network}</code> - <b>主网络接口名称</b><br>• <b>进度条标签:</b><br>  <code>{cpubar}</code> - 系统CPU进度条<br>  <code>{processcpubar}</code> - 进程CPU进度条<br>  <code>{membar}</code> - 系统内存进度条<br>  <code>{processmembar}</code> - 进程内存进度条<br>  <code>{diskbar}</code> - 磁盘进度条<br><br><b>⚙️ 系统详情</b><br>• <code>{os}</code> - <b>操作系统信息</b><br>• <code>{loadaverage}</code> - <b>负载平均值</b><br>• <code>{packages}</code> - <b>已安装包数量</b><br>• <code>{init}</code> - <b>初始化系统</b> (systemd/pm2等)<br>• <code>{process}</code> - <b>进程数量</b><br><br><b>⏱️ 运行状态</b><br>• <code>{uptime}</code> - <b>运行时间</b> (Xd Yh Zm)<br>• <code>{scantime}</code> - <b>扫描耗时</b> (毫秒)</blockquote><br><br><b>📝 模板设置示例:</b><br>发送一条消息，内容为自定义模板：<br><code>&lt;b&gt;📊 系统状态&lt;/b&gt;<br>CPU: {cpu}% {cpubar}<br>内存: {mem}% {membar}<br>磁盘: {disk} {diskbar}<br>运行时间: {uptime}</code><br>回复该消息，发送 <code>${mainPrefix}status set</code><br><b>⚠️ 注意事项:</b><br>• 模板必须包含有效的HTML标签（如 <code>&lt;b&gt;</code>, <code>&lt;code&gt;</code>）<br>• 标签名称必须完全匹配`;
 
 // 系统命令执行超时 (ms)
 const EXEC_TIMEOUT = 5000;
@@ -45,7 +45,6 @@ interface StatusData {
   kernelInfo: string;
   locale: string;
   nodejsVersion: string;
-  teleprotoVersion: string;  // backward compat alias
   mtcuteVersion: string;
   teleboxVersion: string;
   osInfo: string;
@@ -62,7 +61,6 @@ interface StatusData {
   // 新字段（匹配简化标签）
   kernel: string;             // 内核版本
   nodejs: string;             // Node.js版本
-  teleproto: string;           // Teleproto库版本
   mtcute: string;              // mtcute库版本
   telebox: string;            // TeleBox版本
   os: string;                 // 操作系统信息
@@ -99,7 +97,6 @@ interface SystemDetails {
 
 interface VersionInfo {
   nodejs: string;
-  teleproto: string;
   mtcute: string;
   telebox: string;
 }
@@ -349,7 +346,6 @@ class TeleBoxSystemMonitor extends Plugin {
       kernelInfo: systemDetails.kernelInfo,
       locale,
       nodejsVersion: versions.nodejs,
-      teleprotoVersion: versions.teleproto,
       mtcuteVersion: versions.mtcute,
       teleboxVersion: versions.telebox,
       osInfo: systemDetails.osInfo,
@@ -368,7 +364,6 @@ class TeleBoxSystemMonitor extends Plugin {
       ...baseData,
       kernel: baseData.kernelInfo,
       nodejs: baseData.nodejsVersion,
-      teleproto: baseData.teleprotoVersion,
       mtcute: baseData.mtcuteVersion,
       telebox: baseData.teleboxVersion,
       os: baseData.osInfo,
@@ -743,14 +738,12 @@ Scan Time: ${scanTime}ms
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
       return {
         nodejs: process.version,
-        teleproto: packageJson.dependencies?.teleproto?.replace('^', '') || 'unknown',
         mtcute: packageJson.dependencies?.['@mtcute/node']?.replace('^', '') || 'unknown',
         telebox: readDisplayVersion()
       };
     } catch (e: unknown) {
       return {
         nodejs: process.version,
-        teleproto: 'unknown',
         mtcute: 'unknown',
         telebox: readDisplayVersion()
       };
