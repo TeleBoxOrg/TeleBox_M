@@ -127,8 +127,9 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
   // Bridge mtcute internal logging into TeleBox logger when supported.
   try {
     const lvl = logger.getGramJSLogLevel?.();
-    if (typeof lvl === "string" && (client as unknown as { log?: { level: string } }).log) {
-      (client as unknown as { log: { level: string } }).log.level = lvl;
+    const clientLog = (client as unknown as { log?: { level: string } })?.log;
+    if (typeof lvl === "string" && clientLog) {
+      clientLog.level = lvl;
     }
   } catch (e: unknown) {
     logger.error("[mtcuteClient] operation failed:", e);

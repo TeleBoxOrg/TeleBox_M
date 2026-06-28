@@ -18,6 +18,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { tryGetCurrentGenerationContext, getGlobalClient } from "@utils/globalClient";
 import type { InputPeerLike } from "@mtcute/node";
 import type { Message } from "@mtcute/node";
+import type { Document } from "@mtcute/core";
 import { htmlEscape } from "@utils/htmlEscape";
 
 const prefixes = getPrefixes();
@@ -243,10 +244,13 @@ async function getDatabase() {
 }
 
 async function getMediaFileName(msg: MessageContext | Message): Promise<string> {
-  const metadata = msg.media as unknown as { document?: { attributes?: Array<{ fileName?: string }> } };
-  const fileName = metadata.document?.attributes?.[0]?.fileName;
+  const media = msg.media;
+  if (!media || media.type !== 'document') {
+    throw new Error('[tpm] 无法获取媒体文件名: 消息不包含文档');
+  }
+  const fileName = media.fileName;
   if (!fileName) {
-    throw new Error('[tpm] 无法获取媒体文件名: document.attributes[0].fileName 不存在');
+    throw new Error('[tpm] 无法获取媒体文件名: document.fileName 不存在');
   }
   return fileName;
 }

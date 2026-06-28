@@ -469,9 +469,8 @@ async function formatMessageInfo(msg: Message): Promise<string> {
           info += `· Original Chat ID: <code>${fullChannelId}</code><br>`;
         } else {
           // AnonymousSender
-          const anonSender = fwdSender as unknown as { displayName?: string };
-          if (anonSender?.displayName) {
-            info += `· Hidden User: ${anonSender.displayName}<br>`;
+          if ('displayName' in fwdSender && typeof fwdSender.displayName === 'string') {
+            info += `· Hidden User: ${fwdSender.displayName}<br>`;
           }
         }
       }
