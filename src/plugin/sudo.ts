@@ -141,7 +141,7 @@ async function handleList(msg: MessageContext) {
     return;
   }
   await msg.edit({
-    text: html`当前用户列表：
+    text: html`当前用户列表：<br><br>
 ${users.map((u) => "- " + u.username).join("<br>")}`,
   });
 }
@@ -200,7 +200,7 @@ async function handleChatList(msg: MessageContext) {
     return;
   }
   await msg.edit({
-    text: html`对话白名单列表：
+    text: html`对话白名单列表：<br><br>
 ${chats.map((c) => "- " + c.name).join("<br>")}`,
   });
 }
