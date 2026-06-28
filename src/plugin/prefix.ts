@@ -5,11 +5,8 @@ import { getPrefixes, loadPlugins } from "@utils/pluginManager";
 import fs from "fs";
 import path from "path";
 import { logger } from "@utils/logger";
+import { htmlEscape } from "@utils/htmlEscape";
 
-const htmlEscape = (t: string) =>
-  t.replace(/[&<>"']/g, (m) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" } as Record<string, string>)[m] || m
-  );
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 const help_text = `🛠 <b>前缀管理</b>
