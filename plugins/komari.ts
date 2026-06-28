@@ -670,7 +670,7 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
   } catch (error: unknown) {
     logger.error("Komari处理错误:", error);
 
-    const errorMsg = `❌ 错误：${getErrorMessage(error)}`;
+    const errorMsg = `❌ 错误：${htmlEscape(getErrorMessage(error))}`;
     await msg.edit({ text: html`${errorMsg}` });
 
     setTimeout(() => {
