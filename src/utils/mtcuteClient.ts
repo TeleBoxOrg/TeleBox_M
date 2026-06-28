@@ -125,14 +125,22 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
   });
 
   // Bridge mtcute internal logging into TeleBox logger when supported.
+  // mtcute's client.log is a Logger instance; level lives on its mgr (LogManager).
   try {
     const lvl = logger.getGramJSLogLevel?.();
-    const clientLog = (client as unknown as { log?: { level: string } })?.log;
+    const clientLog = client.log;
     if (typeof lvl === "string" && clientLog) {
-      clientLog.level = lvl;
+      const levelMap: Record<string, number> = {
+        debug: 4, // LogManager.VERBOSE
+        info: 3,  // LogManager.INFO
+        warn: 2,  // LogManager.WARN
+        error: 1, // LogManager.ERROR
+        none: 0,  // LogManager.OFF
+      };
+      clientLog.mgr.level = levelMap[lvl] ?? 3;
     }
   } catch (e: unknown) {
-    logger.error("[mtcuteClient] operation failed:", e);
+    logger.error("[mtcuteClient] failed to bridge log level:", e);
   }
 
   return client;
