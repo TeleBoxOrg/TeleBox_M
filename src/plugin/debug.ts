@@ -12,6 +12,7 @@ import * as path from "path";
 import { safeGetMe } from "../utils/authGuards";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import { htmlEscape } from "@utils/htmlEscape";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -453,16 +454,16 @@ async function formatMessageInfo(msg: Message): Promise<string> {
         if (isUser(fwdSender as Peer)) {
           const user = fwdSender as User;
           const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "N/A";
-          info += `· Original Name: ${fullName}<br>`;
+          info += `· Original Name: ${htmlEscape(fullName)}<br>`;
           if (user.username) {
-            info += `· Original Username: @${user.username}<br>`;
+            info += `· Original Username: @${htmlEscape(user.username)}<br>`;
           }
           info += `· Original Sender ID: <code>${user.id}</code><br>`;
         } else if (isChat(fwdSender as Peer)) {
           const chat = fwdSender as Chat;
-          info += `· Original Channel: ${chat.title}<br>`;
+          info += `· Original Channel: ${htmlEscape(chat.title)}<br>`;
           if (chat.username) {
-            info += `· Original Username: @${chat.username}<br>`;
+            info += `· Original Username: @${htmlEscape(chat.username)}<br>`;
           }
           const channelId = chat.id.toString();
           const fullChannelId = channelId.startsWith("-100") ? channelId : `-100${channelId}`;
@@ -470,7 +471,7 @@ async function formatMessageInfo(msg: Message): Promise<string> {
         } else {
           // AnonymousSender
           if ('displayName' in fwdSender && typeof fwdSender.displayName === 'string') {
-            info += `· Hidden User: ${fwdSender.displayName}<br>`;
+            info += `· Hidden User: ${htmlEscape(fwdSender.displayName)}<br>`;
           }
         }
       }
@@ -485,7 +486,7 @@ async function formatMessageInfo(msg: Message): Promise<string> {
       
       // 如果有签名
       if (fwd.signature) {
-        info += `· Post Author: ${fwd.signature}<br>`;
+        info += `· Post Author: ${htmlEscape(fwd.signature)}<br>`;
       }
     }
 
@@ -511,9 +512,9 @@ async function formatUserInfo(
         [peer.firstName, peer.lastName].filter(Boolean).join(" ") ||
         "N/A";
 
-      info += `· Name: ${fullName}<br>`;
+      info += `· Name: ${htmlEscape(fullName)}<br>`;
       info += `· Username: ${
-        peer.username ? "@" + peer.username : "N/A"
+        peer.username ? "@" + htmlEscape(peer.username) : "N/A"
       }<br>`;
       info += `· ID: <code>${peer.id}</code><br>`;
 
@@ -523,7 +524,7 @@ async function formatUserInfo(
     } else if (peer && isChat(peer)) {
       info += `· ID: <code>${peer.id}</code><br>`;
       info += `· Type: ${peer.chatType}<br>`;
-      info += `· Title: ${peer.title}<br>`;
+      info += `· Title: ${htmlEscape(peer.title)}<br>`;
     } else {
       info += `· ID: <code>${userId}</code><br>`;
       info += `· Type: Unknown<br>`;
@@ -567,7 +568,7 @@ async function formatChatInfo(
     } else if (isChat(peer)) {
       if (peer.chatType === "group") {
         info += `<b>GROUP</b><br>`;
-        info += `· Title: ${peer.title}<br>`;
+        info += `· Title: ${htmlEscape(peer.title)}<br>`;
         const groupId = peer.id.toString();
         const fullGroupId = groupId.startsWith("-") ? groupId : `-${groupId}`;
         info += `· ID: <code>${fullGroupId}</code><br>`;
@@ -575,9 +576,9 @@ async function formatChatInfo(
         // channel or supergroup
         const isChannel = peer.chatType === "channel";
         info += `<b>${isChannel ? "CHANNEL" : "GROUP"}</b><br>`;
-        info += `· Title: ${peer.title}<br>`;
+        info += `· Title: ${htmlEscape(peer.title)}<br>`;
         info += `· Username: ${
-          peer.username ? "@" + peer.username : "N/A"
+          peer.username ? "@" + htmlEscape(peer.username) : "N/A"
         }<br>`;
         const chatId = peer.id.toString();
         const fullChatId = chatId.startsWith("-100") ? chatId : `-100${chatId}`;
