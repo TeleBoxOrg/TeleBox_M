@@ -78,7 +78,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
 
 // 解析 FLOOD_WAIT 错误中的等待秒数；非 flood 错返回 null
 function getFloodWaitSeconds(error: unknown): number | null {
-  const msg = error instanceof Error ? getErrorMessage(error) : String(error || "");
+  const msg = getErrorMessage(error);
   // teleproto 抛出的 RPCError 里通常带 "FLOOD_WAIT_X" 或 "wait of N seconds"
   let m = msg.match(/FLOOD_WAIT_(\d+)/);
   if (m) return parseInt(m[1], 10);
@@ -791,7 +791,7 @@ class BanManager {
   }
 
   private static getErrorReason(error: unknown): string {
-    const message = error instanceof Error ? getErrorMessage(error) : String(error || "UNKNOWN_ERROR");
+    const message = getErrorMessage(error);
     const match = message.match(/[A-Z_]{3,}/);
     return match?.[0] || message;
   }

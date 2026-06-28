@@ -1,6 +1,7 @@
 import type { ChildProcess } from "child_process";
 import { AsyncLocalStorage } from "async_hooks";
 import { logger } from "@utils/logger";
+import { toError } from "@utils/errorHelpers";
 
 export type GenerationLifecycleState =
   | "active"
@@ -102,12 +103,6 @@ const RESOURCE_KINDS: GenerationResourceKind[] = [
   "task",
   "timeout",
 ];
-
-function toError(reason: unknown): Error {
-  if (reason instanceof Error) return reason;
-  if (typeof reason === "string") return new Error(reason);
-  return new Error("Generation aborted");
-}
 
 function createTimeoutPromise(ms: number): Promise<"timeout"> {
   return new Promise((resolve) => {
