@@ -41,9 +41,13 @@ type PluginEventHandler = {
   handler: (ctx: unknown) => Promise<void>;
 };
 
-const cmdIgnoreEdited = !!JSON.parse(
-  process.env.TB_CMD_IGNORE_EDITED || "true"
-);
+let cmdIgnoreEdited = true;
+try {
+  const raw = process.env.TB_CMD_IGNORE_EDITED;
+  cmdIgnoreEdited = raw !== undefined ? !!JSON.parse(raw) : true;
+} catch (e: unknown) {
+  logger.warn(`[pluginBase] TB_CMD_IGNORE_EDITED 环境变量 JSON 解析失败，使用默认值 true:`, e);
+}
 logger.info(
   `[CMD_IGNORE_EDITED] 命令监听忽略编辑的消息: ${cmdIgnoreEdited} (可使用环境变量 TB_CMD_IGNORE_EDITED 覆盖)`
 );
