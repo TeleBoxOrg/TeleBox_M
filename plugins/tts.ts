@@ -272,7 +272,7 @@ class TTSPlugin extends Plugin {
                             type: "document",
                             file: buffer,
                             fileName: `voices_${filter}.txt`,
-                            caption: html`📋 <b>可用音色列表</b> (${filter}) - 共 ${voices.length} 个`,
+                            caption: html`📋 <b>可用音色列表</b> (${htmlEscape(filter)}) - 共 ${voices.length} 个`,
                         });
                         await deleteCommandMessage(msg);
                     } else {

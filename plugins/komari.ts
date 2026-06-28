@@ -618,7 +618,7 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
       const displayValue = configValue;
 
       await msg.edit({
-        text: html`✅ 已设置 ${displayName}: <code>${displayValue}</code>`,
+        text: html`✅ 已设置 ${displayName}: <code>${htmlEscape(displayValue)}</code>`,
       });
 
       setTimeout(() => {
