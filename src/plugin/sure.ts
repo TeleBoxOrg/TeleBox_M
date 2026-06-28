@@ -6,6 +6,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { sleep } from "@utils/asyncHelpers";
 import { SureDB, type MsgRecord } from "@utils/sureDB";
+import { htmlEscape } from "@utils/htmlEscape";
 import {
   dealCommandPluginWithMessage,
   getCommandFromMessage,
@@ -66,12 +67,12 @@ function buildDisplay(
   mention?: boolean,
 ) {
   const parts: string[] = [];
-  if (entity?.title) parts.push(entity.title);
-  if (entity?.firstName) parts.push(entity.firstName);
-  if (entity?.lastName) parts.push(entity.lastName);
+  if (entity?.title) parts.push(htmlEscape(entity.title));
+  if (entity?.firstName) parts.push(htmlEscape(entity.firstName));
+  if (entity?.lastName) parts.push(htmlEscape(entity.lastName));
   if (entity?.username)
     parts.push(
-      mention ? `@${entity.username}` : `<code>@${entity.username}</code>`,
+      mention ? `@${htmlEscape(entity.username)}` : `<code>@${htmlEscape(entity.username)}</code>`,
     );
   parts.push(
     isUser
