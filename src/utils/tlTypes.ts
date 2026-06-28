@@ -137,6 +137,7 @@ export interface EntityLike {
   title?: string;
   firstName?: string;
   lastName?: string;
+  name?: string;
   username?: string;
   type?: string;
   isGroup?: boolean;
@@ -145,6 +146,9 @@ export interface EntityLike {
   peerId?: TlObject;
   chatId?: number | string;
   accessHash?: number | string;
+  emojiStatus?: {
+    documentId?: { toString(): string } | number | bigint;
+  };
 }
 
 /** Message-like object */
@@ -188,4 +192,17 @@ export interface ParticipantLike {
   adminRights?: Record<string, boolean>;
   rank?: string;
   deleted?: boolean;
+}
+
+/** Telegram message entity (text entity within a message) */
+export interface MessageEntityLike {
+  _?: string;
+  type?: string;
+  className?: string;
+  offset?: number;
+  length?: number;
+  documentId?: { value?: number | bigint } | string | number | bigint;
+  url?: string;
+  userId?: number | string;
+  user?: { id?: number | string };
 }
