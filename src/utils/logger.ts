@@ -36,7 +36,7 @@ class Logger {
   private db!: Awaited<ReturnType<typeof JSONFilePreset<LoggerConfig>>>;
   private level: LogLevel = LogLevel.INFO;
   private readonly DB_NAME = "logger";
-  private context: Record<string, any> = {};
+  private context: Record<string, string | number | boolean> = {};
 
   // Rate-limiting for known-spammy Telegram RPC errors to reduce log noise
   // Key: error pattern (e.g., channel ID), Value: last log timestamp
@@ -50,7 +50,7 @@ class Logger {
   private static originalError = console.error;
   private static isOverridden = false;
 
-  constructor(context: Record<string, any> = {}) {
+  constructor(context: Record<string, string | number | boolean> = {}) {
     this.context = context;
     // 只有主 Logger 实例才需要覆写控制台和加载 DB
     if (Object.keys(context).length === 0) {
@@ -60,7 +60,7 @@ class Logger {
   }
 
   // 创建带有特定上下文的子日志实例
-  public child(context: Record<string, any>): Logger {
+  public child(context: Record<string, string | number | boolean>): Logger {
     const childLogger = new Logger({ ...this.context, ...context });
     // 子 Logger 共享主 Logger 的等级
     childLogger.level = this.level; 
@@ -77,7 +77,7 @@ class Logger {
     this.level = this.db.data.level;
   }
 
-  private formatLog(level: string, args: any[], forceLevel: boolean = false): string {
+  private formatLog(level: string, args: unknown[], forceLevel: boolean = false): string {
     const timestamp = dayjs().format("YYYY-MM-DD HH:mm:ss.SSS");
     
     // 颜色映射
@@ -196,7 +196,7 @@ class Logger {
   }
 
   // 从原始 console 参数中尝试推断 GramJS 的日志等级（若存在）
-  private detectGramJsLevel(args: any[]): "DEBUG" | "INFO " | "WARN " | "ERROR" | null {
+  private detectGramJsLevel(args: unknown[]): 'DEBUG' | 'INFO ' | 'WARN ' | 'ERROR' | null {
     const stringArgs: string[] = args
       .filter(a => typeof a === 'string')
       .map(a => (a as string).replace(ANSI_REGEX, ""));
@@ -215,106 +215,92 @@ class Logger {
     return null;
   }
 
+  /**
+   * Serialize console arguments into a single message string for pattern matching.
+   */
+  private static serializeArgs(args: ReadonlyArray<unknown>): string {
+    return args
+      .map(a =>
+        typeof a === 'string'
+          ? a
+          : a instanceof Error
+            ? `${a.message} ${a.stack ?? ''}`
+            : a && typeof a === 'object' && 'message' in a
+              ? String((a as { message: unknown }).message)
+              : ''
+      )
+      .join(' ');
+  }
+
+  /**
+   * Handle channel-gap-related failures: detect, circuit-break, rate-limit, and downgrade to WARN.
+   * Returns true if the message was a channel gap failure (and should not be logged at its original level).
+   */
+  private handleChannelGapFailure(args: ReadonlyArray<unknown>): boolean {
+    const msg = Logger.serializeArgs(args);
+    if (!this.isChannelGapFailure(msg)) return false;
+
+    const channelId = this.extractChannelId(msg);
+    if (channelId) {
+      recordChannelGapFailure(channelId);
+      if (isChannelCircuitBroken(channelId)) return true;
+    }
+    const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';
+    const now = Date.now();
+    const lastLogged = Logger.downgradeLastLogged.get(rateKey) || 0;
+    if (now - lastLogged >= Logger.DOWNGRADE_LOG_INTERVAL_MS) {
+      Logger.downgradeLastLogged.set(rateKey, now);
+      if (this.level <= LogLevel.WARNING) {
+        Logger.originalLog(this.formatLog('WARN ', args as unknown[], true));
+      }
+    }
+    return true;
+  }
+
   private overrideConsole() {
     if (Logger.isOverridden) return;
 
-    console.debug = (...args: any[]) => {
+    console.debug = (...args: unknown[]) => {
       if (this.level <= LogLevel.DEBUG) {
-        Logger.originalDebug(this.formatLog("DEBUG", args));
+        Logger.originalDebug(this.formatLog('DEBUG', args));
       }
     };
 
-    console.log = (...args: any[]) => {
-      // Downgrade known non-actionable Telegram RPC errors from ERROR to WARN
+    console.log = (...args: unknown[]) => {
       // teleproto uses console.log for all log levels including errors
-      const msg = args.map(a => typeof a === 'string' ? a : (a instanceof Error ? a.message + ' ' + a.stack : (a?.message ? String(a.message) : ''))).join(' ');
-      if (this.isChannelGapFailure(msg)) {
-        const channelId = this.extractChannelId(msg);
-        // Record failure and suppress logging entirely for circuit-broken channels
-        if (channelId) {
-          recordChannelGapFailure(channelId);
-          if (isChannelCircuitBroken(channelId)) return;
-        }
-        const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';
-        const now = Date.now();
-        const lastLogged = Logger.downgradeLastLogged.get(rateKey) || 0;
-        if (now - lastLogged >= Logger.DOWNGRADE_LOG_INTERVAL_MS) {
-          Logger.downgradeLastLogged.set(rateKey, now);
-          if (this.level <= LogLevel.WARNING) {
-            Logger.originalLog(this.formatLog("WARN ", args, true));
-          }
-        }
-        return;
-      }
+      if (this.handleChannelGapFailure(args)) return;
       if (this.level <= LogLevel.INFO) {
         const derived = this.detectGramJsLevel(args);
-        const lvl = derived ?? "INFO ";
+        const lvl = derived ?? 'INFO ';
         Logger.originalLog(this.formatLog(lvl, args));
       }
     };
-    
-    console.info = (...args: any[]) => {
+
+    console.info = (...args: unknown[]) => {
       if (this.level <= LogLevel.INFO) {
         const derived = this.detectGramJsLevel(args);
-        const lvl = derived ?? "INFO ";
+        const lvl = derived ?? 'INFO ';
         Logger.originalInfo(this.formatLog(lvl, args));
       }
     };
 
-    console.warn = (...args: any[]) => {
+    console.warn = (...args: unknown[]) => {
       // Downgrade known non-actionable Telegram RPC errors (e.g. "difference too long")
-      // that arrive via console.warn, same as the console.log/console.error paths
-      const msg = args.map(a => typeof a === 'string' ? a : (a instanceof Error ? a.message + ' ' + a.stack : (a?.message ? String(a.message) : ''))).join(' ');
-      if (this.isChannelGapFailure(msg)) {
-        const channelId = this.extractChannelId(msg);
-        // Record failure and suppress logging entirely for circuit-broken channels
-        if (channelId) {
-          recordChannelGapFailure(channelId);
-          if (isChannelCircuitBroken(channelId)) return;
-        }
-        const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';
-        const now = Date.now();
-        const lastLogged = Logger.downgradeLastLogged.get(rateKey) || 0;
-        if (now - lastLogged >= Logger.DOWNGRADE_LOG_INTERVAL_MS) {
-          Logger.downgradeLastLogged.set(rateKey, now);
-          if (this.level <= LogLevel.WARNING) {
-            Logger.originalLog(this.formatLog("WARN ", args, true));
-          }
-        }
-        return;
-      }
+      if (this.handleChannelGapFailure(args)) return;
       if (this.level <= LogLevel.WARNING) {
-        Logger.originalWarn(this.formatLog("WARN ", args));
+        Logger.originalWarn(this.formatLog('WARN ', args));
       }
     };
 
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       // Downgrade known non-actionable Telegram RPC errors from ERROR to WARN
       // to prevent log spam from infinite retry loops on stale channel pts
-      const msg = args.map(a => typeof a === 'string' ? a : (a instanceof Error ? a.message + ' ' + a.stack : (a?.message ? String(a.message) : ''))).join(' ');
-      if (this.isChannelGapFailure(msg)) {
-        const channelId = this.extractChannelId(msg);
-        // Record failure and suppress logging entirely for circuit-broken channels
-        if (channelId) {
-          recordChannelGapFailure(channelId);
-          if (isChannelCircuitBroken(channelId)) return;
-        }
-        const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';
-        const now = Date.now();
-        const lastLogged = Logger.downgradeLastLogged.get(rateKey) || 0;
-        if (now - lastLogged >= Logger.DOWNGRADE_LOG_INTERVAL_MS) {
-          Logger.downgradeLastLogged.set(rateKey, now);
-          if (this.level <= LogLevel.WARNING) {
-            Logger.originalLog(this.formatLog("WARN ", args, true));
-          }
-        }
-        return;
-      }
+      if (this.handleChannelGapFailure(args)) return;
       if (this.level <= LogLevel.ERROR) {
-        Logger.originalError(this.formatLog("ERROR", args));
+        Logger.originalError(this.formatLog('ERROR', args));
       }
     };
-    
+
     Logger.isOverridden = true;
   }
 
@@ -345,46 +331,29 @@ class Logger {
   }
 
   /** Structured logging convenience methods */
-  public info(...args: any[]): void {
+  public info(...args: unknown[]): void {
     if (this.level <= LogLevel.INFO) {
-      Logger.originalLog(this.formatLog("INFO ", args));
+      Logger.originalLog(this.formatLog('INFO ', args));
     }
   }
 
-  public warn(...args: any[]): void {
+  public warn(...args: unknown[]): void {
     if (this.level <= LogLevel.WARNING) {
-      Logger.originalWarn(this.formatLog("WARN ", args));
+      Logger.originalWarn(this.formatLog('WARN ', args));
     }
   }
 
-  public error(...args: any[]): void {
+  public error(...args: unknown[]): void {
     // Downgrade known non-actionable Telegram RPC errors from ERROR to WARN
-    const msg = args.map(a => typeof a === 'string' ? a : (a instanceof Error ? a.message + ' ' + a.stack : (a?.message ? String(a.message) : ''))).join(' ');
-    if (this.isChannelGapFailure(msg)) {
-      const channelId = this.extractChannelId(msg);
-      if (channelId) {
-        recordChannelGapFailure(channelId);
-        if (isChannelCircuitBroken(channelId)) return;
-      }
-      const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';
-      const now = Date.now();
-      const lastLogged = Logger.downgradeLastLogged.get(rateKey) || 0;
-      if (now - lastLogged >= Logger.DOWNGRADE_LOG_INTERVAL_MS) {
-        Logger.downgradeLastLogged.set(rateKey, now);
-        if (this.level <= LogLevel.WARNING) {
-          Logger.originalLog(this.formatLog("WARN ", args, true));
-        }
-      }
-      return;
-    }
+    if (this.handleChannelGapFailure(args)) return;
     if (this.level <= LogLevel.ERROR) {
-      Logger.originalError(this.formatLog("ERROR", args));
+      Logger.originalError(this.formatLog('ERROR', args));
     }
   }
 
-  public debug(...args: any[]): void {
+  public debug(...args: unknown[]): void {
     if (this.level <= LogLevel.DEBUG) {
-      Logger.originalDebug(this.formatLog("DEBUG", args));
+      Logger.originalDebug(this.formatLog('DEBUG', args));
     }
   }
 
