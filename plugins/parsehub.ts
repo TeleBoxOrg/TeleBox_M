@@ -375,7 +375,7 @@ async function relayParseResult(
 
 class ParseHubPlugin extends Plugin {
 
-  description: string = `<br>${pluginName}<br><br>${helpText}`;
+  description: string = `${pluginName}<br><br>${helpText}`;
   cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     parsehub: async (msg: MessageContext) => {
       const rawText = msg.text || "";
@@ -386,29 +386,22 @@ class ParseHubPlugin extends Plugin {
       let links = extractLinks(cleaned);
 
       // 若命令未包含链接且为回复消息，从被回复消息中提取链接
-      if (!links.length && msg.replyToMessage?.id) {
-        try {
-          const replied = await safeGetReplyMessage(msg);
-          const replyText = replied?.text || "";
-          const replyLinks = extractLinks(replyText);
-          if (replyLinks.length) {
-            links = replyLinks;
-          }
-        } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
-      }
-
-      // 若命令和被回复消息都包含链接，合并去重，命令里的在前
+      let repliedLinks: string[] = [];
       if (msg.replyToMessage?.id) {
         try {
           const replied = await safeGetReplyMessage(msg);
           const replyText = replied?.text || "";
-          const replyLinks = extractLinks(replyText);
-          if (replyLinks.length) {
-            const set = new Set<string>(links);
-            for (const l of replyLinks) set.add(l);
-            links = Array.from(set);
-          }
+          repliedLinks = extractLinks(replyText);
         } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
+      }
+
+      if (!links.length && repliedLinks.length) {
+        links = repliedLinks;
+      } else if (repliedLinks.length) {
+        // 合并去重，命令里的在前
+        const set = new Set<string>(links);
+        for (const l of repliedLinks) set.add(l);
+        links = Array.from(set);
       }
 
       if (!links.length) {
