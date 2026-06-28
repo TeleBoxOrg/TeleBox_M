@@ -209,7 +209,7 @@ class TeleBoxSystemMonitor extends Plugin {
 
   private formatLifecycleDiagnostics(): string {
     const context = tryGetCurrentGenerationContext();
-    if (!context) return "<b>🧪 Lifecycle diagnostics</b>\n\n当前没有运行中的 generation。";
+    if (!context) return "<b>🧪 Lifecycle diagnostics</b><br><br>当前没有运行中的 generation。";
     const snapshot = context.snapshot();
     const stats = Object.entries(snapshot.stats)
       .filter(([, stat]) => stat.created > 0 || stat.active > 0 || stat.canceled > 0 || stat.timedOut > 0)
