@@ -796,12 +796,12 @@ class BanManager {
     return match?.[0] || message;
   }
 
-  private static getChatKind(chatId: any): ChatKind {
-    if (chatId?.kind === 'chat' || chatId?.kind === 'channel') {
-      return chatId.kind;
+  private static getChatKind(chatId: ChatIdArg | { kind?: string }): ChatKind {
+    const obj = chatId as { kind?: string; className?: string } | undefined;
+    if (obj?.kind === 'chat' || obj?.kind === 'channel') {
+      return obj.kind;
     }
-
-    const className = chatId?.className;
+    const className = obj?.className;
     if (className === 'PeerChat' || className === 'Chat') {
       return 'chat';
     }

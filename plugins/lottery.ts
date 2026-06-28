@@ -703,14 +703,14 @@ async function sendPrizeToWinner(client: TelegramClient, winner: LotteryUser, pr
                        (winner.first_name || winner.last_name || `用户 ${winner.user_id}`);
 
     const prizeMessage =
-      `🎉 <b>恭喜中奖!</b>\n\n` +
-      `🏆 <b>活动名称:</b> ${htmlEscape(lottery.title)}\n` +
-      `🎁 <b>奖品内容:</b> ${htmlEscape(prizeText)}\n\n` +
-      `📝 <b>中奖详情:</b>\n` +
-      `• 活动: ${htmlEscape(lottery.title)}\n` +
-      `• 中奖用户: ${htmlEscape(displayName)}\n` +
-      `• 中奖时间: ${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}\n\n` +
-      `🎊 <b>感谢您的参与，祝您好运!</b>\n` +
+      `🎉 <b>恭喜中奖!</b><br><br>` +
+      `🏆 <b>活动名称:</b> ${htmlEscape(lottery.title)}<br>` +
+      `🎁 <b>奖品内容:</b> ${htmlEscape(prizeText)}<br><br>` +
+      `📝 <b>中奖详情:</b><br>` +
+      `• 活动: ${htmlEscape(lottery.title)}<br>` +
+      `• 中奖用户: ${htmlEscape(displayName)}<br>` +
+      `• 中奖时间: ${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}<br><br>` +
+      `🎊 <b>感谢您的参与，祝您好运!</b><br>` +
       `💡 <b>提示:</b> 如有疑问请联系活动发起者`;
 
     await client.sendText(winner.user_id ?? winner.id ?? 0, html(prizeMessage));

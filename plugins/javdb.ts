@@ -52,7 +52,7 @@ function chunkHtml(text: string, limit = MAX_MESSAGE_LENGTH): string[] {
 }
 
 /** 发送长消息（自动分割为多条）*/
-async function sendLongMessage(client: any, msg: MessageContext, htmlContent: string) {
+async function sendLongMessage(client: { sendText: (chatId: number | string, text: string, options?: { replyTo?: number }) => Promise<unknown> }, msg: MessageContext, htmlContent: string) {
   const parts = chunkHtml(htmlContent);
   const first = parts[0] + (parts.length > 1 ? `\n\n📄 (1/${parts.length})` : "");
   try {
