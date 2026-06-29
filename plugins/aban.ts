@@ -1,7 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
-import { getCurrentGenerationContext } from "@utils/globalClient";
+import { getCurrentGenerationContext, getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
-import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { TelegramClient } from "@mtcute/node";
 import type { ClientInternals } from "@utils/clientInternals";
@@ -17,8 +16,7 @@ import { logger } from "@utils/logger";
 import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { tl } from "@mtcute/core";
-import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
-import type { MtcuteInputPeer, MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
+import type { MtcuteMessageContext, MtcuteInputPeer, MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
 import { htmlEscape } from "@utils/htmlEscape";
 
 /**

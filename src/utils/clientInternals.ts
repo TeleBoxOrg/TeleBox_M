@@ -2,7 +2,7 @@
  * Shared type definitions for internal mtcute client methods.
  *
  * mtcute's public TypeScript types do not expose all internal methods
- * (resolvePeer, getInputEntity, getDialogs, getMessages, downloadMedia, etc.).
+ * (resolvePeer, getInputEntity, getDialogs, downloadMedia, etc.).
  * These type extensions provide type-safe access to those internals
  * without repeating inline `as unknown as { ... }` casts across every plugin.
  *
@@ -16,10 +16,7 @@
  * clear and allows centralized updates if mtcute's types change.
  *
  * Created as part of code quality improvement to eliminate 150+ inline
- * `as unknown as` type casts across the codebase.
  */
-
-import type { MessageContext } from "@mtcute/dispatcher";
 
 /**
  * Internal mtcute client methods not exposed in the public TypeScript types.
@@ -40,18 +37,6 @@ export interface ClientInternals {
 }
 
 /**
- * Extended client interface for getMessages method.
- * mtcute's TelegramClient has getMessages internally but it's not in the public types.
- *
- * Cast via: `(client as unknown as ClientWithGetMessages).getMessages(...)`
- */
-export interface ClientWithGetMessages {
-  getMessages(id: number, params: { limit: number; offset?: number }): Promise<any[] & { total?: number }>;
-  getMessages(id: number, params: { limit: number; ids: undefined }): Promise<any[] & { total?: number }>;
-  getMessages(peer: unknown, opts: { limit: number }): Promise<MessageContext[]>;
-}
-
-/**
  * Extended client interface for downloadMedia method.
  * mtcute's TelegramClient has downloadMedia internally but it's not in the public types.
  *
@@ -60,15 +45,6 @@ export interface ClientWithGetMessages {
 export interface ClientWithDownload {
   downloadMedia(media: unknown): Promise<unknown>;
   downloadMedia(media: unknown, opts?: Record<string, unknown>): Promise<unknown>;
-}
-
-/**
- * Extended client interface for sendFile method.
- *
- * Cast via: `(client as unknown as ClientWithSendFile).sendFile(...)`
- */
-export interface ClientWithSendFile {
-  sendFile(peer: unknown, opts: Record<string, unknown>): Promise<void>;
 }
 
 /**
