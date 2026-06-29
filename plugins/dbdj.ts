@@ -7,6 +7,8 @@ import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { ClientInternals } from "@utils/clientInternals";
+import type { TelegramClient } from "@mtcute/node";
+import type { InputPeerLike } from "@mtcute/core";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -122,12 +124,12 @@ class DbdjPlugin extends Plugin {
           parseMode: "html",
         });
 
-        const client = msg.client! as unknown as import("@mtcute/node").TelegramClient;
+        const client = msg.client as TelegramClient;
         const offsetId = (msg.id || 1) - 1; // 从命令消息之前开始
-        const messages = await safeGetMessages(client, msg.peerId as unknown as import("@mtcute/core").InputPeerLike, {
+        const messages = await safeGetMessages(client, msg.peerId as InputPeerLike, {
           ids: [] as number[],
           ...{ offsetId, limit: scanCount },
-        } as unknown as Parameters<typeof safeGetMessages>[2]);
+        } as Parameters<typeof safeGetMessages>[2]);
 
         // 收集有效用户: 仅统计来自用户的消息, 排除自身(out)、无 fromId 的消息
         const uniqueUserIds: number[] = [];
