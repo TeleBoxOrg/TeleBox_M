@@ -4,6 +4,7 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import * as fs from "fs";
 import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
+import { safeJsonParse } from "@utils/asyncHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
@@ -70,18 +71,15 @@ const STATE_DIR = createDirectoryInAssets(pluginName);
 const STATE_PATH = path.join(STATE_DIR, "state.json");
 
 function readState(): InitState {
-  try {
-    const raw = fs.readFileSync(STATE_PATH, "utf-8");
-    const parsed = JSON.parse(raw);
-    return {
-      initialized: Boolean(parsed?.initialized),
-      ignoredUpToId: Number.isFinite(parsed?.ignoredUpToId)
-        ? Number(parsed.ignoredUpToId)
-        : undefined,
-    };
-  } catch (_e: unknown) {
-    return { initialized: false };
-  }
+  const raw = fs.readFileSync(STATE_PATH, "utf-8");
+  const parsed = safeJsonParse<Partial<InitState>>(raw);
+  if (!parsed) return { initialized: false };
+  return {
+    initialized: Boolean(parsed?.initialized),
+    ignoredUpToId: Number.isFinite(parsed?.ignoredUpToId)
+      ? Number(parsed.ignoredUpToId)
+      : undefined,
+  };
 }
 
 function writeState(state: InitState) {
