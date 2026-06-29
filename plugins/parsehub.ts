@@ -71,15 +71,20 @@ const STATE_DIR = createDirectoryInAssets(pluginName);
 const STATE_PATH = path.join(STATE_DIR, "state.json");
 
 function readState(): InitState {
-  const raw = fs.readFileSync(STATE_PATH, "utf-8");
-  const parsed = safeJsonParse<Partial<InitState>>(raw);
-  if (!parsed) return { initialized: false };
-  return {
-    initialized: Boolean(parsed?.initialized),
-    ignoredUpToId: Number.isFinite(parsed?.ignoredUpToId)
-      ? Number(parsed.ignoredUpToId)
-      : undefined,
-  };
+  try {
+    const raw = fs.readFileSync(STATE_PATH, "utf-8");
+    const parsed = safeJsonParse<Partial<InitState>>(raw);
+    if (!parsed) return { initialized: false };
+    return {
+      initialized: Boolean(parsed?.initialized),
+      ignoredUpToId: Number.isFinite(parsed?.ignoredUpToId)
+        ? Number(parsed.ignoredUpToId)
+        : undefined,
+    };
+  } catch {
+    // State file may not exist on first run — return defaults
+    return { initialized: false };
+  }
 }
 
 function writeState(state: InitState) {
