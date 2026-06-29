@@ -13,6 +13,7 @@ import { getCurrentGenerationContext } from "@utils/globalClient";
 import { reloadRuntime } from "@utils/runtimeManager";
 import { logger } from "@utils/logger";
 import { htmlEscape } from "@utils/htmlEscape";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -440,7 +441,7 @@ class ReloadPlugin extends Plugin {
         });
       } catch (error: unknown) {
         logger.error("Plugin reload failed:", error);
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = getErrorMessage(error);
         try {
           const client = await getGlobalClient();
           await updateReloadStatus({
@@ -493,7 +494,7 @@ class ReloadPlugin extends Plugin {
       } catch (error: unknown) {
         logger.error("[Health] 命令执行失败:", error);
         await msg.edit({
-          text: html(`❌ 获取内存信息失败：${htmlEscape(error instanceof Error ? error.message : String(error))}`),
+          text: html(`❌ 获取内存信息失败：${htmlEscape(getErrorMessage(error))}`),
         });
       }
     },

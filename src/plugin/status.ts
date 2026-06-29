@@ -12,6 +12,7 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -880,7 +881,7 @@ Scan Time: ${scanTime}ms
     error: unknown,
     context: string
   ): Promise<void> {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     logger.error(`[${this.PLUGIN_NAME}] ${context} 错误:`, error);
     await msg.edit({
       text: `❌ 操作失败: ${errorMessage}`,

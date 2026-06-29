@@ -7,6 +7,7 @@ import { Dispatcher, MessageContext } from "@mtcute/dispatcher";
 import { AliasDB } from "./aliasDB";
 import { cronManager } from "./cronManager";
 import { logger } from "./logger";
+import { getErrorMessage } from "./errorHelpers";
 import type { TeleBoxRuntime } from "./runtimeManager";
 
 type PluginEntry = {
@@ -305,7 +306,7 @@ async function dealCommandPluginWithMessage(param: {
     }
   } catch (error: unknown) {
     logger.error("Command handler error:", error);
-    const errorMsg = `处理命令时出错：${error instanceof Error ? error.message : String(error)}`;
+    const errorMsg = `处理命令时出错：${getErrorMessage(error)}`;
     try {
       await msg.edit({ text: errorMsg });
     } catch (editError: unknown) {
