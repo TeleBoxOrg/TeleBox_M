@@ -62,7 +62,7 @@ async function sendLongMessage(client: { sendText: (chatId: number | string, tex
   }
   // 注意：消息必须按顺序逐条发送，不能并行（每条消息依赖前一条发送完成以保持顺序）
   for (let i = 1; i < parts.length; i++) {
-    await client.sendText(msg.chat.id, html(`${htmlEscape(parts[i])}<br><br>📄 (${i + 1}/${parts.length})`), { replyTo: msg.id });
+    await client.sendText(msg.chat.id, html(`${parts[i]}<br><br>📄 (${i + 1}/${parts.length})`), { replyTo: msg.id });
   }
 }
 
