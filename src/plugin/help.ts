@@ -145,7 +145,7 @@ function formatModuleCommands(
 
   aliasDB.close();
   return {
-    text: `🔧 <b>功能模块:</b><br><blockquote expandable>${lines.join("<br>")}<br></blockquote>`,
+    text: html`🔧 <b>功能模块:</b><br><blockquote expandable>${lines.join("<br>")}<br></blockquote>`,
   };
 }
 
