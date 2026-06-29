@@ -433,8 +433,8 @@ class BfPlugin extends Plugin {
           text: html(
             target === "all"
               ? "✅ 已清空所有目标"
-              : `✅ 已删除 ${target}<br>当前目标: ${
-                  remaining.join(", ") || "无"
+              : `✅ 已删除 ${htmlEscape(target)}<br>当前目标: ${
+                  remaining.map(t => htmlEscape(t)).join(", ") || "无"
                 }`
           ),
         });
