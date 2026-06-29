@@ -343,7 +343,7 @@ class surePlugin extends Plugin {
   listenMessageHandler?: (msg: MessageContext, options?: { isEdited?: boolean }) => Promise<void> =
     async (msg) => {
       if (msg.forward) return;
-      const uid = msg.sender.id;
+      const uid = msg.sender?.id;
       const cid = msg.chat.id;
       if (!uid || !cid) return;
       if (!getSureIds().includes(uid)) return;
