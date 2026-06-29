@@ -11,6 +11,7 @@ import { JSONFilePreset } from "lowdb/node";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
+import type { ResourceStats } from "@utils/generationContext";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 
@@ -29,6 +30,7 @@ const EXEC_TIMEOUT = 5000;
 
 // ==================== 类型 ====================
 interface StatusData {
+  [key: string]: string;
   // 旧字段（向后兼容）
   hostname: string;
   platform: string;
@@ -199,7 +201,7 @@ class TeleBoxSystemMonitor extends Plugin {
     statusData.scanTime = scanTime.toString();
     statusData.scantime = scanTime.toString();
 
-    const rendered = this.renderTemplate(template, statusData as unknown as Record<string, string>);
+    const rendered = this.renderTemplate(template, statusData);
     await msg.edit({
       text: html(rendered),
     });
@@ -209,7 +211,7 @@ class TeleBoxSystemMonitor extends Plugin {
     const context = tryGetCurrentGenerationContext();
     if (!context) return "<b>🧪 Lifecycle diagnostics</b><br><br>当前没有运行中的 generation。";
     const snapshot = context.snapshot();
-    const stats = Object.entries(snapshot.stats)
+    const stats = (Object.entries(snapshot.stats) as [string, ResourceStats][])
       .filter(([, stat]) => stat.created > 0 || stat.active > 0 || stat.canceled > 0 || stat.timedOut > 0)
       .map(([kind, stat]) => {
         return `• <code>${kind}</code>: active=<code>${stat.active}</code>, created=<code>${stat.created}</code>, drained=<code>${stat.completed}</code>, canceled=<code>${stat.canceled}</code>, timedOut=<code>${stat.timedOut}</code>`;
