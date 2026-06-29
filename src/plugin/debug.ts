@@ -391,10 +391,10 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
     if (isUser(entity)) {
       info += `<b>USER</b><br>`;
       info +=
-        `· Name: ${entity.firstName || ""} ${entity.lastName || ""}`.trim() +
+        `· Name: ${htmlEscape(entity.firstName || "")} ${htmlEscape(entity.lastName || "")}`.trim() +
         "<br>";
       info += `· Username: ${
-        entity.username ? "@" + entity.username : "N/A"
+        entity.username ? "@" + htmlEscape(entity.username) : "N/A"
       }<br>`;
       info += `· ID: <code>${entity.id}</code><br>`;
       if (entity.isBot) info += `· Type: Bot<br>`;
@@ -403,9 +403,9 @@ async function formatEntityInfo(entity: Peer): Promise<string> {
     } else if (isChat(entity)) {
       const isChannel = entity.chatType === "channel";
       info += `<b>${isChannel ? "CHANNEL" : "SUPERGROUP"}</b><br>`;
-      info += `· Title: ${entity.title}<br>`;
+      info += `· Title: ${htmlEscape(entity.title)}<br>`;
       info += `· Username: ${
-        entity.username ? "@" + entity.username : "N/A"
+        entity.username ? "@" + htmlEscape(entity.username) : "N/A"
       }<br>`;
       const entityId = entity.id.toString();
       const fullId = entityId.startsWith("-100") ? entityId : `-100${entityId}`;
@@ -624,11 +624,11 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
         if (entity.chatType === "channel" || entity.chatType === "supergroup") {
           const isChannel = entity.chatType === "channel";
           info += `· 类型: ${isChannel ? "频道" : "超级群组"}<br>`;
-          info += `· 名称: ${entity.title}<br>`;
+          info += `· 名称: ${htmlEscape(entity.title)}<br>`;
           
           if (entity.username) {
-            info += `· 用户名: @${entity.username}<br>`;
-            info += `· 公开链接: https://t.me/${entity.username}<br>`;
+            info += `· 用户名: @${htmlEscape(entity.username)}<br>`;
+            info += `· 公开链接: https://t.me/${htmlEscape(entity.username)}<br>`;
           } else {
             info += `· 用户名: 无（私有群组）<br>`;
           }
@@ -647,7 +647,7 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
           
         } else if (entity.chatType === "group") {
           info += `· 类型: 普通群组<br>`;
-          info += `· 名称: ${entity.title}<br>`;
+          info += `· 名称: ${htmlEscape(entity.title)}<br>`;
           info += `· 用户名: 无（普通群组无用户名）<br>`;
           
           if (entity.membersCount) {
@@ -656,9 +656,9 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
         }
       } else if (isUser(entity)) {
         info += `· 类型: 用户<br>`;
-        info += `· 名称: ${entity.displayName}<br>`;
+        info += `· 名称: ${htmlEscape(entity.displayName)}<br>`;
         if (entity.username) {
-          info += `· 用户名: @${entity.username}<br>`;
+          info += `· 用户名: @${htmlEscape(entity.username)}<br>`;
         }
       }
       
@@ -680,7 +680,7 @@ async function parseGroupId(client: TelegramClient, chatId: string): Promise<str
 
     info += `<br><b>🔗 可用链接格式</b><br>`;
     if (entityFound && entity && isChat(entity) && entity.username) {
-      info += `· 公开链接: https://t.me/${entity.username}<br>`;
+      info += `· 公开链接: https://t.me/${htmlEscape(entity.username)}<br>`;
     }
     
     if (chatId.startsWith("-100")) {
