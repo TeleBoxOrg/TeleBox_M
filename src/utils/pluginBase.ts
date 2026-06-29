@@ -2,6 +2,7 @@ import { TelegramClient } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { GenerationContext } from "./generationContext";
 import { logger } from "@utils/logger";
+import { safeJsonParse } from "@utils/asyncHelpers";
 
 export interface PluginRuntimeContext {
   generation: number;
@@ -44,9 +45,12 @@ type PluginEventHandler = {
 let cmdIgnoreEdited = true;
 try {
   const raw = process.env.TB_CMD_IGNORE_EDITED;
-  cmdIgnoreEdited = raw !== undefined ? !!JSON.parse(raw) : true;
+  if (raw !== undefined) {
+    const parsed = safeJsonParse<boolean>(raw);
+    cmdIgnoreEdited = parsed !== undefined ? parsed : true;
+  }
 } catch (e: unknown) {
-  logger.warn(`[pluginBase] TB_CMD_IGNORE_EDITED 环境变量 JSON 解析失败，使用默认值 true:`, e);
+  logger.warn(`[pluginBase] TB_CMD_IGNORE_EDITED 环境变量解析失败，使用默认值 true:`, e);
 }
 logger.info(
   `[CMD_IGNORE_EDITED] 命令监听忽略编辑的消息: ${cmdIgnoreEdited} (可使用环境变量 TB_CMD_IGNORE_EDITED 覆盖)`
