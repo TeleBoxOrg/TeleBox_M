@@ -51,10 +51,8 @@ class CronManager {
       });
       if (context) {
         context.trackTask(task, { label: `cron:${name}:execution`, kind: "cron-execution" });
-        task.catch((e) => { logger.error(e); });
-      } else {
-        task.catch((e) => { logger.error(e); });
       }
+      task.catch((e) => { logger.error(e); });
     });
 
     taskState.job = job;

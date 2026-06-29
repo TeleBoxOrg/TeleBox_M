@@ -1,4 +1,4 @@
-import { TelegramClient } from "@mtcute/node";
+import type { TelegramClient } from "@mtcute/node";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { GenerationContext } from "./generationContext";
 import { logger } from "@utils/logger";
@@ -63,12 +63,11 @@ abstract class Plugin {
   abstract cmdHandlers: Record<
     string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (msg: any, trigger?: any) => Promise<void>
+    (msg: MessageContext, trigger?: any) => Promise<void>
   >;
   listenMessageHandlerIgnoreEdited?: boolean = true;
   listenMessageHandler?: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    msg: any,
+    msg: MessageContext,
     options?: { isEdited?: boolean }
   ) => Promise<void>;
   eventHandlers?: PluginEventHandler[];
