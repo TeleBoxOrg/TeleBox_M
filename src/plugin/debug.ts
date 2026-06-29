@@ -192,7 +192,7 @@ class DebugPlugin extends Plugin {
 
       try {
         await msg.edit({
-          text: html`<blockquote expandable>${txt}</blockquote>`,
+          text: html`<blockquote expandable>${htmlEscape(txt)}</blockquote>`,
         });
       } catch (error: unknown) {
         // 如果编辑失败且是因为消息过长，则发送文件
@@ -232,7 +232,7 @@ class DebugPlugin extends Plugin {
 
       try {
         await msg.edit({
-          text: html`<blockquote expandable>${txt}</blockquote>`,
+          text: html`<blockquote expandable>${htmlEscape(txt)}</blockquote>`,
         });
       } catch (error: unknown) {
         // 如果编辑失败且是因为消息过长，则发送文件
