@@ -4,6 +4,7 @@ import { stdin as input, stdout as output } from "process";
 import qr from "qrcode-terminal";
 import type { GenerationContext } from "./generationContext";
 import { logger } from "@utils/logger";
+import type { ClientInternals } from "./clientInternals";
 
 /**
  * Native mtcute login manager.
@@ -113,7 +114,7 @@ export async function initializeClientSession(
       // start the updates loop. Without it, Dispatcher.for(client) silently
       // receives ZERO updates — commands never trigger. Explicitly start it.
       try {
-        await (client as unknown as { startUpdatesLoop?: () => Promise<void> }).startUpdatesLoop?.();
+        await (client as unknown as ClientInternals).startUpdatesLoop?.();
       } catch (e: unknown) {
         logger.warn("[LOGIN] startUpdatesLoop failed (updates may be inactive):", e);
       }
