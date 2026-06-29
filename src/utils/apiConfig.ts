@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import readline from "readline";
 import { logger } from "@utils/logger";
+import { safeJsonParse } from "@utils/asyncHelpers";
 import type { LegacyProxyConfig } from "./mtcuteClient";
 
 interface TelegramAPI {
@@ -24,7 +25,7 @@ function loadConfig(): TelegramAPI {
   ensureConfigFileExists();
   try {
     const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
-    return JSON.parse(raw);
+    return safeJsonParse<TelegramAPI>(raw) ?? {};
   } catch (e: unknown) {
     logger.error("❌ 无法读取 config.json:", e);
     return {};
