@@ -53,7 +53,7 @@ async function formatEntity(
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
   } catch (e: unknown) {
-    logger.error(e);
+    logger.error("[bf] formatEntity failed:", e);
     if (throwErrorIfFailed)
       throw new Error(
         `无法获取 ${typeof target === "string" ? target : "目标"} 的 entity: ${getErrorMessage(e) || "未知错误"}`
