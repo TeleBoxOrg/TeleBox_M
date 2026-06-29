@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import axios from "axios";
 import { logger } from "@utils/logger";
+import { getErrorMessage } from "@utils/errorHelpers";
 import type { MtcuteMessageContext, MtcuteFileLocation } from "@utils/mtcuteTypes";
 
 import type { MessageContext } from "@mtcute/dispatcher";
@@ -651,7 +652,7 @@ async function installPlugin(args: string[], msg: MessageContext) {
         try {
           fileName = await getMediaFileName(replied);
         } catch (e: unknown) {
-          await sendOrEditMessage(msg, `❌ 无法获取文件名: ${e instanceof Error ? e.message : String(e)}`);
+          await sendOrEditMessage(msg, `❌ 无法获取文件名: ${getErrorMessage(e)}`);
           return;
         }
 
@@ -683,7 +684,7 @@ async function installPlugin(args: string[], msg: MessageContext) {
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
           }
-          await sendOrEditMessage(statusMsg, `❌ 插件加载失败\n错误信息:\n${error instanceof Error ? error.message : String(error)}`);
+          await sendOrEditMessage(statusMsg, `❌ 插件加载失败\n错误信息:\n${getErrorMessage(error)}`);
           return;
         }
 
@@ -800,9 +801,7 @@ async function uninstallMultiplePlugins(
           results.push({
             name: trimmedName,
             success: false,
-            reason: `删除失败: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
+            reason: `删除失败: ${getErrorMessage(error)}`,
           });
         }
       } else {
@@ -824,9 +823,7 @@ async function uninstallMultiplePlugins(
     await db.write();
   } catch (error: unknown) {
     logger.error(`[TPM] 批量卸载过程中发生错误:`, error);
-    await sendOrEditMessage(msg, `批量卸载过程中发生错误: ${
-        error instanceof Error ? error.message : String(error)
-      }`);
+    await sendOrEditMessage(msg, `批量卸载过程中发生错误: ${getErrorMessage(error)}`);
     return;
   }
 
