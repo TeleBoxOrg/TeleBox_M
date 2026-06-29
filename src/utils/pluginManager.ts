@@ -216,6 +216,7 @@ function getCommandFromMessage(
     pfs = diyPrefixes;
   }
   const text = typeof msg === "string" ? msg : msg.text;
+  if (!text) return null;
 
   const matched = pfs.find((p) => text.startsWith(p));
   if (!matched) return null;
