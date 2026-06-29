@@ -26,7 +26,7 @@ MessageContext.prototype.deleteWithDelay = async function (
   try {
     await this.delete();
   } catch (e: unknown) {
-    logger.error(e);
+    logger.error("[patch] deleteWithDelay failed:", e);
     if (shouldThrowError) {
       throw e;
     }
