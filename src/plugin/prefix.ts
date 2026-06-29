@@ -99,6 +99,7 @@ class PrefixPlugin extends Plugin {
         }
         fs.writeFileSync(envPath, content, "utf-8");
       } catch (e: unknown) {
+        logger.warn('[prefix] .env 写入失败，仅本次生效', e);
         persisted = false;
       }
       await loadPlugins();
