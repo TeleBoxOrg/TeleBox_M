@@ -91,13 +91,6 @@ interface BackupConfig {
   target_chat_ids: string[];
 }
 
-interface FileInfo {
-  file_name: string;
-  file_size: number;
-  message_id: number;
-  chat_id: number;
-  date: string;
-}
 
 // 配置管理类
 class ConfigManager {

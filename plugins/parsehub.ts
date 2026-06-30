@@ -3,7 +3,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import * as fs from "fs";
-import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
+import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { safeJsonParse } from "@utils/asyncHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";

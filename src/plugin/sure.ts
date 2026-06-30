@@ -4,7 +4,6 @@ import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
-import { sleep } from "@utils/asyncHelpers";
 import { SureDB, type MsgRecord } from "@utils/sureDB";
 import { htmlEscape } from "@utils/htmlEscape";
 import {

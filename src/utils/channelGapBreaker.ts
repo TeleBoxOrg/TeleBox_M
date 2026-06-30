@@ -17,7 +17,6 @@
  */
 
 import { logger } from "./logger";
-import type { TelegramClient } from "@mtcute/node";
 
 /** Shape of the internal client properties we access for gap breaking. */
 interface GapBreakerClient {

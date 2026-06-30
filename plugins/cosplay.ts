@@ -5,7 +5,7 @@ import { getGlobalClient } from "@utils/globalClient";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { npm_install } from "@utils/npm_install";
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, { AxiosInstance } from "axios";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";

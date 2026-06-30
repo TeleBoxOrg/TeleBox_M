@@ -17,9 +17,7 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { JSONFilePreset } from "lowdb/node";
 import { getPrefixes } from "@utils/pluginManager";
 import { tryGetCurrentGenerationContext, getGlobalClient } from "@utils/globalClient";
-import type { InputPeerLike } from "@mtcute/node";
 import type { Message } from "@mtcute/node";
-import type { Document } from "@mtcute/core";
 import { htmlEscape } from "@utils/htmlEscape";
 
 const prefixes = getPrefixes();
