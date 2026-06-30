@@ -42,18 +42,6 @@ type PartialEntity = {
   accessHash?: string | number;
 };
 
-/**
- * Raw chat full response type for getFullChat.
- */
-type _RawChatFull = {
-  fullChat?: {
-    participants?: {
-      _?: string;
-      participants?: Array<{ _?: string; userId?: number }>;
-    };
-  };
-  users?: Array<{ id?: number | string; _?: string; [key: string]: unknown }>;
-};
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
