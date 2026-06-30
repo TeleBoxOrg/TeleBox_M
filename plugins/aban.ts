@@ -66,7 +66,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
     pLimitReady = (async () => {
       try {
         npm_install("p-limit");
-      } catch (e: unknown) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('[aban] p-limit 安装失败', e) }
       pLimit = (await import("p-limit")).default;
     })();
   }

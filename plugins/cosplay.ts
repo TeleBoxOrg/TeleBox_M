@@ -256,7 +256,7 @@ class CosplayScraper {
       } catch (error: unknown) {
         try {
           await fs.promises.unlink(tempFile);
-        } catch (e: unknown) { logger.warn('操作失败', e) }
+        } catch (e: unknown) { logger.warn('[cosplay] 清理临时文件失败', e) }
         throw error;
       }
     });

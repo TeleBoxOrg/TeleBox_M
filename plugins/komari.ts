@@ -144,7 +144,7 @@ class ConfigManager {
     if (this.db) {
       try {
         this.db.close();
-      } catch (e: unknown) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('[komari] 数据库关闭失败', e) }
     }
     this.db = null;
     this.initialized = false;

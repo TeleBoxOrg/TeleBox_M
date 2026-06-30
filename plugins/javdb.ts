@@ -337,10 +337,10 @@ class JavDBPlugin extends Plugin {
           await client.sendMedia(msg.chat.id, { type: 'photo', file: tmpPath, caption: html(caption), spoiler: true }, { replyTo: msg.replyToMessage?.id });
 
           // 删除原查询消息
-          try { await msg.delete(); } catch (e: unknown) { logger.warn('操作失败', e) }
+          try { await msg.delete(); } catch (e: unknown) { logger.warn('[javdb] 删除查询消息失败', e) }
         } finally {
           // 清理临时文件
-          try { await fs.promises.unlink(tmpPath); } catch (e: unknown) { logger.warn('操作失败', e) }
+          try { await fs.promises.unlink(tmpPath); } catch (e: unknown) { logger.warn('[javdb] 清理临时文件失败', e) }
         }
       } catch (_e: unknown) {
         // 封面下载失败，仅发送文本
@@ -353,7 +353,7 @@ class JavDBPlugin extends Plugin {
         const t = setTimeout(async () => {
           pendingTimers.delete(t);
           if (getCurrentGeneration() !== gen) return;
-          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e: unknown) { logger.warn('操作失败', e) }
+          try { await client.call({ _: 'messages.deleteMessages', id: [sent!.id], revoke: true } as unknown as Parameters<typeof client.call>[0]); } catch (e: unknown) { logger.warn('[javdb] 定时销毁消息失败', e) }
         }, 60_000);
         pendingTimers.add(t);
       }

@@ -1746,7 +1746,7 @@ class LotteryPlugin extends Plugin {
     if (db) {
       try {
         db.close();
-      } catch (e: unknown) { logger.warn('操作失败', e) }
+      } catch (e: unknown) { logger.warn('[lottery] 数据库关闭失败', e) }
       db = null as unknown as typeof db;
     }
   }
