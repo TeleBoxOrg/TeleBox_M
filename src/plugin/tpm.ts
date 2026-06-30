@@ -1186,8 +1186,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
         try {
           const stat = fs.statSync(filePath);
           mtime = stat.mtime.toLocaleString("zh-CN");
-          /* ignored */
-        } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
+        } catch (e: unknown) { logger.error("[tpm] 获取文件修改时间失败:", e); }
         localLinesVerbose.push(`${nameTag} 🗄 ${mtime}`);
       } else {
         localLinesSimple.push(nameTag);

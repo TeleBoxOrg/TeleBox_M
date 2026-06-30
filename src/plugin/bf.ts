@@ -235,8 +235,7 @@ async function createBackup(
     // 清理临时目录
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
-      /* ignored */
-    } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
+    } catch (e: unknown) { logger.error("[quality] 清理临时目录失败:", e); }
   }
 }
 
@@ -626,8 +625,7 @@ class BfPlugin extends Plugin {
           for (const f of tempFiles) {
             fs.unlinkSync(path.join(os.tmpdir(), f));
           }
-          /* ignored */
-        } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
+        } catch (e: unknown) { logger.error("[quality] 清理备份临时文件失败:", e); }
       }
     },
 
@@ -700,8 +698,7 @@ class BfPlugin extends Plugin {
         try {
           fs.unlinkSync(tempPath);
           fs.rmSync(extractPath, { recursive: true, force: true });
-          /* ignored */
-        } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
+        } catch (e: unknown) { logger.error("[quality] 清理恢复临时文件失败:", e); }
 
         // 尝试重载插件
         try {
