@@ -119,8 +119,7 @@ const sanitizeUrl = (url: string): string => {
   try {
     const u = new URL(url);
     if (u.protocol === "http:" || u.protocol === "https:") return u.toString();
-    /* ignored */
-  } catch (e: unknown) { logger.error("[quality] ignored error:", e); }
+  } catch (e: unknown) { logger.error("[telegraphFormatter] URL 验证失败:", e); }
   return "";
 };
 
