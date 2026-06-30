@@ -271,7 +271,7 @@ function clearChannelStateOnClient(
       const t = um.channelFailRetryTimers.get(channelId);
       if (t) {
           /* ignored */
-        try { clearTimeout(t); } catch (e: unknown) { logger.error('[channelGapBreaker] clearTimeout failed:', e); }
+        clearTimeout(t);
         um.channelFailRetryTimers.delete(channelId);
         cleared = true;
       }
