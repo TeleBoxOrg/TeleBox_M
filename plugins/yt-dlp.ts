@@ -332,7 +332,8 @@ async function handleUpdateCommand(msg: MessageContext): Promise<void> {
 
 async function getVideoInfo(query: string): Promise<{ title: string; uploader: string; duration: number } | null> {
     try {
-        const { stdout } = await execPromise(`${YTDLP_PATH} "ytsearch1:${query}" -j --no-download --no-warnings --no-check-certificate`);
+        const safeQuery = query.replace(/[`$!\\'"\r\n]/g, '');
+        const { stdout } = await execPromise(`${YTDLP_PATH} "ytsearch1:${safeQuery}" -j --no-download --no-warnings --no-check-certificate`);
         if (!stdout) return null;
         const videoData = JSON.parse(stdout.trim().split("\n").pop()!);
         if (videoData?.title) {
@@ -413,7 +414,9 @@ async function downloadAndUploadSong(msg: MessageContext, songQuery: string, pre
     const escapedTitle = songTitle.replace(/"/g, '\\"');
     const escapedArtist = artistName.replace(/"/g, '\\"');
     
-    let command = `${YTDLP_PATH} "ytsearch1:${finalSearchQuery}" -x --audio-format mp3 --audio-quality 0 --embed-thumbnail --write-thumbnail --convert-thumbnails jpg -o "${outputTemplate}" --metadata "title=${escapedTitle}" --metadata "artist=${escapedArtist}" --no-warnings --no-check-certificate --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=android,web"`;
+    const safeSearchQuery = finalSearchQuery.replace(/[`$!\\'"\r\n]/g, '');
+
+    let command = `${YTDLP_PATH} "ytsearch1:${safeSearchQuery}" -x --audio-format mp3 --audio-quality 0 --embed-thumbnail --write-thumbnail --convert-thumbnails jpg -o "${outputTemplate}" --metadata "title=${escapedTitle}" --metadata "artist=${escapedArtist}" --no-warnings --no-check-certificate --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --extractor-args "youtube:player_client=android,web"`;
 
     if (albumName) {
         const escapedAlbum = albumName.replace(/"/g, '\\"');
