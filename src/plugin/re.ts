@@ -35,7 +35,7 @@ class RePlugin extends Plugin {
 
         // 获取从被回复消息开始的消息
         const messages = await client.getHistory(replied.chat.id, {
-          offset: { id: replied!.id, date: 0 },
+          offset: { id: replied.id, date: 0 },
           limit: count,
           reverse: true,
         });
@@ -50,10 +50,10 @@ class RePlugin extends Plugin {
             try {
               // 使用 mtcute forwardMessagesById 以支持论坛话题 (threadId)
               const toPeer = msg.chat.id;
-              const fromPeer = replied!.chat.id;
+              const fromPeer = replied.chat.id;
               const ids = messages.map((m) => m.id);
               const threadId: number | undefined =
-                replied!.replyToMessage?.threadId ?? replied!.replyToMessage?.id ?? undefined;
+                replied.replyToMessage?.threadId ?? replied.replyToMessage?.id ?? undefined;
 
               await client.forwardMessagesById({
                 fromChatId: fromPeer,
@@ -78,7 +78,7 @@ class RePlugin extends Plugin {
           for (let i = 0; i < repeat; i++) {
             await Promise.all(
               messages.map((message) =>
-                this.copyMessage(client, msg.chat.id, message, replied!.replyToMessage?.threadId ?? replied!.replyToMessage?.id ?? undefined)
+                this.copyMessage(client, msg.chat.id, message, replied.replyToMessage?.threadId ?? replied.replyToMessage?.id ?? undefined)
               )
             );
           }

@@ -650,12 +650,21 @@ class BfPlugin extends Plugin {
 
       try {
         // 获取回复的消息
+        const replyToMessage = msg.replyToMessage;
+        if (!replyToMessage?.id) {
+          await msg.edit({ text: "❌ 无法获取回复消息 ID" });
+          return;
+        }
         const messages = await safeGetMessages(client, msg.chat, {
-          ids: [msg.replyToMessage!.id!],
+          ids: [replyToMessage.id],
         });
 
         const backupMsg = messages[0];
-        const fileName = (backupMsg?.media as (Document | Video | Audio | Voice | Sticker | null))?.fileName ?? "";
+        if (!backupMsg?.media) {
+          await msg.edit({ text: "❌ 回复的消息没有媒体内容" });
+          return;
+        }
+        const fileName = (backupMsg.media as (Document | Video | Audio | Voice | Sticker | null))?.fileName ?? "";
         if (!fileName?.endsWith(".tar.gz")) {
           await msg.edit({
             text: "❌ 回复的消息不是有效的备份文件",
@@ -668,7 +677,7 @@ class BfPlugin extends Plugin {
         // Download file — backupMsg.media may be a Document (which extends FileLocation),
         // but TypeScript can't verify that through the MessageMedia union, so we cast.
         const tempPath = path.join(os.tmpdir(), `restore_${Date.now()}.tar.gz`);
-        const media = backupMsg!.media as MtcuteFileLocation;
+        const media = backupMsg.media as MtcuteFileLocation;
         const buffer = await client.downloadAsBuffer(media);
 
         if (!buffer) {

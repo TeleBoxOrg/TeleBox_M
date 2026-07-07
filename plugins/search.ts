@@ -294,9 +294,9 @@ class SearchService {
       for (const textMsg of groupMessages) {
         if (this.isMessageMatching(textMsg, query) && hasReplies(textMsg)) {
           logger.info(`找到匹配消息 #${textMsg.id}，正在精确获取其 ${getReplyCount(textMsg)} 条评论...`);
-          // TODO: safeGetMessages does not support replyTo-based fetching.
-          // Use client.getReplies() or similar mtcute API to fetch actual replies.
-          const comments: Message[] = [];
+          // Fetch replies using mtcute's getMessages with fromReply=true
+          const replyMessages = await this.client.getMessages(linkedGroupEntity, [textMsg.id], true);
+          const comments: Message[] = replyMessages.filter((m): m is Message => m != null);
 
           const videoReplies = comments.filter((msg: Message) =>
             getMessageVideo(msg) != null &&
