@@ -375,6 +375,7 @@ class Logger {
       msg.includes('PERSISTENT_TIMESTAMP_OUTDATED') ||
       msg.includes('HISTORY_GET_FAILED') ||
       msg.includes('difference too long') ||
+      msg.includes('channelDifferenceTooLong') ||
       (msg.includes('fetchChannelDifference ') && (
         msg.includes('PERSISTENT_TIMESTAMP_OUTDATED') ||
         msg.includes('HISTORY_GET_FAILED')

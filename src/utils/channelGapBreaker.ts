@@ -14,9 +14,15 @@
  *
  * Importantly, this only touches TeleBox code — the teleproto library
  * itself is not modified.
+ *
+ * Note: logger is imported lazily to avoid circular dependency with logger.ts
+ * which imports this module for recordChannelGapFailure/isChannelCircuitBroken.
  */
 
-import { logger } from "./logger";
+function getLogger() {
+  // Lazy require to break circular dependency with logger.ts
+  return require("./logger").logger;
+}
 
 /** Shape of the internal client properties we access for gap breaking. */
 interface GapBreakerClient {
@@ -194,7 +200,7 @@ function circuitBreakChannel(channelId: string): void {
 
     const summary = clearChannelStateOnClient(client, channelId);
     if (summary.cleared) {
-      logger.info(
+      getLogger().info(
         `[CircuitBreaker] Cleared pts=${summary.oldPts ?? "?"} for channel ${channelId} — ` +
         `${record.timestamps.length} PTS failures within ${Math.round(FAILURE_WINDOW_MS / 60000)}min window. ` +
         `Cooldown: ${formatCooldown(effectiveCooldown)} (repeat #${record.breakCount}) ` +
@@ -205,7 +211,7 @@ function circuitBreakChannel(channelId: string): void {
     // Reset failure counter after breaking
     record.timestamps = [];
   } catch (e: unknown) {
-    logger.error("[channelGapBreaker] operation failed:", e);
+    getLogger().error("[channelGapBreaker] operation failed:", e);
   }
 }
 
@@ -220,7 +226,7 @@ function silentlyClearChannelPts(channelId: string): void {
     if (!client) return;
     clearChannelStateOnClient(client, channelId);
   } catch (e: unknown) {
-    logger.error("[channelGapBreaker] operation failed:", e);
+    getLogger().error("[channelGapBreaker] operation failed:", e);
   }
 }
 
@@ -247,7 +253,7 @@ function clearChannelStateOnClient(
           oldPts = tracker.pts.current();
         }
       } catch (e: unknown) {
-        logger.error("[channelGapBreaker] operation failed:", e);
+        getLogger().error("[channelGapBreaker] operation failed:", e);
       }
       try {
         if (tracker.timer) {
@@ -261,7 +267,7 @@ function clearChannelStateOnClient(
           tracker.pts.setRequesting(false);
         }
       } catch (e: unknown) {
-        logger.error("[channelGapBreaker] operation failed:", e);
+        getLogger().error("[channelGapBreaker] operation failed:", e);
       }
       um.channels.delete(channelId);
       cleared = true;
@@ -325,7 +331,7 @@ function tryGetClient(): unknown {
       return runtime.client;
     }
   } catch (e: unknown) {
-    logger.error("[channelGapBreaker] operation failed:", e);
+    getLogger().error("[channelGapBreaker] operation failed:", e);
   }
   return null;
 }
@@ -351,4 +357,36 @@ export function resetCircuitBreaker(): void {
     // point the escalated cooldown is correct behavior (the channel has
     // a history of repeated breaks).
   }
+}
+
+/**
+ * Clean up stale channel failure records to prevent memory leaks.
+ * Removes entries for channels that:
+ * - Have no active cooldown (brokenAt is null)
+ * - Have no recent failure timestamps (older than CLEANUP_WINDOW_MS)
+ * - Have never been circuit-broken (breakCount === 0)
+ *
+ * Called periodically (e.g., via cron) to bound the map size.
+ */
+export function cleanupStaleChannels(): number {
+  const now = Date.now();
+  // 7 days - channels that haven't failed in a week and were never circuit-broken
+  const CLEANUP_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+  let removed = 0;
+  for (const [channelId, record] of channelFailures) {
+    if (record.breakCount === 0 && record.brokenAt === null && record.timestamps.length === 0) {
+      // This shouldn't happen, but defensive check
+      channelFailures.delete(channelId);
+      removed++;
+    } else if (record.breakCount === 0 && record.brokenAt === null && record.timestamps.length > 0) {
+      // Check if all timestamps are old
+      const allOld = record.timestamps.every((t) => now - t >= CLEANUP_WINDOW_MS);
+      if (allOld) {
+        channelFailures.delete(channelId);
+        removed++;
+      }
+    }
+    // Note: channels with breakCount > 0 are NEVER removed to preserve escalation history
+  }
+  return removed;
 }
