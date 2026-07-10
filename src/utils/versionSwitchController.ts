@@ -122,16 +122,22 @@ async function main(): Promise<void> {
   let extPath: string;
 
   if (skipLogin && envSource && envTarget) {
-    // Fast path: external session already exists
+    // Fast path: session already exists (native or external)
     source = envSource;
     target = envTarget;
     console.log(`[controller] Fast-path switching ${source} → ${target}`);
 
+    const targetSession = state.sessions[target];
     extPath = resolveExternalSessionPath(target, DEFAULT_SWITCH_HOME) ?? "";
-    if (!extPath) {
-      throw new Error("SWITCH_SKIP_LOGIN set but no external session registered for " + target);
+    if (targetSession.kind === "native") {
+      // Native session — the session lives in the target repo already, no injection needed
+      extPath = "";
+      console.log(`[controller] Target ${target} has native session — no injection needed`);
+    } else if (!extPath) {
+      throw new Error("SWITCH_SKIP_LOGIN set but no session registered for " + target);
+    } else {
+      console.log(`[controller] Using existing external session: ${extPath}`);
     }
-    console.log(`[controller] Using existing external session: ${extPath}`);
   } else {
     // Slow path: login required
     const pendingLogin = state.pendingLogin;
@@ -215,8 +221,15 @@ async function main(): Promise<void> {
     preSwitchState.pendingTransaction = null;
     saveSwitchState(preSwitchState, DEFAULT_SWITCH_HOME);
 
-    // Inject external session into target version's config
-    injectSessionConfig(target, extPath);
+    // Inject external session into target version's config (only if external)
+    const targetSession = state.sessions[target];
+    if (targetSession.kind === "external") {
+      injectSessionConfig(target, extPath);
+    } else {
+      console.log(`[controller] Target ${target} uses native session — skipping injection`);
+      // Clean any stale _switchSessionPath from a previous external run
+      if (target === "mtcute") clearSwitchSessionMarker(target);
+    }
 
     pm2("stop", PM2_NAMES[source]);
     console.log(`[controller] Stopped ${source} (${PM2_NAMES[source]})`);
@@ -271,6 +284,18 @@ async function main(): Promise<void> {
 
     process.exit(1);
   }
+}
+
+function clearSwitchSessionMarker(version: "teleproto" | "mtcute"): void {
+  const configPath = path.join(REPO_ROOTS[version], "config.json");
+  if (!fs.existsSync(configPath)) return;
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as Record<string, unknown>;
+    if ("_switchSessionPath" in config) {
+      delete config._switchSessionPath;
+      fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    }
+  } catch { /* ignore */ }
 }
 
 function injectSessionConfig(version: "teleproto" | "mtcute", extPath: string): void {

@@ -271,7 +271,8 @@ const plugin = new (class extends Plugin {
     const target: TeleBoxVersion = "teleproto";
     const state = loadSwitchState(DEFAULT_SWITCH_HOME);
 
-    if (state.sessions.teleproto.kind !== "external") {
+    // 两种 session 都有效：native（一直在自己目录里）或 external（switch login 登录的）
+    if (state.sessions.teleproto.kind !== "external" && state.sessions.teleproto.kind !== "native") {
       await msg.edit({ text: T.goNotReady(target) });
       return;
     }
