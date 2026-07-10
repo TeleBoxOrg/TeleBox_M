@@ -41,7 +41,11 @@
 ## 🟡 中优先级
 - [x] 10. pluginBase/pluginManager/runtimeManager 同步 — 插件基类清理、管理器错误日志降噪、运行时管理器生命周期修复
   - 已完成：逐项对比 teleproto 近 30 次提交（含 287bb87 命令行 env 容错、ef2f77c 去 any、565e2a2 无限重连看门狗、a328e24 去冗余 abort、247ad51 setup 隔离、8cfe4c1 错误日志降噪等），mtcute 版三文件已完全对齐：pluginBase 用 logger + safeJsonParse（无 teleproto 引用残留）；pluginManager 对缺失模块降为 logger.debug（降噪）、setup 失败用 Promise.all + try/catch 隔离（后续插件仍初始化）；runtimeManager 用 mtcute 原生 client.onConnectionState 实现断开看门狗、trackDisposable 清理监听器与定时器防泄漏、reloadRuntime 不再冗余 abort（由 unloadPluginsForRuntime 守卫）。唯一未改项：Plugin.cmdHandlers 第二参数 `trigger?: any` 保留——收窄为 MessageContext 会使 .gitignore 下的用户插件 weather.ts（用 `args: string[]`）`tsc` 失败，且 teleproto 上游 ef2f77c 也刻意保留该 any；故维持现状保证跨插件兼容与构建通过。`tsc --noEmit` 对三文件无新增报错。任务 #10 完成。
-- [ ] 11. 其它工具类同步 — loginManager、apiConfig、conversation、banUtils、telegraphFormatter、telegramFormatter 等
+- [x] 11. 其它工具类同步 — loginManager、apiConfig、conversation、banUtils、telegraphFormatter、telegramFormatter 等
+  - 已完成：逐项对比 teleproto 与 mtcute 的 6 个命名工具类（loginManager、apiConfig、conversation、banUtils、telegraphFormatter、telegramFormatter）及 authGuards。
+    - loginManager（mtcute 用 `client.start()` + SQLite 存储，`startUpdatesLoop` 修复）、apiConfig（`safeJsonParse` + logger + `LegacyProxyConfig` 类型替代 `any`）、conversation（mtcute 原生 `Conversation` 类封装）、telegraphFormatter/telegramFormatter（logger 集成 + URL 校验错误日志）、authGuards（`getMe()` 直接返回 `User`，无 teleproto `Api.User` 残留）已全部以 mtcute 原生 API 改写，且比 teleproto 更优（类型收窄、`console.*`→logger）。
+    - **修复一处真实迁移 bug**：`banUtils.getBannedUsers` 先前机械照搬 teleproto `ChannelParticipantBanned` 的字段形状，访问 `member.peer.userId` / `member.kickedBy` / `member.date`，但 mtcute 的 `ChatMember` 对象根本没有这些字段（实体封在 `member.user` 访问器、封禁者经 `member.restrictedBy`、时间在 `member.raw.date`），导致该判定恒为 false、函数永远返回空数组。已改为 mtcute 原生访问：`member.user` + `member.restrictedBy` + `(member.raw as {date?}).date`，并修正 `username`/`title` 的 `string|null`→`string|undefined` 类型。`tsc --noEmit` 对 banUtils.ts 无报错。
+  - 任务 #11 完成。
 - [ ] 12. TeleBox_Plugins 功能修复同步 (18+) — sendat、autodel、quote、zhijiao、lu_bs、aban、speedlink、dig、convert、paolu、qr、eat、clean_member、getstickers、diss、xmsl、oxost、whois、pmcaptcha
 - [ ] 13. 插件架构改进同步 — setup() 初始化、cleanup() 生命周期、定时器追踪、generation-safe 模式、空 catch 清理
 - [ ] 14. 全局 axios 代理支持 — teleproto 版新增的配置全局代理支持

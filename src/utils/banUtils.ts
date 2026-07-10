@@ -119,56 +119,33 @@ export async function getBannedUsers(
 
   try {
     // mtcute 高级 API: getChatMembers with type 'banned'
+    // 注意：mtcute 的 ChatMember 没有 teleproto 的 ChannelParticipantBanned
+    // 的 peer/kickedBy/date 字段，而是把实体封进 user 访问器，封禁者通过
+    // restrictedBy 暴露，封禁时间位于 raw.date。原先按 teleproto 字段形状
+    // 取 member.peer/kickedBy/date 会恒为 undefined，导致函数永远返回空数组。
     const members = await client.getChatMembers(channel, {
       type: 'banned',
       limit,
     });
 
     for (const member of members) {
-      // member 可以是 ChatMember 类型，使用接口描述运行时属性
-      const memberAny = member as unknown as {
-        kickedBy?: { id?: number };
-        date?: number;
-        peer?: { userId?: number; channelId?: number; chatId?: number };
-        user?: { id?: number; firstName?: string; username?: string; title?: string };
-      };
+      const user = member.user;
+      if (!user) continue;
 
-      if (memberAny.kickedBy !== undefined || memberAny.date !== undefined) {
-        // Banned member
-        let entityId: number = 0;
-        let entityType: 'user' | 'channel' | 'chat' = 'user';
+      // 封禁者：restrictedBy 在 status 为 banned/restricted 时可用
+      const kickedByUser = member.restrictedBy;
+      // 封禁时间：原始 TL 中的 date 字段（ChannelParticipantBanned/ChatParticipantBanned）
+      const kickedDate = (member.raw as { date?: number } | undefined)?.date;
 
-        if (memberAny.peer?.userId) {
-          entityId = Number(memberAny.peer.userId);
-          entityType = 'user';
-        } else if (memberAny.peer?.channelId) {
-          entityId = Number(memberAny.peer.channelId);
-          entityType = 'channel';
-        } else if (memberAny.peer?.chatId) {
-          entityId = Number(memberAny.peer.chatId);
-          entityType = 'chat';
-        } else if (memberAny.user?.id) {
-          entityId = Number(memberAny.user.id);
-          entityType = 'user';
-        }
-
-        if (entityId) {
-          const user = memberAny.user;
-          const displayName = entityType === 'user'
-            ? (user?.firstName || user?.username || "Unknown User")
-            : (user?.title || user?.username || "Unknown");
-
-          bannedUsers.push({
-            id: entityId,
-            firstName: displayName,
-            username: user?.username,
-            kickedBy: memberAny.kickedBy ? Number(memberAny.kickedBy) : undefined,
-            kickedDate: memberAny.date,
-            type: entityType,
-            title: user?.title,
-          });
-        }
-      }
+      bannedUsers.push({
+        id: Number(user.id),
+        firstName: user.firstName || user.username || "Unknown User",
+        username: user.username ?? undefined,
+        kickedBy: kickedByUser ? Number(kickedByUser.id) : undefined,
+        kickedDate,
+        type: 'user',
+        title: member.title ?? undefined,
+      });
     }
   } catch (error: unknown) {
     logger.error("获取被封禁用户失败:", error);
