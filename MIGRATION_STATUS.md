@@ -49,7 +49,8 @@
 - [ ] 12. TeleBox_Plugins 功能修复同步 (18+) — sendat、autodel、quote、zhijiao、lu_bs、aban、speedlink、dig、convert、paolu、qr、eat、clean_member、getstickers、diss、xmsl、oxost、whois、pmcaptcha
   - 进度：逐项对比 teleproto 版对应插件，针对 mtcute 版的迁移缺陷进行修复。
     - [x] sendat（已提交 TeleBox_M_Plugins d320ff6）：修复致命 bug——executeTask 误用 `client.sendText(task.cid, "")` 导致定时任务永远发送空消息，改为 `client.sendText(task.cid, html(task.msg))`；补充注册 cron 前的 zombie 守卫（删除上一代同名 cron）；新增 `cleanup()` 钩子清除本插件 cron 任务防 reload 泄漏。对齐 teleproto 版 sendat.ts。
-    - [ ] 待办（剩余 18 个）：autodel、quote、zhijiao、lu_bs、aban、speedlink、dig、convert、paolu、qr、eat、clean_member、getstickers、diss、xmsl、oxost、whois、pmcaptcha —— 下一轮逐一对比并修复。
+    - [x] autodel（本轮提交）：修复 reload 后静默失效的真实迁移 bug——`setup()` 仅赋值 `lifecycle` 而未重新初始化数据库。teleproto 版在 `setup()` 中当 `this.db` 为 null 时调用 `initDatabase()`（因 `cleanup()` 在每次 reload 时把 `this.db` 置 null 并清空 `this.settings`，若不在 load 时重建，`.reload` 后 autodel 因 db 为 null、settings 为空而彻底停止工作，直到整进程重启）。mtcute 版此前缺失该重建逻辑，本次将 `setup()` 改为 `async` 并在 `!this.db` 时 `await this.initDatabase()`，同时保留 teleproto 版一致的 `deleteMessagesById(msg.chat.inputPeer, [msg.id], { revoke: false })`（mtcute Chat 确有 `inputPeer` getter，类型正确）。`tsc --noEmit` 对 autodel 无新增报错。
+    - [ ] 待办（剩余 17 个）：quote、zhijiao、lu_bs、aban、speedlink、dig、convert、paolu、qr、eat、clean_member、getstickers、diss、xmsl、oxost、whois、pmcaptcha —— 下一轮逐一对比并修复。
 - [ ] 13. 插件架构改进同步 — setup() 初始化、cleanup() 生命周期、定时器追踪、generation-safe 模式、空 catch 清理
 - [ ] 14. 全局 axios 代理支持 — teleproto 版新增的配置全局代理支持
 
