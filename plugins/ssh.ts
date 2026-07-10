@@ -15,10 +15,10 @@ import crypto from "crypto";
 
 import type { TelegramClient } from '@mtcute/core/client.js';
 import type { InputPeerLike } from '@mtcute/core/highlevel/types/index.js';
+// @ts-ignore - ssh2 has no type declarations
 import { Client as SSH2Client } from 'ssh2';
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
 
 const execAsync = promisify(exec);
@@ -174,7 +174,7 @@ class ConfigManager {
     
     // 简单的锁机制防止并发初始化
     while (this.initLock) {
-      await sleep(10);
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
     
     if (this.initialized) return;
@@ -374,7 +374,7 @@ class SSHPlugin extends Plugin {
             await this.generateSSHKeys(msg, client, "add");
           } else {
             await msg.edit({
-              text: html`❌ <b>无效的生成模式</b><br><br>用法:<br>• <code>${mainPrefix}ssh gen add</code> - 生成新密钥并追加<br>• <code>${mainPrefix}ssh gen replace</code> - 生成新密钥并替换所有旧密钥`,
+              text: `❌ <b>无效的生成模式</b>\n\n用法:\n• <code>${mainPrefix}ssh gen add</code> - 生成新密钥并追加\n• <code>${mainPrefix}ssh gen replace</code> - 生成新密钥并替换所有旧密钥`,
             });
           }
           break;
@@ -442,7 +442,7 @@ class SSHPlugin extends Plugin {
     } catch (error: unknown) {
       logger.error("[ssh] 执行失败:", error);
       await msg.edit({
-        text: html`❌ <b>执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`,
+        text: `❌ <b>执行失败:</b> ${htmlEscape(getErrorMessage(error) || "未知错误")}`,
       });
     }
   }
@@ -547,7 +547,7 @@ class SSHPlugin extends Plugin {
         const backupTimestamp = dayjs().format("YYYYMMDD_HHmmss");
         try {
           await execAsync(`cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.backup.${backupTimestamp} 2>/dev/null || true`);
-        } catch (e: unknown) { logger.warn('[ssh] 备份 authorized_keys 失败', e) }
+        } catch (e: unknown) { logger.warn('操作失败', e) }
         
         await msg.edit({ text: "🔄 正在替换密钥..." });
         // 直接写入公钥，确保格式正确
@@ -558,7 +558,7 @@ class SSHPlugin extends Plugin {
         let existingKeys = "";
         try {
           existingKeys = fs.readFileSync("/root/.ssh/authorized_keys", "utf-8");
-        } catch (e: unknown) { logger.warn('[ssh] 读取 authorized_keys 失败', e) }
+        } catch (e: unknown) { logger.warn('操作失败', e) }
         
         // 检查密钥是否已存在（通过比较公钥数据部分）
         const newKeyData = keyParts[1];
@@ -598,7 +598,7 @@ class SSHPlugin extends Plugin {
           peer = await client.resolvePeer(targetChat);
         } catch (_e: unknown) {
           peer = "me";
-          await msg.replyText(html(`⚠️ 无法找到指定会话 ${htmlEscape(targetChat)}，已发送到收藏夹`));
+          await msg.replyText(html(`⚠️ 无法找到指定会话 ${targetChat}，已发送到收藏夹`));
         }
       }
 
@@ -617,7 +617,7 @@ class SSHPlugin extends Plugin {
       try {
         const keysContent = fs.readFileSync("/root/.ssh/authorized_keys", "utf-8");
         keyCount = keysContent.trim().split('\n').filter(line => line.trim() && !line.startsWith('#')).length;
-      } catch (e: unknown) { logger.warn('[ssh] 读取密钥文件失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
 
       // 生成状态消息
       let setupMessage = "";
@@ -626,7 +626,7 @@ class SSHPlugin extends Plugin {
       }
       
       await msg.edit({
-        text: html`✅ <b>SSH密钥生成成功</b><br><br>📁 密钥包已发送到: ${targetChat === "me" ? "收藏夹" : htmlEscape(targetChat)}<br>🔑 公钥${modeText}<br>📊 当前共有 ${keyCount} 个授权密钥<br><br><b>服务器信息：</b><br>🖥️ 主机: ${htmlEscape(hostname)}<br>🌐 IP: ${htmlEscape(ipAddress)}<br>🔌 端口: ${htmlEscape(sshPort)}<br><br><b>连接命令：</b><br><code>ssh -i ${htmlEscape(keyName)} root@${htmlEscape(ipAddress)} -p ${htmlEscape(sshPort)}</code>${setupMessage}<br><br>💡 <b>提示：</b><br>• 请下载并保存私钥文件<br>• 本地设置权限: <code>chmod 600 ${htmlEscape(keyName)}</code><br>• 使用 <code>${htmlEscape(mainPrefix)}ssh keys</code> 查看所有密钥`,
+        text: `✅ <b>SSH密钥生成成功</b>\n\n📁 密钥包已发送到: ${targetChat === "me" ? "收藏夹" : htmlEscape(targetChat)}\n🔑 公钥${modeText}\n📊 当前共有 ${keyCount} 个授权密钥\n\n<b>服务器信息：</b>\n🖥️ 主机: ${htmlEscape(hostname)}\n🌐 IP: ${htmlEscape(ipAddress)}\n🔌 端口: ${htmlEscape(sshPort)}\n\n<b>连接命令：</b>\n<code>ssh -i ${htmlEscape(keyName)} root@${htmlEscape(ipAddress)} -p ${htmlEscape(sshPort)}</code>${setupMessage}\n\n💡 <b>提示：</b>\n• 请下载并保存私钥文件\n• 本地设置权限: <code>chmod 600 ${htmlEscape(keyName)}</code>\n• 使用 <code>${htmlEscape(mainPrefix)}ssh keys</code> 查看所有密钥`,
       });
 
       // 清理临时文件
@@ -763,7 +763,7 @@ class SSHPlugin extends Plugin {
       await execAsync(`chmod 600 ${authorizedKeysPath}`);
 
       await msg.edit({
-        text: html`✅ <b>授权密钥已清空</b><br><br>🗂️ 备份文件: <code>${authorizedKeysPath}.backup.${timestamp}</code><br><br>⚠️ <b>警告:</b> 所有SSH密钥登录已失效，请确保有其他方式访问服务器`,
+        text: `✅ <b>授权密钥已清空</b>\n\n🗂️ 备份文件: <code>${authorizedKeysPath}.backup.${timestamp}</code>\n\n⚠️ <b>警告:</b> 所有SSH密钥登录已失效，请确保有其他方式访问服务器`,
       });
       
     } catch (error: unknown) {
@@ -844,7 +844,7 @@ ${keysContent}`;
       const client = await getGlobalClient();
       if (!client) {
         await msg.edit({
-          text: html`✅ <b>密钥导出完成</b><br><br>📊 密钥数量: ${lines.length}<br>📁 文件已生成，但无法发送<br><br>请检查客户端连接`,
+          text: `✅ <b>密钥导出完成</b>\n\n📊 密钥数量: ${lines.length}\n📁 文件已生成，但无法发送\n\n请检查客户端连接`,
         });
         return;
       }
@@ -888,7 +888,7 @@ ${keysContent}`;
     
     if (!newPassword) {
       await msg.edit({
-        text: html`❌ <b>请提供新密码</b><br><br>示例: <code>${mainPrefix}ssh passwd 新密码123</code>`,
+        text: `❌ <b>请提供新密码</b>\n\n示例: <code>${mainPrefix}ssh passwd 新密码123</code>`,
       });
       return;
     }
@@ -896,7 +896,7 @@ ${keysContent}`;
     // 验证密码复杂度
     if (!validatePassword(newPassword)) {
       await msg.edit({
-        text: html`❌ <b>密码不符合要求</b><br><br>密码长度至少8位`,
+        text: `❌ <b>密码不符合要求</b>\n\n密码长度至少8位`,
       });
       return;
     }
@@ -910,7 +910,7 @@ ${keysContent}`;
 
       // 不显示明文密码
       await msg.edit({
-        text: html`✅ <b>root密码修改成功</b><br><br>⚠️ 请妥善保管新密码`,
+        text: `✅ <b>root密码修改成功</b>\n\n⚠️ 请妥善保管新密码`,
       });
     } catch (error: unknown) {
       throw new Error(`修改密码失败: ${getErrorMessage(error)}`);
@@ -923,7 +923,7 @@ ${keysContent}`;
     
     if (!port) {
       await msg.edit({
-        text: html`❌ <b>无效的端口号</b><br><br>端口范围: 1-65535<br>示例: <code>${mainPrefix}ssh port 2222</code>`,
+        text: `❌ <b>无效的端口号</b>\n\n端口范围: 1-65535\n示例: <code>${mainPrefix}ssh port 2222</code>`,
       });
       return;
     }
@@ -939,7 +939,7 @@ ${keysContent}`;
         const portCheck = await checkPortInUse(port);
         if (portCheck.inUse) {
           await msg.edit({
-            text: html`❌ <b>端口冲突检测失败</b><br><br>端口 <code>${port}</code> 已被占用<br>进程信息: <code>${htmlEscape(portCheck.processInfo || '未知')}</code><br><br>💡 <b>建议:</b><br>• 选择其他端口号<br>• 停止占用该端口的服务<br>• 使用 <code>netstat -tlnp | grep :${port}</code> 查看详情`,
+            text: `❌ <b>端口冲突检测失败</b>\n\n端口 <code>${port}</code> 已被占用\n进程信息: <code>${htmlEscape(portCheck.processInfo || '未知')}</code>\n\n💡 <b>建议:</b>\n• 选择其他端口号\n• 停止占用该端口的服务\n• 使用 <code>netstat -tlnp | grep :${port}</code> 查看详情`,
           });
           return;
         }
@@ -989,7 +989,7 @@ ${keysContent}`;
       }
 
       await msg.edit({
-        text: html`✅ <b>SSH端口修改成功</b><br><br>🔧 新端口: <code>${port}</code><br>🛡️ 防火墙: 已自动开放 TCP/UDP ${port}<br>📄 备份文件: /etc/ssh/sshd_config.backup.${htmlEscape(timestamp)}${oldPortWarning}<br><br>⚠️ <b>重要:</b> 请用新端口测试连接后再断开当前会话`,
+        text: `✅ <b>SSH端口修改成功</b>\n\n🔧 新端口: <code>${port}</code>\n🛡️ 防火墙: 已自动开放 TCP/UDP ${port}\n📄 备份文件: /etc/ssh/sshd_config.backup.${htmlEscape(timestamp)}${oldPortWarning}\n\n⚠️ <b>重要:</b> 请用新端口测试连接后再断开当前会话`,
       });
     } catch (error: unknown) {
       throw new Error(`修改SSH端口失败: ${getErrorMessage(error)}`);
@@ -1003,7 +1003,7 @@ ${keysContent}`;
     
     if (!enable && !disable) {
       await msg.edit({
-        text: html`❌ <b>无效的参数</b><br><br>使用: <code>${mainPrefix}ssh pwauth on/off</code>`,
+        text: `❌ <b>无效的参数</b>\n\n使用: <code>${mainPrefix}ssh pwauth on/off</code>`,
       });
       return;
     }
@@ -1031,7 +1031,7 @@ ${keysContent}`;
       await ConfigManager.set(CONFIG_KEYS.PASSWORD_AUTH, authValue);
 
       await msg.edit({
-        text: html`✅ <b>密码登录已${action}</b><br><br>当前状态: ${enable ? "✅ 已开启" : "❌ 已关闭"}<br>备份文件: /etc/ssh/sshd_config.backup.${timestamp}`,
+        text: `✅ <b>密码登录已${action}</b>\n\n当前状态: ${enable ? "✅ 已开启" : "❌ 已关闭"}\n备份文件: /etc/ssh/sshd_config.backup.${timestamp}`,
       });
     } catch (error: unknown) {
       throw new Error(`${action}密码登录失败: ${getErrorMessage(error)}`);
@@ -1045,7 +1045,7 @@ ${keysContent}`;
     
     if (!enable && !disable) {
       await msg.edit({
-        text: html`❌ <b>无效的参数</b><br><br>使用: <code>${mainPrefix}ssh keyauth on/off</code>`,
+        text: `❌ <b>无效的参数</b>\n\n使用: <code>${mainPrefix}ssh keyauth on/off</code>`,
       });
       return;
     }
@@ -1080,7 +1080,7 @@ ${keysContent}`;
       }
 
       await msg.edit({
-        text: html`✅ <b>密钥登录已${action}</b><br><br>当前状态: ${enable ? "✅ 已开启" : "❌ 已关闭"}<br>备份文件: /etc/ssh/sshd_config.backup.${timestamp}${warningText}`,
+        text: `✅ <b>密钥登录已${action}</b>\n\n当前状态: ${enable ? "✅ 已开启" : "❌ 已关闭"}\n备份文件: /etc/ssh/sshd_config.backup.${timestamp}${warningText}`,
       });
     } catch (error: unknown) {
       throw new Error(`${action}密钥登录失败: ${getErrorMessage(error)}`);
@@ -1095,7 +1095,7 @@ ${keysContent}`;
     
     if (!enable && !disable && !keyOnly) {
       await msg.edit({
-        text: html`❌ <b>无效的参数</b><br><br>用法:<br>• <code>${mainPrefix}ssh rootlogin on</code> - 允许所有root登录方式<br>• <code>${mainPrefix}ssh rootlogin off</code> - 完全禁止root登录<br>• <code>${mainPrefix}ssh rootlogin keyonly</code> - 仅允许密钥登录root`,
+        text: `❌ <b>无效的参数</b>\n\n用法:\n• <code>${mainPrefix}ssh rootlogin on</code> - 允许所有root登录方式\n• <code>${mainPrefix}ssh rootlogin off</code> - 完全禁止root登录\n• <code>${mainPrefix}ssh rootlogin keyonly</code> - 仅允许密钥登录root`,
       });
       return;
     }
@@ -1126,14 +1126,14 @@ ${keysContent}`;
           
           if (userList.length === 0) {
             await msg.edit({
-              text: html`❌ <b>检测到没有普通用户账户</b><br><br>完全禁用root登录可能导致系统无法访问。<br><br><b>建议:</b><br>• 使用 <code>${mainPrefix}ssh rootlogin keyonly</code> 仅允许密钥登录<br>• 或先手动创建普通用户账户再禁用root<br><br>如需继续强制禁用，请再次执行命令。`,
+              text: `❌ <b>检测到没有普通用户账户</b>\n\n完全禁用root登录可能导致系统无法访问。\n\n<b>建议:</b>\n• 使用 <code>${mainPrefix}ssh rootlogin keyonly</code> 仅允许密钥登录\n• 或先手动创建普通用户账户再禁用root\n\n如需继续强制禁用，请再次执行命令。`,
             });
             return;
           }
         } catch (_e: unknown) {
           // 检查失败时给出警告
           await msg.edit({
-            text: html`⚠️ <b>无法检测用户账户</b><br><br>建议使用 <code>${mainPrefix}ssh rootlogin keyonly</code> 而不是完全禁用<br><br>如需继续禁用root登录:<br><code>${mainPrefix}ssh rootlogin off</code>`,
+            text: `⚠️ <b>无法检测用户账户</b>\n\n建议使用 <code>${mainPrefix}ssh rootlogin keyonly</code> 而不是完全禁用\n\n如需继续禁用root登录:\n<code>${mainPrefix}ssh rootlogin off</code>`,
           });
           return;
         }
@@ -1163,7 +1163,7 @@ ${keysContent}`;
       }
       
       await msg.edit({
-        text: html`✅ <b>Root登录配置已更新</b><br><br>状态: ${statusText}<br>配置值: <code>PermitRootLogin ${authValue}</code><br>备份文件: /etc/ssh/sshd_config.backup.${timestamp}<br><br>${securityTip}`,
+        text: `✅ <b>Root登录配置已更新</b>\n\n状态: ${statusText}\n配置值: <code>PermitRootLogin ${authValue}</code>\n备份文件: /etc/ssh/sshd_config.backup.${timestamp}\n\n${securityTip}`,
       });
     } catch (error: unknown) {
       throw new Error(`配置Root登录失败: ${getErrorMessage(error)}`);
@@ -1176,7 +1176,7 @@ ${keysContent}`;
     
     if (!password) {
       await msg.edit({
-        text: html`❌ <b>请提供root密码</b><br><br>示例: <code>${mainPrefix}ssh enableroot 新密码123</code><br><br>⚠️ <b>说明:</b> 此命令会启用root账户并设置密码，允许直接SSH登录root`,
+        text: `❌ <b>请提供root密码</b>\n\n示例: <code>${mainPrefix}ssh enableroot 新密码123</code>\n\n⚠️ <b>说明:</b> 此命令会启用root账户并设置密码，允许直接SSH登录root`,
       });
       return;
     }
@@ -1211,7 +1211,7 @@ ${keysContent}`;
       }
       
       await msg.edit({
-        text: html`✅ <b>Root账户已启用</b><br><br>🔑 Root密码: <code>${htmlEscape(password)}</code><br>🔓 账户状态: 已解锁<br>🚪 SSH登录: 已允许<br>📄 备份文件: /etc/ssh/sshd_config.backup.${currentConfig}<br><br>✨ <b>现在可以直接用root登录SSH了！</b><br><br>⚠️ <b>安全提示:</b><br>• 建议设置复杂密码<br>• 考虑配置SSH密钥登录<br>• 可用 <code>${mainPrefix}ssh rootlogin keyonly</code> 提升安全性`,
+        text: `✅ <b>Root账户已启用</b>\n\n🔑 Root密码: <code>${htmlEscape(password)}</code>\n🔓 账户状态: 已解锁\n🚪 SSH登录: 已允许\n📄 备份文件: /etc/ssh/sshd_config.backup.${currentConfig}\n\n✨ <b>现在可以直接用root登录SSH了！</b>\n\n⚠️ <b>安全提示:</b>\n• 建议设置复杂密码\n• 考虑配置SSH密钥登录\n• 可用 <code>${mainPrefix}ssh rootlogin keyonly</code> 提升安全性`,
       });
       
     } catch (error: unknown) {
@@ -1248,7 +1248,7 @@ ${keysContent}`;
       }
 
       await msg.edit({
-        text: html`✅ <b>SSH服务重启成功</b><br><br>重启命令: <code>${htmlEscape(restartResult.command || "未知")}</code><br>服务状态: ${sshStatus}<br><br>💡 建议重启后验证SSH连接`,
+        text: `✅ <b>SSH服务重启成功</b>\n\n重启命令: <code>${htmlEscape(restartResult.command || "未知")}</code>\n服务状态: ${sshStatus}\n\n💡 建议重启后验证SSH连接`,
       });
     } catch (error: unknown) {
       throw new Error(`重启SSH服务失败: ${getErrorMessage(error)}`);
@@ -1261,7 +1261,7 @@ ${keysContent}`;
     
     if (!port) {
       await msg.edit({
-        text: html`❌ <b>无效的端口号</b><br><br>端口范围: 1-65535<br>示例: <code>${mainPrefix}ssh open 80</code>`,
+        text: `❌ <b>无效的端口号</b>\n\n端口范围: 1-65535\n示例: <code>${mainPrefix}ssh open 80</code>`,
       });
       return;
     }
@@ -1286,7 +1286,7 @@ ${keysContent}`;
       }
 
       await msg.edit({
-        text: html`✅ <b>端口 ${port} 已开放</b><br><br>协议: TCP/UDP<br><br>💡 提示: 规则已添加到iptables，重启后可能需要重新设置`,
+        text: `✅ <b>端口 ${port} 已开放</b>\n\n协议: TCP/UDP\n\n💡 提示: 规则已添加到iptables，重启后可能需要重新设置`,
       });
     } catch (error: unknown) {
       throw new Error(`开放端口失败: ${getErrorMessage(error)}`);
@@ -1299,7 +1299,7 @@ ${keysContent}`;
     
     if (!port) {
       await msg.edit({
-        text: html`❌ <b>无效的端口号</b><br><br>端口范围: 1-65535<br>示例: <code>${mainPrefix}ssh close 80</code>`,
+        text: `❌ <b>无效的端口号</b>\n\n端口范围: 1-65535\n示例: <code>${mainPrefix}ssh close 80</code>`,
       });
       return;
     }
@@ -1327,7 +1327,7 @@ ${keysContent}`;
       }
 
       await msg.edit({
-        text: html`✅ <b>端口 ${port} 已关闭</b><br><br>协议: TCP/UDP<br><br>💡 提示: 规则已添加到iptables，重启后可能需要重新设置`,
+        text: `✅ <b>端口 ${port} 已关闭</b>\n\n协议: TCP/UDP\n\n💡 提示: 规则已添加到iptables，重启后可能需要重新设置`,
       });
     } catch (error: unknown) {
       throw new Error(`关闭端口失败: ${getErrorMessage(error)}`);
@@ -1338,7 +1338,7 @@ ${keysContent}`;
   private async setTarget(msg: MessageContext, target: string): Promise<void> {
     if (!target) {
       await msg.edit({
-        text: html`❌ <b>请提供目标</b><br><br>示例:<br><code>${mainPrefix}ssh set me</code> - 重置为默认发送到收藏夹<br><code>${mainPrefix}ssh set @username</code> - 设置发送到指定用户<br><code>${mainPrefix}ssh set -1001234567890</code> - 设置发送到指定群组/频道`,
+        text: `❌ <b>请提供目标</b>\n\n示例:\n<code>${mainPrefix}ssh set me</code> - 重置为默认发送到收藏夹\n<code>${mainPrefix}ssh set @username</code> - 设置发送到指定用户\n<code>${mainPrefix}ssh set -1001234567890</code> - 设置发送到指定群组/频道`,
       });
       return;
     }
@@ -1354,7 +1354,7 @@ ${keysContent}`;
             await client.resolvePeer(target);
           } catch (_e: unknown) {
             await msg.edit({
-              text: html`⚠️ <b>无法验证目标有效性</b><br><br>目标 <code>${htmlEscape(target)}</code> 可能无效，但配置已保存。<br><br>发送时如果失败将自动使用收藏夹。`,
+              text: `⚠️ <b>无法验证目标有效性</b>\n\n目标 <code>${htmlEscape(target)}</code> 可能无效，但配置已保存。\n\n发送时如果失败将自动使用收藏夹。`,
             });
             await ConfigManager.set(CONFIG_KEYS.TARGET_CHAT, target);
             return;
@@ -1366,7 +1366,7 @@ ${keysContent}`;
       await ConfigManager.set(CONFIG_KEYS.TARGET_CHAT, target);
 
       await msg.edit({
-        text: html`✅ <b>接收目标已设置</b><br><br>目标: <code>${htmlEscape(target)}</code><br><br>${target === "me" ? "密钥将发送到收藏夹" : "密钥将发送到指定会话"}`,
+        text: `✅ <b>接收目标已设置</b>\n\n目标: <code>${htmlEscape(target)}</code>\n\n${target === "me" ? "密钥将发送到收藏夹" : "密钥将发送到指定会话"}`,
       });
     } catch (error: unknown) {
       throw new Error(`设置目标失败: ${getErrorMessage(error)}`);
@@ -1480,7 +1480,7 @@ ${keysContent}`;
       }
 
       await msg.edit({
-        text: html`📊 <b>SSH状态信息</b><br><br><b>SSH服务状态：</b><br>服务状态: ${sshStatus}<br>端口: <code>${htmlEscape(actualPort)}</code><br><br><b>认证配置：</b><br>密码登录: ${actualPasswordAuth}<br>Root登录: ${rootLogin}<br>密钥登录: ${actualPubkeyAuth}<br>已授权密钥: ${keyCount} 个${iptablesInfo}<br><br><b>插件配置：</b><br>接收目标: <code>${htmlEscape(targetChat)}</code><br>${targetChat === "me" ? "(发送到收藏夹)" : "(发送到指定会话)"}<br><br><b>相关文件：</b><br>• SSH配置: /etc/ssh/sshd_config<br>• 授权密钥: /root/.ssh/authorized_keys${systemInfo}`,
+        text: `📊 <b>SSH状态信息</b>\n\n<b>SSH服务状态：</b>\n服务状态: ${sshStatus}\n端口: <code>${htmlEscape(actualPort)}</code>\n\n<b>认证配置：</b>\n密码登录: ${actualPasswordAuth}\nRoot登录: ${rootLogin}\n密钥登录: ${actualPubkeyAuth}\n已授权密钥: ${keyCount} 个${iptablesInfo}\n\n<b>插件配置：</b>\n接收目标: <code>${htmlEscape(targetChat)}</code>\n${targetChat === "me" ? "(发送到收藏夹)" : "(发送到指定会话)"}\n\n<b>相关文件：</b>\n• SSH配置: /etc/ssh/sshd_config\n• 授权密钥: /root/.ssh/authorized_keys${systemInfo}`,
       });
     } catch (error: unknown) {
       throw new Error(`获取SSH状态信息失败: ${getErrorMessage(error)}`);

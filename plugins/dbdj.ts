@@ -1,4 +1,5 @@
 import { Plugin } from "@utils/pluginBase";
+import { sleep } from "@utils/asyncHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
@@ -6,8 +7,6 @@ import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { ClientInternals } from "@utils/clientInternals";
-import type { TelegramClient } from "@mtcute/node";
-import type { InputPeerLike } from "@mtcute/core";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -123,12 +122,12 @@ class DbdjPlugin extends Plugin {
           parseMode: "html",
         });
 
-        const client = msg.client as TelegramClient;
+        const client = msg.client! as unknown as import("@mtcute/node").TelegramClient;
         const offsetId = (msg.id || 1) - 1; // 从命令消息之前开始
-        const messages = await safeGetMessages(client, msg.peerId as InputPeerLike, {
+        const messages = await safeGetMessages(client, msg.peerId as unknown as import("@mtcute/core").InputPeerLike, {
           ids: [] as number[],
           ...{ offsetId, limit: scanCount },
-        } as Parameters<typeof safeGetMessages>[2]);
+        } as unknown as Parameters<typeof safeGetMessages>[2]);
 
         // 收集有效用户: 仅统计来自用户的消息, 排除自身(out)、无 fromId 的消息
         const uniqueUserIds: number[] = [];
@@ -138,7 +137,8 @@ class DbdjPlugin extends Plugin {
         // 先收集所有需要查询的用户ID
         const uidsToFetch: number[] = [];
         for (const m of messages) {
-          // 跳过自己发送的消息（已迁移到 mtcute: m.raw.out）
+          // 跳过自己发送的消息
+          // if ((m as any).out) continue;
           const from = (m as { fromId?: { userId?: number } }).fromId;
           const uid = from?.userId ? Number(from.userId) : undefined;
           if (!uid || !Number.isFinite(uid)) continue;

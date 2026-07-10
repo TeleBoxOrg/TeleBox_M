@@ -3,8 +3,6 @@ import { getGlobalClient } from "@utils/globalClient";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
-import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 import type { tl } from "@mtcute/core";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -152,7 +150,7 @@ class ClearStickerPlugin extends Plugin {
 
 
           // 节流，避免触发限制
-          await sleep(1200);
+          await new Promise(resolve => setTimeout(resolve, 1200));
           
         } catch (historyError: unknown) {
           logger.error("Failed to get chat history:", historyError);

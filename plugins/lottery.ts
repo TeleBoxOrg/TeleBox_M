@@ -9,16 +9,23 @@ import type { TelegramClient } from "@mtcute/node";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
-import { getErrorMessage } from "@utils/errorHelpers";
-import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers";
+
+// Track pending setTimeout handles for safe cleanup on reload
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 
 // Get command prefixes
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
-// Track pending setTimeout handles for safe cleanup on reload
-const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+// HTML escape function
+function htmlEscape(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 
 function codeTag(text: string | number): string {
   return `<code>${htmlEscape(String(text))}</code>`;
@@ -679,7 +686,7 @@ async function distributePrizes(client: TelegramClient, lottery: LotteryConfigRo
         const winnerRecord = getLotteryWinners(lottery.id).find(w => w.user_id === winner.user_id);
         if (winnerRecord) {
           await sendPrizeToWinner(client, winner, winnerRecord.prize_text ?? '', lottery);
-          await sleep(1000); // Rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limiting
         }
       }
     }
@@ -696,14 +703,14 @@ async function sendPrizeToWinner(client: TelegramClient, winner: LotteryUser, pr
                        (winner.first_name || winner.last_name || `用户 ${winner.user_id}`);
 
     const prizeMessage =
-      `🎉 <b>恭喜中奖!</b><br><br>` +
-      `🏆 <b>活动名称:</b> ${htmlEscape(lottery.title)}<br>` +
-      `🎁 <b>奖品内容:</b> ${htmlEscape(prizeText)}<br><br>` +
-      `📝 <b>中奖详情:</b><br>` +
-      `• 活动: ${htmlEscape(lottery.title)}<br>` +
-      `• 中奖用户: ${htmlEscape(displayName)}<br>` +
-      `• 中奖时间: ${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}<br><br>` +
-      `🎊 <b>感谢您的参与，祝您好运!</b><br>` +
+      `🎉 <b>恭喜中奖!</b>\n\n` +
+      `🏆 <b>活动名称:</b> ${htmlEscape(lottery.title)}\n` +
+      `🎁 <b>奖品内容:</b> ${htmlEscape(prizeText)}\n\n` +
+      `📝 <b>中奖详情:</b>\n` +
+      `• 活动: ${htmlEscape(lottery.title)}\n` +
+      `• 中奖用户: ${htmlEscape(displayName)}\n` +
+      `• 中奖时间: ${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}\n\n` +
+      `🎊 <b>感谢您的参与，祝您好运!</b>\n` +
       `💡 <b>提示:</b> 如有疑问请联系活动发起者`;
 
     await client.sendText(winner.user_id ?? winner.id ?? 0, html(prizeMessage));
@@ -839,7 +846,7 @@ async function performLotteryDraw(client: TelegramClient, lottery: LotteryConfig
       winnerLines.push(`${statusIcon} ${formattedName}${statusText}`);
     }
     
-    const winUsersText = winnerLines.join("<br>");
+    const winUsersText = winnerLines.join("\n");
     
     const endText = 
       `🎊 <b>开奖结果</b>\n\n` +
@@ -1215,7 +1222,7 @@ const lottery = async (msg: MessageContext) => {
 
         const warehouseList = warehouses.map((w, index) => 
           `${index + 1}. <b>${htmlEscape(w.warehouse_name)}</b> - ${w.prize_count}种奖品，库存${w.total_stock}个`
-        ).join("<br>");
+        ).join("\n");
 
         await msg.edit({
           text: html(`📦 <b>可用奖品仓库</b><br><br>${warehouseList}<br><br><b>创建抽奖用法:</b><br><code>${mainPrefix}lottery create [标题] [关键词] [人数] [中奖数] [仓库名或序号]</code><br><br><b>示例:</b><br><code>${mainPrefix}lottery create "新年抽奖" 抽奖 100 5 1</code><br><code>${mainPrefix}lottery create "新年抽奖" 抽奖 100 5 default</code>`)
@@ -1253,7 +1260,7 @@ const lottery = async (msg: MessageContext) => {
       if (!selectedWarehouse) {
         const warehouseList = availableWarehouses.map((w, index) => 
           `${index + 1}. ${htmlEscape(w)}`
-        ).join("<br>");
+        ).join("\n");
         
         await msg.edit({
           text: html(`❌ <b>错误:</b> 奖品仓库不存在<br><br>可用仓库:<br>${warehouseList}<br><br>💡 请使用正确的仓库名称或序号`)
@@ -1305,14 +1312,14 @@ const lottery = async (msg: MessageContext) => {
       await msg.edit({ text: html("🔄 <b>发布抽奖活动...</b>") });
       
       const createText =
-        `🎉 <b>抽奖活动已创建</b><br><br>` +
-        `🏆 <b>活动名称:</b> ${htmlEscape(title)}<br>` +
-        `🎁 <b>中奖名额:</b> <b>${winnerCount}</b> 个<br>` +
-        `👥 <b>参与上限:</b> <b>${maxParticipants}</b> 人<br>` +
-        `🔑 <b>参与关键词:</b> ${codeTag(keyword)}<br>` +
-        `📦 <b>奖品仓库:</b> ${htmlEscape(selectedWarehouse)}<br>` +
-        `🎁 <b>可用奖品:</b> ${warehousePrizes.length} 种<br>` +
-        `🆔 <b>抽奖ID:</b> ${codeTag(uniqueId)}<br><br>` +
+        `🎉 <b>抽奖活动已创建</b>\n\n` +
+        `🏆 <b>活动名称:</b> ${htmlEscape(title)}\n` +
+        `🎁 <b>中奖名额:</b> <b>${winnerCount}</b> 个\n` +
+        `👥 <b>参与上限:</b> <b>${maxParticipants}</b> 人\n` +
+        `🔑 <b>参与关键词:</b> ${codeTag(keyword)}\n` +
+        `📦 <b>奖品仓库:</b> ${htmlEscape(selectedWarehouse)}\n` +
+        `🎁 <b>可用奖品:</b> ${warehousePrizes.length} 种\n` +
+        `🆔 <b>抽奖ID:</b> ${codeTag(uniqueId)}\n\n` +
         `💡 <b>提示:</b> 发送关键词即可参与抽奖`;
 
       const sentMsg = await msg.client?.sendText(chatId, html(createText));
@@ -1490,7 +1497,7 @@ const lottery = async (msg: MessageContext) => {
         
         addPrizeToWarehouse(warehouseName, prizeText, stock);
         await msg.edit({
-          text: html(`✅ <b>奖品已添加</b><br><br>仓库: ${codeTag(warehouseName)}<br>奖品: ${prizeText}<br>数量: ${stock}`)
+          text: html(`✅ <b>奖品已添加</b><br><br>仓库: ${codeTag(warehouseName)}<br>奖品: ${htmlEscape(prizeText)}<br>数量: ${stock}`)
         });
         return;
       }
@@ -1511,7 +1518,7 @@ const lottery = async (msg: MessageContext) => {
 
         const prizeList = prizes.map((prize, index) => 
           `${index + 1}. ${htmlEscape(prize.prize_text)} (库存: ${prize.stock_count})`
-        ).join("<br>");
+        ).join("\n");
 
         await msg.edit({
           text: html(`📦 <b>奖品仓库: ${htmlEscape(warehouseName)}</b><br><br>${prizeList}`)
@@ -1579,7 +1586,7 @@ const lottery = async (msg: MessageContext) => {
         const name = winner.username ? `@${winner.username}` : 
                     (winner.first_name || winner.last_name || `用户${winner.user_id}`);
         return `${icon} ${htmlEscape(name)} - ${htmlEscape(winner.prize_text || "奖品")}`;
-      }).join("<br>");
+      }).join("\n");
 
       await msg.edit({
         text: html(`🏆 <b>中奖名单</b><br><br>${winnerList}<br><br>✅ 已发放 | ⏳ 待领取 | ❌ 已过期`)
@@ -1624,7 +1631,7 @@ const lottery = async (msg: MessageContext) => {
         try {
           // Create txt file content
           const txtContent = Buffer.from(fullContent, 'utf8');
-          const fileName = `参与名单_${htmlEscape(activeLottery.title)}_${new Date().toISOString().slice(0, 10)}.txt`;
+          const fileName = `参与名单_${activeLottery.title}_${new Date().toISOString().slice(0, 10)}.txt`;
           
           await msg.edit({
             text: html(`👥 <b>参与名单</b><br><br>🎯 <b>活动:</b> ${htmlEscape(activeLottery.title)}<br>📊 <b>进度:</b> ${currentCount}/${activeLottery.max_participants} 人<br><br>📄 <b>参与用户过多，已生成文件发送</b>`)
@@ -1644,7 +1651,7 @@ const lottery = async (msg: MessageContext) => {
             const displayName = p.username ? `@${p.username}` : 
                                (p.first_name || p.last_name || `用户 ${p.user_id}`);
             return `${index + 1}. ${htmlEscape(displayName)}`;
-          }).join("<br>");
+          }).join("\n");
           
           await msg.edit({
             text: html(`👥 <b>参与名单</b><br><br>🎯 <b>活动:</b> ${htmlEscape(activeLottery.title)}<br>📊 <b>进度:</b> ${currentCount}/${activeLottery.max_participants} 人<br><br>${displayList}<br><br>... 还有 ${currentCount - 30} 人（文件发送失败，仅显示前30人）`)
@@ -1653,7 +1660,7 @@ const lottery = async (msg: MessageContext) => {
       } else {
         // Send as regular message
         await msg.edit({
-          text: html(`👥 <b>参与名单</b><br><br>🎯 <b>活动:</b> ${htmlEscape(activeLottery.title)}<br>📊 <b>进度:</b> ${currentCount}/${activeLottery.max_participants} 人<br><br>${fullList}`)
+          text: html(`👥 <b>参与名单</b><br><br>🎯 <b>活动:</b> ${htmlEscape(activeLottery.title)}<br>📊 <b>进度:</b> ${currentCount}/${activeLottery.max_participants} 人<br><br>${fullList.split('<br>').map(line => htmlEscape(line)).join('<br>')}`)
         });
       }
       return;
@@ -1748,8 +1755,8 @@ class LotteryPlugin extends Plugin {
     if (db) {
       try {
         db.close();
-      } catch (e: unknown) { logger.warn('[lottery] 数据库关闭失败', e) }
-      db = null!;
+      } catch (e: unknown) { logger.warn('操作失败', e) }
+      db = null as unknown as typeof db;
     }
   }
 

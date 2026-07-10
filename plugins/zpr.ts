@@ -11,8 +11,7 @@ import { JSONFilePreset } from "lowdb/node";
 import axios from "axios";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers"; 
+import { htmlEscape } from "@utils/htmlEscape"; 
 
 // 获取命令前缀
 const prefixes = getPrefixes();
@@ -63,7 +62,7 @@ async function lifecycleDelay(ms: number, label: string): Promise<void> {
         await lifecycle.delay(ms, { label });
         return;
     }
-    await sleep(ms);
+    await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function scheduleAbort(controller: AbortController, ms: number, label: string): () => void {

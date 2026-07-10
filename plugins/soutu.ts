@@ -118,10 +118,11 @@ class SoutuPlugin extends Plugin {
       const yandexUrl = `https://yandex.ru/images/search?url=${encodeURIComponent(imageUrl)}&rpt=imageview`;
 
       await msg.edit({ 
-        text: html`🖼️ <b>搜图结果:</b> (<a href="${htmlEscape(imageUrl)}">原图</a>)<br>
-有效期限: 约30天<br><br>
-• <a href="${htmlEscape(googleUrl)}">Google Lens</a><br>
-• <a href="${htmlEscape(yandexUrl)}">Yandex Images</a>`,
+        text: html`🖼️ <b>搜图结果:</b> (<a href="${imageUrl}">原图</a>)
+有效期限: 约30天
+
+• <a href="${googleUrl}">Google Lens</a>
+• <a href="${yandexUrl}">Yandex Images</a>` 
       });
 
     } catch (error: unknown) {

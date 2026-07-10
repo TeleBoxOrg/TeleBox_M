@@ -8,6 +8,7 @@ import { getApiConfig } from "./apiConfig";
 import { readAppName } from "./teleboxInfoHelper";
 import { logger } from "@utils/logger";
 import path from "path";
+import fs from "fs";
 
 /**
  * Native mtcute client factory.
@@ -22,7 +23,21 @@ import path from "path";
  * `client.start()` when the SQLite storage has no auth keys yet.
  */
 
-const SESSION_DB_PATH = path.join(process.cwd(), "session.db");
+const SESSION_DB_PATH = (() => {
+  // Support external session from version switch controller
+  try {
+    const configPath = path.join(process.cwd(), "config.json");
+    if (fs.existsSync(configPath)) {
+      const raw = fs.readFileSync(configPath, "utf8");
+      const config = JSON.parse(raw) as Record<string, unknown>;
+      if (typeof config._switchSessionPath === "string" && config._switchSessionPath) {
+        const switchPath = config._switchSessionPath;
+        if (fs.existsSync(switchPath)) return switchPath;
+      }
+    }
+  } catch { /* ignore parse errors, use default */ }
+  return path.join(process.cwd(), "session.db");
+})();
 
 /**
  * Build an mtcute transport instance from the legacy proxy config shape.

@@ -8,7 +8,6 @@ import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { hasRawType, isParticipantAdmin, isParticipantCreator } from "@utils/entityTypeGuards";
 import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers";
 
 // 获取命令前缀
 const prefixes = getPrefixes();
@@ -181,7 +180,7 @@ class AtAdminsPlugin extends Plugin {
           ...(replyToId ? { replyTo: replyToId } : {}),
         });
         // 小间隔，避免触发频控
-        await sleep(800);
+        await new Promise((r) => setTimeout(r, 800));
       }
 
       // 延迟删除命令消息

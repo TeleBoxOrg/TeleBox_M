@@ -5,17 +5,16 @@ import { getGlobalClient } from "@utils/globalClient";
 import { html } from "@mtcute/html-parser";
 import { getPrefixes } from "@utils/pluginManager";
 import { npm_install } from "@utils/npm_install";
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { pipeline } from "stream/promises";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers";
-import type { InputMediaLike } from "@mtcute/core";
-import type { TelegramClient } from "@mtcute/node";
+
+const __htmlEscape = (s: string): string =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 let cheerio: typeof import("cheerio");
 let pLimit: typeof import("p-limit").default;
@@ -80,7 +79,7 @@ async function withRetry<T>(
         throw error;
       }
       const delay = CONFIG.RETRY_BASE_DELAY * Math.pow(2, attempt - 1);
-      await sleep(delay);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
   throw lastError;
@@ -132,7 +131,7 @@ class CosplayScraper {
           !errorMessage.includes("只有") &&
           !errorMessage.includes("未找到")
         ) {
-          await sleep(Math.min((attempt + 1) * 1000, 3000));
+          await new Promise((r) => setTimeout(r, Math.min((attempt + 1) * 1000, 3000)));
         }
       }
     }
@@ -257,7 +256,7 @@ class CosplayScraper {
       } catch (error: unknown) {
         try {
           await fs.promises.unlink(tempFile);
-        } catch (e: unknown) { logger.warn('[cosplay] 清理临时文件失败', e) }
+        } catch (e: unknown) { logger.warn('操作失败', e) }
         throw error;
       }
     });
@@ -302,7 +301,7 @@ function parseImageCount(text: string | undefined): number {
 }
 
 async function sendSingleImage(
-  client: TelegramClient,
+  client: any,
   chatId: string | number,
   filePath: string,
   photoSetUrl?: string
@@ -311,13 +310,13 @@ async function sendSingleImage(
     type: "photo",
     file: filePath,
     spoiler: true,
-    caption: photoSetUrl ? html(`套图链接: ${htmlEscape(photoSetUrl)}`) : undefined,
+    caption: photoSetUrl ? html(`套图链接: ${__htmlEscape(photoSetUrl)}`) : undefined,
   });
 }
 
 async function sendImageAlbum(
-  client: TelegramClient,
-  chatId: string | number,
+  client: any,
+  chatId: any,
   filePaths: string[],
   photoSetUrl?: string
 ): Promise<void> {
@@ -326,14 +325,14 @@ async function sendImageAlbum(
       type: "photo",
       file: filePath,
       spoiler: true,
-      caption: i === 0 && photoSetUrl ? html(`套图链接: ${htmlEscape(photoSetUrl)}`) : undefined,
+      caption: i === 0 && photoSetUrl ? html(`套图链接: ${__htmlEscape(photoSetUrl)}`) : undefined,
     }));
 
     if (!media.length) {
       throw new Error("无可发送的媒体");
     }
 
-    await client.sendMediaGroup(chatId, media as unknown as InputMediaLike[]);
+    await client.sendMediaGroup(chatId, media as readonly unknown[]);
   } catch (err: unknown) {
     logger.warn("剧透相册发送失败，尝试逐条发送", getErrorMessage(err) || String(err));
     await Promise.all(filePaths.map(filePath => sendSingleImage(client, chatId, filePath, photoSetUrl)));
@@ -341,8 +340,8 @@ async function sendImageAlbum(
 }
 
 async function sendImages(
-  client: TelegramClient,
-  chatId: string | number,
+  client: any,
+  chatId: any,
   tempFiles: string[],
   photoSetUrl?: string
 ): Promise<void> {
@@ -382,7 +381,7 @@ class CosplayPlugin extends Plugin {
       }
 
       const count = parseImageCount(msg.text);
-      const client: TelegramClient = await getGlobalClient();
+      const client: any = await getGlobalClient();
       let tempFiles: string[] = [];
 
       try {
@@ -391,7 +390,7 @@ class CosplayPlugin extends Plugin {
         const result = await this.scraper.fetchImageUrls(count);
 
         await msg.edit({
-          text: html(`从套图"${htmlEscape(result.photoSet.title)}"中找到 ${result.imageUrls.length} 张图片，正在下载...`),
+          text: html(`从套图"${__htmlEscape(result.photoSet.title)}"中找到 ${result.imageUrls.length} 张图片，正在下载...`),
         });
 
         tempFiles = await this.scraper.downloadImages(result.imageUrls);
@@ -404,7 +403,7 @@ class CosplayPlugin extends Plugin {
       } catch (err: unknown) {
         logger.error("cosplay插件错误:", err);
         await msg.edit({
-          text: html(`❌ 出错: ${htmlEscape(getErrorMessage(err) || "未知错误")}`),
+          text: html(`❌ 出错: ${getErrorMessage(err) || "未知错误"}`),
         });
       } finally {
         if (tempFiles.length) {

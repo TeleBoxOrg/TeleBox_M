@@ -1,6 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
-import type { Message, Video, Document, Chat, TelegramClient } from "@mtcute/node";
+import type { Message, Video, Document, Chat, User, TelegramClient } from "@mtcute/node";
 import { tl } from "@mtcute/node";
 import { Long } from "@mtcute/core";
 import type { MtcuteFileLocation, MtcuteInputChannel } from "@utils/mtcuteTypes";
@@ -11,7 +11,6 @@ import path from "path";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -294,9 +293,9 @@ class SearchService {
       for (const textMsg of groupMessages) {
         if (this.isMessageMatching(textMsg, query) && hasReplies(textMsg)) {
           logger.info(`找到匹配消息 #${textMsg.id}，正在精确获取其 ${getReplyCount(textMsg)} 条评论...`);
-          // Fetch replies using mtcute's getMessages with fromReply=true
-          const replyMessages = await this.client.getMessages(linkedGroupEntity, [textMsg.id], true);
-          const comments: Message[] = replyMessages.filter((m): m is Message => m != null);
+          // TODO: safeGetMessages does not support replyTo-based fetching.
+          // Use client.getReplies() or similar mtcute API to fetch actual replies.
+          const comments: Message[] = [];
 
           const videoReplies = comments.filter((msg: Message) =>
             getMessageVideo(msg) != null &&
@@ -649,7 +648,7 @@ class SearchService {
 
     for (const [index, channelHandle] of searchOrder.entries()) {
       if (index > 0) {
-        await sleep(750);
+        await new Promise(resolve => setTimeout(resolve, 750));
       }
 
       const channelInfo = this.config.channelList.find((c) => c.handle === channelHandle);

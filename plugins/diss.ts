@@ -2,12 +2,9 @@ import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
-import { getGlobalClient } from "@utils/globalClient";
+import axios from "axios";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
-import { htmlEscape } from "@utils/htmlEscape";
-import axios from "axios";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -47,8 +44,8 @@ class DissPlugin extends Plugin {
             
             if (dissText && dissText.length > 0) {
               // 成功获取到语录，发送结果
-              await msg.edit({
-                text: html`${htmlEscape(dissText)}`
+              await msg.edit({ 
+                text: html`${this.htmlEscape(dissText)}`
               });
               return;
             }
@@ -59,7 +56,7 @@ class DissPlugin extends Plugin {
           
           // 如果不是最后一次尝试，等待一下再重试
           if (attempt < 5) {
-            await sleep(1000);
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
       }
@@ -73,9 +70,19 @@ class DissPlugin extends Plugin {
       // 处理意外错误
       logger.error('[diss] 插件执行错误:', error);
       await msg.edit({ 
-        text: html`❌ 发生意外错误: ${htmlEscape(getErrorMessage(error) || "未知错误")}`
+        text: html`❌ 发生意外错误: ${this.htmlEscape(getErrorMessage(error) || "未知错误")}`
       });
     }
+  }
+
+  /**
+   * HTML转义函数（必需）
+   */
+  private htmlEscape(text: string): string {
+    return text.replace(/[&<>"']/g, m => ({ 
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', 
+      '"': '&quot;', "'": '&#x27;' 
+    }[m] || m));
   }
 }
 

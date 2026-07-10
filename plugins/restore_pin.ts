@@ -6,7 +6,6 @@ import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
 import { hasRawType, getRawType } from "@utils/entityTypeGuards";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 import { tl } from "@mtcute/core";
 import Long from "long";
 import { htmlEscape } from "@utils/htmlEscape";
@@ -139,8 +138,8 @@ class RestorePinPlugin extends Plugin {
         errors.push(`消息 ${messageId} 恢复失败`);
       }
 
-      // 延迟避免触发限制（减少到 1 秒）
-      await sleep(1000);
+      // 延迟避免触发限制（减少到1秒）
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     let resultText = `📊 <b>恢复完成</b><br><br>`;

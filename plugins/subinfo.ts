@@ -10,7 +10,6 @@ import dayjs from "dayjs";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { htmlEscape } from "@utils/htmlEscape";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -72,6 +71,14 @@ const REGION_RULES: Array<[string, string[]]> = [
 ];
 
 // --- 工具函数 ---
+
+// HTML实体转义
+function htmlEscape(text: string): string {
+  return text.replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;',
+    '"': '&quot;', "'": '&#x27;'
+  }[m] || m));
+}
 
 const isHttpUrl = (text: string): boolean => /^https?:\/\//i.test(text);
 const formatRawUrl = (url: string, isTxtOutput: boolean): string => isTxtOutput ? url : htmlEscape(url);
@@ -505,7 +512,7 @@ class SubinfoPlugin extends Plugin {
     const format: (text: string) => string = isTxtOutput ? markdownEscape : htmlEscape;
     const codeTag = (text: string) => isTxtOutput ? `\`${format(text)}\`` : `<code>${htmlEscape(text)}</code>`;
     const boldTag = (text: string) => isTxtOutput ? `**${format(text)}**` : `<b>${htmlEscape(text)}</b>`;
-    const blockquoteTag = (text: string) => isTxtOutput ? `\n> ${text.trim().replace(/\n/g, "\n> ")}\n` : `<blockquote expandable>${htmlEscape(text)}</blockquote>`;
+    const blockquoteTag = (text: string) => isTxtOutput ? `\n> ${text.trim().replace(/\n/g, '\n> ')}\n` : `<blockquote expandable>${text}</blockquote>`;
     const separator = isTxtOutput ? '\n' + '='.repeat(40) + '\n' : '\n\n' + '='.repeat(30) + '\n\n';
 
     // 并行处理所有订阅链接（各链接查询相互独立，使用 Promise.all 加速）

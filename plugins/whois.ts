@@ -13,7 +13,6 @@ import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import "dayjs/locale/zh-cn";
 import { logger } from "@utils/logger";
 import { getErrorMessage, getErrorCode } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
 
 // 配置 dayjs
@@ -519,7 +518,7 @@ class WhoisPlugin extends Plugin {
       
       // 避免请求过快
       if (i < domains.length - 1) {
-        await sleep(500);
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     

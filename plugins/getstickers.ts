@@ -10,7 +10,6 @@ import { getPrefixes } from "@utils/pluginManager";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 
 interface StickerAttribute {
   _?: string;
@@ -242,7 +241,7 @@ class GetStickersPlugin extends Plugin {
                 }
                 const s = (v as { toString?: () => string }).toString?.();
                 if (s && !s.includes('[object')) return s;
-              } catch (e: unknown) { logger.warn('[getstickers] 操作失败', e) }
+              } catch (e: unknown) { logger.warn('操作失败', e) }
               return String(v);
             };
             const idVal = toPlainString(ss.id) || toPlainString((ss as { _id?: unknown })._id);
@@ -516,7 +515,7 @@ class GetStickersPlugin extends Plugin {
         }
         
         // 等待一小段时间确保文件完全写入磁盘
-        await sleep(1000);
+        await new Promise(resolve => setTimeout(resolve, 1000));
         logger.info('文件写入等待完成');
         
         // 上传ZIP文件

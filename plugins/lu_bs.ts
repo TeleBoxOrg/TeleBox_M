@@ -2,7 +2,7 @@
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import type { TelegramClient } from "@mtcute/node";
-import type { InputFileLike } from "@mtcute/core";
+import type { Sticker, StickerSet } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
@@ -36,6 +36,7 @@ const HELP_TEXT = `🕒 <b>鲁小迅整点报时</b>
 
 class LuBsPlugin extends Plugin {
   cleanup(): void {
+    this.db = null;
     this.stickerSet = null;
   }
 
@@ -44,12 +45,8 @@ class LuBsPlugin extends Plugin {
     await this.loadStickerSet();
   }
 
-  private db!: Awaited<ReturnType<typeof JSONFilePreset<{ subscriptions: string[]; lastMessages: Record<string, number> }>>>;
-  private stickerSet: { documents: { id: number | bigint; access_hash?: unknown; file_reference?: unknown }[] } | null = null;
-
-  /**
-   * TL RPC return type for messages.getStickerSet - { _: 'messages.stickerSet', set, packs, keywords, documents }
-   */
+  private db: Awaited<ReturnType<typeof JSONFilePreset<{ subscriptions: string[]; lastMessages: Record<string, number> }>>> | null = null;
+  private stickerSet: StickerSet | null = null;
   private readonly PLUGIN_NAME = "lu_bs";
   
   description = HELP_TEXT;
@@ -78,21 +75,24 @@ class LuBsPlugin extends Plugin {
     });
   }
 
+  private async getDB() {
+    if (!this.db) {
+      await this.initDB();
+    }
+    if (!this.db) {
+      throw new Error("订阅数据库初始化失败");
+    }
+    return this.db;
+  }
+
   // 加载贴纸包
   private async loadStickerSet() {
     try {
       const client = await getGlobalClient();
       if (!client) return;
 
-      // 使用mtcute raw API获取贴纸包
-      this.stickerSet = (await client.call({
-        _: 'messages.getStickerSet',
-        stickerset: {
-          _: 'inputStickerSetShortName',
-          shortName: "luxiaoxunbs"
-        },
-        hash: 0
-      })) as unknown as { documents: { id: number | bigint; access_hash?: unknown; file_reference?: unknown }[] };
+      // 使用 mtcute 高级 API，避免手工拼接 TL 文档字段。
+      this.stickerSet = await client.getStickerSet("luxiaoxunbs");
       
       logger.info(`[${this.PLUGIN_NAME}] 贴纸包加载成功`);
     } catch (error: unknown) {
@@ -102,14 +102,17 @@ class LuBsPlugin extends Plugin {
   }
 
   // 获取当前小时对应的贴纸
-  private async getHourSticker(): Promise<{ id: bigint | number; access_hash?: unknown; file_reference?: unknown } | null> {
+  private async getHourSticker(): Promise<Sticker | null> {
     if (!this.stickerSet) {
       await this.loadStickerSet();
     }
     
-    if (!this.stickerSet || !this.stickerSet.documents || this.stickerSet.documents.length === 0) {
+    if (!this.stickerSet) {
       return null;
     }
+
+    const stickers = this.stickerSet.stickers;
+    if (stickers.length === 0) return null;
 
     const now = new Date();
     let hour = now.getHours() - 1;
@@ -124,13 +127,13 @@ class LuBsPlugin extends Plugin {
     }
 
     // 确保索引在有效范围内
-    const stickerIndex = hour % this.stickerSet.documents.length;
-    return this.stickerSet.documents[stickerIndex];
+    const stickerIndex = hour % stickers.length;
+    return stickers[stickerIndex]?.sticker ?? null;
   }
 
   // 发送整点贴纸
   private async sendHourlyStickers(client: TelegramClient) {
-    if (!this.db) await this.initDB();
+    const db = await this.getDB();
     
     const sticker = await this.getHourSticker();
     if (!sticker) {
@@ -138,36 +141,25 @@ class LuBsPlugin extends Plugin {
       return;
     }
 
-    const subscriptions = this.db.data.subscriptions;
+    const subscriptions = [...db.data.subscriptions];
     
     for (const chatId of subscriptions) {
       try {
         // 先删除上一条消息（如果存在）
-        const lastMsgId = this.db.data.lastMessages[chatId];
+        const lastMsgId = db.data.lastMessages[chatId];
         if (lastMsgId) {
           try {
             await client.deleteMessagesById(chatId, [lastMsgId], { revoke: true });
           } catch (error: unknown) { logger.warn(`[lu_bs] 忽略删除失败的情况（消息可能已过期）:`, error) }
         }
 
-        // 发送新贴纸 - mtcute 风格：使用 type: 'document' + TL InputDocument 对象
-        // Note: API returns snake_case fields; mtcute TL types expect camelCase
-        const inputDoc = {
-          _: 'inputDocument' as const,
-          id: sticker.id,
-          accessHash: sticker.access_hash,
-          fileReference: sticker.file_reference,
-        };
-        // Cast needed: InputFileLike doesn't include TypeInputDocument in public types,
-        // but mtcute runtime does handle TL InputDocument objects for resending
-        const message = await client.sendMedia(chatId, {
-          type: 'document',
-          file: inputDoc as unknown as InputFileLike,
-        });
+        // Sticker.inputMedia 是 mtcute 生成的可直接复用媒体对象，包含正确的
+        // accessHash/fileReference，并保留贴纸语义。
+        const message = await client.sendMedia(chatId, sticker.inputMedia);
 
         // 记录新消息ID，用于下次删除
-        this.db.data.lastMessages[chatId] = message.id;
-        await this.db.write();
+        db.data.lastMessages[chatId] = message.id;
+        await db.write();
 
         logger.info(`[${this.PLUGIN_NAME}] 已发送整点报时到 ${chatId}`);
       } catch (error: unknown) {
@@ -177,9 +169,9 @@ class LuBsPlugin extends Plugin {
         const errMsg = getErrorMessage(error);
         if (errMsg.includes("CHAT_WRITE_FORBIDDEN") ||
             errMsg.includes("CHAT_NOT_FOUND")) {
-          this.db.data.subscriptions = this.db.data.subscriptions.filter((id: string) => id !== chatId);
-          delete this.db.data.lastMessages[chatId];
-          await this.db.write();
+          db.data.subscriptions = db.data.subscriptions.filter((id: string) => id !== chatId);
+          delete db.data.lastMessages[chatId];
+          await db.write();
           logger.info(`[${this.PLUGIN_NAME}] 已移除无效订阅: ${chatId}`);
         }
       }
@@ -203,29 +195,13 @@ class LuBsPlugin extends Plugin {
         return true;
       }
       
-      // 群组/频道需要检查管理员权限（chat.type is already narrowed to "chat"）
-      {
-        const [channelPeer, senderPeer] = await Promise.all([
-          client.resolvePeer(chat.id),
-          client.resolvePeer(sender.id),
-        ]);
-        const result = await client.call({
-          _: 'channels.getParticipant',
-          channel: channelPeer,
-          participant: senderPeer
-        } as never) as unknown as { participant?: { _?: string } };
-        const participant = result?.participant;
-        if (!participant) return false;
-        const pType = participant._;
-        return (
-          pType === 'channelParticipantAdmin' ||
-          pType === 'channelParticipantCreator' ||
-          pType === 'chatParticipantAdmin' ||
-          pType === 'chatParticipantCreator'
-        );
-      }
-      
-      return false;
+      // 高级 API 同时兼容普通群、超级群和频道；raw channels.getParticipant
+      // 只接受频道输入，直接用于普通群会触发 CHAT_ID_INVALID。
+      const member = await client.getChatMember({
+        chatId: chat.id,
+        userId: sender.id,
+      });
+      return member?.status === "admin" || member?.status === "creator";
     } catch (error: unknown) {
       logger.error(`[${this.PLUGIN_NAME}] 权限检查失败:`, error);
       return false;
@@ -234,8 +210,6 @@ class LuBsPlugin extends Plugin {
 
   cmdHandlers = {
     lu_bs: async (msg: MessageContext) => {
-      if (!this.db) await this.initDB();
-      
       const parts = msg.text?.trim().split(/\s+/) || [];
       const subCommand = parts[1]?.toLowerCase() || "help";
       
@@ -277,6 +251,7 @@ class LuBsPlugin extends Plugin {
 
   // 处理订阅
   private async handleSubscribe(msg: MessageContext) {
+    const db = await this.getDB();
     const chatId = msg.chat.id.toString();
     if (!chatId) {
       await msg.edit({ text: html`❌ 无法获取聊天ID` });
@@ -293,7 +268,7 @@ class LuBsPlugin extends Plugin {
     }
 
     // 检查是否已订阅
-    if (this.db.data.subscriptions.includes(chatId)) {
+    if (db.data.subscriptions.includes(chatId)) {
       await msg.edit({ 
         text: html`❌ 你已经订阅了整点报时`, 
       });
@@ -301,8 +276,8 @@ class LuBsPlugin extends Plugin {
     }
 
     // 添加订阅
-    this.db.data.subscriptions.push(chatId);
-    await this.db.write();
+    db.data.subscriptions.push(chatId);
+    await db.write();
 
     await msg.edit({ 
       text: html`✅ 你已经成功订阅了整点报时`, 
@@ -311,6 +286,7 @@ class LuBsPlugin extends Plugin {
 
   // 处理退订
   private async handleUnsubscribe(msg: MessageContext) {
+    const db = await this.getDB();
     const chatId = msg.chat.id.toString();
     if (!chatId) {
       await msg.edit({ text: html`❌ 无法获取聊天ID` });
@@ -327,7 +303,7 @@ class LuBsPlugin extends Plugin {
     }
 
     // 检查是否已订阅
-    if (!this.db.data.subscriptions.includes(chatId)) {
+    if (!db.data.subscriptions.includes(chatId)) {
       await msg.edit({ 
         text: html`❌ 你还没有订阅整点报时`, 
       });
@@ -335,9 +311,9 @@ class LuBsPlugin extends Plugin {
     }
 
     // 移除订阅
-    this.db.data.subscriptions = this.db.data.subscriptions.filter((id: string) => id !== chatId);
-    delete this.db.data.lastMessages[chatId];
-    await this.db.write();
+    db.data.subscriptions = db.data.subscriptions.filter((id: string) => id !== chatId);
+    delete db.data.lastMessages[chatId];
+    await db.write();
 
     await msg.edit({ 
       text: html`✅ 你已经成功退订了整点报时`, 
@@ -346,18 +322,19 @@ class LuBsPlugin extends Plugin {
 
   // 处理列表查看
   private async handleList(msg: MessageContext) {
+    const db = await this.getDB();
     const chatId = msg.chat.id.toString();
     if (!chatId) {
       await msg.edit({ text: html`❌ 无法获取聊天ID` });
       return;
     }
 
-    const isSubscribed = this.db.data.subscriptions.includes(chatId);
-    const totalSubscriptions = this.db.data.subscriptions.length;
+    const isSubscribed = db.data.subscriptions.includes(chatId);
+    const totalSubscriptions = db.data.subscriptions.length;
     
-    let text = `📊 <b>订阅状态</b><br><br>`;
-    text += `• 当前聊天: <code>${isSubscribed ? "✅ 已订阅" : "❌ 未订阅"}</code><br>`;
-    text += `• 总订阅数: <code>${totalSubscriptions}</code><br><br>`;
+    let text = `📊 <b>订阅状态</b>\n\n`;
+    text += `• 当前聊天: <code>${isSubscribed ? "✅ 已订阅" : "❌ 未订阅"}</code>\n`;
+    text += `• 总订阅数: <code>${totalSubscriptions}</code>\n\n`;
     
     if (isSubscribed) {
       text += `💡 使用 <code>${mainPrefix}lu_bs unsub</code> 退订`;

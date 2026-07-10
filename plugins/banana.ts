@@ -8,7 +8,6 @@ import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { getGlobalClient } from "@utils/globalClient";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { htmlEscape } from "@utils/htmlEscape";
 import type { MtcuteFileLocation } from "@utils/mtcuteTypes";
 import { html } from "@mtcute/html-parser";
 import type { MessageContext } from "@mtcute/dispatcher";
@@ -423,9 +422,9 @@ async function handleImageEdit(
   }
 
   const extraText = textParts.length
-    ? `<br><br>${textParts.map(t => htmlEscape(t)).join("<br>")}`
+    ? `\n\n${textParts.join("\n")}`
     : "";
-  const captionHtml = html`<b>提示:</b> ${htmlEscape(prompt)}${extraText}`;
+  const captionHtml = html`<b>提示:</b> ${prompt}${extraText}`;
 
   let sent = false;
   for (let index = 0; index < inlineParts.length; index += 1) {

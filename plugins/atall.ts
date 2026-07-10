@@ -7,7 +7,6 @@ import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers";
 
 // 消息分割函数（限制调整为4000字符）
 const splitMessagesByMention = (mentions: string[], maxLength = 4000): string[] => {
@@ -142,7 +141,7 @@ class AtAllPlugin extends Plugin {
           await client.sendText(chatId, html(messageContent), sendOpts);
           
           if (i < messageParts.length - 1) {
-            await sleep(500);
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
         }
 

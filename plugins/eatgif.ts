@@ -261,7 +261,7 @@ class EatGifPlugin extends Plugin {
       });
     } catch (e: unknown) {
       logger.info("exec ffmpeg error", e);
-      await msg.edit({ text: html`生成 webm 失败 ${htmlEscape(String(e))}` });
+      await msg.edit({ text: html`生成 webm 失败 ${String(e)}` });
 
       const client = await getGlobalClient();
       if (client) {

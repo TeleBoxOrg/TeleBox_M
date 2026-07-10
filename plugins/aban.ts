@@ -1,6 +1,7 @@
 import { Plugin } from "@utils/pluginBase";
-import { getCurrentGenerationContext, getGlobalClient } from "@utils/globalClient";
+import { getCurrentGenerationContext } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
+import { getGlobalClient } from "@utils/globalClient";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { TelegramClient } from "@mtcute/node";
 import type { ClientInternals } from "@utils/clientInternals";
@@ -16,7 +17,8 @@ import { logger } from "@utils/logger";
 import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { tl } from "@mtcute/core";
-import type { MtcuteMessageContext, MtcuteInputPeer, MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
+import type { MtcuteMessageContext } from "@utils/mtcuteTypes";
+import type { MtcuteInputPeer, MtcuteInputChannel, MtcuteInputUser } from "@utils/mtcuteTypes";
 import { htmlEscape } from "@utils/htmlEscape";
 
 /**
@@ -42,6 +44,18 @@ type PartialEntity = {
   accessHash?: string | number;
 };
 
+/**
+ * Raw chat full response type for getFullChat.
+ */
+type _RawChatFull = {
+  fullChat?: {
+    participants?: {
+      _?: string;
+      participants?: Array<{ _?: string; userId?: number }>;
+    };
+  };
+  users?: Array<{ id?: number | string; _?: string; [key: string]: unknown }>;
+};
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
@@ -54,7 +68,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
     pLimitReady = (async () => {
       try {
         npm_install("p-limit");
-      } catch (e: unknown) { logger.warn('[aban] p-limit 安装失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
       pLimit = (await import("p-limit")).default;
     })();
   }
@@ -64,7 +78,7 @@ async function ensurePLimit(): Promise<typeof pLimit> {
 
 // 解析 FLOOD_WAIT 错误中的等待秒数；非 flood 错返回 null
 function getFloodWaitSeconds(error: unknown): number | null {
-  const msg = getErrorMessage(error);
+  const msg = error instanceof Error ? getErrorMessage(error) : String(error || "");
   // teleproto 抛出的 RPCError 里通常带 "FLOOD_WAIT_X" 或 "wait of N seconds"
   let m = msg.match(/FLOOD_WAIT_(\d+)/);
   if (m) return parseInt(m[1], 10);
@@ -316,7 +330,38 @@ class UserResolver {
     target: string | number
   ): Promise<PartialEntity | null> {
     try {
-      return await (client as unknown as ClientInternals).resolvePeer(target) as PartialEntity | null;
+      // Resolve peer first to determine entity type and ID
+      const peer = await (client as unknown as ClientInternals).resolvePeer(target) as { _?: string; userId?: number; chatId?: number; channelId?: number; accessHash?: string | number };
+      if (!peer) return null;
+
+      const userId = peer.userId ? Number(peer.userId) : undefined;
+      const lookUpId = userId ?? (peer.chatId ? Number(peer.chatId) : peer.channelId ? Number(peer.channelId) : undefined);
+
+      // Fetch full entity info for display (firstName, username, title, etc.)
+      if (userId) {
+        try {
+          const users = await client.call({
+            _: 'users.getUsers',
+            id: [{ _: 'inputUser', userId, accessHash: peer.accessHash || 0n }],
+          }) as Array<Record<string, unknown>>;
+          if (Array.isArray(users) && users.length > 0 && (users[0] as { _?: string })._ !== 'userEmpty') {
+            return users[0] as PartialEntity;
+          }
+        } catch { /* fallback to peer */ }
+      }
+
+      if (lookUpId) {
+        try {
+          const chats = await client.call({
+            _: 'messages.getChats',
+            id: [lookUpId],
+          }) as { chats?: Array<Record<string, unknown>> };
+          if (chats?.chats?.[0]) return chats.chats[0] as PartialEntity;
+        } catch { /* fallback to peer */ }
+      }
+
+      // Fallback: return peer info (may lack display fields but has id)
+      return peer as unknown as PartialEntity;
     } catch (e: unknown) {
       logger.warn(`aban: safeGetEntity failed for target ${target}`, e);
       return null;
@@ -777,17 +822,17 @@ class BanManager {
   }
 
   private static getErrorReason(error: unknown): string {
-    const message = getErrorMessage(error);
+    const message = error instanceof Error ? getErrorMessage(error) : String(error || "UNKNOWN_ERROR");
     const match = message.match(/[A-Z_]{3,}/);
     return match?.[0] || message;
   }
 
-  private static getChatKind(chatId: ChatIdArg | { kind?: string }): ChatKind {
-    const obj = chatId as { kind?: string; className?: string } | undefined;
-    if (obj?.kind === 'chat' || obj?.kind === 'channel') {
-      return obj.kind;
+  private static getChatKind(chatId: any): ChatKind {
+    if (chatId?.kind === 'chat' || chatId?.kind === 'channel') {
+      return chatId.kind;
     }
-    const className = obj?.className;
+
+    const className = chatId?.className;
     if (className === 'PeerChat' || className === 'Chat') {
       return 'chat';
     }
@@ -1654,7 +1699,7 @@ class AbanPlugin extends Plugin {
       const status = await MessageManager.smartEdit(msg, "🔄 刷新中...", 0);
       
       try {
-        GroupManager.clearCache();
+        await GroupManager.clearCache();
         const groups = await GroupManager.getManagedGroups(client);
         await MessageManager.smartEdit(status, `✅ 已刷新 ${groups.length}个群组`);
       } catch (_e: unknown) {

@@ -10,7 +10,6 @@ import { Buffer } from "buffer";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers";
 
 // 消息分割与发送（接受原始HTML字符串，内部用html模板标签解析）
 const MAX_MESSAGE_LENGTH = 4096;
@@ -162,7 +161,7 @@ class Ox0Plugin extends Plugin {
           if (lifecycle) {
             await lifecycle.delay((waitTime + 1) * 1000, { label: "oxost:flood-wait" });
           } else {
-            await sleep((waitTime + 1) * 1000);
+            await new Promise(res => setTimeout(res, (waitTime + 1) * 1000));
           }
         }
         await sendLongHtml(msg, `❌ <b>错误:</b> ${htmlEscape(getErrorMessage(error))}`);

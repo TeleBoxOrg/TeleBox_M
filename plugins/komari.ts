@@ -144,7 +144,7 @@ class ConfigManager {
     if (this.db) {
       try {
         this.db.close();
-      } catch (e: unknown) { logger.warn('[komari] 数据库关闭失败', e) }
+      } catch (e: unknown) { logger.warn('操作失败', e) }
     }
     this.db = null;
     this.initialized = false;
@@ -618,7 +618,7 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
       const displayValue = configValue;
 
       await msg.edit({
-        text: html`✅ 已设置 ${displayName}: <code>${htmlEscape(displayValue)}</code>`,
+        text: html`✅ 已设置 ${displayName}: <code>${displayValue}</code>`,
       });
 
       setTimeout(() => {
@@ -670,7 +670,7 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
   } catch (error: unknown) {
     logger.error("Komari处理错误:", error);
 
-    const errorMsg = `❌ 错误：${htmlEscape(getErrorMessage(error))}`;
+    const errorMsg = `❌ 错误：${getErrorMessage(error)}`;
     await msg.edit({ text: html`${errorMsg}` });
 
     setTimeout(() => {

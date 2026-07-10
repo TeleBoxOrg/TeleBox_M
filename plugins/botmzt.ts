@@ -142,7 +142,7 @@ async function sendCheckinCommand(msg: MessageContext): Promise<void> {
 
     // 通用错误处理
     await msg.edit({
-      text: html`❌ <b>签到失败:</b> ${htmlEscape(errMsg) || "未知错误"}`
+      text: html`❌ <b>签到失败:</b> ${errMsg || "未知错误"}`
     });
   }
 }
@@ -278,7 +278,7 @@ async function sendImageWithSpoiler(msg: MessageContext, command: string): Promi
 
     // 通用错误处理
     await msg.edit({
-      text: html`❌ <b>获取图片失败:</b> ${htmlEscape(errMsg) || "未知错误"}`
+      text: html`❌ <b>获取图片失败:</b> ${errMsg || "未知错误"}`
     });
   }
 }

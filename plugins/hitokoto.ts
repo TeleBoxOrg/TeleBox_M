@@ -1,8 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
-import { sleep } from "@utils/asyncHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import axios from "axios";
@@ -143,7 +141,7 @@ class HitokotoPlugin extends Plugin {
           throw new Error("获取一言失败，请稍后重试");
         }
         // 等待一段时间后重试
-        await sleep(1000);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 

@@ -9,7 +9,6 @@ import { getPrefixes } from "@utils/pluginManager";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
-import { sleep } from "@utils/asyncHelpers";
 
 
 // 获取命令前缀
@@ -203,7 +202,7 @@ class KkpPlugin extends Plugin {
 
       if (!recentMessages || recentMessages.length === 0) {
         await client.sendText(botUsername, "/start");
-        await sleep(2000);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
       const replyPromise = this.waitForBotReply(client, botEntity, 20000);

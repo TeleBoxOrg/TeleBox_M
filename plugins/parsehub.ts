@@ -3,8 +3,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
 import * as fs from "fs";
-import { safeGetReplyMessage } from "@utils/safeGetMessages";
-import { safeJsonParse } from "@utils/asyncHelpers";
+import { safeGetMessages, safeGetReplyMessage } from "@utils/safeGetMessages";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/globalClient";
@@ -73,16 +72,14 @@ const STATE_PATH = path.join(STATE_DIR, "state.json");
 function readState(): InitState {
   try {
     const raw = fs.readFileSync(STATE_PATH, "utf-8");
-    const parsed = safeJsonParse<Partial<InitState>>(raw);
-    if (!parsed) return { initialized: false };
+    const parsed = JSON.parse(raw);
     return {
       initialized: Boolean(parsed?.initialized),
       ignoredUpToId: Number.isFinite(parsed?.ignoredUpToId)
         ? Number(parsed.ignoredUpToId)
         : undefined,
     };
-  } catch {
-    // State file may not exist on first run — return defaults
+  } catch (_e: unknown) {
     return { initialized: false };
   }
 }
@@ -378,7 +375,7 @@ async function relayParseResult(
 
 class ParseHubPlugin extends Plugin {
 
-  description: string = `${pluginName}<br><br>${helpText}`;
+  description: string = `<br>${pluginName}<br><br>${helpText}`;
   cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     parsehub: async (msg: MessageContext) => {
       const rawText = msg.text || "";
@@ -389,22 +386,29 @@ class ParseHubPlugin extends Plugin {
       let links = extractLinks(cleaned);
 
       // 若命令未包含链接且为回复消息，从被回复消息中提取链接
-      let repliedLinks: string[] = [];
+      if (!links.length && msg.replyToMessage?.id) {
+        try {
+          const replied = await safeGetReplyMessage(msg);
+          const replyText = replied?.text || "";
+          const replyLinks = extractLinks(replyText);
+          if (replyLinks.length) {
+            links = replyLinks;
+          }
+        } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
+      }
+
+      // 若命令和被回复消息都包含链接，合并去重，命令里的在前
       if (msg.replyToMessage?.id) {
         try {
           const replied = await safeGetReplyMessage(msg);
           const replyText = replied?.text || "";
-          repliedLinks = extractLinks(replyText);
+          const replyLinks = extractLinks(replyText);
+          if (replyLinks.length) {
+            const set = new Set<string>(links);
+            for (const l of replyLinks) set.add(l);
+            links = Array.from(set);
+          }
         } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
-      }
-
-      if (!links.length && repliedLinks.length) {
-        links = repliedLinks;
-      } else if (repliedLinks.length) {
-        // 合并去重，命令里的在前
-        const set = new Set<string>(links);
-        for (const l of repliedLinks) set.add(l);
-        links = Array.from(set);
       }
 
       if (!links.length) {

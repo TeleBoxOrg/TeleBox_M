@@ -4,9 +4,9 @@ import { getGlobalClient, getCurrentGeneration } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import type { MessageContext } from "@mtcute/dispatcher";
-import type { Message, TelegramClient, Video, Document, InputMediaSticker } from "@mtcute/node";
+import type { Message, TelegramClient, MessageMedia, Video, Document, InputMediaSticker } from "@mtcute/node";
+import type { FileLocation } from "@mtcute/core";
 import { html } from "@mtcute/html-parser";
-import { htmlEscape } from "@utils/htmlEscape";
 import fs from "fs";
 import path from "path";
 import { execFile } from "child_process";
@@ -111,7 +111,7 @@ class GifConverter {
       const errorMessage = getErrorMessage(error);
       logger.error("GIF转贴纸失败:", error);
       await msg.edit({
-        text: html(`❌ 转换失败：${htmlEscape(errorMessage)}<br><br>💡 请检查支持的格式和限制。`)
+        text: html(`❌ 转换失败：${errorMessage}<br><br>💡 请检查支持的格式和限制。`)
       });
     }
   }
@@ -120,7 +120,28 @@ class GifConverter {
     const prefixes = await getPrefixes();
     const prefix = prefixes[0] || ".";
     
-    const helpText = `<b>🎭 GIF 转贴纸插件帮助</b><br><br><b>基本用法：</b><br>回复包含 GIF 或视频的消息，然后发送 <code>${prefix}gif</code><br><br><b>支持格式：</b><br>• GIF 动图<br>• MP4, AVI, MOV, WEBM 等视频格式<br><br><b>限制条件：</b><br>• 文件大小：≤ ${this.config.maxFileSize}MB<br>• 视频时长：≤ ${this.config.maxDuration}秒<br>• 分辨率：自动调整至 ${this.config.maxWidth}x${this.config.maxHeight} 以内<br><br><b>其他命令：</b><br>• <code>${prefix}gif help</code> - 显示此帮助<br>• <code>${prefix}gif clear</code> - 清理临时文件<br><br><b>注意事项：</b><br>• 转换后的贴纸将以 WebM 格式发送<br>• 过长或过大的视频会被自动裁剪和压缩<br>• 建议使用时长较短的 GIF 或视频以获得最佳效果`;
+    const helpText = `**🎭 GIF 转贴纸插件帮助**
+
+**基本用法：**
+回复包含 GIF 或视频的消息，然后发送 \`${prefix}gif\`
+
+**支持格式：**
+• GIF 动图
+• MP4, AVI, MOV, WEBM 等视频格式
+
+**限制条件：**
+• 文件大小：≤ ${this.config.maxFileSize}MB
+• 视频时长：≤ ${this.config.maxDuration}秒
+• 分辨率：自动调整至 ${this.config.maxWidth}x${this.config.maxHeight} 以内
+
+**其他命令：**
+• \`${prefix}gif help\` - 显示此帮助
+• \`${prefix}gif clear\` - 清理临时文件
+
+**注意事项：**
+• 转换后的贴纸将以 WebM 格式发送
+• 过长或过大的视频会被自动裁剪和压缩
+• 建议使用时长较短的 GIF 或视频以获得最佳效果`;
 
     await msg.edit({ text: html(helpText) });
   }
@@ -144,7 +165,7 @@ class GifConverter {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
       await msg.edit({
-        text: html(`⚠️ 清理临时文件时出错：${htmlEscape(errorMessage)}`)
+        text: html(`⚠️ 清理临时文件时出错：${errorMessage}`)
       });
     }
   }
@@ -365,7 +386,7 @@ class GifConverter {
       const errorMessage = getErrorMessage(error);
       logger.error("自动添加贴纸包失败:", error);
       await statusMsg.edit({ 
-        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...<br><br>错误: ${htmlEscape(errorMessage)}`) 
+        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...<br><br>错误: ${errorMessage}`) 
       });
       
       // 失败后直接发送贴纸
