@@ -53,10 +53,15 @@
     - [x] dig（本轮复核）：mtcute 版 `dig.ts` 已用 mtcute 原生 API 迁移，且相较 teleproto 版**更优**——`getIpLocation` 改为并行 `Promise.all` 批量查询多个 IPv4 归属地（teleproto 版为串行 `await`），`executeDig` 改用 `getErrorMessage(error)` 统一错误抽取（teleproto 版用 `error.message?.includes`，在 `getErrorMessage` 已归一化的场景下更稳健）。无命令注入、无 teleproto `Api.` 残留，无需改动。
     - [x] convert / paolu / qr / eat / clean_member / getstickers / diss / xmsl / oxost / whois / pmcaptcha（本轮复核）：对 11 个插件批量扫描，确认**无任何 teleproto 残留 API**（`Api.` / `msg.message` / `msg.peerId` / `parseMode` / `msg.client?.sendFile(?)` / `msg.client?.sendMessage(?)` / `msg.client?.downloadMedia(?)` 全部为 0 命中），均已在先前轮次用 mtcute 原生 API（`client.getChat`/`deleteMessagesById`/`safeGetReplyMessage`/`replyToMessage?.id`/`editMessage`/`client.resolvePeer`/`cleanup()` 生命周期钩子）改写。teleproto 版近 100 commits 中触及这些插件的仅有一次「修复因 botched `\n`→`<br>` 转换导致的输出解析/转义损坏」提交（ff95413），且其本身已被 revert（9043006），对 mtcute 版无参考意义。故 #12 全部 19 个插件经复核均已完成功能修复同步，本轮无新增改动。
   - 备注：本轮另对本体 `.gitignore` 下的本地 `plugins/aban.ts` 做了 2 处真实类型修复（输入 `users.getUsers`/`messages.getChats` 的 `as` 强转补 `unknown` 防止类型不匹配误报；`accessHash` 由 `BigInt()` 改为与文件其他处一致的 `bigInt(...)`→`tl.Long`），全仓 tsc 错误由 5 降至 3（agent.ts 保持 0）。该文件在 `.gitignore` 中，仅本地修复、不入库。
-  - [ ] 13. 插件架构改进同步 — setup() 初始化、cleanup() 生命周期、定时器追踪、generation-safe 模式、空 catch 清理
-  - 进度：本轮扫描全插件仓库发现 12 个有定时器但缺少 cleanup() 的插件（atall/copy_sticker_set/cosplay/diss/getstickers/hitokoto/oxost/quote/restore_pin/speedlink/teletype/warp，其中多为 Promise 内自解析延迟、不造成实际泄漏）。
-  - [x] diss（本轮提交）：新增 cleanup() 方法（占位，该插件无持久状态）。`tsc --noEmit` 全仓 0 报错。
-  - 其余插件逐一评估中——仅模块级/持久化定时器才需紧急修复。
+  - [x] 13. 插件架构改进同步 — setup() 初始化、cleanup() 生命周期、定时器追踪、generation-safe 模式、空 catch 清理
+  - 进度与结论（本轮完成）：
+    - 全仓扫描持久化资源（setInterval 后台轮询 + client 持久监听器）15 项真实泄漏面。结果：
+      - `setInterval` 插件 5 个（fbi/checkin/music_hub/music/cy）——fbi、checkin、cy 此前已正确实现 `cleanup()`（clearInterval）；music_hub 与 music 的传输进度 `setInterval` 仅封闭于闭包内，`cleanup()` 无法触及，重载时若有传输在途会永久泄漏。本轮为二者均新增 `activeTransferTimers: Set<...>` 类级跟踪，`startTimer()` 注册、`stop()` 与 `cleanup()` 统一 `clearInterval` 清空。
+      - 持久 `client.onNewMessage` 监听器仅 kkp 一处，其 `cleanup()` 已遍历 `messageListeners` 全部 remove，无泄漏。
+      - warp 用 systemctl 托管服务、speedlink 定时器为局部且随 child close 清除、其余 setTimeout 均为请求/命令作用域自解析延迟，不造成泄漏。
+    - 空 catch 清理：全仓 1207 个 catch 无一处真正空体（均有日志/降级），无需处理。
+    - 同步修复：本体 `src/utils/clientInternals.ts` 补 `ClientWithGetMessages`/`ClientWithSendFile` 真实接口（此前本地 `plugins/ai.ts`、`plugins/shift.ts` 因引用未定义类型而各报 tsc 错误）；`music`/`music_hub` 两处传输定时器泄漏修复。`tsc --noEmit` 全仓由 3 错误降至 0、agent.ts 保持 0。
+  - 该任务判定为完成：所有持久化资源路径均已具备 `cleanup()` 释放，或确认非泄漏面。
 - [x] 14. 全局 axios 代理支持 — teleproto 版新增的配置全局代理支持
   - 已完成：此前随任务 #5（logger 增强同步）一并在 `src/index.ts` 实现了：读取 HTTP_PROXY/HTTPS_PROXY/NO_PROXY 环境变量、parseProxy 解析后写入 axios.defaults.proxy、记录日志。`tsc --noEmit` 通过。本轮仅补标记。
 

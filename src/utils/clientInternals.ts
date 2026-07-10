@@ -18,8 +18,10 @@
  * Created as part of code quality improvement to eliminate 150+ inline
  */
 
+import type { MessageContext } from "@mtcute/dispatcher";
+
 /**
- * Internal mtcute client methods not exposed in the public TypeScript types.
+ * Shared type definitions for internal mtcute client methods.
  * These methods exist at runtime on TelegramClient instances.
  *
  * Cast via: `(client as unknown as ClientInternals).resolvePeer(target)`
@@ -45,6 +47,29 @@ export interface ClientInternals {
 export interface ClientWithDownload {
   downloadMedia(media: unknown): Promise<unknown>;
   downloadMedia(media: unknown, opts?: Record<string, unknown>): Promise<unknown>;
+}
+
+/**
+ * Extended client interface for the internal `getMessages` method.
+ * mtcute's TelegramClient exposes getMessages internally but it is not in the public types.
+ *
+ * Cast via: `(client as unknown as ClientWithGetMessages).getMessages(peerId, { limit, ... })`
+ */
+export interface ClientWithGetMessages {
+  getMessages(
+    peerId: unknown,
+    params: { limit: number; ids?: number[] | undefined; offset?: number | bigint | string }
+  ): Promise<MessageContext[] & { total?: number }>;
+}
+
+/**
+ * Extended client interface for the internal `sendFile` method.
+ * mtcute's TelegramClient exposes sendFile internally but it is not in the public types.
+ *
+ * Cast via: `(client as unknown as ClientWithSendFile).sendFile(peerId, { file, ... })`
+ */
+export interface ClientWithSendFile {
+  sendFile(peerId: unknown, opts: Record<string, unknown>): Promise<unknown>;
 }
 
 /**
