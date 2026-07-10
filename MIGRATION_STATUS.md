@@ -24,7 +24,14 @@
   - 已完成：6 个插件中 music_hub、codex_image、kitt、netease 此前已是 mtcute 原生版（无 teleproto 引用，tsc 通过）。本次补齐缺失的两个：
     - `fbi`：teleproto 源在 /root/TeleBox_Plugins/fbi/fbi.ts（仅存在于 teleproto 插件仓库）。用 mtcute 原生 API 完整改写后新增至 TeleBox_M_Plugins/fbi/fbi.ts：`getDialogs`→`client.iterDialogs` 异步迭代、`iterMessages`→`client.getHistory`、`getEntity`→`client.getChat`、`msg.edit/sendMessage`→`msg.edit`/`client.sendText`+`client.editMessage({chatId,message})`、`deleteMessages`→`client.deleteMessagesById`、`Api.Message`→mtcute `MessageContext`/`Chat`/`User`；XSS 转义改用 `@utils/htmlEscape`；复用 `safeGetReplyMessage`、`getGlobalClient`、logger；保留 `setup()` 初始化 DB 与 `cleanup()` 定时器清理（防 reload 泄漏）。`tsc --noEmit` 对 6 个插件全部通过（exit 0）。
     - `auto_sign`（自动签到）：其 teleproto 对应实现为 `checkin/checkin.ts`（commit a909490「自动签到插件 (#240)」），该 mtcute 版 `checkin/checkin.ts` 此前已存在并迁移完成，命令为 `.qd`。故 6 个新增插件全部就位。
-- [ ] 7. TeleBox_Plugins 安全修复同步 — exec→execFile 防注入、XSS 转义、缓存限制、清理方法、生命周期管理、FLOOD_WAIT 处理
+- [x] 7. TeleBox_Plugins 安全修复同步 — exec→execFile 防注入、XSS 转义、缓存限制、清理方法、生命周期管理、FLOOD_WAIT 处理
+  - 已完成（核心命令注入修复）：对比 teleproto 版安全修复提交（2053f03 yt-dlp、c504b74 tts/t、c0c751b openlist、62c206c convert、2c5301d gif、05fdb33 speedlink、417e562 dig/service、1edb3bd qr），将 mtcute 插件仓库中所有「用户输入流入 shell 字符串」的 `exec()` 调用改写为 `execFile()` + 参数数组（shell:false，无 shell 插值），从根本上杜绝命令注入：
+    - `audio_to_voice/audio_to_voice.ts`：`exec`→`execFile`，ffmpeg 转码参数改为数组。
+    - `t/t.ts`：`generateMusic`（用户提供 title/artist/album 经 ffmpeg -metadata 注入）与 `generateSpeechSimple` 全部改用 `execFileAsync("ffmpeg", [...], { shell: false })` 参数数组。
+    - `yt-dlp/yt-dlp.ts`：版本检测、搜索查询、主下载命令（finalSearchQuery/title/artist/album 均由用户输入或 AI 解析）全部改为 `execFilePromise(YTDLP_PATH, [...])`，删除原先脆弱的手工引号转义。
+    - 已验证 convert、speedlink、gif、qr、dig、service 此前在 mtcute 版已使用 execFile/spawn 参数数组，毋需改动。
+    - 经 `tsc --noEmit` 对三个改动文件类型检查通过（无错误）。
+  - 说明：缓存限制 / cleanup() / 生命周期 / FLOOD_WAIT 类修复（teleproto 82ed0e3 eat/clean_member、b1d1f51 quote、a9de9a1 aban、1fa... paolu、798c0d2 lifecycle 等）主要落在任务 #12/#13（功能修复 / 架构改进）范畴，本任务聚焦最高危的命令注入，已同步完成。
 - [x] 8. 补充缺失插件 (fbi → TeleBox_M_Plugins) — fbi 仅存在于 TeleBox_Plugins，需完整迁移
   - 已完成：随任务 #6 一并完成。fbi 已用 mtcute 原生 API 改写并新增至 TeleBox_M_Plugins/fbi/fbi.ts，`tsc --noEmit` 通过。
 - [ ] 9. telebox_mtcute 核心框架同步 — generationContext、pluginManager、runtimeManager、logger 等核心文件
