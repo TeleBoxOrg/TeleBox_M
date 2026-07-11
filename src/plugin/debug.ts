@@ -166,7 +166,7 @@ class DebugPlugin extends Plugin {
         }
 
         await msg.edit({
-          text: html`${targetInfo}`,
+          text: html(targetInfo),
         });
       } catch (error: unknown) {
         await msg.edit({
