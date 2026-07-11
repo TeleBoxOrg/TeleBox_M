@@ -5,6 +5,53 @@ import { getApiConfig } from "./apiConfig";
 import { readAppName } from "./teleboxInfoHelper";
 import { logger } from "./logger";
 import { initializeClientSession } from "./loginManager";
+
+// ── Mitigate teleproto "Media request deadline exceeded" ──────────────────
+// teleproto's MediaScheduler hardcodes REQUEST_DEADLINE_MS = 15_000 (15 s).
+// This monkey-patch wraps the private _run() method to retry internally
+// when a timeout fires, giving each _run call up to 4 × 15 s = 60 s.
+// Guarded with a try/catch since the mtcute runtime may not have teleproto.
+// ───────────────────────────────────────────────────────────────────────────
+(function patchMediaDeadline() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { MediaScheduler } = require("teleproto/network/MediaScheduler");
+    if (!MediaScheduler) return;
+
+    const RETRIES = 3;
+    const BACKOFF_MS = 2000;
+
+    const originalRun = (MediaScheduler.prototype as any)._run;
+
+    (MediaScheduler.prototype as any)._run = async function (
+      this: any,
+      ...args: any[]
+    ) {
+      let lastErr: any;
+      for (let attempt = 0; attempt <= RETRIES; attempt++) {
+        try {
+          return await originalRun.apply(this, args);
+        } catch (err: any) {
+          lastErr = err;
+          const isTimeout =
+            err?.errorMessage === "TIMEOUT" ||
+            err?.message === "Media request deadline exceeded";
+          if (!isTimeout) throw err;
+          const signal: AbortSignal | undefined = args[4];
+          if (signal?.aborted) throw err;
+          if (attempt < RETRIES) {
+            await new Promise<void>((r) =>
+              setTimeout(r, BACKOFF_MS * (attempt + 1))
+            );
+          }
+        }
+      }
+      throw lastErr;
+    };
+  } catch (_) {
+    // teleproto not available (mtcute runtime) — skip patch
+  }
+})();
 import {
   loadPluginsForRuntime,
   unloadPluginsForRuntime,
