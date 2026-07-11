@@ -52,6 +52,33 @@ import { initializeClientSession } from "./loginManager";
     // teleproto not available (mtcute runtime) — skip patch
   }
 })();
+
+// ── Mitigate teleproto Dcenter mediaTempFailed lockout ────────────────────
+// teleproto/network/Dcenter.js: resetMediaTempKey() resets the temp key,
+// expiresAt, and mediaBound, but OMITS mediaTempFailed.  Once a single
+// bindTempAuthKey attempt fails, the Dcenter is permanently locked out of
+// temp-key binding — every subsequent media request falls back to the
+// permanent auth key, which eventually causes "Broken authorization key"
+// and 15-second MediaScheduler deadline timeouts.
+//
+// Fix: monkey-patch resetMediaTempKey to also clear mediaTempFailed.
+// ───────────────────────────────────────────────────────────────────────────
+(function patchDcenterMediaTempFailed() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Dcenter } = require("teleproto/network/Dcenter");
+    if (!Dcenter) return;
+
+    const originalReset = (Dcenter.prototype as any).resetMediaTempKey as () => void;
+
+    (Dcenter.prototype as any).resetMediaTempKey = function (this: any) {
+      originalReset.call(this);
+      this.mediaTempFailed = false;
+    };
+  } catch (_) {
+    // teleproto not available — skip patch
+  }
+})();
 import {
   loadPluginsForRuntime,
   unloadPluginsForRuntime,
