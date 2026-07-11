@@ -1,6 +1,6 @@
 import { Plugin } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { npm_install_project_dependencies } from "@utils/npm_install";
@@ -12,11 +12,11 @@ import { getErrorMessage } from "@utils/errorHelpers";
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 async function getRemotes(): Promise<string[]> {
   try {
-    const { stdout } = await execAsync("git remote");
+    const { stdout } = await execFileAsync("git", ["remote"]);
     return stdout.trim().split("\n").filter((r) => r.trim());
   } catch (e: unknown) {
     return [];
@@ -25,7 +25,7 @@ async function getRemotes(): Promise<string[]> {
 
 async function getBranches(): Promise<string[]> {
   try {
-    const { stdout } = await execAsync("git branch -r");
+    const { stdout } = await execFileAsync("git", ["branch", "-r"]);
     const branches = stdout
       .trim()
       .split("\n")
@@ -73,16 +73,16 @@ async function update(force = false, msg: MessageContext) {
     const { remote, branch } = branchInfo;
     const fullBranch = `${remote}/${branch}`;
 
-    await execAsync("git fetch --all");
+    await execFileAsync("git", ["fetch", "--all"]);
     await msg.edit({ text: "🔄 正在拉取最新代码..." });
 
     if (force) {
       logger.info(`⚠️ 强制回滚到 ${fullBranch}...`);
-      await execAsync(`git reset --hard ${fullBranch}`);
+      await execFileAsync("git", ["reset", "--hard", fullBranch]);
       await msg.edit({ text: "🔄 强制更新中..." });
     }
 
-    await execAsync(`git pull ${remote} ${branch} --no-rebase`);
+    await execFileAsync("git", ["pull", remote, branch, "--no-rebase"]);
     await msg.edit({ text: "🔄 正在合并最新代码..." });
 
     logger.info("\n📦 安装依赖...");
