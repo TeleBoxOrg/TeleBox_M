@@ -8,17 +8,50 @@ import { getGlobalClient } from "@utils/runtimeManager";
 import { executeExit } from "./reload";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
+import { updateAllPlugins } from "./tpm";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 
 const execFileAsync = promisify(execFile);
 
+// ── Auto-update state ──────────────────────────────────────────────────
+const AUTO_UPDATE_STATE_DIR = path.join(os.homedir(), ".telebox");
+const AUTO_UPDATE_STATE_FILE = path.join(AUTO_UPDATE_STATE_DIR, "auto_update.json");
+
+interface AutoUpdateState {
+  enabled: boolean;
+}
+
+function loadAutoUpdateState(): AutoUpdateState {
+  try {
+    if (fs.existsSync(AUTO_UPDATE_STATE_FILE)) {
+      return JSON.parse(fs.readFileSync(AUTO_UPDATE_STATE_FILE, "utf8"));
+    }
+  } catch (e: unknown) {
+    logger.warn("[auto-update] 读取状态文件失败:", e);
+  }
+  return { enabled: false };
+}
+
+function saveAutoUpdateState(state: AutoUpdateState): void {
+  try {
+    fs.mkdirSync(AUTO_UPDATE_STATE_DIR, { recursive: true });
+    fs.writeFileSync(AUTO_UPDATE_STATE_FILE, JSON.stringify(state), "utf8");
+  } catch (e: unknown) {
+    logger.error("[auto-update] 保存状态文件失败:", e);
+  }
+}
+
+// ── Git helpers ────────────────────────────────────────────────────────
 async function getRemotes(): Promise<string[]> {
   try {
     const { stdout } = await execFileAsync("git", ["remote"]);
     return stdout.trim().split("\n").filter((r) => r.trim());
-  } catch (e: unknown) {
+  } catch {
     return [];
   }
 }
@@ -32,7 +65,7 @@ async function getBranches(): Promise<string[]> {
       .map((b) => b.trim().replace(/^\*/, "").trim())
       .filter((b) => b && !b.includes("->"));
     return branches;
-  } catch (e: unknown) {
+  } catch {
     return [];
   }
 }
@@ -60,6 +93,7 @@ async function findMainBranch(): Promise<{ remote: string; branch: string } | nu
   return null;
 }
 
+// ── Manual update (existing) ───────────────────────────────────────────
 async function update(force = false, msg: MessageContext) {
   await msg.edit({ text: "🚀 正在更新项目..." });
   logger.info("🚀 开始更新项目...\n");
@@ -91,8 +125,6 @@ async function update(force = false, msg: MessageContext) {
 
     logger.info("\n✅ 更新完成。");
 
-    // 退出进程，pm2 拉起后由 reload 插件接管 exitFile：
-    // 退出前显示 "🔄 正在重启进程..."；重启完成后编辑为 "✅ 更新完成，耗时 Xms"
     await executeExit(msg, {
       pendingText: "🔄 正在重启进程...",
       successText: "✅ 更新完成，耗时 {elapsedMs}ms",
@@ -100,8 +132,6 @@ async function update(force = false, msg: MessageContext) {
   } catch (error: unknown) {
     logger.error("❌ 更新失败:", error);
 
-    // 构建安全的错误信息 —— exec 错误有 .cmd/.stderr，
-    // 其他错误只有 .message
     const errObj = error as Record<string, unknown>;
     const errCmd = errObj.cmd as string || "";
     const errDetail = (errObj.stderr as string) || getErrorMessage(error) || String(error);
@@ -112,12 +142,10 @@ async function update(force = false, msg: MessageContext) {
       `失败原因：${errDetail}\n\n` +
       "如果是 Git 冲突，请手动解决后再更新，或使用 .update -f 强制更新（会丢弃本地改动）";
 
-    // 兜底：edit 失败再用 fresh client 重发
     try {
       await msg.edit({ text: errorText });
     } catch (editError: unknown) {
       logger.error("Failed to send error message after update failure:", editError);
-      // 最后尝试通过新 client 发送
       try {
         const client = await getGlobalClient();
         const targetChat = msg.chat.id;
@@ -131,14 +159,129 @@ async function update(force = false, msg: MessageContext) {
   }
 }
 
+// ── Auto-update helpers: mtcute replyText() returns raw Message, cast to MessageContext ──
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyCtx = any;
+
+async function replyAsCtx(msg: MessageContext, text: string): Promise<MessageContext> {
+  return (await msg.replyText(text)) as unknown as MessageContext;
+}
+
+async function deleteMsgSafe(m: MessageContext | undefined): Promise<void> {
+  if (!m) return;
+  try { await (m as AnyCtx).delete(); } catch (_) { /* ignore */ }
+}
+
+async function editMsgSafe(m: MessageContext | undefined, text: string): Promise<void> {
+  if (!m) return;
+  try { await (m as AnyCtx).edit({ text }); } catch (_) { /* ignore */ }
+}
+
+// ── Auto-update for main repo ──────────────────────────────────────────
+async function autoUpdateMainRepo(githubMsg: MessageContext): Promise<void> {
+  let statusMsg: MessageContext | undefined;
+  try {
+    statusMsg = await replyAsCtx(githubMsg, "🤖 自动更新：检测到主仓库新提交，正在更新…");
+
+    const branchInfo = await findMainBranch();
+    if (!branchInfo) {
+      throw new Error("未找到可用的远程分支");
+    }
+    const { remote, branch } = branchInfo;
+
+    await execFileAsync("git", ["fetch", "--all"]);
+    await execFileAsync("git", ["pull", remote, branch, "--no-rebase"]);
+    npm_install_project_dependencies();
+
+    // Success — delete status message, then restart silently
+    await deleteMsgSafe(statusMsg);
+    await executeAutoExit();
+  } catch (error: unknown) {
+    const errDetail = getErrorMessage(error) || String(error);
+    await editMsgSafe(statusMsg, `❌ 自动更新失败：${errDetail}`);
+    if (!statusMsg) {
+      try { await githubMsg.replyText(`❌ 自动更新失败：${errDetail}`); } catch (_) {}
+    }
+  }
+}
+
+async function executeAutoExit(): Promise<void> {
+  logger.info("[auto-update] 更新完成，退出进程…");
+  process.exit(0);
+}
+
+// ── Auto-update for plugin repos ───────────────────────────────────────
+async function autoUpdatePlugins(githubMsg: MessageContext): Promise<void> {
+  try {
+    const statusMsg = await replyAsCtx(githubMsg, "🤖 自动更新：检测到插件仓库新提交，正在更新插件…");
+    const result = await updateAllPlugins(statusMsg);
+
+    if (result.failedCount === 0) {
+      await deleteMsgSafe(statusMsg);
+    }
+  } catch (error: unknown) {
+    logger.error("[auto-update] 插件更新异常:", getErrorMessage(error) || String(error));
+  }
+}
+
+// ── GitHubBot message parsing ──────────────────────────────────────────
+const GITHUB_CHANNEL_ID = "-1003061608291";
+
+const MAIN_REPO_PATTERN = /new commit.*to\s+(TeleBox|TeleBox_M)\s*:\s*main/i;
+const PLUGIN_REPO_PATTERN = /new commit.*to\s+(TeleBox_Plugins|TeleBox_M_Plugins)\s*:\s*main/i;
+
 class UpdatePlugin extends Plugin {
-  description: string = `更新项目：拉取最新代码并安装依赖\n<code>${mainPrefix}update -f/-force</code> 强制更新`;
+  description: string =
+    `更新项目：拉取最新代码并安装依赖\n` +
+    `<code>${mainPrefix}update -f/-force</code> 强制更新\n` +
+    `<code>${mainPrefix}update auto on</code> / <code>off</code> 自动更新开关（默认关闭）`;
+
   cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
     update: async (msg) => {
-      const args = msg.text.slice(1).split(" ").slice(1);
-      const force = args.includes("--force") || args.includes("-f");
+      const parts = msg.text.slice(1).split(" ").slice(1);
+
+      if (parts[0] === "auto") {
+        const sub = parts[1]?.toLowerCase();
+        if (sub === "on") {
+          saveAutoUpdateState({ enabled: true });
+          await msg.edit({ text: "✅ 自动更新已开启\n\n检测到主仓库提交时自动 git pull + 重启，检测到插件仓库提交时自动 tpm update。" });
+          return;
+        }
+        if (sub === "off") {
+          saveAutoUpdateState({ enabled: false });
+          await msg.edit({ text: "🔒 自动更新已关闭" });
+          return;
+        }
+        const state = loadAutoUpdateState();
+        await msg.edit({ text: `自动更新状态：${state.enabled ? "✅ 开启" : "🔒 关闭"}\n\n使用 <code>${mainPrefix}update auto on/off</code> 切换` });
+        return;
+      }
+
+      const force = parts.includes("--force") || parts.includes("-f");
       await update(force, msg);
     },
+  };
+
+  listenMessageHandler = async (msg: MessageContext): Promise<void> => {
+    const state = loadAutoUpdateState();
+    if (!state.enabled) return;
+
+    const chatId = String(msg.chat?.id ?? "");
+    if (chatId !== GITHUB_CHANNEL_ID) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((msg.sender as any)?.username !== "GitHubBot") return;
+
+    const text = msg.text || "";
+    if (!text) return;
+
+    if (MAIN_REPO_PATTERN.test(text)) {
+      logger.info("[auto-update] 检测到主仓库提交，开始自动更新…");
+      await autoUpdateMainRepo(msg);
+    } else if (PLUGIN_REPO_PATTERN.test(text)) {
+      logger.info("[auto-update] 检测到插件仓库提交，开始自动更新插件…");
+      await autoUpdatePlugins(msg);
+    }
   };
 }
 
