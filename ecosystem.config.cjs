@@ -3,7 +3,6 @@ module.exports = {
     {
       name: "telebox",
       script: "scripts/run-tsx.cjs",
-      args: "./src/index.ts",
       cwd: "/root/telebox_mtcute",
       interpreter: "/root/.nvm/versions/node/v24.15.0/bin/node",
       exec_mode: "fork",
