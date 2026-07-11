@@ -6,49 +6,39 @@ import { readAppName } from "./teleboxInfoHelper";
 import { logger } from "./logger";
 import { initializeClientSession } from "./loginManager";
 
-// ── Mitigate teleproto Network: clear permanent auth key on media DC break ─
-// When a media DC's permanent auth key is broken, _onSenderBreak for media
-// DCs only resets the temp key.  Clearing mediaTempFailed (above) causes the
-// next connection to attempt temp-key binding — but that binding uses the
-// (broken) permanent key as its anchor, so it fails every time in a loop.
-//
-// Fix: after the original _onSenderBreak, also wipe the permanent auth key
-// for the affected media DC so the next connection triggers a full
-// auth.ExportAuthorization + auth.ImportAuthorization.
-// ───────────────────────────────────────────────────────────────────────────
-(function patchNetworkOnSenderBreak() {
+// ── Fix teleproto main-DC media upload deadlock ────────────────────────────
+// Route main-DC upload parts through the already-authorized main sender.
+(function patchMainDcMediaUpload() {
   try {
-    const { Network } = require("teleproto/network/Network");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { bareDcId, isDownloadDcId, isUploadDcId } = require("teleproto/network/core_types");
-    if (!Network) return;
+    const { MediaScheduler } = require("teleproto/network/MediaScheduler");
+    if (!MediaScheduler) return;
 
-    const originalBreak = Network.prototype._onSenderBreak as (
-      shiftedDcId: number,
-      slot: any
-    ) => void;
+    interface PatchedMediaScheduler {
+      _client: {
+        session: { dcId: number };
+        invoke(request: unknown): Promise<unknown>;
+      };
+    }
 
-    Network.prototype._onSenderBreak = function (
-      this: any,
-      shiftedDcId: number,
-      slot: any
-    ) {
-      originalBreak.call(this, shiftedDcId, slot);
+    const originalSavePart = MediaScheduler.prototype.savePart as (
+      dcId: number,
+      request: unknown,
+      signal?: AbortSignal
+    ) => Promise<unknown>;
 
-      if (isDownloadDcId(shiftedDcId) || isUploadDcId(shiftedDcId)) {
-        const dcId = bareDcId(shiftedDcId);
-        // NEVER clear the permanent key for the session's main DC
-        if (dcId === this._client.session.dcId) return;
-
-        try {
-          const dcenter = this._client._dcenters.get(dcId);
-          if (dcenter) {
-            dcenter.authKey.setKey(undefined).catch(() => {});
-            dcenter.mediaBound = false;
-          }
-          this._client.session.setAuthKey(undefined, dcId);
-        } catch (_) {}
+    MediaScheduler.prototype.savePart = async function (
+      this: PatchedMediaScheduler,
+      dcId: number,
+      request: unknown,
+      signal?: AbortSignal
+    ): Promise<unknown> {
+      if (dcId !== this._client.session.dcId) {
+        return originalSavePart.call(this, dcId, request, signal);
       }
+      if (signal?.aborted) {
+        throw new Error("Media operation aborted");
+      }
+      return this._client.invoke(request);
     };
   } catch (_) {
     // teleproto not available — skip patch
