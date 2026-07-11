@@ -1,11 +1,9 @@
 import { TelegramClient } from "@mtcute/node";
 import { createMtcuteClient, destroyMtcuteClient } from "./mtcuteClient";
 import { initializeClientSession } from "./loginManager";
-import {
-  loadPluginsForRuntime,
-  unloadPluginsForRuntime,
-} from "./pluginManager";
+import { loadPluginsForRuntime, unloadPluginsForRuntime } from "./pluginManager";
 import { resetCircuitBreaker } from "./channelGapBreaker";
+import { loadSwitchState, saveSwitchState, DEFAULT_SWITCH_HOME } from "./versionSwitchState";
 
 import {
   createGenerationContext,
@@ -180,6 +178,40 @@ async function buildRuntime(): Promise<TeleBoxRuntime> {
   return runtime;
 }
 
+async function resolvePendingSwitchNotification(
+  client: TelegramClient,
+  currentVersion: "teleproto" | "mtcute"
+): Promise<void> {
+  try {
+    const state = loadSwitchState(DEFAULT_SWITCH_HOME);
+    const notification = state.pendingNotification;
+    if (!notification || notification.target !== currentVersion) return;
+
+    const icon = currentVersion === "teleproto" ? "🟦" : "🟧";
+    const label = currentVersion === "teleproto" ? "teleproto (gramjs)" : "mtcute (native)";
+    const text = `🎉 **切换完成！** 现在运行的是 ${icon} ${label}\n\n想切回去？发 \`.switch revert\` 就行。`;
+
+    await client.editMessage({
+      chatId: notification.chatId,
+      message: notification.msgId,
+      text,
+    });
+
+    state.pendingNotification = null;
+    saveSwitchState(state, DEFAULT_SWITCH_HOME);
+    logger.info("[RUNTIME] Resolved pending switch notification");
+  } catch {
+    // 通知消息可能已被删除，或 peer 解析失败——静默清理不再重试
+    try {
+      const state = loadSwitchState(DEFAULT_SWITCH_HOME);
+      if (state.pendingNotification) {
+        state.pendingNotification = null;
+        saveSwitchState(state, DEFAULT_SWITCH_HOME);
+      }
+    } catch { /* ignore */ }
+  }
+}
+
 async function startFreshRuntime(): Promise<TeleBoxRuntime> {
   // Reset channel gap circuit-breaker state for the new runtime
   resetCircuitBreaker();
@@ -187,6 +219,8 @@ async function startFreshRuntime(): Promise<TeleBoxRuntime> {
   currentRuntime = runtime;
   try {
     await loadPluginsForRuntime(runtime);
+    // 切换后上线后，编辑之前留下的"正在切换…"通知消息
+    await resolvePendingSwitchNotification(runtime.client, "mtcute");
     runtime.state = "running";
     return runtime;
   } catch (error: unknown) {

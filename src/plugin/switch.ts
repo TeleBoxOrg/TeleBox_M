@@ -278,9 +278,9 @@ const plugin = new (class extends Plugin {
     }
 
     await msg.edit({ text: T.goSwitching(target) });
-    // 在 spawn controller 之前发完成提示——controller 会杀掉当前进程，
-    // 消息必须在这之前发出，否则永远发不出去
-    await msg.answerText(T.goDone(target)).catch(() => {});
+    // 记录消息 ID，等目标版本上线后用新客户端编辑状态
+    state.pendingNotification = { chatId: Number(msg.chat.id), msgId: msg.id, target };
+    saveSwitchState(state, DEFAULT_SWITCH_HOME);
 
     const child = spawn(
       "npx", ["tsx", "/root/telebox/src/utils/versionSwitchController.ts"],
@@ -299,7 +299,8 @@ const plugin = new (class extends Plugin {
     }
 
     await msg.edit({ text: T.revertStarted() });
-    await msg.answerText(T.revertDone()).catch(() => {});
+    state.pendingNotification = { chatId: Number(msg.chat.id), msgId: msg.id, target: "teleproto" };
+    saveSwitchState(state, DEFAULT_SWITCH_HOME);
 
     const child = spawn(
       "npx", ["tsx", "/root/telebox_mtcute/src/utils/versionSwitchController.ts"],
