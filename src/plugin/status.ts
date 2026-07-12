@@ -6,9 +6,11 @@ import * as fs from "fs";
 import { execFileSync, ExecFileSyncOptions } from "child_process";
 import * as path from "path";
 import { JSONFilePreset } from "lowdb/node";
+import type { Low } from "lowdb";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { tryGetCurrentGenerationContext } from "@utils/runtimeManager";
+import type { MessageContext } from "@mtcute/dispatcher";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -187,6 +189,10 @@ interface VersionInfo {
   telebox: string;
 }
 
+interface StatusConfig {
+  template: string;
+}
+
 // ==================== 插件主类 ====================
 class TeleBoxSystemMonitor extends Plugin {
   cleanup(): void {
@@ -194,7 +200,7 @@ class TeleBoxSystemMonitor extends Plugin {
   }
 
   description = `显示系统信息与TeleBox运行状态\n\n${HELP_TEXT}`;
-  private db: any;
+  private db: Low<StatusConfig> | null = null;
   private readonly PLUGIN_NAME = "status";
   private readonly DB_PATH: string;
 
@@ -204,7 +210,9 @@ class TeleBoxSystemMonitor extends Plugin {
       createDirectoryInAssets(this.PLUGIN_NAME),
       "config.json"
     );
-    this.initDB();
+    void this.initDB().catch((error: unknown) => {
+      console.error(`[${this.PLUGIN_NAME}] 数据库启动初始化失败:`, error);
+    });
   }
 
   // 初始化数据库
@@ -219,6 +227,12 @@ class TeleBoxSystemMonitor extends Plugin {
     }
   }
 
+  private async ensureDb(): Promise<Low<StatusConfig>> {
+    if (!this.db) await this.initDB();
+    if (!this.db) throw new Error("状态数据库初始化失败");
+    return this.db;
+  }
+
   // ==================== 命令处理器 ====================
   cmdHandlers = {
     status: this.handleStatus.bind(this),
@@ -226,7 +240,7 @@ class TeleBoxSystemMonitor extends Plugin {
   };
 
   // 处理 status 命令
-  private async handleStatus(msg: any): Promise<void> {
+  private async handleStatus(msg: MessageContext): Promise<void> {
     try {
       const parts = msg.text?.trim().split(/\s+/) || [];
       const subCommand = parts[1]?.toLowerCase();
@@ -256,16 +270,14 @@ class TeleBoxSystemMonitor extends Plugin {
   }
 
   // 处理 sysinfo 命令
-  private async handleSysInfo(msg: any): Promise<void> {
+  private async handleSysInfo(msg: MessageContext): Promise<void> {
     try {
       await msg.edit({
         text: "🔄 正在获取系统信息...",
-        parseMode: "html",
       });
       const sysInfo = await this.getSystemInfo();
       await msg.edit({
         text: sysInfo,
-        parseMode: "html",
       });
     } catch (error) {
       await this.handleError(msg, error, "sysinfo");
@@ -274,10 +286,9 @@ class TeleBoxSystemMonitor extends Plugin {
 
   // ==================== 状态显示 ====================
   // 显示系统状态
-  private async showStatus(msg: any): Promise<void> {
+  private async showStatus(msg: MessageContext): Promise<void> {
     await msg.edit({
       text: "🔄 正在获取状态信息...",
-      parseMode: "html",
     });
     const startTime = Date.now();
     const template = this.db?.data?.template || DEFAULT_TEMPLATE;
@@ -290,7 +301,6 @@ class TeleBoxSystemMonitor extends Plugin {
     const rendered = this.renderTemplate(template, statusData as unknown as Record<string, string>);
     await msg.edit({
       text: rendered,
-      parseMode: "html",
     });
   }
 
@@ -303,14 +313,13 @@ class TeleBoxSystemMonitor extends Plugin {
       `Uptime: <code>${Math.round((Date.now() - context.createdAt) / 1000)}s</code>`;
   }
 
-  private async handleLifecycleStatus(msg: any): Promise<void> {
+  private async handleLifecycleStatus(msg: MessageContext): Promise<void> {
     await msg.edit({
       text: this.formatLifecycleDiagnostics(),
-      parseMode: "html",
     });
   }
 
-  private async handleLifecycleStress(msg: any): Promise<void> {
+  private async handleLifecycleStress(msg: MessageContext): Promise<void> {
     const text = this.formatLifecycleDiagnostics() +
       `\n\n<b>Repeatable stress scenarios</b>\n` +
       `• idle repeated reload: compare active counters before/after reload; old generation residual should become none.\n` +
@@ -322,14 +331,13 @@ class TeleBoxSystemMonitor extends Plugin {
       `• cron callback mid-flight + reload: cron-job cancels; cron-execution drains or reports residual.`;
     await msg.edit({
       text,
-      parseMode: "html",
     });
   }
 
   // 显示当前模板内容
-  private async handleShowTemplate(msg: any): Promise<void> {
-    if (!this.db) await this.initDB();
-    const template = this.db.data.template || DEFAULT_TEMPLATE;
+  private async handleShowTemplate(msg: MessageContext): Promise<void> {
+    const db = await this.ensureDb();
+    const template = db.data.template || DEFAULT_TEMPLATE;
 
     // 转义 HTML 特殊字符，使模板原样显示
     const htmlMap: Record<string, string> = {
@@ -343,7 +351,6 @@ class TeleBoxSystemMonitor extends Plugin {
 
     await msg.edit({
       text: `<b>📄 当前模板内容:</b>\n\n<code>${escaped}</code>`,
-      parseMode: "html"
     });
   }
 
@@ -462,34 +469,30 @@ class TeleBoxSystemMonitor extends Plugin {
 
   // ==================== 模板管理 ====================
   // 设置自定义模板
-  private async handleSetTemplate(msg: any): Promise<void> {
+  private async handleSetTemplate(msg: MessageContext): Promise<void> {
     const replyMsg = await safeGetReplyMessage(msg);
     if (!replyMsg || !replyMsg.text) {
       await msg.edit({
         text: "❌ 请回复一条包含模板内容的消息",
-        parseMode: "html",
       });
       return;
     }
-    if (!this.db) await this.initDB();
-
-    this.db.data.template = replyMsg.text;
-    await this.db.write();
+    const db = await this.ensureDb();
+    db.data.template = replyMsg.text;
+    await db.write();
 
     await msg.edit({
       text: `✅ 模板已保存！使用 <code>${mainPrefix}status</code> 查看效果`,
-      parseMode: "html",
     });
   }
 
   // 重置默认模板
-  private async handleResetTemplate(msg: any): Promise<void> {
-    if (!this.db) await this.initDB();
-    this.db.data.template = DEFAULT_TEMPLATE;
-    await this.db.write();
+  private async handleResetTemplate(msg: MessageContext): Promise<void> {
+    const db = await this.ensureDb();
+    db.data.template = DEFAULT_TEMPLATE;
+    await db.write();
     await msg.edit({
       text: "✅ 模板已重置为默认！",
-      parseMode: "html",
     });
   }
 
@@ -950,7 +953,7 @@ Scan Time: ${scanTime}ms
 
   // 统一错误处理
   private async handleError(
-    msg: any,
+    msg: MessageContext,
     error: unknown,
     context: string
   ): Promise<void> {
@@ -958,7 +961,6 @@ Scan Time: ${scanTime}ms
     console.error(`[${this.PLUGIN_NAME}] ${context} 错误:`, error);
     await msg.edit({
       text: `❌ 操作失败: ${errorMessage}`,
-      parseMode: "html",
     });
   }
 }
