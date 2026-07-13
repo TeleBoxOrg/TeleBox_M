@@ -34,7 +34,7 @@ const EMOJI: Record<string, string> = {
 };
 
 function label(v: TeleBoxVersion): string {
-  return v === "teleproto" ? "teleproto" : "mtcute";
+  return v === "teleproto" ? "TeleBox Classic" : "TeleBox-Next";
 }
 
 function detectCurrentVersion(): TeleBoxVersion {
@@ -68,9 +68,9 @@ const T = {
     [
       `**🔄 版本切换**`,
       ``,
-      `在 **teleproto** 和 **mtcute** 之间切换。`,
+      `在 **TeleBox Classic** 和 **TeleBox-Next** 之间切换。`,
       `session 直接转换，**不用重新登录**。`,
-      `两版都放在原安装目录下：telebox/telebox-teleproto 与 telebox/telebox-mtcute。`,
+      `两版都放在原安装目录下：telebox/telebox-classic 与 telebox/telebox-next。`,
       ``,
       `**两个子命令：**`,
       ``,
@@ -227,7 +227,7 @@ const plugin = new (class extends Plugin {
           ``,
           message,
           ``,
-          `会在原运行时目录下使用 telebox-teleproto / telebox-mtcute 子目录；`,
+          `会在原运行时目录下使用 telebox-classic / telebox-next 子目录；`,
           `没有的那一版会自动创建并下载。`,
         ].join("\n"),
       });

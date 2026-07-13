@@ -140,7 +140,7 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
     ...(transport ? { transport } : {}),
   });
 
-  // Bridge mtcute internal logging into TeleBox logger when supported.
+  // Bridge mtcute internal logging into TeleBox-Next logger when supported.
   // mtcute's client.log is a Logger instance; level lives on its mgr (LogManager).
   try {
     const lvl = logger.getGramJSLogLevel?.();

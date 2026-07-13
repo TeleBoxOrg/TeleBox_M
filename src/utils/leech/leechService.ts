@@ -40,8 +40,8 @@ export class LeechService {
   ) {}
 
   /**
-   * Check current Telegram session. The actual login is owned by TeleBox runtime.
-   * 检查当前 Telegram Session；真正的登录流程由 TeleBox runtime 负责。
+   * Check current Telegram session. The actual login is owned by TeleBox-Next runtime.
+   * 检查当前 Telegram Session；真正的登录流程由 TeleBox-Next runtime 负责。
    */
   async checkSession(client: TelegramClient, actor?: string): Promise<{ id?: string; username?: string; name: string }> {
     const actionId = createLeechActionId("leech_session");

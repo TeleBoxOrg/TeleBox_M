@@ -547,7 +547,7 @@ class BfPlugin extends Plugin {
           : "plugins, assets";
         
         const caption =
-          `📦 <b>TeleBox ${backupType}</b>\n\n` +
+          `📦 <b>TeleBox-Next ${backupType}</b>\n\n` +
           `🕐 <b>时间</b>: ${formatCN(new Date())}\n` +
           `📊 <b>大小</b>: ${(stats.size / 1024 / 1024).toFixed(2)} MB\n` +
           `📋 <b>内容</b>: ${contentDesc}`;
@@ -630,7 +630,7 @@ class BfPlugin extends Plugin {
       if (cmd === "help" || cmd === "帮助") {
         await msg.edit({
           text: html(
-            "🔄 <b>TeleBox 恢复系统</b><br><br>" +
+            "🔄 <b>TeleBox-Next 恢复系统</b><br><br>" +
             "📁 回复备份文件消息，发送 <code>hf</code> 恢复<br>" +
             "📦 支持格式: .tar.gz 备份文件<br>" +
             "🔄 恢复后会自动重载插件"

@@ -2,7 +2,7 @@ import { MessageContext } from "@mtcute/dispatcher";
 import { logger } from "@utils/logger";
 
 /**
- * TeleBox 自定义 MessageContext 便捷方法。
+ * TeleBox-Next 自定义 MessageContext 便捷方法。
  *
  * 旧 gramjs 版本把这些挂在 `Api.Message.prototype`,并额外做 HTML 实体保护 hack
  * (因为 gramjs 的 HTMLParser 会错误处理 `&lt;` 等)。mtcute 0.29 的 `html` 解析器

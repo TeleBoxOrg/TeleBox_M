@@ -154,7 +154,7 @@ function buildMemoryAlertText(params: {
     `• Heap 增长：<code>${formatMb(growth.heapGrowth)}</code>\n` +
     `• RSS 增长：<code>${formatMb(growth.rssGrowth)}</code>\n` +
     `• 增长阈值：<code>${config.runtimeGrowthThreshold} MB</code>\n\n` +
-    `正在重启 TeleBox...`
+    `正在重启 TeleBox-Next...`
   );
 }
 
@@ -242,7 +242,7 @@ function getMemoryUsage() {
 }
 
 function formatMemoryInfo(memory: ReturnType<typeof getMemoryUsage>): string {
-  return `📊 TeleBox 内存使用情况
+  return `📊 TeleBox-Next 内存使用情况
 堆内存 (Heap):
   • 已使用：${memory.heapUsed.toFixed(2)} MB
   • 总分配：${memory.heapTotal.toFixed(2)} MB
@@ -476,7 +476,7 @@ class ReloadPlugin extends Plugin {
       await msg.delete();
       scheduleTrackedTimeout(async () => {
         try {
-          const pm2Name = process.env.name || "telebox-mtcute";
+          const pm2Name = process.env.name || "telebox-next";
           await execFileAsync("pm2", ["restart", pm2Name]);
         } catch (error: unknown) {
           logger.error("PM2 restart failed:", error);

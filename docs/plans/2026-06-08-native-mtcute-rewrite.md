@@ -1,8 +1,8 @@
-# TeleBox 原生 mtcute 重写实施计划
+# TeleBox-Next 原生 mtcute 重写实施计划
 
 > **For Hermes:** 用 subagent-driven-development 技能逐任务执行本计划。用户已显式授权本次迁移使用多 agent 工作流。
 
-**Goal:** 把 TeleBox 从 teleproto(gramjs 分支)完全重写为原生 @mtcute/node 0.29，零 gramjs 残留、零 adapter 兼容层。
+**Goal:** 把 TeleBox-Next 从 teleproto(gramjs 分支)完全重写为原生 @mtcute/node 0.29，零 gramjs 残留、零 adapter 兼容层。
 
 **Architecture:** 保留与 Telegram 库无关的运行时框架(generation 代际管理 / GenerationContext 的 abort-drain-dispose 生命周期 / cronManager / logger / *DB 工具)。换血层:client 创建、session、Plugin 契约、123 个插件的命令处理器。命令签名从 `Api.Message` 改为 mtcute 原生 `Message`，命令分发改用 @mtcute/dispatcher。
 
@@ -25,11 +25,11 @@
 
 **Objective:** package.json 依赖从 teleproto 切到 mtcute 全家桶。
 
-**Files:** Modify `/root/telebox_mtcute/package.json`
+**Files:** Modify `/root/telebox-next/package.json`
 
 **Step 1:** 安装原生依赖
 ```bash
-cd /root/telebox_mtcute
+cd /root/telebox-next
 npm install @mtcute/node@0.29.7 @mtcute/dispatcher@0.29.7 @mtcute/sqlite@0.29.7
 ```
 
@@ -51,7 +51,7 @@ git commit --author="TiaraBasori <mintabyss233@gmail.com>" -m "feat(deps): add n
 
 **Objective:** 产出 gramjs→mtcute 方法/类型映射文档，供后续所有任务参考。
 
-**Files:** Create `/root/telebox_mtcute/docs/plans/mtcute-api-map.md`
+**Files:** Create `/root/telebox-next/docs/plans/mtcute-api-map.md`
 
 映射核心(从评估数据 Api.* 频次倒排):
 - `Api.Message` (897+95次) → mtcute `Message` (from `@mtcute/node`)
@@ -151,7 +151,7 @@ abstract class Plugin {
 
 ---
 
-## Phase 4:123 插件批量迁移(TeleBox_Plugins_mtcute)
+## Phase 4:123 插件批量迁移(TeleBox-Next_Plugins)
 
 **策略:** 按 Api.* 复杂度分三批。每批用 subagent 并行(用户已授权多 agent，最多 3 并发)。
 

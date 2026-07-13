@@ -2,7 +2,7 @@
 /**
  * Standalone version-switch controller.
  *
- * Orchestrates a TeleBox version switch (teleproto ↔ mtcute). It is spawned
+ * Orchestrates a TeleBox Classic ↔ TeleBox-Next version switch. It is spawned
  * as a detached child process by the versionSwitch plugin so that the switch
  * survives a PM2 restart of the source bot.
  *
@@ -51,7 +51,7 @@ import path from "path";
 
 // ─── Config ────────────────────────────────────────────────────────────────
 
-// Nested layout under original runtime home (telebox-teleproto / telebox-mtcute).
+// Nested layout under original runtime home (telebox-classic / telebox-next).
 let REPO_ROOTS = resolveRepoRoots();
 const NESTED = ensureNestedLayout();
 REPO_ROOTS = NESTED.roots;
@@ -62,7 +62,7 @@ const PLUGIN_INDEX_PATHS: Record<"teleproto" | "mtcute", string> = {
 
 const PM2_NAMES: Record<"teleproto" | "mtcute", string> = {
   teleproto: "telebox",
-  mtcute: "telebox-mtcute",
+  mtcute: "telebox-next",
 };
 
 const READY_TIMEOUT_MS = 60_000;

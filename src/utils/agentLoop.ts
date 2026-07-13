@@ -8,19 +8,19 @@ import { getPlatform } from "./agentTypes";
 function buildSystemPrompt(input: AgentInput) {
   const runtime = input.runtime!;
   const { displayName, config } = input;
-  const scopeText = runtime.scope === "system" ? "\u7CFB\u7EDF\u7EA7" : "TeleBox \u9879\u76EE\u7EA7";
+  const scopeText = runtime.scope === "system" ? "\u7CFB\u7EDF\u7EA7" : "TeleBox-Next \u9879\u76EE\u7EA7";
   const pathRules = runtime.scope === "system" ? [
     "\u7CFB\u7EDF\u7EA7\u6A21\u5F0F\u5141\u8BB8\u5728\u64CD\u4F5C\u7CFB\u7EDF\u6388\u4E88\u7684\u6743\u9650\u5185\u4F7F\u7528\u7EDD\u5BF9\u8DEF\u5F84\u548C\u6267\u884C\u7CFB\u7EDF\u547D\u4EE4\u3002",
     "\u76F8\u5BF9\u6587\u4EF6\u8DEF\u5F84\u9ED8\u8BA4\u4EE5\u5F53\u524D\u9694\u79BB\u5DE5\u4F5C\u533A\u4E3A\u6839\uFF1B\u9700\u8981\u64CD\u4F5C\u5176\u5B83\u4F4D\u7F6E\u65F6\u660E\u786E\u4F7F\u7528\u7EDD\u5BF9\u8DEF\u5F84\u3002"
   ] : [
-    "TeleBox \u6A21\u5F0F\u53EA\u5141\u8BB8\u6587\u4EF6\u5DE5\u5177\u8BBF\u95EE\u9879\u76EE\u6839\u76EE\u5F55\u548C\u5F53\u524D\u5DE5\u4F5C\u533A\u3002",
+    "TeleBox-Next \u6A21\u5F0F\u53EA\u5141\u8BB8\u6587\u4EF6\u5DE5\u5177\u8BBF\u95EE\u9879\u76EE\u6839\u76EE\u5F55\u548C\u5F53\u524D\u5DE5\u4F5C\u533A\u3002",
     "\u4E0D\u8981\u6267\u884C\u6574\u673A\u66F4\u65B0\u3001\u8F6F\u4EF6\u5B89\u88C5\u3001\u8D26\u6237\u3001\u6CE8\u518C\u8868\u3001\u5173\u673A\u91CD\u542F\u7B49\u7CFB\u7EDF\u7EA7\u64CD\u4F5C\uFF1B\u8FD9\u7C7B\u4EFB\u52A1\u8981\u6C42\u7528\u6237\u6539\u7528 .sysagent\u3002"
   ];
   return [
-    displayName ? `[身份]\n你是运行在 TeleBox 中的${scopeText}编程智能体，自定义名称为「${displayName}」。` : `[身份]\n你是运行在 TeleBox 中的${scopeText}编程智能体；当前未设置自定义名称。`,
+    displayName ? `[身份]\n你是运行在 TeleBox-Next 中的${scopeText}编程智能体，自定义名称为「${displayName}」。` : `[身份]\n你是运行在 TeleBox-Next 中的${scopeText}编程智能体；当前未设置自定义名称。`,
     [
       "[核心职责]",
-      "- 你是用户的编程协作者：通过工具观察环境、读写文件、运行命令、调用 TeleBox 插件并发送文件，帮助用户完成真实开发任务。",
+      "- 你是用户的编程协作者：通过工具观察环境、读写文件、运行命令、调用 TeleBox-Next 插件并发送文件，帮助用户完成真实开发任务。",
       "- 你服务于真实目标，而不是演示。每一次回复都应把任务向前推进一步。"
     ].join("\n"),
     [
@@ -49,7 +49,7 @@ function buildSystemPrompt(input: AgentInput) {
       "- 读代码优先 list_files、search_files、read_file；写之前先确认路径与现有结构。",
       "- 小范围修改优先 replace_text（注意行尾换行符）；完整创建或重写文件用 write_file。",
       "- run_command 用于检查、测试、构建与必要的终端操作；不能伪造命令结果，失败要读 stderr。",
-      "- 需要其它 TeleBox 能力时，先 list_plugins 了解可用命令，再 run_plugin 调用，不要把插件能力当成已知。",
+      "- 需要其它 TeleBox-Next 能力时，先 list_plugins 了解可用命令，再 run_plugin 调用，不要把插件能力当成已知。",
       "- send_file 成功前不能声称文件已发送。",
       "- 一轮可返回多个互不冲突的工具调用以并行推进；但不要重复完全相投且无新信息的调用（相同调用连续失败 3 次会触发熔断）。"
     ].join("\n"),
@@ -661,7 +661,7 @@ async function wait(ms: number) {
 async function dispatchPluginCaptured(msg: any, commandLine: string) {
   const normalized = stripCommandPrefix(commandLine);
   const command = findCommand(normalized);
-  if (!command) throw new Error(`\u672A\u77E5 TeleBox \u63D2\u4EF6\u547D\u4EE4\uFF1A${normalized}`);
+  if (!command) throw new Error(`\u672A\u77E5 TeleBox-Next \u63D2\u4EF6\u547D\u4EE4\uFF1A${normalized}`);
   const outputs: string[] = [];
   const captured = cloneForCapture(msg, normalized, outputs);
   await (0, import_pluginManager2.dealCommandPluginWithMessage)({ cmd: command, msg: captured, trigger: msg });

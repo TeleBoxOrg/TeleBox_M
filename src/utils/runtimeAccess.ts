@@ -6,7 +6,7 @@
  * registers concrete implementations at module load time.
  *
  * Callers must not invoke these before runtimeManager has been required at
- * least once (normal for TeleBox: index → runtimeManager → pluginManager).
+ * least once (normal for TeleBox-Next: index → runtimeManager → pluginManager).
  */
 
 export type RuntimeSnapshot = {

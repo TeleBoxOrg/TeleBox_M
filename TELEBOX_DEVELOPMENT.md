@@ -1,4 +1,4 @@
-# TeleBox 开发规范
+# TeleBox-Next 开发规范
 
 ## 目录
 
@@ -245,7 +245,7 @@ run();
 - 加载环境变量
 - 配置全局 HTTP 代理（axios）
 - 初始化 logger 和 pluginBase 配置
-- 启动 TeleBox runtime（`startRuntime()` 包含登录 + 插件加载）
+- 启动 TeleBox-Next runtime（`startRuntime()` 包含登录 + 插件加载）
 - 注册全局错误处理和优雅关闭钩子
 - 应用 Telegram API 补丁
 
@@ -432,7 +432,7 @@ utils/* (工具模块)
 - **TypeScript版本**: ^5.9.2
 - **Telegram 库版本**: @mtcute/node ^0.30.1（原生 mtcute API，不依赖 teleproto）
 - **协议**: LGPL-2.1-only
-- **仓库**: TeleBoxOrg/TeleBox_M（mtcute 版本）
+- **仓库**: TeleBoxOrg/TeleBox-Next（mtcute 版本）
 
 ## 🔌 插件系统
 
@@ -720,7 +720,7 @@ import {
 - 前缀管理
 
 **调用约束**：
-- `loadPlugins()` 只能用于已经挂载 TeleBox runtime 的流程，例如命令处理器、系统管理插件、运行中的热重载逻辑
+- `loadPlugins()` 只能用于已经挂载 TeleBox-Next runtime 的流程，例如命令处理器、系统管理插件、运行中的热重载逻辑
 - 不要在插件模块顶层、构造函数、副作用导入阶段调用 `loadPlugins()`；插件文件在 TPM 校验等场景下也会被单独 `require`，此时 runtime 尚未初始化
 - 如果需要在插件里触发重载，把调用放到明确的异步入口里，例如 `cmdHandlers`、`listenMessageHandler`、`eventHandlers` 内部
 
@@ -1155,7 +1155,7 @@ TeleBox内置19个系统插件，位于 `src/plugin/` 目录。
 **功能**：
 - 从Git拉取最新代码
 - 自动安装依赖
-- 重启TeleBox
+- 重启TeleBox-Next
 
 **命令**：
 ```
@@ -1222,7 +1222,7 @@ TeleBox内置19个系统插件，位于 `src/plugin/` 目录。
 
 **功能**：
 - 重新加载插件
-- 无需重启TeleBox
+- 无需重启TeleBox-Next
 - 用于插件开发调试
 
 **命令**：
@@ -2468,7 +2468,7 @@ const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
    
    // 显式类型声明
    const count: number = 0;
-   const name: string = "TeleBox";
+   const name: string = "TeleBox-Next";
    
    // 使用接口定义对象结构
    interface Config {

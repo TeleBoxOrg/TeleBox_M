@@ -17,7 +17,7 @@ const mainPrefix = prefixes[0];
 
 
 // ==================== 常量 ====================
-const DEFAULT_TEMPLATE = `<b>📊 TeleBox 运行状态</b>
+const DEFAULT_TEMPLATE = `<b>📊 TeleBox-Next 运行状态</b>
 <b>🏠 主机信息</b>
 • <b>主机名:</b> <code>{hostname}</code>
 • <b>平台:</b> <code>{platform} {arch}</code>

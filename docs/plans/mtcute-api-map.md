@@ -59,7 +59,7 @@ await msg.edit({ text: "plain text" });
 
 - `cmdHandlers` / `listenMessageHandler` 收到的参数类型是 **`MessageContext`**(from `@mtcute/dispatcher`),不是裸 `Message`。
 - `MessageContext extends Message`,额外带:`.edit()`、`.delete()`、`.replyText()`、`.replyMedia()`、`.answerText()`、`.getReplyTo()`、`.react()`、`.pin()`、`.forwardTo()`、`.copy()`。裸 `Message` 没有这些方法,所以契约必须用 `MessageContext`。
-- TeleBox 自定义 `.deleteWithDelay(delay, throw?)` / `.safeDelete({revoke?})` 由 `src/hook/patches/telegram.patch.ts` 挂到 `MessageContext.prototype`,类型在 `src/hook/types/telegram.d.ts` 用 `declare module "@mtcute/dispatcher"` 增广。
+- TeleBox-Next 自定义 `.deleteWithDelay(delay, throw?)` / `.safeDelete({revoke?})` 由 `src/hook/patches/telegram.patch.ts` 挂到 `MessageContext.prototype`,类型在 `src/hook/types/telegram.d.ts` 用 `declare module "@mtcute/dispatcher"` 增广。
 - `msg.message`(gramjs 文本)→ `msg.text`;`msg.getReplyMessage()` → `msg.getReplyTo()`。
 
 ## 方法映射(高频)

@@ -1,4 +1,4 @@
-# TeleBox Mtcute 迁移状态追踪
+# TeleBox-Next Mtcute 迁移状态追踪
 
 本文件由 mtcute 健康检查 cron 维护。运行逻辑：
 1. 读取本文件，找出第一项 `[ ] pending` 任务（按优先级 🔴→🟡→🟢，同优先级按编号）。
@@ -22,7 +22,7 @@
   - 已完成：对比 teleproto 版 logger.ts，mtcute 版此前已包含 PERSISTENT/HISTORY 降级、5 分钟/通道速率限制、downgradeLastLogged 有界驱逐、通道间隙断路器处理（channelId 提取已补齐 `fetching difference for <id>` 与 `updates (\d{8,})` 模式，比 teleproto 更新）。本次补齐 teleproto 在 logger 之外的两项增强：`src/index.ts` (1) 新增全局 axios 代理支持（读取 HTTP_PROXY/HTTPS_PROXY/NO_PROXY 环境变量，parseProxy 后写入 axios.defaults.proxy），(2) 全局错误处理器改从 `process.exit(1)` 退出改为只记录 `logger.error` 不退出——避免单个未捕获 rejection 直接崩溃整个进程（对齐 teleproto commit 47d0798）。`tsc --noEmit` 通过（exit 0）。
 - [x] 6. TeleBox_Plugins 新增插件迁移 (6个) — fbi、music_hub、auto_sign、codex_image、kitt、netease
   - 已完成：6 个插件中 music_hub、codex_image、kitt、netease 此前已是 mtcute 原生版（无 teleproto 引用，tsc 通过）。本次补齐缺失的两个：
-    - `fbi`：teleproto 源在 /root/TeleBox_Plugins/fbi/fbi.ts（仅存在于 teleproto 插件仓库）。用 mtcute 原生 API 完整改写后新增至 TeleBox_M_Plugins/fbi/fbi.ts：`getDialogs`→`client.iterDialogs` 异步迭代、`iterMessages`→`client.getHistory`、`getEntity`→`client.getChat`、`msg.edit/sendMessage`→`msg.edit`/`client.sendText`+`client.editMessage({chatId,message})`、`deleteMessages`→`client.deleteMessagesById`、`Api.Message`→mtcute `MessageContext`/`Chat`/`User`；XSS 转义改用 `@utils/htmlEscape`；复用 `safeGetReplyMessage`、`getGlobalClient`、logger；保留 `setup()` 初始化 DB 与 `cleanup()` 定时器清理（防 reload 泄漏）。`tsc --noEmit` 对 6 个插件全部通过（exit 0）。
+    - `fbi`：teleproto 源在 /root/TeleBox_Plugins/fbi/fbi.ts（仅存在于 teleproto 插件仓库）。用 mtcute 原生 API 完整改写后新增至 TeleBox-Next_Plugins/fbi/fbi.ts：`getDialogs`→`client.iterDialogs` 异步迭代、`iterMessages`→`client.getHistory`、`getEntity`→`client.getChat`、`msg.edit/sendMessage`→`msg.edit`/`client.sendText`+`client.editMessage({chatId,message})`、`deleteMessages`→`client.deleteMessagesById`、`Api.Message`→mtcute `MessageContext`/`Chat`/`User`；XSS 转义改用 `@utils/htmlEscape`；复用 `safeGetReplyMessage`、`getGlobalClient`、logger；保留 `setup()` 初始化 DB 与 `cleanup()` 定时器清理（防 reload 泄漏）。`tsc --noEmit` 对 6 个插件全部通过（exit 0）。
     - `auto_sign`（自动签到）：其 teleproto 对应实现为 `checkin/checkin.ts`（commit a909490「自动签到插件 (#240)」），该 mtcute 版 `checkin/checkin.ts` 此前已存在并迁移完成，命令为 `.qd`。故 6 个新增插件全部就位。
 - [x] 7. TeleBox_Plugins 安全修复同步 — exec→execFile 防注入、XSS 转义、缓存限制、清理方法、生命周期管理、FLOOD_WAIT 处理
   - 已完成（核心命令注入修复）：对比 teleproto 版安全修复提交（2053f03 yt-dlp、c504b74 tts/t、c0c751b openlist、62c206c convert、2c5301d gif、05fdb33 speedlink、417e562 dig/service、1edb3bd qr），将 mtcute 插件仓库中所有「用户输入流入 shell 字符串」的 `exec()` 调用改写为 `execFile()` + 参数数组（shell:false，无 shell 插值），从根本上杜绝命令注入：
@@ -32,9 +32,9 @@
     - 已验证 convert、speedlink、gif、qr、dig、service 此前在 mtcute 版已使用 execFile/spawn 参数数组，毋需改动。
     - 经 `tsc --noEmit` 对三个改动文件类型检查通过（无错误）。
   - 说明：缓存限制 / cleanup() / 生命周期 / FLOOD_WAIT 类修复（teleproto 82ed0e3 eat/clean_member、b1d1f51 quote、a9de9a1 aban、1fa... paolu、798c0d2 lifecycle 等）主要落在任务 #12/#13（功能修复 / 架构改进）范畴，本任务聚焦最高危的命令注入，已同步完成。
-- [x] 8. 补充缺失插件 (fbi → TeleBox_M_Plugins) — fbi 仅存在于 TeleBox_Plugins，需完整迁移
-  - 已完成：随任务 #6 一并完成。fbi 已用 mtcute 原生 API 改写并新增至 TeleBox_M_Plugins/fbi/fbi.ts，`tsc --noEmit` 通过。
-- [x] 9. telebox_mtcute 核心框架同步 — generationContext、pluginManager、runtimeManager、logger 等核心文件
+- [x] 8. 补充缺失插件 (fbi → TeleBox-Next_Plugins) — fbi 仅存在于 TeleBox_Plugins，需完整迁移
+  - 已完成：随任务 #6 一并完成。fbi 已用 mtcute 原生 API 改写并新增至 TeleBox-Next_Plugins/fbi/fbi.ts，`tsc --noEmit` 通过。
+- [x] 9. telebox-next 核心框架同步 — generationContext、pluginManager、runtimeManager、logger 等核心文件
   - 已完成：逐项对比 teleproto 与 mtcute 四个核心文件。`generationContext.ts` 与 `pluginManager.ts` 此前已用 mtcute 原生 API（logger、Dispatcher、Proxy 别名、并行 setup）改写，且比 teleproto 更完善（console.* → logger、teleproto 事件 → mtcute Dispatcher）。`logger.ts` 此前已含 PERSISTENT/HISTORY 降级、速率限制、有界驱逐、通道间隙断路器（比 teleproto 更新），无需改动。
   - 唯一缺失项：`runtimeManager.ts` 的**连接断开看门狗**（客户端持续离线 30s 后自动整代 runtime 重载，teleproto 版在 buildRuntime 中通过 gramjs `UpdateConnectionState` 事件实现）。mtcute 无该事件类，改用 mtcute 原生 `client.onConnectionState`（`Emitter<ConnectionState>`，状态 offline/connecting/updating/connected）改写：offline 时安排 30s 后 `reloadRuntime()`，connected 时取消；并通过 `context.trackDisposable` 在卸载时 `.remove()` 监听器并清除定时器，防止 reload 泄漏。随 commit 86a9be2 提交本体仓库。`tsc --noEmit` 对 runtimeManager 无新增报错（本体其余 agent.ts 既有报错与本任务无关，已确认在干净工作树下同样存在）。核心框架同步任务完成。
 
@@ -73,4 +73,4 @@
     - `tsconfig.json`：**无需同步**——mtcute 版已含额外的 `@mtcute/html-parser` → `utils/html` 路径别名，比 teleproto 版更完整。
     - `.nvmrc`/`.npmrc`：两版一致（`v24` / `legacy-peer-deps=true`），无需改动。
     - `config.json`/`.env-sample`：差异仅为本机会话凭据与 `_switchSessionPath`，属运行态数据（config.json 已被 .gitignore 忽略），非可同步配置。
-  - 本轮实际提交：删除 `ecosystem.config.js`（commit 1d6a667，已 push 到 TeleBox_M）。`tsc --noEmit` 全仓 0 错误、agent.ts 0 错误。任务 #15 完成，15 项迁移全部 done。
+  - 本轮实际提交：删除 `ecosystem.config.js`（commit 1d6a667，已 push 到 TeleBox-Next）。`tsc --noEmit` 全仓 0 错误、agent.ts 0 错误。任务 #15 完成，15 项迁移全部 done。

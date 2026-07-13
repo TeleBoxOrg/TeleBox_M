@@ -1,7 +1,7 @@
 import "@mtcute/dispatcher";
 
 /**
- * 扩展 mtcute 的 MessageContext，添加 TeleBox 自定义的便捷删除方法。
+ * 扩展 mtcute 的 MessageContext，添加 TeleBox-Next 自定义的便捷删除方法。
  *
  * 这些方法由 src/hook/patches/telegram.patch.ts 在运行时挂到
  * MessageContext.prototype 上。命令 handler 收到的就是 MessageContext，

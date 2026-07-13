@@ -96,7 +96,7 @@ function actorFromMessage(msg: MessageContext): string {
   return String(senderId ?? chatId ?? "unknown");
 }
 
-const helpText = `<b>TeleBox Leech V1</b>
+const helpText = `<b>TeleBox-Next Leech V1</b>
 
 <code>${mainPrefix}leech login</code> / <code>${mainPrefix}leech session</code>
   检查当前 Telegram session / Check current Telegram session.

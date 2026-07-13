@@ -1,4 +1,4 @@
-// TeleBox Agent (mtcute) — 平台上适配层
+// TeleBox-Next Agent (mtcute) — 平台上适配层
 // 所有业务逻辑在 @utils/agentCore.ts 中共享；此文件仅定义 mtcute 专属的 TG API 适配。
 
 import import_fs = require("fs");

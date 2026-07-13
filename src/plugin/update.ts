@@ -49,7 +49,7 @@ function saveAutoUpdateState(state: AutoUpdateState): void {
 // ── Git helpers ────────────────────────────────────────────────────────
 // Inject identity so git pull (which may create merge commits) doesn't fail
 // on machines without global git config. Synced from teleproto 5ba6a97.
-const GIT_USER_NAME = "TeleBox Auto-Update";
+const GIT_USER_NAME = "TeleBox-Next Auto-Update";
 const GIT_USER_EMAIL = "telebox@users.noreply.github.com";
 
 async function gitExec(args: string[]): Promise<{ stdout: string; stderr: string }> {
@@ -295,8 +295,8 @@ async function autoUpdatePlugins(githubMsg: MessageContext): Promise<void> {
 // ── GitHubBot message parsing ──────────────────────────────────────────
 const GITHUB_CHANNEL_ID = "-1003061608291";
 
-const MAIN_REPO_PATTERN = /new commit.*to\s+(TeleBox|TeleBox_M)\s*:\s*main/i;
-const PLUGIN_REPO_PATTERN = /new commit.*to\s+(TeleBox_Plugins|TeleBox_M_Plugins)\s*:\s*main/i;
+const MAIN_REPO_PATTERN = /new commit.*to\s+(TeleBox|TeleBox_M|TeleBox-Next)\s*:\s*main/i;
+const PLUGIN_REPO_PATTERN = /new commit.*to\s+(TeleBox_Plugins|TeleBox_M_Plugins|TeleBox-Next_Plugins)\s*:\s*main/i;
 
 class UpdatePlugin extends Plugin {
   description: string =

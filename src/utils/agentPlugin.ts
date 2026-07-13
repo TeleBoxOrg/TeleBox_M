@@ -60,7 +60,7 @@ function formatDuration(ms: number) {
   return Number.isInteger(minutes) ? `${minutes} \u5206\u949F` : `${minutes.toFixed(1)} \u5206\u949F`;
 }
 function scopeName(scope: AgentScope) {
-  return scope === "system" ? "\u7CFB\u7EDF\u7EA7" : "TeleBox";
+  return scope === "system" ? "\u7CFB\u7EDF\u7EA7" : "TeleBox-Next";
 }
 function scopeCommand(scope: AgentScope) {
   return `${mainPrefix}${scope === "system" ? "sysagent" : "agent"}`;
@@ -110,7 +110,7 @@ function helpText(scope: AgentScope, displayName = "") {
       [`${prefix} ${alias("rm", "\u5220\u9664")} <\u6587\u4EF6>`, "\u5220\u9664\u5DE5\u4F5C\u533A\u6587\u4EF6"],
       [
         scope === "telebox" ? `${prefix} ${alias("run", "\u8FD0\u884C")} <\u63D2\u4EF6\u547D\u4EE4>` : `${prefix} ${alias("sys", "\u7CFB\u7EDF")} <\u7CFB\u7EDF\u547D\u4EE4>`,
-        scope === "telebox" ? "\u901A\u8FC7 TeleBox \u8C03\u7528\u63D2\u4EF6" : "\u76F4\u63A5\u6267\u884C\u7CFB\u7EDF\u547D\u4EE4"
+        scope === "telebox" ? "\u901A\u8FC7 TeleBox-Next \u8C03\u7528\u63D2\u4EF6" : "\u76F4\u63A5\u6267\u884C\u7CFB\u7EDF\u547D\u4EE4"
       ]
     ]),
     menuSection("\u914D\u7F6E", [
@@ -122,7 +122,7 @@ function helpText(scope: AgentScope, displayName = "") {
       [`${prefix} ${alias("perms", "\u6743\u9650")}`, "\u67E5\u770B\u6743\u9650\u4ECB\u7EED"],
       [
         `${other} <\u9700\u6C42>`,
-        `\u5207\u6362\u5230${scope === "system" ? "TeleBox \u667A\u80FD\u4F53" : "\u7CFB\u7EDF\u667A\u80FD\u4F53"}\u667A\u80FD\u4F53`
+        `\u5207\u6362\u5230${scope === "system" ? "TeleBox-Next \u667A\u80FD\u4F53" : "\u7CFB\u7EDF\u667A\u80FD\u4F53"}\u667A\u80FD\u4F53`
       ]
     ]),
     menuSection("\u914D\u7F6E AI \u6A21\u578B", [
@@ -471,7 +471,7 @@ ${tgBlockquote(`${scopeCommand(scope)} <\u9700\u6C42>`)}`
     await showHtmlMessage(
       msg,
       [
-        tgBold("\u53EF\u8C03\u7528 TeleBox \u63D2\u4EF6"),
+        tgBold("\u53EF\u8C03\u7528 TeleBox-Next \u63D2\u4EF6"),
         tgHtmlBlockquote(rows.join("\n") || "\u6682\u65E0\u53EF\u8C03\u7528\u63D2\u4EF6\u3002", true)
       ].join("\n")
     );
@@ -587,7 +587,7 @@ ${tgBlockquote(`${scopeCommand(scope)} <\u9700\u6C42>`)}`
     await showHtmlMessage(
       msg,
       scope === "telebox" ? [
-        tgBold("TeleBox \u9879\u76EE\u6A21\u5F0F\u6743\u9650"),
+        tgBold("TeleBox-Next \u9879\u76EE\u6A21\u5F0F\u6743\u9650"),
         tgBlockquote(
           [
             `\u9879\u76EE\u6839\u76EE\u5F55\uFF1A${process.cwd()}`,
@@ -601,7 +601,7 @@ ${tgBlockquote(`${scopeCommand(scope)} <\u9700\u6C42>`)}`
         tgBold("\u7CFB\u7EDF\u7EA7\u6A21\u5F0F\u6743\u9650"),
         tgBlockquote(
           [
-            "\u7EE7\u627F\u5F53\u524D TeleBox/Node \u8FDB\u7A0B\u7684\u64CD\u4F5C\u7CFB\u7EDF\u6743\u9650\u3002",
+            "\u7EE7\u627F\u5F53\u524D TeleBox-Next/Node \u8FDB\u7A0B\u7684\u64CD\u4F5C\u7CFB\u7EDF\u6743\u9650\u3002",
             "\u53EF\u4F7F\u7528\u7EDD\u5BF9\u8DEF\u5F84\u548C\u7CFB\u7EDF\u547D\u4EE4\uFF0C\u4F46\u4E0D\u4F1A\u7ED5\u8FC7 UAC\u3001\u6587\u4EF6 ACL \u6216\u7CFB\u7EDF\u6743\u9650\u3002",
             "\u9700\u8981\u7BA1\u7406\u5458\u6743\u9650\u65F6\uFF0C\u5E94\u4EE5\u7BA1\u7406\u5458\u8EAB\u4EFD\u542F\u52A8 TeleBox\u3002"
           ].join("\n"),

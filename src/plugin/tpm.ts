@@ -25,7 +25,7 @@ const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
 const MAX_MESSAGE_LENGTH = 4000;
 const PLUGINS_INDEX_URL =
-  "https://raw.githubusercontent.com/TeleBoxOrg/TeleBox_M_Plugins/main/plugins.json";
+  "https://raw.githubusercontent.com/TeleBoxOrg/TeleBox-Next_Plugins/main/plugins.json";
 const REQUEST_TIMEOUT_MS = 20000;
 const MAX_RETRIES = 4;
 const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
@@ -1081,7 +1081,7 @@ async function search(msg: MessageContext) {
       `• <code>${mainPrefix}tpm rm [名称]</code> 卸载\n` +
       `• <code>${mainPrefix}tpm rm all</code> 清空`;
 
-    const repoLink = `\n🔗 <b>插件仓库:</b> <a href="https://github.com/TeleBoxOrg/TeleBox_M_Plugins">TeleBox_M_Plugins</a>`;
+    const repoLink = `\n🔗 <b>插件仓库:</b> <a href="https://github.com/TeleBoxOrg/TeleBox-Next_Plugins">TeleBox-Next_Plugins</a>`;
 
     const title = keyword ? `🔍 搜索 "${htmlEscape(keyword)}" 结果` : `🔍 远程插件列表`;
     const fullMessage = [
@@ -1229,7 +1229,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
       "",
       `━━━━━━━━━━━━━━━━━`,
       `📊 总计: ${dbNames.length + notInDb.length} 个插件`,
-      "", `🔗 <b>插件仓库:</b> <a href="https://github.com/TeleBoxOrg/TeleBox_M_Plugins">TeleBox_M_Plugins</a>`,
+      "", `🔗 <b>插件仓库:</b> <a href="https://github.com/TeleBoxOrg/TeleBox-Next_Plugins">TeleBox-Next_Plugins</a>`,
     ].join("\n");
     const fullMessage = messageParts.join("\n");
     
@@ -1356,7 +1356,7 @@ export async function updateAllPlugins(msg: MessageContext): Promise<{ failedCou
 
 class TpmPlugin extends Plugin {
 
-  description: string = `<b>📦 TeleBox 插件管理器 (TPM)</b>
+  description: string = `<b>📦 TeleBox-Next 插件管理器 (TPM)</b>
 
 <b>🔍 查看插件:</b>
 • <code>${mainPrefix}tpm search</code> (别名: <code>s</code>) - 显示远程插件列表

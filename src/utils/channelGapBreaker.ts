@@ -12,7 +12,7 @@
  * as "apply immediately" instead of detecting a gap and triggering
  * another round of hopeless GetChannelDifference calls.
  *
- * Importantly, this only touches TeleBox code — the teleproto library
+ * Importantly, this only touches TeleBox-Next code — the teleproto library
  * itself is not modified.
  *
  * Note: logger is imported lazily to avoid circular dependency with logger.ts

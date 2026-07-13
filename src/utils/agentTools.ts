@@ -120,7 +120,7 @@ const TOOL_DEFINITIONS = [
     parameters: schema(
       {
         command: { type: "string" },
-        cwd: { type: "string", description: "\u5DE5\u4F5C\u76EE\u5F55\uFF1BTeleBox \u6A21\u5F0F\u4E0B\u5FC5\u987B\u4F4D\u4E8E\u9879\u76EE\u5185" },
+        cwd: { type: "string", description: "\u5DE5\u4F5C\u76EE\u5F55\uFF1BTeleBox-Next \u6A21\u5F0F\u4E0B\u5FC5\u987B\u4F4D\u4E8E\u9879\u76EE\u5185" },
         timeout_ms: { type: "integer", minimum: 1e3, maximum: 864e5 }
       },
       ["command"]
@@ -128,12 +128,12 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "list_plugins",
-    description: "\u5217\u51FA\u5F53\u524D\u53EF\u7528\u7684 TeleBox \u63D2\u4EF6\u547D\u4EE4\uFF08\u4E0D\u542B\u88AB\u5C4F\u853D\u7684\u547D\u4EE4\uFF09\u3002\u60F3\u7528\u67D0\u4E2A\u80FD\u529B\u4F46\u4E0D\u786E\u5B9A\u547D\u4EE4\u540D\u65F6\u5148\u8C03\u7528\u5B83\uFF0C\u518D\u7528 run_plugin \u6267\u884C\u3002",
+    description: "\u5217\u51FA\u5F53\u524D\u53EF\u7528\u7684 TeleBox-Next \u63D2\u4EF6\u547D\u4EE4\uFF08\u4E0D\u542B\u88AB\u5C4F\u853D\u7684\u547D\u4EE4\uFF09\u3002\u60F3\u7528\u67D0\u4E2A\u80FD\u529B\u4F46\u4E0D\u786E\u5B9A\u547D\u4EE4\u540D\u65F6\u5148\u8C03\u7528\u5B83\uFF0C\u518D\u7528 run_plugin \u6267\u884C\u3002",
     parameters: schema({})
   },
   {
     name: "run_plugin",
-    description: "\u8C03\u7528\u4E00\u4E2A TeleBox \u63D2\u4EF6\u547D\u4EE4\u3002\u3002command \u4E0D\u5E26\u524D\u7F00\uFF0C\u4F8B\u5982 `ping` \u6216 `ssr status`\uFF1B\u53EF\u7528 run_plugin \u8C03\u7528\u7684\u80FD\u529B\u8986\u76D6\u539F\u751F\u5DE5\u5177\u4E4B\u5916\u7684\u4E1A\u52A1\u3002\u7981\u6B62\u9012\u5F52\u8C03\u7528 agent/sysagent/ai/exec\u3002",
+    description: "\u8C03\u7528\u4E00\u4E2A TeleBox-Next \u63D2\u4EF6\u547D\u4EE4\u3002\u3002command \u4E0D\u5E26\u524D\u7F00\uFF0C\u4F8B\u5982 `ping` \u6216 `ssr status`\uFF1B\u53EF\u7528 run_plugin \u8C03\u7528\u7684\u80FD\u529B\u8986\u76D6\u539F\u751F\u5DE5\u5177\u4E4B\u5916\u7684\u4E1A\u52A1\u3002\u7981\u6B62\u9012\u5F52\u8C03\u7528 agent/sysagent/ai/exec\u3002",
     parameters: schema({ command: { type: "string" } }, ["command"])
   },
   {
@@ -182,7 +182,7 @@ function resolveAgentPath(context: RuntimeContext, rawPath: unknown, fallback = 
   }
   const resolved = import_path.resolve(base, requested || ".");
   if (context.scope === "telebox" && !within(context.projectRoot ?? ".", resolved) && !within(workspaceDir(context), resolved)) {
-    throw new Error("TeleBox 智能体不能访问项目目录以外的路径；请使用 .sysagent 执行系统级任务");
+    throw new Error("TeleBox-Next 智能体不能访问项目目录以外的路径；请使用 .sysagent 执行系统级任务");
   }
   return resolved;
 }
@@ -275,7 +275,7 @@ function assertCommandAllowed(command: string, scope: AgentScope) {
     /\b(?:rm|rmdir)\b[^\r\n]*(?:-rf|-fr|\/s)\b/i
   ];
   if (dangerous.some((pattern) => pattern.test(command))) {
-    throw new Error("\u8BE5\u547D\u4EE4\u8D85\u51FA TeleBox \u9879\u76EE\u6A21\u5F0F\u7684\u5B89\u5168\u8FB9\u754C\uFF1B\u8BF7\u6539\u7528 .sysagent \u660E\u786E\u6267\u884C\u7CFB\u7EDF\u7EA7\u4EFB\u52A1");
+    throw new Error("\u8BE5\u547D\u4EE4\u8D85\u51FA TeleBox-Next \u9879\u76EE\u6A21\u5F0F\u7684\u5B89\u5168\u8FB9\u754C\uFF1B\u8BF7\u6539\u7528 .sysagent \u660E\u786E\u6267\u884C\u7CFB\u7EDF\u7EA7\u4EFB\u52A1");
   }
 }
 function stripPluginPrefix(commandLine: string) {

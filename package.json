@@ -1,7 +1,7 @@
 {
-  "name": "telebox",
+  "name": "telebox-next",
   "version": "0.2.8",
-  "description": "TeleBox - A Telegram bot framework built on mtcute (TypeScript)",
+  "description": "TeleBox-Next - Telegram UserBot framework on mtcute (TypeScript)",
   "scripts": {
     "start": "node scripts/run-tsx.cjs ./src/index.ts",
     "tpm": "node scripts/run-tsx.cjs ./src/plugin/tpm.ts",
@@ -9,22 +9,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TiaraBasori/TeleBox_mtcute.git"
+    "url": "git+https://github.com/TeleBoxOrg/TeleBox-Next.git"
   },
   "keywords": [
     "telegram",
     "bot",
     "mtcute",
-    "telebox",
-    "typescript"
+    "typescript",
+    "telebox-next",
+    "TeleBox-Next",
+    "userbot"
   ],
   "author": "TiaraBasori <mintabyss233@gmail.com>",
   "license": "LGPL-2.1-only",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/TiaraBasori/TeleBox_mtcute/issues"
+    "url": "https://github.com/TeleBoxOrg/TeleBox-Next/issues"
   },
-  "homepage": "https://github.com/TiaraBasori/TeleBox_mtcute#readme",
+  "homepage": "https://github.com/TeleBoxOrg/TeleBox-Next#readme",
   "engines": {
     "node": "24.x"
   },

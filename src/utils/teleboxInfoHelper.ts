@@ -41,10 +41,10 @@ function readAppName(): string {
     const userConfig = path.join(process.cwd(), "config.json");
     const rawJson = fs.readFileSync(userConfig, "utf-8");
     const name = safeJsonParse<{ app_name?: string }>(rawJson);
-    return name?.app_name || `TeleBox ${readVersion()}`;
+    return name?.app_name || `TeleBox-Next ${readVersion()}`;
   } catch (error: unknown) {
     logger.error("无法读取config.json,", error);
-    return `TeleBox ${readVersion()}`;
+    return `TeleBox-Next ${readVersion()}`;
   }
 }
 

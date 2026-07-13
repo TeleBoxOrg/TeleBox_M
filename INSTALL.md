@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📋 TeleBox 安装指南
+# 📋 TeleBox-Next 安装指南
 
 > 💡 你是什么也不懂的小白吗？查看如何使用我们的 [一键部署脚本](https://github.com/TeleBoxOrg/TeleBox_Scripts)
 
@@ -12,7 +12,7 @@
 
 ## 🎯 项目简介
 
-[**TeleBox**](https://github.com/TeleBoxOrg/TeleBox_M) 是基于 **Node.js** 与 **TypeScript** 构建的现代化 Telegram UserBot 开发框架，提供强大的插件系统和丰富的功能模块。
+[**TeleBox-Next**](https://github.com/TeleBoxOrg/TeleBox-Next) 是基于 **Node.js** 与 **TypeScript** 构建的现代化 Telegram UserBot 开发框架，提供强大的插件系统和丰富的功能模块。
 
 ## 🚀 部署指南
 
@@ -88,8 +88,8 @@ mkdir -p ~/telebox
 # 📂 进入项目目录
 cd ~/telebox
 
-# 🔄 克隆 TeleBox 项目
-git clone https://github.com/TeleBoxOrg/TeleBox_M.git .
+# 🔄 克隆 TeleBox-Next 项目
+git clone https://github.com/TeleBoxOrg/TeleBox-Next.git .
 ```
 
 **📋 目录结构：**
@@ -132,7 +132,7 @@ npm install
 # 📂 确保在项目目录
 cd ~/telebox
 
-# 🚀 启动 TeleBox
+# 🚀 启动 TeleBox-Next
 npm start
 ```
 
@@ -171,7 +171,7 @@ npm start
    ```
    [INFO] - [Signed in successfully as xxx]
    ```
-   > 🎉 看到此消息表示登录成功，TeleBox 正在运行
+   > 🎉 看到此消息表示登录成功，TeleBox-Next 正在运行
    
    > 💡 **接下来：** 现在可以在 Telegram 中向自己发送命令测试（如 `.help`），确认后按 `CTRL+C` 停止，然后继续步骤 6 进行生产环境部署
 
@@ -189,7 +189,7 @@ npm start
 npm install -g pm2
 ```
 
-**🚀 启动 TeleBox 服务：**
+**🚀 启动 TeleBox-Next 服务：**
 
 ```bash
 # 使用 PM2 启动服务
@@ -328,12 +328,12 @@ pm2 list
 
 ## 🎉 **部署完成**
 
-**TeleBox 现在已成功部署并运行！**
+**TeleBox-Next 现在已成功部署并运行！**
 
-[![返回主页](https://img.shields.io/badge/🏠_返回主页-README.md-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/README.md)
+[![返回主页](https://img.shields.io/badge/🏠_返回主页-README.md-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox-Next/blob/main/README.md)
 
 
 
-如有问题，请[**🆘 问题反馈**](https://github.com/TeleBoxOrg/TeleBox_M/issues)
+如有问题，请[**🆘 问题反馈**](https://github.com/TeleBoxOrg/TeleBox-Next/issues)
 
 </div>

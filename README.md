@@ -1,17 +1,17 @@
 <div align="center">
 
-# 🚀 TeleBox
+# 🚀 TeleBox-Next
 
 [![License](https://img.shields.io/badge/License-LGPL%202.1-blue.svg?style=for-the-badge)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-24.x-green.svg?style=for-the-badge&logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Version](https://img.shields.io/badge/Version-0.2.8-orange.svg?style=for-the-badge)](CHANGELOG.md)
 
-**现代化 Telegram UserBot 开发框架**
+**TeleBox-Next — 基于 mtcute 的下一代 Telegram UserBot 框架**
 
 _基于 Node.js 和 TypeScript 构建，提供强大的插件系统与丰富的功能模块_
 
-[📖 快速开始](#-快速开始) • [🔌 插件生态](#-插件生态) • [🛠️ 开发指南](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/TELEBOX_DEVELOPMENT.md) • [📚 文档](#-相关链接)
+[📖 快速开始](#-快速开始) • [🔌 插件生态](#-插件生态) • [🛠️ 开发指南](https://github.com/TeleBoxOrg/TeleBox-Next/blob/main/TELEBOX_DEVELOPMENT.md) • [📚 文档](#-相关链接)
 
 </div>
 
@@ -84,7 +84,7 @@ sudo 权限分配和用户管理
 <summary><b>📁 点击展开项目结构</b></summary>
 
 ```
-📦 TeleBox/
+📦 TeleBox-Next/
 ├── 🎯 src/                     # 核心源代码
 │   ├── 🚪 index.ts            # 应用入口点
 │   ├── 🔌 plugin/             # 内置插件目录
@@ -305,7 +305,7 @@ abstract class Plugin {
 
 <div align="center">
 
-[![Plugin Repository](https://img.shields.io/badge/🔌_插件仓库-TeleBox__M__Plugins-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M_Plugins)
+[![Plugin Repository](https://img.shields.io/badge/🔌_插件仓库-TeleBox__M__Plugins-blue?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox-Next_Plugins)
 
 </div>
 
@@ -334,7 +334,7 @@ abstract class Plugin {
 
 ### 📥 **安装部署**
 
-[![安装指南](https://img.shields.io/badge/📋_完整安装指南-点击查看-green?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/INSTALL.md)
+[![安装指南](https://img.shields.io/badge/📋_完整安装指南-点击查看-green?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox-Next/blob/main/INSTALL.md)
 
 </div>
 
@@ -388,16 +388,16 @@ npm run dev
 <tr>
 <td align="center" width="20%">
 
-[![主仓库](https://img.shields.io/badge/📦_主仓库-TeleBox_M-blue?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_M)
+[![主仓库](https://img.shields.io/badge/📦_主仓库-TeleBox-Next-blue?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox-Next)
 
-[![插件仓库](https://img.shields.io/badge/🔌_插件仓库-TeleBox__M__Plugins-green?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_M_Plugins)
+[![插件仓库](https://img.shields.io/badge/🔌_插件仓库-TeleBox__M__Plugins-green?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox-Next_Plugins)
 
 </td>
 <td align="center" width="20%">
 
-[![安装指南](https://img.shields.io/badge/📋_安装指南-INSTALL.md-orange?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox_M/blob/main/INSTALL.md)
+[![安装指南](https://img.shields.io/badge/📋_安装指南-INSTALL.md-orange?style=for-the-badge)](https://github.com/TeleBoxOrg/TeleBox-Next/blob/main/INSTALL.md)
 
-[![问题反馈](https://img.shields.io/badge/🆘_问题反馈-Issues-red?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox_M/issues)
+[![问题反馈](https://img.shields.io/badge/🆘_问题反馈-Issues-red?style=for-the-badge&logo=github)](https://github.com/TeleBoxOrg/TeleBox-Next/issues)
 
 </td>
 </tr>
@@ -415,10 +415,10 @@ npm run dev
 
 ---
 
-### 🎯 **TeleBox**
+### 🎯 **TeleBox-Next**
 
 _让 Telegram UserBot 开发更简单、更强大_
 
-<sub>Made with ❤️ by TeleBox Team</sub>
+<sub>Made with ❤️ by TeleBox-Next Team</sub>
 
 </div>

@@ -16,7 +16,7 @@
 - **相关提交**：
   - `feat(update): use process exit instead of soft reload after update`
   - `feat(tpm): use process exit instead of soft reload after update`
-- **迁移建议**：确保使用 PM2 管理 TeleBox 进程，或配置其他进程监控方案
+- **迁移建议**：确保使用 PM2 管理 TeleBox-Next 进程，或配置其他进程监控方案
 
 ### 2. GenerationContext 生命周期系统引入
 - **变更内容**：所有插件和运行时组件现在受 `GenerationContext` 管理，支持优雅的资源清理和中止信号
@@ -117,7 +117,7 @@
 
 ## 🔌 插件系统增强
 
-### TPM（TeleBox Plugin Manager）改进
+### TPM（TeleBox-Next Plugin Manager）改进
 #### 安装与状态管理
 - 防止动态内容破坏 HTML 格式
 - 优化消息分页显示
@@ -259,7 +259,7 @@
 
 ### 版本显示改进
 - 添加共享显示版本格式化器
-- help 和 status 使用格式化的 TeleBox 显示版本
+- help 和 status 使用格式化的 TeleBox-Next 显示版本
 
 ### Update 命令增强
 - 自动检测 git remote 和分支，支持任意安装方式
@@ -342,7 +342,7 @@ npm install
 # 安装 PM2
 npm install -g pm2
 
-# 启动 TeleBox
+# 启动 TeleBox-Next
 pm2 start "npm start" --name telebox
 
 # 保存配置并设置开机自启
@@ -404,11 +404,11 @@ module.exports = {
 
 ## 🙏 致谢
 
-感谢所有为 TeleBox 0.2.8 做出贡献的开发者！
+感谢所有为 TeleBox-Next 0.2.8 做出贡献的开发者！
 
 ---
 
-**完整提交历史**：[v0.2.7...v0.2.8](https://github.com/TeleBoxOrg/TeleBox_M/compare/e39fb2b...04b715a)
+**完整提交历史**：[v0.2.7...v0.2.8](https://github.com/TeleBoxOrg/TeleBox-Next/compare/e39fb2b...04b715a)
 
 ---
 
