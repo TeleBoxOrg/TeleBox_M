@@ -296,7 +296,7 @@ async function autoUpdatePlugins(githubMsg: MessageContext): Promise<void> {
 const GITHUB_CHANNEL_ID = "-1003061608291";
 
 const MAIN_REPO_PATTERN = /new commit.*to\s+(TeleBox|TeleBox_M|TeleBox-Next)\s*:\s*main/i;
-const PLUGIN_REPO_PATTERN = /new commit.*to\s+(TeleBox_Plugins|TeleBox_M_Plugins|TeleBox-Next_Plugins)\s*:\s*main/i;
+const PLUGIN_REPO_PATTERN = /new commit.*to\s+(TeleBox_Plugins|TeleBox-Next_Plugins|TeleBox-Next_Plugins)\s*:\s*main/i;
 
 class UpdatePlugin extends Plugin {
   description: string =
