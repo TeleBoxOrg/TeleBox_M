@@ -7,12 +7,12 @@ import { cronManager } from "./cronManager";
 import { logger } from "./logger";
 import { getErrorMessage } from "./errorHelpers";
 import type { TeleBoxRuntime } from "./runtimeManager";
-
-/** Lazy resolve to avoid circular import with runtimeManager. */
-function getCurrentGen(): number {
-  const { getCurrentGeneration } = require("./runtimeManager") as typeof import("./runtimeManager");
-  return getCurrentGeneration();
-}
+import {
+  getCurrentGeneration,
+  getGlobalClient,
+  reloadRuntime,
+  tryGetCurrentRuntime,
+} from "./runtimeAccess";
 
 type PluginEntry = {
   original?: string;
@@ -29,8 +29,6 @@ const USER_PLUGIN_PATH = path.join(process.cwd(), "plugins");
 const DEFAUTL_PLUGIN_PATH = path.join(process.cwd(), "src", "plugin");
 const PROJECT_ROOT = process.cwd();
 const CACHE_PURGE_EXCLUDE = new Set<string>([
-  path.resolve(PROJECT_ROOT, "src/utils/globalClient.ts"),
-  path.resolve(PROJECT_ROOT, "src/utils/globalClient.js"),
   path.resolve(PROJECT_ROOT, "src/utils/pluginManager.ts"),
   path.resolve(PROJECT_ROOT, "src/utils/pluginManager.js"),
   path.resolve(PROJECT_ROOT, "src/utils/pluginBase.ts"),
@@ -39,6 +37,8 @@ const CACHE_PURGE_EXCLUDE = new Set<string>([
   path.resolve(PROJECT_ROOT, "src/utils/cronManager.js"),
   path.resolve(PROJECT_ROOT, "src/utils/runtimeManager.ts"),
   path.resolve(PROJECT_ROOT, "src/utils/runtimeManager.js"),
+  path.resolve(PROJECT_ROOT, "src/utils/runtimeAccess.ts"),
+  path.resolve(PROJECT_ROOT, "src/utils/runtimeAccess.js"),
   // Logger overrides console.* once at startup. Purging it on reload caused
   // the new Logger class to capture the already-wrapped console.log as
   // "original", stacking another wrapper every reload (visible as nested
@@ -329,7 +329,6 @@ async function dealCommandPlugin(
   // mtcute, a message is in Saved Messages when its chat id equals our own user
   // id. Compare against the self id cached on the runtime at login (avoids an
   // extra getMe() round-trip per message).
-  const { tryGetCurrentRuntime } = require("./runtimeManager") as typeof import("./runtimeManager");
   const meId = tryGetCurrentRuntime()?.meId;
   const isSavedMessage = meId != null && String(msg.chat.id) === meId;
   // gramjs `msg.out` → mtcute `msg.isOutgoing`. Only react to our own outgoing
@@ -382,7 +381,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
     const messageHandler = plugin.listenMessageHandler;
     if (messageHandler) {
       dispatcher.onNewMessage(async (msg: MessageContext) => {
-        if (runtime.generation !== getCurrentGen()) return;
+        if (runtime.generation !== getCurrentGeneration()) return;
         try {
           await messageHandler(msg);
         } catch (error: unknown) {
@@ -395,7 +394,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
         (plugin.name && listenerHandleEdited.includes(plugin.name))
       ) {
         dispatcher.onEditMessage(async (msg: MessageContext) => {
-          if (runtime.generation !== getCurrentGen()) return;
+          if (runtime.generation !== getCurrentGeneration()) return;
           try {
             await messageHandler(msg, { isEdited: true });
           } catch (error: unknown) {
@@ -412,7 +411,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
     if (Array.isArray(eventHandlers) && eventHandlers.length > 0) {
       for (const eh of eventHandlers) {
         const safeHandler = async (ctx: unknown) => {
-          if (runtime.generation !== getCurrentGen()) return;
+          if (runtime.generation !== getCurrentGeneration()) return;
           try {
             await eh.handler(ctx);
           } catch (error: unknown) {
@@ -444,10 +443,9 @@ function dealCronPlugin(runtime: TeleBoxRuntime): void {
       for (const key of keys) {
         const cronTask = cronTasks[key];
         cronManager.set(key, cronTask.cron, async () => {
-          if (runtime.signal.aborted || runtime.generation !== getCurrentGen()) return;
-          const { getGlobalClient } = require("./runtimeManager") as typeof import("./runtimeManager");
+          if (runtime.signal.aborted || runtime.generation !== getCurrentGeneration()) return;
           const client = await getGlobalClient();
-          await cronTask.handler(client);
+          await cronTask.handler(client as never);
         }, runtime.context);
       }
     }
@@ -529,11 +527,11 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
 
   // Root command router: outgoing messages → command dispatch.
   dispatcher.onNewMessage(async (msg: MessageContext) => {
-    if (runtime.generation !== getCurrentGen()) return;
+    if (runtime.generation !== getCurrentGeneration()) return;
     await dealNewMsgEvent(msg);
   });
   dispatcher.onEditMessage(async (msg: MessageContext) => {
-    if (runtime.generation !== getCurrentGen()) return;
+    if (runtime.generation !== getCurrentGeneration()) return;
     await dealEditedMsgEvent(msg);
   });
 
@@ -543,9 +541,7 @@ async function loadPluginsForRuntime(runtime: TeleBoxRuntime) {
 }
 
 async function loadPlugins(): Promise<boolean> {
-  const { reloadRuntime }: typeof import("./runtimeManager") = require("./runtimeManager");
-
-  if (isPluginLoadInProgress()) {
+    if (isPluginLoadInProgress()) {
     logger.warn(
       "[RELOAD] Skip nested plugin reload while plugins are still being required. Move loadPlugins() out of module top-level initialization."
     );
