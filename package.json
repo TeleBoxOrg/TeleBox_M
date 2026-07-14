@@ -1,6 +1,6 @@
 {
   "name": "telebox-next",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "TeleBox-Next - Telegram UserBot framework on mtcute (TypeScript)",
   "scripts": {
     "start": "node scripts/run-tsx.cjs ./src/index.ts",
