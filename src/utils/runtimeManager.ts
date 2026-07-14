@@ -187,6 +187,16 @@ async function startFreshRuntime(): Promise<TeleBoxRuntime> {
       } catch (e) {
         logger.warn("[RUNTIME] pending status deletes/reactions:", e);
       }
+      // Resume autofix steps 4-5 (update plugins + summary) if a fix was in
+      // progress before the restart.
+      try {
+        const mod = require("../plugin/autofix") as {
+          resumeAutofix?: () => Promise<void>;
+        };
+        await mod.resumeAutofix?.();
+      } catch (e) {
+        logger.warn("[RUNTIME] resume autofix:", e);
+      }
     })();
     runtime.state = "running";
     return runtime;
