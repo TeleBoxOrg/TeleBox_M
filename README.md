@@ -187,7 +187,7 @@ abstract class Plugin {
 |:----:|:----:|:----:|
 | 运行时 | Node.js | `24.x` |
 | 语言 | TypeScript | `^5.9.2` |
-| Telegram API | mtcute | `@mtcute/node ^0.30.1` |
+| Telegram API | mtcute | `@mtcute/node ^0.30.3` |
 | 数据库 | better-sqlite3 · lowdb | `^12.11.1` · `^7.0.1` |
 | 运行 | tsx | `^4.22.4` |
 | HTTP / 图像 / 工具 | axios · sharp · lodash · cron | 见 `package.json` |
