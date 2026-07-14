@@ -7,6 +7,7 @@ import {
 import { getApiConfig } from "./apiConfig";
 import { readAppName } from "./teleboxInfoHelper";
 import { logger } from "@utils/logger";
+import { patchTelegramClientHtmlCompat } from "../hook/patches/telegram.patch";
 import path from "path";
 import fs from "fs";
 
@@ -157,6 +158,13 @@ export async function createMtcuteClient(): Promise<TelegramClient> {
     }
   } catch (e: unknown) {
     logger.error("[mtcuteClient] failed to bridge log level:", e);
+  }
+
+  // Central HTML + sendFile(gramjs) compatibility for all plugins
+  try {
+    patchTelegramClientHtmlCompat(client as never);
+  } catch (e: unknown) {
+    logger.error("[mtcuteClient] html-compat patch failed:", e);
   }
 
   return client;
