@@ -1240,16 +1240,25 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
   }
 }
 
-export async function updateAllPlugins(msg: MessageContext): Promise<{ failedCount: number; statusPeerId?: any; statusMsgId?: number }> {
-  const statusMsg = await sendOrEditMessage(msg, "🔍 正在检查待更新的插件...");
-  let canEdit = true;
+export async function updateAllPlugins(
+  msg: MessageContext,
+  opts?: { silent?: boolean },
+): Promise<{ failedCount: number; statusPeerId?: any; statusMsgId?: number }> {
+  const silent = !!opts?.silent;
+  let statusMsg: MessageContext = msg;
+  let canEdit = !silent;
+  if (!silent) {
+    statusMsg = await sendOrEditMessage(msg, "🔍 正在检查待更新的插件...");
+  }
   
   try {
     const db = await getDatabase();
     const dbPlugins = Object.keys(db.data);
 
     if (dbPlugins.length === 0) {
-      await sendOrEditMessage(statusMsg, "📦 数据库中没有已安装的插件记录");
+      if (!silent) {
+        await sendOrEditMessage(statusMsg, "📦 数据库中没有已安装的插件记录");
+      }
       return { failedCount: 0, statusPeerId: statusMsg.chat?.id, statusMsgId: statusMsg.id };
     }
 
@@ -1336,19 +1345,28 @@ export async function updateAllPlugins(msg: MessageContext): Promise<{ failedCou
     }
 
     const finalText = `✅ 更新完成 (成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个)`;
-    // Snapshot peerId+msgId BEFORE reloadAndFinalize — loadPlugins() inside will
-    // destroy the old client, invalidating statusMsg's internal references.
-    const statusPeerId = statusMsg.chat.id;
+    const statusPeerId = statusMsg.chat?.id;
     const statusMsgId = statusMsg.id;
-    await reloadAndFinalize(statusMsg, finalText);
+    if (silent) {
+      try {
+        const { loadPlugins } = await import("@utils/pluginManager");
+        await loadPlugins();
+      } catch (e) {
+        logger.error("[TPM] silent reload failed:", e);
+      }
+    } else {
+      await reloadAndFinalize(statusMsg, finalText);
+    }
     logger.info(`[TPM] 更新完成。统计: 成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个`);
     return { failedCount, statusPeerId, statusMsgId };
   } catch (error: unknown) {
     logger.error("[TPM] 一键更新失败:", error);
-    try {
-      await statusMsg.edit({ text: `❌ 一键更新失败: ${htmlEscape(String(error))}` });
-    } catch (editError: unknown) {
-      logger.info(`[TPM] 错误消息编辑失败: ${editError}`);
+    if (!silent) {
+      try {
+        await statusMsg.edit({ text: `❌ 一键更新失败: ${htmlEscape(String(error))}` });
+      } catch (editError: unknown) {
+        logger.info(`[TPM] 错误消息编辑失败: ${editError}`);
+      }
     }
     return { failedCount: 1, statusPeerId: statusMsg?.chat?.id, statusMsgId: statusMsg?.id };
   }

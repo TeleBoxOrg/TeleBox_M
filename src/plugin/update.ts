@@ -273,18 +273,27 @@ async function editMsgSafe(m: MessageContext | undefined, text: string): Promise
 }
 
 // ── Auto-update for main repo ──────────────────────────────────────────
-async function autoUpdateMainRepo(githubMsg: MessageContext): Promise<void> {
-  let statusMsg: MessageContext | undefined;
+/** React ✅ on GitHubBot commit message (success signal; no chat spam). */
+async function reactSuccessOnGithubMsg(githubMsg: MessageContext): Promise<void> {
   try {
-    statusMsg = await replyAsCtx(githubMsg, "🤖 自动更新：检测到主仓库新提交，正在更新…");
-
-    // Snapshot chat.id+msgId before any blocking operation —
-    // npm_install_project_dependencies() blocks the event loop and the
-    // statusMsg object may become stale afterwards.
+    const client = await getGlobalClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const targetChatId = String((statusMsg as any).chat?.id ?? "");
-    const targetMsgId = statusMsg.id;
+    const chatId = (githubMsg as any).chat?.id ?? (githubMsg as any).chatId;
+    if (chatId == null || githubMsg.id == null) return;
+    await client.sendReaction({
+      chatId,
+      message: githubMsg.id,
+      emoji: "✅",
+    });
+    logger.info(`[auto-update] ✅ reaction on msg ${githubMsg.id}`);
+  } catch (e: unknown) {
+    logger.warn("[auto-update] ✅ reaction failed:", getErrorMessage(e) || e);
+  }
+}
 
+async function autoUpdateMainRepo(githubMsg: MessageContext): Promise<void> {
+  // Silent success: no status replies. Errors only.
+  try {
     const branchInfo = await findMainBranch();
     if (!branchInfo) {
       throw new Error("未找到可用的远程分支");
@@ -295,15 +304,14 @@ async function autoUpdateMainRepo(githubMsg: MessageContext): Promise<void> {
     await gitExec(["pull", remote, branch, "--no-rebase"]);
     npm_install_project_dependencies();
 
-    // Success — delete status message using a fresh client with retry, then restart silently.
-    await deleteStatusMessage(targetChatId, targetMsgId);
+    await reactSuccessOnGithubMsg(githubMsg);
     await executeAutoExit();
   } catch (error: unknown) {
     const errDetail = getErrorMessage(error) || String(error);
-    await editMsgSafe(statusMsg, `❌ 自动更新失败：${errDetail}`);
-    if (!statusMsg) {
-      try { await githubMsg.replyText(`❌ 自动更新失败：${errDetail}`); } catch (_) {}
-    }
+    logger.error("[auto-update] 主仓库更新失败:", errDetail);
+    try {
+      await githubMsg.replyText(`❌ 自动更新失败：${errDetail}`);
+    } catch (_) {}
   }
 }
 
@@ -315,32 +323,38 @@ async function executeAutoExit(): Promise<void> {
 // ── Auto-update for plugin repos ───────────────────────────────────────
 async function autoUpdatePlugins(githubMsg: MessageContext): Promise<void> {
   try {
-    const statusMsg = await replyAsCtx(githubMsg, "🤖 自动更新：检测到插件仓库新提交，正在更新插件…");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fallbackChatId = String((statusMsg as any).chat?.id ?? "");
-    const fallbackMsgId = statusMsg.id;
-
-    const result = await updateAllPlugins(statusMsg);
+    const result = await updateAllPlugins(githubMsg, { silent: true });
 
     if (result.failedCount === 0) {
-      const targetChatId = result.statusPeerId ?? fallbackChatId;
-      const targetMsgId = result.statusMsgId ?? fallbackMsgId;
-      await deleteStatusMessage(targetChatId, targetMsgId);
+      await reactSuccessOnGithubMsg(githubMsg);
+      return;
     }
+    try {
+      await githubMsg.replyText(`❌ 插件自动更新失败：${result.failedCount} 个插件更新失败`);
+    } catch (_) {}
   } catch (error: unknown) {
-    logger.error("[auto-update] 插件更新异常:", getErrorMessage(error) || String(error));
+    const errDetail = getErrorMessage(error) || String(error);
+    logger.error("[auto-update] 插件更新异常:", errDetail);
+    try {
+      await githubMsg.replyText(`❌ 插件自动更新失败：${errDetail}`);
+    } catch (_) {}
   }
 }
 
 // ── GitHubBot message parsing ──────────────────────────────────────────
-const GITHUB_CHANNEL_ID = "-1003061608291";
+// Any chat with GitHubBot commit posts (product channel + telebox 群绑定)
+/** Legacy product channel (no longer required; any chat with GitHubBot works). */
+const _GITHUB_CHANNEL_ID_LEGACY = "-1003061608291";
+void _GITHUB_CHANNEL_ID_LEGACY;
 const GITHUB_BOT_USER_ID = "107550100";
 const GITHUB_BOT_USERNAME = "githubbot";
 
+// Next edition only reacts to Next repos (not classic TeleBox / TeleBox-Plugins alone).
+// Accept TeleBoxOrg / TeleBoxLabs / bare names.
 const MAIN_REPO_PATTERN =
-  /new commit[\s\S]*?to\s+(?:TeleBoxOrg\/)?(TeleBox|TeleBox_M|TeleBox-Next)\s*:\s*main/i;
+  /new commit[\s\S]*?to\s+(?:(?:TeleBoxOrg|TeleBoxLabs)\/)?(TeleBox-Next)\s*:\s*main/i;
 const PLUGIN_REPO_PATTERN =
-  /new commit[\s\S]*?to\s+(?:TeleBoxOrg\/)?(TeleBox-Plugins|TeleBox_Plugins|TeleBox_M_Plugins|TeleBox-Next-Plugins|TeleBox-Next_Plugins)\s*:\s*main/i;
+  /new commit[\s\S]*?to\s+(?:(?:TeleBoxOrg|TeleBoxLabs)\/)?(TeleBox-Next-Plugins|TeleBox-Next_Plugins|TeleBox_M_Plugins)\s*:\s*main/i;
 
 function normalizeChatId(msg: MessageContext): string {
   const id = msg.chat?.id;
@@ -378,7 +392,12 @@ class UpdatePlugin extends Plugin {
         const sub = parts[1]?.toLowerCase();
         if (sub === "on") {
           saveAutoUpdateState({ enabled: true });
-          await msg.edit({ text: "✅ 自动更新已开启\n\n检测到主仓库提交时自动 git pull + 重启，检测到插件仓库提交时自动 tpm update。" });
+          await msg.edit({
+            text:
+              "✅ 自动更新已开启\n\n" +
+              "任意会话中 GitHubBot 推送 Next 仓库（TeleBox-Next / TeleBox-Next-Plugins，含 TeleBoxLabs 镜像）提交时自动更新。\n" +
+              "成功：仅在 commit 消息上 ✅；失败：回复错误。",
+          });
           return;
         }
         if (sub === "off") {
@@ -387,7 +406,9 @@ class UpdatePlugin extends Plugin {
           return;
         }
         const state = loadAutoUpdateState();
-        await msg.edit({ text: `自动更新状态：${state.enabled ? "✅ 开启" : "🔒 关闭"}\n\n使用 <code>${mainPrefix}update auto on/off</code> 切换` });
+        await msg.edit({
+          text: `自动更新状态：${state.enabled ? "✅ 开启" : "🔒 关闭"}\n\n使用 <code>${mainPrefix}update auto on/off</code> 切换`,
+        });
         return;
       }
 
@@ -400,19 +421,17 @@ class UpdatePlugin extends Plugin {
     const state = loadAutoUpdateState();
     if (!state.enabled) return;
 
-    const chatId = normalizeChatId(msg);
-    if (chatId !== GITHUB_CHANNEL_ID) return;
-
     if (!isGitHubBot(msg)) return;
 
     const text = msg.text || "";
     if (!text || !/new commit/i.test(text)) return;
 
+    const chatId = normalizeChatId(msg);
     if (PLUGIN_REPO_PATTERN.test(text)) {
-      logger.info("[auto-update] 检测到插件仓库提交，开始自动更新插件…");
+      logger.info(`[auto-update] chat=${chatId || "?"} 插件仓库提交 → silent update`);
       await autoUpdatePlugins(msg);
     } else if (MAIN_REPO_PATTERN.test(text)) {
-      logger.info("[auto-update] 检测到主仓库提交，开始自动更新…");
+      logger.info(`[auto-update] chat=${chatId || "?"} 主仓库提交 → silent update`);
       await autoUpdateMainRepo(msg);
     }
   };
