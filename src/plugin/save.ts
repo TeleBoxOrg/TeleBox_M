@@ -4,7 +4,7 @@ import type { MessageContext } from "@mtcute/dispatcher";
 import type { MtcuteFileDownloadLocation, MtcuteMessageContext } from "@utils/mtcuteTypes";
 import { thtml as html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/runtimeManager";
-import { createDirectoryInAssets, createDirectoryInTemp } from "@utils/pathHelpers";
+import { createDirectoryInAssets, createDirectoryInTemp, resolvePluginAssetFile } from "@utils/pathHelpers";
 import { JSONFilePreset } from "lowdb/node";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -87,7 +87,7 @@ class SavePlugin extends Plugin {
   name = "save";
   description = help_text;
   
-  private tempDir = createDirectoryInTemp("prometheus");
+  private tempDir = createDirectoryInTemp("save", ["prometheus"]);
   private db: Awaited<ReturnType<typeof JSONFilePreset<SaveDB>>> | null = null;
   private lastEditText: Map<string, string> = new Map();
   private chatDisplayNameCache: Map<string, string> = new Map();
@@ -371,7 +371,12 @@ class SavePlugin extends Plugin {
   
   private async initDB(): Promise<void> {
     try {
-      const dbPath = path.join(createDirectoryInAssets("prometheus"), "config.json");
+      const dbPath = resolvePluginAssetFile({
+        plugin: "save",
+        fileName: "config.json",
+        legacyDirs: ["prometheus"],
+        legacyFiles: [{ dir: "prometheus", fileName: "config.json" }],
+      });
       this.db = await JSONFilePreset<SaveDB>(dbPath, { users: {} });
     } catch (error: unknown) {
       logger.error(`初始化数据库失败:`, error);
