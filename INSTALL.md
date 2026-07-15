@@ -192,7 +192,7 @@ npm install -g pm2
 **🚀 启动 TeleBox-Next 服务：**
 
 ```bash
-# 使用 PM2 启动服务（进程名 telebox-next，与 Classic 的 telebox 区分）
+# 使用 PM2 启动服务（进程名 telebox-next，与 TeleBox 的 telebox 区分）
 pm2 start "npm start" --name telebox-next
 
 # 保存 PM2 配置

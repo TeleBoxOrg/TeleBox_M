@@ -271,7 +271,7 @@ run();
 | `sendLogDB.ts` | 发送日志数据库 |
 | `banUtils.ts` | 封禁管理工具 |
 | `cronManager.ts` | 定时任务管理器 |
-| `conversation.ts` | 对话管理器（仅 Classic 版；Next 使用 mtcute 对话 API） |
+| `conversation.ts` | 对话管理器（仅 TeleBox 版；Next 使用 mtcute 对话 API） |
 | `tlRevive.ts` | Telegram实体序列化工具 |
 | `npm_install.ts` | NPM包安装工具 |
 | `teleboxInfoHelper.ts` | 系统信息助手 |
@@ -316,7 +316,7 @@ run();
 | `status.ts` | 系统状态（PM2、版本、内存、generation） |
 | `sudo.ts` | 权限管理 |
 | `sure.ts` | 确认操作 |
-| `switch.ts` | 版本切换（Classic ↔ Next） |
+| `switch.ts` | 版本切换（TeleBox ↔ Next） |
 | `tpm.ts` | 插件包管理器 |
 | `update.ts` | 更新管理（含自动更新功能） |
 
@@ -419,7 +419,7 @@ utils/* (工具模块)
   ├── runtimeManager → Telegram客户端 + getGlobalClient()
   ├── *DB.ts → 数据库操作 (aliasDB, sudoDB, sureDB, sendLogDB)
   ├── cronManager → 定时任务
-  ├── conversation → 对话管理（仅 Classic）
+  ├── conversation → 对话管理（仅 TeleBox）
   ├── agent*.ts → AI Agent 6模块 + barrel
   ├── versionSwitch*.ts → 版本切换 5模块
   └── leech/ → 消息搬运 8模块

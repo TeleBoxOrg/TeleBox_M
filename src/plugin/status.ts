@@ -296,7 +296,7 @@ class TeleBoxSystemMonitor extends Plugin {
     });
     const startTime = Date.now();
     let template = this.db?.data?.template || DEFAULT_TEMPLATE;
-    // Migrate legacy Classic template labels after switch
+    // Migrate legacy TeleBox template labels after switch
     if (template.includes("Teleproto版本") || (template.includes("{teleproto}") && !template.includes("{mtcute}"))) {
       template = template
         .replace(/Teleproto版本/g, "mtcute版本")

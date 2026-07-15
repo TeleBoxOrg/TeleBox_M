@@ -470,7 +470,7 @@ void _GITHUB_CHANNEL_ID_LEGACY;
 const GITHUB_BOT_USER_ID = "107550100";
 const GITHUB_BOT_USERNAME = "githubbot";
 
-// Next edition only reacts to Next repos (not classic TeleBox / TeleBox-Plugins alone).
+// Next edition only reacts to Next repos (not TeleBox / TeleBox-Plugins alone).
 // Accept TeleBoxOrg / TeleBoxLabs / bare names.
 // GitHubBot: "1 new commit to …" / "2 new commits to …" (singular or plural)
 const COMMIT_NOTICE_PATTERN = /\bnew\s+commits?\b/i;
