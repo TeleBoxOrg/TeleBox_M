@@ -528,7 +528,7 @@ class UpdatePlugin extends Plugin {
           await msg.edit({
             text:
               "✅ 自动更新已开启\n\n" +
-              "任意会话中 GitHubBot 推送 Next 仓库（TeleBox-Next / TeleBox-Next-Plugins，含 TeleBoxLabs 镜像）提交时自动更新。\n" +
+              "任意会话中 GitHubBot 推送 Next 仓库（TeleBox-Next / TeleBox-Next-Plugins）提交时自动更新。\n" +
               "成功：仅在 commit 消息上 ❤️；失败：回复错误。",
           });
           return;

@@ -38,9 +38,9 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "@mtcute/convert": "^0.30.3",
-    "@mtcute/dispatcher": "^0.30.3",
-    "@mtcute/node": "^0.30.3",
+    "@mtcute/convert": "^0.31.0",
+    "@mtcute/dispatcher": "^0.31.0",
+    "@mtcute/node": "^0.31.0",
     "@vitalets/google-translate-api": "^9.2.1",
     "archiver": "^7.0.1",
     "axios": "^1.18.1",

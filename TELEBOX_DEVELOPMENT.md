@@ -430,7 +430,7 @@ utils/* (工具模块)
 - **当前版本**: 0.2.9
 - **Node.js要求**: 24.x
 - **TypeScript版本**: ^5.9.2
-- **Telegram 库版本**: @mtcute/node ^0.30.3
+- **Telegram 库版本**: @mtcute/node ^0.31.0
 - **协议**: LGPL-2.1-only
 - **仓库**: TeleBoxOrg/TeleBox-Next
 
@@ -949,8 +949,8 @@ TB_LISTENER_HANDLE_EDITED="sudo sure"
   },
   "license": "LGPL-2.1-only",
   "dependencies": {
-    "@mtcute/node": "^0.30.3",
-    "@mtcute/dispatcher": "^0.30.3",
+    "@mtcute/node": "^0.31.0",
+    "@mtcute/dispatcher": "^0.31.0",
     "dotenv": "^17.2.2",
     "cron": "^4.3.3",
     "axios": "^1.18.1",
