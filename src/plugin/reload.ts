@@ -64,29 +64,97 @@ function scheduleTrackedTimeout(
   return timer;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 const editExitMsg = async () => {
+  if (!fs.existsSync(exitFile)) return;
+  let payload: {
+    messageId?: number;
+    chatId?: unknown;
+    time?: number;
+    successText?: string;
+    isHtml?: boolean;
+  };
   try {
-    const data = fs.readFileSync(exitFile, "utf-8");
-    const { messageId, chatId, time, successText, isHtml } = JSON.parse(data);
-    const client = await getGlobalClient();
-    if (client) {
-      const elapsedMs = Date.now() - time;
-      const tmpl: string = successText || "✅ 重启完成，耗时 {elapsedMs}ms";
-      const text = tmpl.replace(/\{elapsedMs\}/g, String(elapsedMs));
+    payload = JSON.parse(fs.readFileSync(exitFile, "utf-8"));
+  } catch (e: unknown) {
+    logger.error("Failed to parse exit message file:", e);
+    try {
+      fs.unlinkSync(exitFile);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  const messageId = Number(payload.messageId);
+  // Coerce chatId to a plain string/number (never nested peer objects)
+  let chatId: string | number | undefined;
+  if (typeof payload.chatId === "string" || typeof payload.chatId === "number") {
+    chatId = payload.chatId;
+  } else if (payload.chatId && typeof payload.chatId === "object") {
+    const o = payload.chatId as { id?: unknown; chatId?: unknown; userId?: unknown };
+    if (o.id != null) chatId = String(o.id);
+    else if (o.chatId != null) chatId = String(o.chatId);
+    else if (o.userId != null) chatId = String(o.userId);
+  }
+  if (chatId == null || !Number.isFinite(messageId)) {
+    try {
+      fs.unlinkSync(exitFile);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+
+  const elapsedMs = Date.now() - (Number(payload.time) || Date.now());
+  const tmpl: string = payload.successText || "✅ 重启完成，耗时 {elapsedMs}ms";
+  const text = tmpl.replace(/\{elapsedMs\}/g, String(elapsedMs));
+  const isHtml = !!payload.isHtml;
+
+  const delays = [0, 1500, 3000, 6000, 12000];
+  let lastErr: unknown;
+  for (let i = 0; i < delays.length; i++) {
+    if (delays[i] > 0) await sleep(delays[i]);
+    try {
+      const client = await getGlobalClient();
+      if (!client) {
+        lastErr = new Error("client not ready");
+        continue;
+      }
       await client.editMessage({
         chatId,
         message: messageId,
         text: isHtml ? html(text) : text,
       });
       fs.unlinkSync(exitFile);
+      return;
+    } catch (e: unknown) {
+      lastErr = e;
     }
-  } catch (e: unknown) {
-    logger.error("Failed to edit exit message:", e);
+  }
+
+  try {
+    const client = await getGlobalClient();
+    if (client) {
+      await client.sendText(chatId, isHtml ? html(text) : text);
+    }
+  } catch (sendErr: unknown) {
+    logger.error("Failed to edit/send exit message after retries:", lastErr || sendErr);
+  }
+  try {
+    fs.unlinkSync(exitFile);
+  } catch {
+    /* ignore */
   }
 };
 
 if (fs.existsSync(exitFile)) {
-  editExitMsg().catch((e: unknown) => logger.error("Failed to handle exit message on startup:", e));
+  setTimeout(() => {
+    editExitMsg().catch((e: unknown) => logger.error("Failed to handle exit message on startup:", e));
+  }, 2000);
 }
 
 export async function executeExit(
@@ -102,18 +170,29 @@ export async function executeExit(
   const result = await msg.edit({
     text: isHtml ? html(pendingText) : pendingText,
   });
-  if (result) {
+  const messageId =
+    result && typeof result === "object" && "id" in result
+      ? Number((result as { id: number }).id)
+      : Number(msg.id);
+  const chatId =
+    (result && typeof result === "object" && "chat" in result
+      ? (result as { chat?: { id?: string | number } }).chat?.id
+      : undefined) ??
+    msg.chat?.id;
+  if (Number.isFinite(messageId) && chatId != null) {
     fs.writeFileSync(
       exitFile,
       JSON.stringify({
-        messageId: result.id,
-        chatId: result.chat.id,
+        messageId,
+        chatId: typeof chatId === "object" ? String((chatId as { id?: unknown }).id ?? chatId) : chatId,
         time: Date.now(),
         successText: options?.successText,
         isHtml,
       }),
-      "utf-8"
+      "utf-8",
     );
+  } else {
+    logger.warn("[RELOAD] executeExit: could not persist exit status peer/messageId");
   }
   process.exit(0);
 }
