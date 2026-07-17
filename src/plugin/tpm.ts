@@ -1419,10 +1419,12 @@ export async function updateAllPlugins(
     }
 
     if (updatedCount === 0 && silent) {
-      // Nothing changed, silent auto-update: skip full reload to avoid
-      // crash from unreferenced rejections during disposeRuntime.
+      // Nothing changed: skip full reload to avoid crash from
+      // unreferenced rejections during disposeRuntime.
       logger.info("[TPM] 更新跳过: 无变化，跳过 reload");
-      return { failedCount: 0, statusPeerId, statusMsgId };
+      const skipPeerId = statusMsg.chat?.id;
+      const skipMsgId = statusMsg.id;
+      return { failedCount: 0, statusPeerId: skipPeerId, statusMsgId: skipMsgId };
     }
 
     const finalText = `✅ 更新完成 (成功${updatedCount}个, 跳过${skipCount}个, 失败${failedCount}个)`;
