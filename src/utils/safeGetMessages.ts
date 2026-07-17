@@ -97,13 +97,13 @@ export async function safeGetReplyMessage(
 ): Promise<Message | undefined> {
   if (!msg) return undefined;
 
-  // MessageContext has a convenient getReplyTo()
+  // MessageContext has a convenient getReplyTo() (uses inputMessageReplyTo)
   if (typeof (msg as MessageContext).getReplyTo === "function") {
     try {
       const replied = await (msg as MessageContext).getReplyTo();
-      return replied ?? undefined;
-    } catch (e: unknown) {
-      return undefined;
+      if (replied) return replied;
+    } catch {
+      // fall through to explicit id fetch
     }
   }
 
@@ -114,6 +114,13 @@ export async function safeGetReplyMessage(
   const client = (msg as MessageContext).client;
   if (!client) return undefined;
 
-  const [replyMsg] = await safeGetMessages(client, msg.chat, { ids: [replyToMsgId] });
-  return replyMsg;
+  try {
+    // Explicit fetch by replied-to message id in the same chat
+    const [replyMsg] = await safeGetMessages(client, msg.chat.id ?? msg.chat, {
+      ids: [replyToMsgId],
+    });
+    return replyMsg;
+  } catch {
+    return undefined;
+  }
 }
