@@ -259,21 +259,12 @@ function listLocalPluginNames(): string[] {
 }
 
 /**
- * If tpm plugins.json is empty but plugins/*.ts exist (common after switch /
- * fresh assets dir), rebuild records from the remote catalog for matching names.
- * Returns number of records written.
+ * Always rebuild the installed-plugin DB from disk + remote catalog.
+ * Scans plugins/*.ts, fetches remote plugins.json, and writes a fresh
+ * record set so tpm ls / update always reflect reality.
  */
-async function ensureInstalledPluginDb(db: Awaited<ReturnType<typeof getDatabase>>): Promise<number> {
-  const existing = Object.keys(db.data || {});
-  if (existing.length > 0) return 0;
-
+async function rebuildPluginDb(db: Awaited<ReturnType<typeof getDatabase>>): Promise<number> {
   const localNames = listLocalPluginNames();
-  if (localNames.length === 0) return 0;
-
-  logger.info(
-    `[TPM] 安装记录为空，尝试从远程目录重建（本地 ${localNames.length} 个插件文件）…`,
-  );
-
   let catalog: RemotePluginsIndex = {};
   try {
     const res = await fetchWithRetry<RemotePluginsIndex>(PLUGINS_INDEX_URL);
@@ -281,30 +272,36 @@ async function ensureInstalledPluginDb(db: Awaited<ReturnType<typeof getDatabase
       catalog = res.data;
     }
   } catch (error: unknown) {
-    logger.error("[TPM] 获取远程插件目录失败，无法重建安装记录:", error);
+    logger.error("[TPM] 获取远程插件目录失败，重建使用旧记录:", error);
     return 0;
   }
 
   let written = 0;
   const now = Date.now();
+  const oldData = { ...db.data };
+  db.data = {};
+
   for (const name of localNames) {
     const entry = catalog[name];
-    if (!entry?.url) continue;
-    db.data[name] = {
-      url: entry.url,
-      desc: entry.desc,
-      _updatedAt: now,
-    };
+    if (entry?.url) {
+      db.data[name] = {
+        url: entry.url,
+        desc: entry.desc || oldData[name]?.desc || "暂无描述",
+        _updatedAt: oldData[name]?._updatedAt || now,
+      };
+    } else if (oldData[name]) {
+      // local plugin has no remote match — keep old record
+      db.data[name] = { ...oldData[name] };
+      logger.info(`[TPM] 本地插件 ${name} 无远程记录，保留旧记录`);
+    } else {
+      logger.info(`[TPM] 本地插件 ${name} 无远程记录且无旧记录，跳过`);
+    }
     written++;
   }
 
-  if (written > 0) {
-    await db.write();
-    logger.info(`[TPM] 已从远程目录重建 ${written} 条安装记录`);
-  } else {
-    logger.info("[TPM] 远程目录中无匹配项，安装记录仍为空");
-  }
-  return written;
+  await db.write();
+  logger.info(`[TPM] 插件数据库已重建: ${Object.keys(db.data).length} 条记录 (${localNames.length} 个本地文件)`);
+  return Object.keys(db.data).length;
 }
 
 async function getDatabase() {
@@ -1179,7 +1176,7 @@ async function showPluginRecords(msg: MessageContext, verbose?: boolean) {
       sendOrEditMessage(msg, "📚 正在读取插件数据..."),
       getDatabase(),
     ]);
-    await ensureInstalledPluginDb(db);
+    await rebuildPluginDb(db);
     const dbNames = Object.keys(db.data);
 
     let filePlugins: string[] = [];
@@ -1324,7 +1321,7 @@ export async function updateAllPlugins(
   
   try {
     const db = await getDatabase();
-    await ensureInstalledPluginDb(db);
+    await rebuildPluginDb(db);
     const dbPlugins = Object.keys(db.data);
 
     if (dbPlugins.length === 0) {
