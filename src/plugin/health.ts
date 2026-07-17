@@ -537,7 +537,7 @@ class HealthPlugin extends Plugin {
         configDB.data.leakfixEnabled = false;
         overThresholdStreak = 0;
         await configDB.write();
-        await msg.edit({ text: html("❌ <b>自动内存保护已关闭</b>\n\n系统不会再自动清理/重启。\n需要时再发 <code>${mainPrefix}memory on</code> 打开。") });
+        await msg.edit({ text: html(`❌ <b>自动内存保护已关闭</b>\n\n系统不会再自动清理/重启。\n需要时再发 <code>${mainPrefix}memory on</code> 打开。`) });
       } else if (subCmd === "set") {
         const target = parts[2]?.toLowerCase();
         const threshold = parseInt(parts[3], 10);
@@ -559,7 +559,7 @@ class HealthPlugin extends Plugin {
         else if (target === "rss") configDB.data.rssThreshold = threshold;
         else if (target === "growth") configDB.data.runtimeGrowthThreshold = threshold;
         else {
-          await msg.edit({ text: html("❌ 只支持 heap（程序内存）/ rss（总占用）/ growth（涨幅）\n例：<code>${mainPrefix}memory set heap 150</code>") });
+          await msg.edit({ text: html(`❌ 只支持 heap（程序内存）/ rss（总占用）/ growth（涨幅）\n例：<code>${mainPrefix}memory set heap 150</code>`) });
           return;
         }
         await configDB.write();
@@ -572,7 +572,7 @@ class HealthPlugin extends Plugin {
       } else if (subCmd === "mode") {
         const mode = parseBaselineMode(parts[2]?.toLowerCase());
         if (!mode) {
-          await msg.edit({ text: html("❌ 请选择：\n• <code>${mainPrefix}memory mode auto</code> — 打开保护时自动记\n• <code>${mainPrefix}memory mode manual</code> — 只有 reset 才改\n• <code>${mainPrefix}memory mode reload</code> — 每次重载后改") });
+          await msg.edit({ text: html(`❌ 请选择：\n• <code>${mainPrefix}memory mode auto</code> — 打开保护时自动记\n• <code>${mainPrefix}memory mode manual</code> — 只有 reset 才改\n• <code>${mainPrefix}memory mode reload</code> — 每次重载后改`) });
           return;
         }
         configDB.data.baselineMode = mode;
