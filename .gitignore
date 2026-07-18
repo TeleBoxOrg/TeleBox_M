@@ -6,6 +6,7 @@
 *~
 
 config.json
+session
 session.db
 session.db-journal
 session.db-wal
