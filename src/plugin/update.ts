@@ -185,8 +185,9 @@ function getGithubNoticeText(msg: MessageContext): string {
   const candidates = [
     msg.text,
     anyMsg.caption,
-    anyMsg.message,
+    anyMsg.raw?.text,
     anyMsg.raw?.message,
+    anyMsg.message,
   ];
   for (const c of candidates) {
     if (typeof c === "string" && c.trim()) return c;
@@ -622,10 +623,16 @@ const GITHUB_BOT_USERNAME = "githubbot";
 // GitHubBot: "1 new commit to …" / "2 new commits to …" (singular or plural)
 // 兼容：`Repo:main` / `Repo: main` / markdown `[Org/Repo:main]` / 少量实体夹杂
 const COMMIT_NOTICE_PATTERN = /\bnew\s+commits?\b/i;
+// 标准格式："N new commits to Org/Repo:main" 或 "to [Org/Repo:main]"
 const MAIN_REPO_PATTERN =
   /\bnew\s+commits?\b[\s\S]*?\bto\s+\[?(?:(?:TeleBoxOrg|TeleBoxLabs)\/)?(TeleBox-Next)\]?(?:\s*:\s*|\/)main\b/i;
 const PLUGIN_REPO_PATTERN =
   /\bnew\s+commits?\b[\s\S]*?\bto\s+\[?(?:(?:TeleBoxOrg|TeleBoxLabs)\/)?(TeleBox-Next-Plugins|TeleBox-Next_Plugins|TeleBox_M_Plugins)\]?(?:\s*:\s*|\/)main\b/i;
+// Markdown 反向格式："[Org/Repo:main] N new commits by Author"（repo 在前，无 "to"）
+const MAIN_REPO_REVERSE_PATTERN =
+  /\[?(?:(?:TeleBoxOrg|TeleBoxLabs)\/)?(TeleBox-Next)\s*:\s*main\]?[\s\S]*?\bnew\s+commits?\b/i;
+const PLUGIN_REPO_REVERSE_PATTERN =
+  /\[?(?:(?:TeleBoxOrg|TeleBoxLabs)\/)?(TeleBox-Next-Plugins|TeleBox-Next_Plugins|TeleBox_M_Plugins)\s*:\s*main\]?[\s\S]*?\bnew\s+commits?\b/i;
 
 function normalizeChatId(msg: MessageContext): number {
   const id = msg.chat?.id;
@@ -639,13 +646,16 @@ function normalizeChatId(msg: MessageContext): number {
 function isGitHubBot(msg: MessageContext): boolean {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sender = msg.sender as any;
-  const sid = sender?.id != null ? String(sender.id) : "";
-  if (sid && sid === GITHUB_BOT_USER_ID) return true;
+  // mtcute sender 可能是 User 对象 (含 id/username) 或 PeerUser (含 userId)
+  const sid = sender?.id ?? sender?.userId;
+  if (sid != null && String(sid) === GITHUB_BOT_USER_ID) return true;
   const uname = String(sender?.username || "").toLowerCase().replace(/^@/, "");
   if (uname === GITHUB_BOT_USERNAME) return true;
+  // 回退：any 属性上的 senderId / fromId
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyMsg = msg as any;
   if (anyMsg.senderId != null && String(anyMsg.senderId) === GITHUB_BOT_USER_ID) return true;
+  if (anyMsg.fromId?.userId != null && String(anyMsg.fromId.userId) === GITHUB_BOT_USER_ID) return true;
   return false;
 }
 
@@ -695,17 +705,23 @@ class UpdatePlugin extends Plugin {
     if (!isGitHubBot(msg)) return;
 
     const text = getGithubNoticeText(msg);
-    if (!text || !COMMIT_NOTICE_PATTERN.test(text)) return;
+    if (!text) return;
+    if (!COMMIT_NOTICE_PATTERN.test(text)) {
+      // GitHubBot may send non-commit messages (e.g. CI results); skip silently
+      return;
+    }
+    logger.info(`[auto-update] GitHubBot 提交通知: ${text.slice(0, 200)}`);
 
     const chatId = normalizeChatId(msg);
-    if (PLUGIN_REPO_PATTERN.test(text)) {
+    // 标准格式优先，再试反向 markdown 格式
+    if (PLUGIN_REPO_PATTERN.test(text) || PLUGIN_REPO_REVERSE_PATTERN.test(text)) {
       logger.info(`[auto-update] chat=${chatId || "?"} 插件仓库提交 → silent update`);
       await autoUpdatePlugins(msg);
-    } else if (MAIN_REPO_PATTERN.test(text)) {
+    } else if (MAIN_REPO_PATTERN.test(text) || MAIN_REPO_REVERSE_PATTERN.test(text)) {
       logger.info(`[auto-update] chat=${chatId || "?"} 主仓库提交 → silent update`);
       await autoUpdateMainRepo(msg);
     } else {
-      logger.debug(
+      logger.info(
         `[auto-update] chat=${chatId || "?"} GitHubBot 通知未匹配 Next 仓库: ${text.slice(0, 120)}`,
       );
     }
