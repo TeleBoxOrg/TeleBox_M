@@ -6,6 +6,18 @@ import type { GenerationContext } from "./generationContext";
 import { logger } from "@utils/logger";
 import type { ClientInternals } from "./clientInternals";
 
+/** Installs a process SIGINT guard that exits cleanly during interactive login.
+ *  readline.createInterface captures stdin in raw mode and intercepts SIGINT
+ *  as a line-editing event; without this handler ctrl+c does nothing. */
+function installLoginSigintGuard(): () => void {
+  const handler = () => {
+    logger.warn("\n⏹ Login aborted (SIGINT).");
+    process.exit(130);
+  };
+  process.on("SIGINT", handler);
+  return () => process.removeListener("SIGINT", handler);
+}
+
 /**
  * Native mtcute login manager.
  *
@@ -26,6 +38,12 @@ let rl: Interface | null = null;
 function getReadlineInterface(): Interface {
   if (!rl) {
     rl = createInterface({ input, output });
+    // readline in raw mode intercepts SIGINT; listen and exit cleanly
+    rl.on("SIGINT", () => {
+      logger.warn("\n⏹ Login aborted (SIGINT).");
+      rl?.close();
+      process.exit(130);
+    });
   }
   return rl;
 }
@@ -123,29 +141,36 @@ export async function initializeClientSession(
 
   let me: User;
 
-  if (wantQr) {
-    // mtcute start() drives QR login when qrCodeHandler is provided and phone
-    // is omitted. It still accepts a password callback for 2FA after scan.
-    me = await client.start({
-      qrCodeHandler: (url: string, expires: Date) => {
-        logger.info("\nScan this QR code using Telegram:");
-        logger.info("Settings → Devices → Link Desktop Device\n");
-        qr.generate(url, { small: true });
-        const remaining = Math.max(0, Math.ceil((expires.getTime() - Date.now()) / 1000));
-        logger.info(`(QR expires in ~${remaining}s, will refresh automatically)`);
-      },
-      password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
-    });
-  } else {
-    logger.info("Phone login...");
-    me = await client.start({
-      phone: async () => await getUserInput("Enter phone number (+86...): ", lifecycle),
-      code: async () => await getUserInput("Enter the verification code: ", lifecycle),
-      password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
-      invalidCodeCallback: (type) => {
-        logger.warn(`❌ Invalid ${type}, please try again.`);
-      },
-    });
+  // mtcute client.start() creates its own readline internally which also
+  // captures SIGINT. Install a process-level guard so ctrl+c always exits.
+  const removeSigintGuard = installLoginSigintGuard();
+  try {
+    if (wantQr) {
+      // mtcute start() drives QR login when qrCodeHandler is provided and phone
+      // is omitted. It still accepts a password callback for 2FA after scan.
+      me = await client.start({
+        qrCodeHandler: (url: string, expires: Date) => {
+          logger.info("\nScan this QR code using Telegram:");
+          logger.info("Settings → Devices → Link Desktop Device\n");
+          qr.generate(url, { small: true });
+          const remaining = Math.max(0, Math.ceil((expires.getTime() - Date.now()) / 1000));
+          logger.info(`(QR expires in ~${remaining}s, will refresh automatically)`);
+        },
+        password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
+      });
+    } else {
+      logger.info("Phone login...");
+      me = await client.start({
+        phone: async () => await getUserInput("Enter phone number (+86...): ", lifecycle),
+        code: async () => await getUserInput("Enter the verification code: ", lifecycle),
+        password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
+        invalidCodeCallback: (type) => {
+          logger.warn(`❌ Invalid ${type}, please try again.`);
+        },
+      });
+    }
+  } finally {
+    removeSigintGuard();
   }
 
   throwIfAborted(lifecycle);
