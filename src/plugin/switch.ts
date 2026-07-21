@@ -29,6 +29,8 @@ import { markSwitchInProgress, clearSwitchInProgress,
   clearProgressSnapshot,
   isSwitchInProgress,
 } from "@utils/versionSwitchProgress";
+import { thtml as html } from "@mtcute/html-parser";
+import { htmlEscape } from "@utils/htmlEscape";
 
 const prefixes = getPrefixes();
 const mainPrefix = prefixes[0];
@@ -79,18 +81,18 @@ const T = {
       ``,
       `两个子命令：`,
       ``,
-      `1. \`${mainPrefix}switch go\``,
+      `1. <code>${mainPrefix}switch go</code>`,
       `• 立刻切到另一个版本`,
       `• 自动：转换 session → 同步插件/配置 → 重启目标版本`,
       `• 另一边没有的插件会归档到本机，不会丢`,
       `• bot 会短暂离线几秒，完成后本条消息会更新`,
       ``,
-      `2. \`${mainPrefix}switch status\``,
+      `2. <code>${mainPrefix}switch status</code>`,
       `• 查看当前运行的是哪个版本`,
       `• 显示另一边版本名称`,
       `• 不切换，只看状态`,
       ``,
-      `再切回去：再发一次 \`${mainPrefix}switch go\` 即可。`,
+      `再切回去：再发一次 <code>${mainPrefix}switch go</code> 即可。`,
     ].join("\n"),
 
   status: (state: ReturnType<typeof loadSwitchState>) => {
@@ -102,8 +104,8 @@ const T = {
       `当前运行： ${EMOJI[current]} ${label(current)}`,
       `另一边： ${EMOJI[other]} ${label(other)}`,
       ``,
-      `切过去：\`${mainPrefix}switch go\``,
-      `再看状态：\`${mainPrefix}switch status\``,
+      `切过去：<code>${mainPrefix}switch go</code>`,
+      `再看状态：<code>${mainPrefix}switch status</code>`,
     ];
     if (state.activeVersion) {
       lines.push(
@@ -130,21 +132,21 @@ const T = {
     [
       `❌ 当前没有可用的 session`,
       ``,
-      `请先正常登录 mtcute，再发 \`${mainPrefix}switch go\`。`,
+      `请先正常登录 mtcute，再发 <code>${mainPrefix}switch go</code>。`,
     ].join("\n"),
 
   legacyRemoved: () =>
     [
       `ℹ️ 现在只有两个命令：`,
       ``,
-      `\`${mainPrefix}switch go\` — 切到另一个版本`,
-      `\`${mainPrefix}switch status\` — 查看状态`,
+      `<code>${mainPrefix}switch go</code> — 切到另一个版本`,
+      `<code>${mainPrefix}switch status</code> — 查看状态`,
       ``,
       `不用 login / code / pwd / revert。`,
     ].join("\n"),
 
   unknownSub: (sub: string) =>
-    `不知道 \`${sub}\` 是什么命令。\n\n` + T.help(),
+    `不知道 <code>${htmlEscape(sub)}</code> 是什么命令。\n\n` + T.help(),
 };
 
 function spawnController(source: TeleBoxVersion, target: TeleBoxVersion): void {
