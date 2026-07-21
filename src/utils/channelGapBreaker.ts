@@ -160,6 +160,13 @@ function clearMtcuteChannelState(
 /** How many consecutive PTS failures before we circuit-break the channel. */
 const FAILURE_THRESHOLD = 2;
 
+/** Immediate circuit-break on fatal unrecoverable errors (no retry possible). */
+const FATAL_ERRORS = [
+  'difference too long',
+  'channelDifferenceTooLong',
+  'Could not find a matching Constructor',
+];
+
 /**
  * Sliding window in ms. Failures older than this are forgotten.
  * Set to 30 minutes so that transient issues self-heal.
@@ -211,8 +218,9 @@ const channelFailures = new Map<string, FailureRecord>();
  * for a channel.
  *
  * @param channelId - The Telegram channel/group ID as a string (e.g. "1680975844")
+ * @param errorMsg - Optional full error message to detect fatal unrecoverable errors
  */
-export function recordChannelGapFailure(channelId: string): void {
+export function recordChannelGapFailure(channelId: string, errorMsg?: string): void {
   const now = Date.now();
 
   // Evict stale entries if the map grows too large. Proactive eviction
@@ -228,6 +236,9 @@ export function recordChannelGapFailure(channelId: string): void {
     channelFailures.set(channelId, record);
   }
 
+  // Check for fatal unrecoverable errors that should trigger immediate circuit break
+  const isFatalError = errorMsg && FATAL_ERRORS.some(fatal => errorMsg.includes(fatal));
+
   // Compute the effective cooldown for this channel based on its repeat break count
   const effectiveCooldown = getEffectiveCooldown(record.breakCount);
 
@@ -239,6 +250,12 @@ export function recordChannelGapFailure(channelId: string): void {
   // the full cooldown window.
   if (record.brokenAt && now - record.brokenAt < effectiveCooldown) {
     silentlyClearChannelPts(channelId);
+    return;
+  }
+
+  // For fatal errors, trigger immediate circuit break
+  if (isFatalError) {
+    circuitBreakChannel(channelId);
     return;
   }
 

@@ -497,7 +497,11 @@ export async function flushPendingReactions(): Promise<void> {
     } catch (err: unknown) {
       logger.warn("[auto-update] pending reaction still failing:", getErrorMessage(err) || err);
       const m = String(getErrorMessage(err) || err || "");
-      if (/Cannot find any entity|No user has|PEER_ID_INVALID|CHAT_ID_INVALID|invalid reaction entity/i.test(m)) {
+      // Handle "You can't write in this chat" and similar permission errors
+      if (
+        /Cannot find any entity|No user has|PEER_ID_INVALID|CHAT_ID_INVALID|invalid reaction entity|You can't write in this chat|CHAT_WRITE_FORBIDDEN|FORBIDDEN/i.test(m)
+      ) {
+        logger.info(`[auto-update] Skipping reaction for chat ${item.chatId}: no permission to write`);
         continue;
       }
       if (isReactionInvalidError(err)) continue;
@@ -508,10 +512,6 @@ export async function flushPendingReactions(): Promise<void> {
 }
 
 // ── Auto-update for main repo ──────────────────────────────────────────
-/**
- * React on GitHubBot commit message after update finishes (success signal).
- * Plugin path captures chatId/msgId before silent loadPlugins()/reloadRuntime().
- */
 async function reactSuccessOnGithubMsg(
   githubMsg: MessageContext,
   prefetched?: { chatId?: number; msgId?: number },
@@ -525,6 +525,15 @@ async function reactSuccessOnGithubMsg(
       logger.info(`[auto-update] reaction ${used} on msg ${msgId}`);
       return;
     } catch (e: unknown) {
+      const m = String(getErrorMessage(e) || e || "");
+      // Handle "You can't write in this chat" and similar permission errors
+      if (
+        /Cannot find any entity|No user has|PEER_ID_INVALID|CHAT_ID_INVALID|invalid reaction entity|You can't write in this chat|CHAT_WRITE_FORBIDDEN|FORBIDDEN/i.test(m)
+      ) {
+        logger.info(`[auto-update] Skipping reaction for chat ${chatId}: no permission to write`);
+        return;
+      }
+      if (isReactionInvalidError(e)) return;
       logger.warn(
         `[auto-update] reaction failed (attempt ${attempt}/3):`,
         getErrorMessage(e) || e,

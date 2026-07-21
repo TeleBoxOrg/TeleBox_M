@@ -251,7 +251,7 @@ class Logger {
 
     const channelId = this.extractChannelId(msg);
     if (channelId) {
-      recordChannelGapFailure(channelId);
+      recordChannelGapFailure(channelId, msg);
       if (isChannelCircuitBroken(channelId)) return true;
     }
     const rateKey = channelId ? `pts_err:${channelId}` : 'pts_err:unknown';

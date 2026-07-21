@@ -4,6 +4,7 @@ import { stdin as input, stdout as output } from "process";
 import qr from "qrcode-terminal";
 import type { GenerationContext } from "./generationContext";
 import { logger } from "@utils/logger";
+import { withRetry } from "@utils/asyncHelpers";
 import type { ClientInternals } from "./clientInternals";
 
 /** Installs a process SIGINT guard that exits cleanly during interactive login.
@@ -125,7 +126,14 @@ export async function initializeClientSession(
   // Fast path: if storage already has a valid session, start() will reuse it
   // and start the updates loop automatically (no interactive prompts).
   try {
-    const me = await client.start();
+    const me = await withRetry(
+      () => client.start(),
+      {
+        maxRetries: 3,
+        baseDelayMs: 5000,
+        label: "mtcute:client.start",
+      }
+    );
     if (me) {
       logger.info(`✅ Existing session detected. Logged in as ${me.displayName}.`);
       closeReadlineInterface();
@@ -141,14 +149,11 @@ export async function initializeClientSession(
 
   let me: User;
 
-  // mtcute client.start() creates its own readline internally which also
-  // captures SIGINT. Install a process-level guard so ctrl+c always exits.
-  const removeSigintGuard = installLoginSigintGuard();
-  try {
-    if (wantQr) {
-      // mtcute start() drives QR login when qrCodeHandler is provided and phone
-      // is omitted. It still accepts a password callback for 2FA after scan.
-      me = await client.start({
+  if (wantQr) {
+    // mtcute start() drives QR login when qrCodeHandler is provided and phone
+    // is omitted. It still accepts a password callback for 2FA after scan.
+    me = await withRetry(
+      () => client.start({
         qrCodeHandler: (url: string, expires: Date) => {
           logger.info("\nScan this QR code using Telegram:");
           logger.info("Settings → Devices → Link Desktop Device\n");
@@ -157,20 +162,30 @@ export async function initializeClientSession(
           logger.info(`(QR expires in ~${remaining}s, will refresh automatically)`);
         },
         password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
-      });
-    } else {
-      logger.info("Phone login...");
-      me = await client.start({
+      }),
+      {
+        maxRetries: 3,
+        baseDelayMs: 5000,
+        label: "mtcute:client.start:qr",
+      }
+    );
+  } else {
+    logger.info("Phone login...");
+    me = await withRetry(
+      () => client.start({
         phone: async () => await getUserInput("Enter phone number (+86...): ", lifecycle),
         code: async () => await getUserInput("Enter the verification code: ", lifecycle),
         password: async () => await getUserInput("Enter 2FA password (if any): ", lifecycle),
         invalidCodeCallback: (type) => {
           logger.warn(`❌ Invalid ${type}, please try again.`);
         },
-      });
-    }
-  } finally {
-    removeSigintGuard();
+      }),
+      {
+        maxRetries: 3,
+        baseDelayMs: 5000,
+        label: "mtcute:client.start:phone",
+      }
+    );
   }
 
   throwIfAborted(lifecycle);

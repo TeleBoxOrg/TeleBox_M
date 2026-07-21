@@ -51,3 +51,38 @@ export function safeJsonParse<T = unknown>(text: string): T | undefined {
     return undefined;
   }
 }
+
+export interface RetryOptions {
+  maxRetries: number;
+  baseDelayMs: number;
+  label: string;
+}
+
+/**
+ * Retry a function with exponential backoff.
+ * Retries on any error; the last error is thrown after maxRetries attempts.
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= options.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: unknown) {
+      lastError = err;
+      const isLastAttempt = attempt === options.maxRetries;
+      if (!isLastAttempt) {
+        const delay = options.baseDelayMs * Math.pow(2, attempt - 1);
+        console.warn(
+          `[${options.label}] Attempt ${attempt}/${options.maxRetries} failed:`,
+          err instanceof Error ? err.message : String(err),
+          `— retrying in ${delay}ms...`
+        );
+        await sleep(delay);
+      }
+    }
+  }
+  throw lastError;
+}

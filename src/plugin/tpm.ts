@@ -115,6 +115,9 @@ async function clearCustomSourceConfig(): Promise<void> {
 }
 
 function convertGithubToRawPluginUrl(url: string): string {
+  if (!url || typeof url !== 'string') {
+    return url;
+  }
   try {
     const parsed = new URL(url);
     if (parsed.hostname === "github.com") {
@@ -419,6 +422,9 @@ async function getMediaFileName(msg: MessageContext | Message): Promise<string> 
 }
 
 function normalizeGithubUrl(input: string): string {
+  if (!input || typeof input !== 'string') {
+    return input;
+  }
   try {
     const parsed = new URL(input);
     if (parsed.hostname === "github.com") {
