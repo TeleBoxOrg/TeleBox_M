@@ -377,10 +377,29 @@ async function runPluginSetup(plugin: Plugin, runtime: TeleBoxRuntime): Promise<
   );
 }
 
+// mtcute's Dispatcher runs, within a single handler group, ONLY the first
+// matching handler and then stops propagation unless that handler returns
+// PropagationAction.Continue. The root command router (registered in group 0
+// before this function runs) matches every message and returns void, which
+// would shadow every plugin listen/event handler that also landed in group 0 —
+// they would silently never fire. Give each plugin's listen/event handlers
+// their own dedicated, monotonically increasing handler group: mtcute iterates
+// all groups in order, so every plugin group runs independently of the root
+// router and of each other. Group 0 stays reserved for the root command router.
+let pluginHandlerGroupSeq = 0;
+function nextPluginHandlerGroup(): number {
+  return ++pluginHandlerGroupSeq;
+}
+
 function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher): void {
+  // Each runtime generation rebuilds the dispatcher from scratch, so reset the
+  // group counter to keep group numbers stable and bounded across reloads.
+  pluginHandlerGroupSeq = 0;
+
   for (const plugin of validPlugins) {
     const messageHandler = plugin.listenMessageHandler;
     if (messageHandler) {
+      const group = nextPluginHandlerGroup();
       dispatcher.onNewMessage(async (msg: MessageContext) => {
         if (runtime.generation !== getCurrentGeneration()) return;
         try {
@@ -388,7 +407,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
         } catch (error: unknown) {
           logger.error("listenMessageHandler NewMessage error:", error);
         }
-      });
+      }, group);
 
       if (
         !plugin.listenMessageHandlerIgnoreEdited ||
@@ -401,7 +420,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
           } catch (error: unknown) {
             logger.error("listenMessageHandler EditedMessage error:", error);
           }
-        });
+        }, group);
       }
     }
 
@@ -411,6 +430,7 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
     const eventHandlers = plugin.eventHandlers;
     if (Array.isArray(eventHandlers) && eventHandlers.length > 0) {
       for (const eh of eventHandlers) {
+        const group = nextPluginHandlerGroup();
         const safeHandler = async (ctx: unknown) => {
           if (runtime.generation !== getCurrentGeneration()) return;
           try {
@@ -421,14 +441,14 @@ function dealListenMessagePlugin(runtime: TeleBoxRuntime, dispatcher: Dispatcher
         };
         switch (eh.kind) {
           case "editMessage":
-            dispatcher.onEditMessage((msg: MessageContext) => safeHandler(msg));
+            dispatcher.onEditMessage((msg: MessageContext) => safeHandler(msg), group);
             break;
           case "rawUpdate":
-            dispatcher.onRawUpdate((upd: unknown) => safeHandler(upd));
+            dispatcher.onRawUpdate((upd: unknown) => safeHandler(upd), group);
             break;
           case "newMessage":
           default:
-            dispatcher.onNewMessage((msg: MessageContext) => safeHandler(msg));
+            dispatcher.onNewMessage((msg: MessageContext) => safeHandler(msg), group);
             break;
         }
       }
