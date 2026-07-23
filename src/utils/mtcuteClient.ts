@@ -64,37 +64,110 @@ export interface LegacyProxyConfig {
   secret?: string;
 }
 
+/**
+ * Read proxy configuration from environment variables.
+ * Supports standard proxy env vars: HTTP_PROXY, HTTPS_PROXY, ALL_PROXY,
+ * and socks5:// or socks4:// URLs.
+ */
+function getProxyFromEnv(): LegacyProxyConfig | undefined {
+  // Check standard env vars (case-insensitive)
+  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
+  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  const allProxy = process.env.ALL_PROXY || process.env.all_proxy;
+  const socksProxy = process.env.SOCKS_PROXY || process.env.socks_proxy;
+
+  // Prefer https_proxy > http_proxy > all_proxy > socks_proxy for HTTP/HTTPS
+  const proxyUrl = httpsProxy || httpProxy || allProxy || socksProxy;
+  if (!proxyUrl) return undefined;
+
+  try {
+    const url = new URL(proxyUrl);
+    const host = url.hostname;
+    const port = Number(url.port);
+    const username = url.username ? decodeURIComponent(url.username) : undefined;
+    const password = url.password ? decodeURIComponent(url.password) : undefined;
+
+    if (!host || !port) {
+      logger.warn("[CLIENT] 环境变量代理 URL 格式无效，缺少 host 或 port:", proxyUrl);
+      return undefined;
+    }
+
+    const protocol = url.protocol.toLowerCase();
+
+    if (protocol === "socks5:") {
+      return {
+        host,
+        port,
+        username,
+        password,
+        socksType: 5,
+      };
+    }
+
+    if (protocol === "socks4:") {
+      return {
+        host,
+        port,
+        username,
+        password,
+        socksType: 4,
+      };
+    }
+
+    if (protocol === "http:" || protocol === "https:") {
+      return {
+        host,
+        port,
+        username,
+        password,
+        type: "http",
+        http: true,
+      };
+    }
+
+    logger.warn("[CLIENT] 不支持的代理协议:", protocol);
+    return undefined;
+  } catch (e: unknown) {
+    logger.warn("[CLIENT] 解析环境变量代理失败:", e);
+    return undefined;
+  }
+}
+
 function buildTransport(
   proxy: LegacyProxyConfig | undefined
 ): SocksProxyTcpTransport | HttpProxyTcpTransport | MtProxyTcpTransport | undefined {
-  if (!proxy) return undefined;
+  // Merge config proxy with env proxy: config takes precedence, env as fallback
+  const envProxy = getProxyFromEnv();
+  const effectiveProxy = proxy ?? envProxy;
+
+  if (!effectiveProxy) return undefined;
 
   // Legacy gramjs proxy shape: { socksType?: 4|5, ip, port, username?, password? }
   // or { MTProxy: true, ip, port, secret }
-  const host = proxy.ip ?? proxy.host ?? proxy.hostname;
+  const host = effectiveProxy.ip ?? effectiveProxy.host ?? effectiveProxy.hostname;
   if (!host) {
     logger.warn("[CLIENT] 代理配置缺少 host，回退到直连");
     return undefined;
   }
 
   try {
-    if (proxy.MTProxy || proxy.secret) {
+    if (effectiveProxy.MTProxy || effectiveProxy.secret) {
       return new MtProxyTcpTransport({
         host,
-        port: Number(proxy.port),
-        secret: proxy.secret ?? "",
+        port: Number(effectiveProxy.port),
+        secret: effectiveProxy.secret ?? "",
       });
     }
 
-    const port = Number(proxy.port);
+    const port = Number(effectiveProxy.port);
 
     // HTTP proxy
-    if (proxy.type === "http" || proxy.http) {
+    if (effectiveProxy.type === "http" || effectiveProxy.http) {
       return new HttpProxyTcpTransport({
         host,
         port,
-        user: proxy.username ?? proxy.user ?? "",
-        password: proxy.password ?? "",
+        user: effectiveProxy.username ?? effectiveProxy.user ?? "",
+        password: effectiveProxy.password ?? "",
       });
     }
 
@@ -102,9 +175,9 @@ function buildTransport(
     return new SocksProxyTcpTransport({
       host,
       port,
-      user: proxy.username ?? proxy.user ?? "",
-      password: proxy.password ?? "",
-      version: proxy.socksType === 4 ? 4 : 5,
+      user: effectiveProxy.username ?? effectiveProxy.user ?? "",
+      password: effectiveProxy.password ?? "",
+      version: effectiveProxy.socksType === 4 ? 4 : 5,
     });
   } catch (e: unknown) {
     logger.warn("[CLIENT] 代理配置解析失败，回退到直连:", e);
