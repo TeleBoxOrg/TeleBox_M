@@ -9,23 +9,24 @@
       "ES2020"
     ],
     "sourceMap": false,
-    "downlevelIteration": true,
     "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
     "paths": {
       "@utils/*": [
-        "utils/*"
+        "./src/utils/*"
       ],
       "@mtcute/html-parser": [
-        "utils/html"
+        "./src/utils/html"
+      ],
+      "*": [
+        "./*"
       ]
     }
   },
