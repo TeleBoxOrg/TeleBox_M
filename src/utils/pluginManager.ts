@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { isValidPlugin, Plugin } from "@utils/pluginBase";
+import type { PanelSettingsAdapter } from "@utils/pluginBase";
 import { Dispatcher, MessageContext } from "@mtcute/dispatcher";
 import { AliasDB } from "./aliasDB";
 import { cronManager } from "./cronManager";
@@ -567,6 +568,26 @@ async function loadPlugins(): Promise<boolean> {
   }
 }
 
+function getLoadedPlugins(): Plugin[] {
+  return [...validPlugins];
+}
+
+function listLoadedPlugins(): string[] {
+  return validPlugins
+    .filter(p => p.name)
+    .map(p => p.name!);
+}
+
+function getPluginPanelAdapters(): PanelSettingsAdapter[] {
+  const adapters: PanelSettingsAdapter[] = [];
+  for (const plugin of validPlugins) {
+    if (plugin.panelAdapter) {
+      adapters.push(plugin.panelAdapter);
+    }
+  }
+  return adapters;
+}
+
 export {
   getPrefixes,
   setPrefixes,
@@ -577,4 +598,7 @@ export {
   getPluginEntry,
   dealCommandPluginWithMessage,
   getCommandFromMessage,
+  getLoadedPlugins,
+  listLoadedPlugins,
+  getPluginPanelAdapters,
 };
