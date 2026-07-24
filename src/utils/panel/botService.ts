@@ -64,10 +64,11 @@ function getProxyAgent(): any {
       const auth = username && password ? `${username}:${password}@` : "";
       const proxyAddress = `${protocol}//${auth}${host}:${port}`;
 
-      // Use http-proxy-agent for HTTP/HTTPS proxy
-      const { HttpProxyAgent } = require("http-proxy-agent");
+      // Telegram Bot API 使用 HTTPS，因此必须用 HttpsProxyAgent
+      // (HttpsProxyAgent 通过 CONNECT 隧道代理 HTTPS 请求)
+      const { HttpsProxyAgent } = require("https-proxy-agent");
 
-      return new HttpProxyAgent(proxyAddress);
+      return new HttpsProxyAgent(proxyAddress);
     }
 
     logger.warn("[panel-bot] 不支持的代理协议:", protocol);
